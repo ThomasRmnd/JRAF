@@ -24,7 +24,7 @@
 #include "RecTools/PmtProp.h"
 
 #include "analysis/Analysis.hpp"
-#include "loader/Loader.h"
+#include "loader/Loader.hpp"
 
 class AnalysisGroupC : public AlgBase {
 

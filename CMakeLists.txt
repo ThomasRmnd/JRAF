@@ -38,6 +38,7 @@ DEPENDS
     
     Identifier
     GeometryLib
+    RecTools
     BufferMemMgrLib
     Context
     EvtNavigator
