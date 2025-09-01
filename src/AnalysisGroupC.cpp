@@ -1,5 +1,8 @@
 #include "AnalysisGroupC.hpp"
 
+#include <cmath>
+#include <numeric>
+
 #include "SniperKernel/AlgFactory.h"
 #include "SniperKernel/SniperLog.h"
 
@@ -182,22 +185,22 @@ bool AnalysisGroupC::execute() {
         [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_WP) == pmt.type) ? pmt.q : 0.0 ); } 
     );
 
-    bool is_possibly_muon = false;
-
     JM::EvtNavigator* nav = m_buf->curEvt();
     TimeStamp ts{nav->TimeStamp().GetTimeSpec()};
 
     if (m_reconstruct_muon_mode) {
+
+        bool is_possibly_cd_muon = false;
+        bool is_possibly_wp_muon = false;
 
         JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
         JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
         JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
         JM::WpTriggerHeader* wp_trig_hdr = JM::getHeaderObject<JM::WpTriggerHeader>(nav);
         if ((!cd_lpmt_calib_hdr || !cd_trig_hdr) && (!wp_calib_hdr || !wp_trig_hdr)) {
-            is_possibly_muon = true;
+            is_possibly_cd_muon = true;
         }
-
-        if (
+        else if (
             totq_cd >= m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold && 
             ts - m_cd_last_muon > m_cd_afterpulse_thold &&
@@ -205,7 +208,8 @@ bool AnalysisGroupC::execute() {
         ) {
             m_cd_last_muon = ts;
             m_wp_last_muon = ts;
-            is_possibly_muon = true;
+            is_possibly_cd_muon = true;
+            is_possibly_wp_muon = true;
         }
         else if (
             n_cd_used == 0ul && 
@@ -213,7 +217,7 @@ bool AnalysisGroupC::execute() {
             ts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
             m_wp_last_muon = ts;
-            is_possibly_muon = true;
+            is_possibly_wp_muon = true;
         }
         else if (
             totq_cd >= m_cd_muon_totq_thold && 
@@ -221,7 +225,7 @@ bool AnalysisGroupC::execute() {
             (ts - m_cd_last_muon > TimeStamp{0, 2000000} || ts - m_wp_last_muon > TimeStamp{0, 2000000})
         ) {
             m_cd_last_muon = ts;
-            is_possibly_muon = true;
+            is_possibly_cd_muon = true;
         }
 
         /* RecTrks* trks = new RecTrks();
@@ -235,24 +239,40 @@ bool AnalysisGroupC::execute() {
             return true;
         } */
 
-        if (!is_possibly_muon) {
-            LogInfo << "Event is not tagged as a muon\n";
-            return true;
+        if (is_possibly_cd_muon) {
+            JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
+
+            JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
+            JM::CdTrackRecEvt* cd_evt = new JM::CdTrackRecEvt();
+
+            JM::RecTrack* trk = new JM::RecTrack(
+                CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
+                CLHEP::HepLorentzVector(0.0, 0.0, -20000.0, 0.0)
+            );
+            trk->setQuality(1.0f);
+            trk->setPESum(1.0f);
+
+            cd_evt->addTrack(trk);
+            cd_hdr->setEvent(cd_evt);
+            JM::addHeaderObject(nav, cd_hdr);
         }
+        else if (is_possibly_wp_muon) {
+            JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
 
-        JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
-        JM::CdTrackRecEvt* cd_evt = new JM::CdTrackRecEvt();
+            JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
+            JM::CdTrackRecEvt* cd_evt = new JM::CdTrackRecEvt();
 
-        JM::RecTrack* trk = new JM::RecTrack(
-            CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
-            CLHEP::HepLorentzVector(0.0, 0.0, -20000.0, 0.0)
-        );
-        trk->setQuality(1.0f);
-        trk->setPESum(1.0f);
+            JM::RecTrack* trk = new JM::RecTrack(
+                CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
+                CLHEP::HepLorentzVector(0.0, 0.0, -20000.0, 0.0)
+            );
+            trk->setQuality(1.0f);
+            trk->setPESum(1.0f);
 
-        cd_evt->addTrack(trk);
-        cd_hdr->setEvent(cd_evt);
-        JM::addHeaderObject(nav, cd_hdr);
+            cd_evt->addTrack(trk);
+            cd_hdr->setEvent(cd_evt);
+            JM::addHeaderObject(nav, cd_hdr);
+        }
     
     }
 
