@@ -69,7 +69,7 @@ alg.property("Use20inchPMT").set(True)
 alg.property("ChosenDetectors").set(3) # 1: CD, 2: WP, 4: TT
 alg.property("UseJointLoader").set(True) 
 alg.property("LoaderTimeWindow").set([-500.0, 500.0]) # ns
-alg.property("ReconstructionMuonMode").set(True)
+alg.property("ReconstructMuonMode").set(True)
 
 task.setEvtMax(-1)
 if not task.run():
