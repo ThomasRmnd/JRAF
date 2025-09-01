@@ -1,11 +1,70 @@
 #!/bin/bash
 set -e
 
+PROC_ID="$1"
+LIST_FILE="$2"
+OUTPUT_DIR="$3"
+
+shift 3
+
+EXTRA_ARGS=$#
+
+EOS_BASE="root://junoeos01.ihep.ac.cn:1094/"
+
+input_file=$(sed -n "$((PROC_ID + 1))p" "$OUTPUT_DIR/$LIST_FILE")
+if [[ -z "$input_file" ]]; then
+    echo "No input file found for PROC_ID=$PROC_ID"
+    exit 1
+fi
+
+input_filename=$(basename "$input_file")
+local_input_file="$TEMP/$input_filename"
+local_vertex_file="$TEMP/${input_filename/.rtraw/.vertex.rec}"
+local_track_file="$TEMP/${input_filename/.rtraw/.track.rec}"
+local_output_file="$TEMP/${input_filename/.rtraw/.output.root}"
+output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
+
+echo "Output filename: $output_file"
+
+echo "Copying file from EOS: $input_file"
+xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
+
+echo "Running share/tut_rtraw2rec.py for file: $local_input_file"
+
 source /cvmfs/juno.ihep.ac.cn/el9_amd64_gcc11/Release/J25.5.0/setup.sh
 
-# Arguments: <run_number> <proc_id> <start_file> [other args...]
-run_number=$1
-proc_id=$2
-start_file=$3
+python ${TUTORIALROOT}/share/tut_rtraw2rec.py \
+    --loglevel Info \
+    --evtmax -1 \
+    --method qctr \
+    --waverec-method cotiwaverec \
+    --Calib 1 \
+    --pmtcalibsvc-ChargeAlgType 0 \
+    --pmtcalibsvc-ReadDB 1 \
+    --pmtcalibsvc-DBcur 20250210 \
+    --input $local_input_file \
+    --output $local_vertex_file \
+    --output-stream /Event/CdLpmtCalib:off \
+    --output-stream /Event/CdSpmtCalib:off \
+    --output-stream /Event/WpCalib:off
+
+# --global-tag MixedPhase_J25.7.2 \
 
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
+
+echo "Running run_muon.py for file: $local_vertex_file"
+python run_muon.py \
+  --input "$local_vertex_file" \
+  --output "$local_track_file" \
+  "${EXTRA_ARGS[@]}"
+
+echo "Running run_analysis.py for file: $local_vertex_file"
+python run_analysis.py \
+  --input "$local_track_file" \
+  --output "$local_output_file" \
+  "${EXTRA_ARGS[@]}"
+
+echo "Copying result to $output_file"
+cp "$local_output_file" "$output_file"
+
+echo "Done (PROC_ID=$PROC_ID)"
