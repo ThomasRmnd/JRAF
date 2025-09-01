@@ -25,8 +25,8 @@ bool details::loadCol(CalibPmtList::const_iterator clb_first, CalibPmtList::cons
         }
 
         if (i < 0 || std::distance(table_first, table_last) <= i) {
-            LogError << "PMT (id: " << id << ") is out of range. Index is " << i << ", while the range is " << std::distance(table_first, table_last) << '\n';
-            return false;
+            LogWarn << "PMT (id: " << id << ") is out of range. Index is " << i << ", while the range is " << std::distance(table_first, table_last) << '\n';
+            continue;
         }
 
         PmtTable::iterator it_table = table_first + static_cast<std::ptrdiff_t>(i);
