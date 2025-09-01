@@ -6,8 +6,6 @@
 
 #include "EvtNavigator/NavBuffer.h"
 
-#include "loader/Loader.h"
-
 class Analysis {
 
 public:

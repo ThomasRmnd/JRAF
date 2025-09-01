@@ -30,7 +30,7 @@ bool WpRangeFiller::loadGeom() {
         it->pos = pmt->getCenter();
         it->loc = 2;
         it->res = m_res_wp;
-        it->type = Pmttype::_PMTINCH20;
+        it->type = PmtType::PMT_WP;
     }
     return true;
 }

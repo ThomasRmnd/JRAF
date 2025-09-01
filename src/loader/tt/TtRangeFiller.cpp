@@ -42,7 +42,7 @@ bool TtRangeFiller::loadGeom() {
         it->pos = itgeom->second->getCenter();
         it->loc = 3;
         it->res = m_res_tt;
-        it->type = Pmttype::_PMTTT;
+        it->type = PmtType::PMT_TT;
         ++itgeom;
     }
     return true;

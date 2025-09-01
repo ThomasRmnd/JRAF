@@ -33,7 +33,7 @@ bool CdSRangeFiller::loadGeom() {
         it->pos = pmt->getCenter();
         it->loc = 1;
         it->res = m_res_3inch;
-        it->type = Pmttype::_PMTINCH3;
+        it->type = PmtType::PMT_3INCH;
     }
     return true;
 }

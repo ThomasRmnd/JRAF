@@ -54,11 +54,11 @@ bool details::loadCdGeom(PmtTable::iterator first, PmtTable::iterator last, CdGe
         it->loc = 1;
         if (CdID::is20inch(id)) {
             it->res = res_20inch;
-            it->type = Pmttype::_PMTINCH20;
+            it->type = PmtType::PMT_20INCH;
         } 
         else if (CdID::is3inch(id)) {
             it->res = res_3inch;
-            it->type = Pmttype::_PMTINCH3;
+            it->type = PmtType::PMT_3INCH;
         }
         else {
             LogError << "PMT (id: " << id << ") is not a 20-inch nor a 3-inch PMT\n";
