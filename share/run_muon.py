@@ -56,6 +56,7 @@ ro_svc.property("OutputStreams").set(output_streams)
 
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
+import CdWpTtChi2RecTool
 alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(1)
 alg.useRecTool("CdWpTtChi2RecTool")
