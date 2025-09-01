@@ -46,7 +46,13 @@ input_file = [ifilepath]
 ri_svc = task.createSvc("RootInputSvc/InputSvc")
 ri_svc.property("InputFile").set(input_file)
 output_streams = {
+    # === Calib ===
+    "/Event/CdLpmtCalib": ofilepath,
+    "/Event/CdSpmtCalib": ofilepath,
+    "/Event/WpCalib": ofilepath,
+    "/Event/TtCalib": ofilepath,
     # === Rec ===
+    "/Event/CdVertexRec": ofilepath,
     "/Event/CdTrackRec": ofilepath,
     "/Event/WpRec": ofilepath,
     "/Event/TtRec": ofilepath
