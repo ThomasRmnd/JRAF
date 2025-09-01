@@ -27,7 +27,7 @@ prof.setLogLevel(loglevel)
 
 # ~~~~~~~~~~ BufferMemMgr ~~~~~~~~~~
 import BufferMemMgr
-buf_mgr = task.createSvc("BufferMemMgr/")
+buf_mgr = task.createSvc("BufferMemMgr")
 buf_mgr.property("TimeWindow").set([lower_tw, upper_tw])
 
 # ~~~~~~~~~~ Geometry ~~~~~~~~~~ 
