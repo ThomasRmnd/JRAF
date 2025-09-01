@@ -240,8 +240,6 @@ bool AnalysisGroupC::execute() {
         } */
 
         if (is_possibly_cd_muon) {
-            JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
-
             JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
             JM::CdTrackRecEvt* cd_evt = new JM::CdTrackRecEvt();
 
@@ -257,10 +255,8 @@ bool AnalysisGroupC::execute() {
             JM::addHeaderObject(nav, cd_hdr);
         }
         else if (is_possibly_wp_muon) {
-            JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
-
-            JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
-            JM::CdTrackRecEvt* cd_evt = new JM::CdTrackRecEvt();
+            JM::CdTrackRecHeader* wp_hdr = new JM::CdTrackRecHeader();
+            JM::CdTrackRecEvt* wp_evt = new JM::CdTrackRecEvt();
 
             JM::RecTrack* trk = new JM::RecTrack(
                 CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
@@ -269,9 +265,9 @@ bool AnalysisGroupC::execute() {
             trk->setQuality(1.0f);
             trk->setPESum(1.0f);
 
-            cd_evt->addTrack(trk);
-            cd_hdr->setEvent(cd_evt);
-            JM::addHeaderObject(nav, cd_hdr);
+            wp_evt->addTrack(trk);
+            wp_hdr->setEvent(wp_evt);
+            JM::addHeaderObject(nav, wp_hdr);
         }
     
     }
