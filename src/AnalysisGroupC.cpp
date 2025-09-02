@@ -205,6 +205,7 @@ bool AnalysisGroupC::execute() {
         LogInfo << "CdLpmtCalibHeader: " << cd_lpmt_calib_hdr << ", CdTriggerHeader: " << cd_trig_hdr 
                 << ", WpCalibHeader: " << wp_calib_hdr << ", WpTriggerHeader: " << wp_trig_hdr << '\n';
         LogInfo << "Last muon time: CD = " << m_cd_last_muon << ", WP = " << m_wp_last_muon << '\n';
+        LogInfo << "Delta time since last muon: CD = " << ts - m_cd_last_muon << ", WP = " << ts - m_wp_last_muon << '\n';
         if ((!cd_lpmt_calib_hdr || !cd_trig_hdr) && (!wp_calib_hdr || !wp_trig_hdr)) {
             is_possibly_cd_muon = true;
         }
