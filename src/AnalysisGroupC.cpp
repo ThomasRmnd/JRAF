@@ -10,6 +10,7 @@
 #include "Event/CdTrackRecHeader.h"
 #include "Event/CdTriggerHeader.h"
 #include "Event/WpCalibHeader.h"
+#include "Event/WpRecHeader.h"
 #include "Event/WpTriggerHeader.h"
 #include "EvtNavigator/EvtNavHelper.h"
 
@@ -266,8 +267,8 @@ bool AnalysisGroupC::execute() {
             JM::addHeaderObject(nav, cd_hdr);
         }
         else if (is_possibly_wp_muon) {
-            JM::CdTrackRecHeader* wp_hdr = new JM::CdTrackRecHeader();
-            JM::CdTrackRecEvt* wp_evt = new JM::CdTrackRecEvt();
+            JM::WpRecHeader* wp_hdr = new JM::WpRecHeader();
+            JM::WpRecEvt* wp_evt = new JM::WpRecEvt();
 
             JM::RecTrack* trk = new JM::RecTrack(
                 CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
