@@ -51,6 +51,8 @@ bool AnalysisGroupC::initialize() {
     if (!initLoader()) return false;
 
     if (m_reconstruct_muon_mode) {
+        m_cd_last_muon = TimeStamp{};
+        m_wp_last_muon = TimeStamp{};
         if (!initRecTool()) return false;
     }
     else {
@@ -200,6 +202,9 @@ bool AnalysisGroupC::execute() {
         JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
         JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
         JM::WpTriggerHeader* wp_trig_hdr = JM::getHeaderObject<JM::WpTriggerHeader>(nav);
+        LogInfo << "CdLpmtCalibHeader: " << cd_lpmt_calib_hdr << ", CdTriggerHeader: " << cd_trig_hdr 
+                << ", WpCalibHeader: " << wp_calib_hdr << ", WpTriggerHeader: " << wp_trig_hdr << '\n';
+        LogInfo << "Last muon time: CD = " << m_cd_last_muon << ", WP = " << m_wp_last_muon << '\n';
         if ((!cd_lpmt_calib_hdr || !cd_trig_hdr) && (!wp_calib_hdr || !wp_trig_hdr)) {
             is_possibly_cd_muon = true;
         }
@@ -241,6 +246,8 @@ bool AnalysisGroupC::execute() {
             LogInfo << "No track reconstructed\n";
             return true;
         } */
+
+        LogInfo << "Is possibly CD muon: " << is_possibly_cd_muon << ", is possibly WP muon: " << is_possibly_wp_muon << '\n';
 
         if (is_possibly_cd_muon) {
             JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
