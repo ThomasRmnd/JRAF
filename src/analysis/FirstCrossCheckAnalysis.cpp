@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "SniperKernel/SniperLog.h"
+
 #include "event/Event.hpp"
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
@@ -54,6 +56,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     std::vector<ibd> ibds;
 
     for (const vertex& prompt : cur_vertices) {
+        LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) continue;
         if (!height_vol_cut.isIn(prompt)) continue;
         if (!xyradius_vol_cut.isIn(prompt)) continue;
