@@ -188,6 +188,9 @@ bool AnalysisGroupC::execute() {
     JM::EvtNavigator* nav = m_buf->curEvt();
     TimeStamp ts{nav->TimeStamp().GetTimeSpec()};
 
+    LogInfo << "TimeStamp: " << ts << '\n';
+    LogInfo << "TotQ: CD = " << totq_cd << ", WP = " << totq_wp << '\n';
+
     if (m_reconstruct_muon_mode) {
 
         bool is_possibly_cd_muon = false;

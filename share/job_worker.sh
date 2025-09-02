@@ -37,6 +37,7 @@ python ${TUTORIALROOT}/share/tut_rtraw2rec.py \
     --loglevel Info \
     --evtmax -1 \
     --method qctr \
+    --global-tag MixedPhase_J25.7.2 \
     --waverec-method cotiwaverec \
     --Calib 1 \
     --pmtcalibsvc-ChargeAlgType 0 \
@@ -44,11 +45,10 @@ python ${TUTORIALROOT}/share/tut_rtraw2rec.py \
     --pmtcalibsvc-DBcur 20250210 \
     --input $local_input_file \
     --output $local_vertex_file \
-    --output-stream /Event/CdLpmtCalib:off \
-    --output-stream /Event/CdSpmtCalib:off \
-    --output-stream /Event/WpCalib:off
-
-# --global-tag MixedPhase_J25.7.2 \
+    --output-stream /Event/CdLpmtCalib:on \
+    --output-stream /Event/CdTrigger:on \
+    --output-stream /Event/WpCalib:on \
+    --output-stream /Event/WpTrigger:on
 
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 
