@@ -22,7 +22,7 @@ task.setLogLevel(loglevel)
 
 # ~~~~~~~~~~ Profiling ~~~~~~~~~~
 import SniperProfiling
-prof = task.createSvc("SniperProfiling/")
+prof = task.createSvc("SniperProfiling")
 prof.setLogLevel(loglevel)
 
 # ~~~~~~~~~~ BufferMemMgr ~~~~~~~~~~

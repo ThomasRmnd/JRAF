@@ -22,12 +22,12 @@ task.setLogLevel(loglevel)
 
 # ~~~~~~~~~~ Profiling ~~~~~~~~~~
 import SniperProfiling
-prof = task.createSvc("SniperProfiling/")
+prof = task.createSvc("SniperProfiling")
 prof.setLogLevel(loglevel)
 
 # ~~~~~~~~~~ BufferMemMgr ~~~~~~~~~~
 import BufferMemMgr
-buf_mgr = task.createSvc("BufferMemMgr/")
+buf_mgr = task.createSvc("BufferMemMgr")
 buf_mgr.property("TimeWindow").set([lower_tw, upper_tw])
 
 # ~~~~~~~~~~ Geometry ~~~~~~~~~~ 
