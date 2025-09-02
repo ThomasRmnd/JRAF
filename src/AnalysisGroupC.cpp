@@ -51,8 +51,8 @@ bool AnalysisGroupC::initialize() {
     if (!initLoader()) return false;
 
     if (m_reconstruct_muon_mode) {
-        m_cd_last_muon = TimeStamp{};
-        m_wp_last_muon = TimeStamp{};
+        m_cd_last_muon = TimeStamp{0, 0};
+        m_wp_last_muon = TimeStamp{0, 0};
         if (!initRecTool()) return false;
     }
     else {
