@@ -95,14 +95,21 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         SphereVolumeSelection distance_correlation_cut{prompt.pos, 1500.0};
 
         for (const vertex& delayed : aft_vertices) {
+            LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) continue;
+            LogInfo << "Delayed in fiducial volume\n";
             if (!height_vol_cut.isIn(delayed)) continue;
+            LogInfo << "Delayed below max height\n";
             if (!xyradius_vol_cut.isIn(delayed)) continue;
+            LogInfo << "Delayed outside XY radius\n";
 
             if (delayed.totq < delayed_lower_thold || delayed_upper_thold < delayed.totq) continue;
+            LogInfo << "Delayed in energy range\n";
 
             if (!correlation_time_cut.isIn(delayed)) continue;
+            LogInfo << "Delayed is correlated in time\n";
             if (!distance_correlation_cut.isIn(delayed)) continue;
+            LogInfo << "Delayed is correlated in space\n";
 
             is_vetoed = false;
             for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
@@ -111,6 +118,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 break;
             }
             if (is_vetoed) continue;
+            LogInfo << "Delayed is is not vetoed\n";
 
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
@@ -121,8 +129,10 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 break;
             }
             if (delayed_has_multi) continue;
+            LogInfo << "Delayed has no multiplicity\n";
 
             ibds.emplace_back(prompt, delayed);
+            LogInfo << "IBD event detected!\n";
         }
     }
 
