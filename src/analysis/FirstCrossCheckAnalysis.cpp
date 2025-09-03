@@ -104,7 +104,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             if (!correlation_time_cut.isIn(delayed)) continue;
             if (!distance_correlation_cut.isIn(delayed)) continue;
 
-            bool is_vetoed = false;
+            is_vetoed = false;
             for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
                 if (!cut.isIn(delayed)) {
                     is_vetoed = true;
