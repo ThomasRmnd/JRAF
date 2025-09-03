@@ -6,8 +6,8 @@ LIST_FILE="$2"
 OUTPUT_DIR="$3"
 
 shift 3
+EXTRA_ARGS=("$@")
 
-EXTRA_ARGS=$#
 
 EOS_BASE="root://junoeos01.ihep.ac.cn:1094/"
 
