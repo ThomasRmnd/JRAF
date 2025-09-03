@@ -6,10 +6,22 @@ LIST_FILE="$2"
 OUTPUT_DIR="$3"
 
 shift 3
-EXTRA_ARGS=("$@")
-
 
 EOS_BASE="root://junoeos01.ihep.ac.cn:1094/"
+SKIP_IF_EXISTS=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --skip-if-exists)
+            SKIP_IF_EXISTS=true
+            shift
+            ;;
+        *) 
+            EXTRA_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
 
 input_file=$(sed -n "$((PROC_ID + 1))p" "$OUTPUT_DIR/$LIST_FILE")
 if [[ -z "$input_file" ]]; then
@@ -25,6 +37,11 @@ local_output_file="$TEMP/${input_filename/.rtraw/.output.root}"
 output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
 
 echo "Output filename: $output_file"
+
+if [[ "$SKIP_IF_EXISTS" == true && -f "$output_file" ]]; then
+    echo "Skipping PROC_ID=$PROC_ID — output already exists: $output_file"
+    exit 0
+fi
 
 echo "Copying file from EOS: $input_file"
 xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
@@ -54,9 +71,7 @@ xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
 )
 
 (
-    set +e
     source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
-    set -e
     echo "TUTORIALROOT = ${TUTORIALROOT}"
 
     echo "Running run_muon.py for file: $local_vertex_file"

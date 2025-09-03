@@ -5,6 +5,7 @@ LIST_FILE="edm_file_list.txt"
 
 log_level=3
 time_window=("-2.0" "2.0")
+skip_if_exists=false
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -40,6 +41,11 @@ while [[ $# -gt 0 ]]; do
         --property-file)
             property_file="$2"
             shift 2
+            ;;
+        *)
+        --skip-if-exists)
+            skip_if_exists=true
+            shift
             ;;
         *)
             echo "Unknown argument: $1"
@@ -91,6 +97,10 @@ extra_args=""
 
 extra_args+=" --time-window ${time_window[0]} ${time_window[1]}"
 extra_args+=" --log-level $log_level"
+
+if [[ "$skip_if_exists" == true ]]; then
+    extra_args+=" --skip-if-exists"
+fi
 
 
 # if [[ -z "$property_file" ]]; then

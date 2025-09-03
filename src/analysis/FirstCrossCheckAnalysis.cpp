@@ -62,10 +62,14 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) continue;
+        LogInfo << "Vertex in fiducial volume\n";
         if (!height_vol_cut.isIn(prompt)) continue;
+        LogInfo << "Vertex below max height\n";
         if (!xyradius_vol_cut.isIn(prompt)) continue;
+        LogInfo << "Vertex outside XY radius\n";
 
         if (prompt.totq < prompt_lower_thold || prompt_upper_thold < prompt.totq) continue;
+        LogInfo << "Vertex in energy range\n";
 
         bool is_vetoed = false;
         for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
@@ -75,6 +79,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             }
         }
         if (is_vetoed) continue;
+        LogInfo << "Vertex is not vetoed\n";
 
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
@@ -84,6 +89,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             break;
         }
         if (prompt_has_multi) continue;
+        LogInfo << "Vertex has no multiplicity\n";
 
         WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 1000}, TimeStamp{0, 2000000}};
         SphereVolumeSelection distance_correlation_cut{prompt.pos, 1500.0};
