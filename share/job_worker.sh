@@ -29,40 +29,46 @@ echo "Output filename: $output_file"
 echo "Copying file from EOS: $input_file"
 xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
 
-echo "Running share/tut_rtraw2rec.py for file: $local_input_file"
+(
+    source /cvmfs/juno.ihep.ac.cn/el9_amd64_gcc11/Release/J25.5.0/setup.sh
 
-source /cvmfs/juno.ihep.ac.cn/el9_amd64_gcc11/Release/J25.5.0/setup.sh
+    echo "Running share/tut_rtraw2rec.py for file: $local_input_file"
 
-python ${TUTORIALROOT}/share/tut_rtraw2rec.py \
-    --loglevel Info \
-    --evtmax -1 \
-    --method qctr \
-    --global-tag MixedPhase_J25.7.2 \
-    --waverec-method cotiwaverec \
-    --Calib 1 \
-    --pmtcalibsvc-ChargeAlgType 0 \
-    --pmtcalibsvc-ReadDB 1 \
-    --pmtcalibsvc-DBcur 20250210 \
-    --input $local_input_file \
-    --output $local_vertex_file \
-    --output-stream /Event/CdLpmtCalib:on \
-    --output-stream /Event/CdTrigger:on \
-    --output-stream /Event/WpCalib:on \
-    --output-stream /Event/WpTrigger:on
+    python ${TUTORIALROOT}/share/tut_rtraw2rec.py \
+        --loglevel Info \
+        --evtmax -1 \
+        --method qctr \
+        --global-tag MixedPhase_J25.7.2 \
+        --waverec-method cotiwaverec \
+        --Calib 1 \
+        --pmtcalibsvc-ChargeAlgType 0 \
+        --pmtcalibsvc-ReadDB 1 \
+        --pmtcalibsvc-DBcur 20250210 \
+        --input "$local_input_file" \
+        --output "$local_vertex_file" \
+        --output-stream /Event/CdLpmtCalib:on \
+        --output-stream /Event/CdTrigger:on \
+        --output-stream /Event/WpCalib:on \
+        --output-stream /Event/WpTrigger:on
+)
 
-source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
+(
+    source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 
-echo "Running run_muon.py for file: $local_vertex_file"
-python run_muon.py \
-  --input "$local_vertex_file" \
-  --output "$local_track_file" \
-  "${EXTRA_ARGS[@]}"
+    echo "Running run_muon.py for file: $local_vertex_file"
 
-echo "Running run_analysis.py for file: $local_vertex_file"
-python run_analysis.py \
-  --input "$local_track_file" \
-  --output "$local_output_file" \
-  "${EXTRA_ARGS[@]}"
+    python run_muon.py \
+      --input "$local_vertex_file" \
+      --output "$local_track_file" \
+      "${EXTRA_ARGS[@]}"
+
+    echo "Running run_analysis.py for file: $local_track_file"
+
+    python run_analysis.py \
+      --input "$local_track_file" \
+      --output "$local_output_file" \
+      "${EXTRA_ARGS[@]}"
+)
 
 echo "Copying result to $output_file"
 cp "$local_output_file" "$output_file"

@@ -54,9 +54,13 @@ if [[ -z "$input_path" || -z "$run_number" || -z "$output_path" ]]; then
 fi
 
 echo "Listing ROOT files from EOS..."
-mapfile -t file_list < <(xrdfs "$EOS_BASE" ls "$input_path" | grep '\.root$')
+mapfile -t file_list < <(xrdfs "$EOS_BASE" ls "$input_path")
+
+echo "Number of file before applying run number: ${#file_list[@]}"
 
 file_list=($(printf "%s\n" "${file_list[@]}" | grep "RUN\.${run_number}\."))
+
+echo "Number of file after applying run number: ${#file_list[@]}"
 
 if [[ -z "$file_offset" ]]; then
     file_offset=0
@@ -71,7 +75,7 @@ if ! [[ "$file_offset" =~ ^[0-9]+$ && "$file_range" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-echo "Total number of file: [$file_offset, $file_range]" 
+echo "Total number of file: [$file_offset, $file_range]"
 
 file_list=("${file_list[@]:$file_offset:$file_range}")
 job_count=${#file_list[@]}
