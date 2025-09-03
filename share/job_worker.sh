@@ -31,6 +31,7 @@ xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
 
 (
     source /cvmfs/juno.ihep.ac.cn/el9_amd64_gcc11/Release/J25.5.0/setup.sh
+    echo "TUTORIALROOT = ${TUTORIALROOT}"
 
     echo "Running share/tut_rtraw2rec.py for file: $local_input_file"
 
@@ -54,6 +55,7 @@ xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
 
 (
     source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
+    echo "TUTORIALROOT = ${TUTORIALROOT}"
 
     echo "Running run_muon.py for file: $local_vertex_file"
 
