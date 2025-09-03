@@ -54,7 +54,9 @@ xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
 )
 
 (
+    set +e
     source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
+    set -e
     echo "TUTORIALROOT = ${TUTORIALROOT}"
 
     echo "Running run_muon.py for file: $local_vertex_file"
