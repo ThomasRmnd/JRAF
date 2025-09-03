@@ -84,6 +84,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
         for (const vertex& cand : bef_vertices) {
+            LogInfo << "Before candidate: " << cand << '\n';
             if (!multi_prompt_time.isIn(cand)) continue;
             prompt_has_multi = true;
             break;
