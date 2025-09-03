@@ -86,13 +86,14 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         for (const vertex& cand : bef_vertices) {
             LogInfo << "Before candidate: " << cand << '\n';
             if (!multi_prompt_time.isIn(cand)) continue;
+            if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
             prompt_has_multi = true;
             break;
         }
         if (prompt_has_multi) continue;
         LogInfo << "Prompt has no multiplicity\n";
 
-        WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 1000}, TimeStamp{0, 2000000}};
+        WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 5000}, TimeStamp{0, 2000000}};
         SphereVolumeSelection distance_correlation_cut{prompt.pos, 1500.0};
 
         for (const vertex& delayed : aft_vertices) {
@@ -126,6 +127,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             for (const vertex& cand : aft_vertices) {
                 if (cand.ts <= delayed.ts) continue;
                 if (!multi_delayed_time.isIn(cand)) continue;
+                if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
                 delayed_has_multi = true;
                 break;
             }
