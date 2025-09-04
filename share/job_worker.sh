@@ -31,9 +31,10 @@ fi
 
 input_filename=$(basename "$input_file")
 local_input_file="$TEMP/$input_filename"
-local_vertex_file="$TEMP/${input_filename/.rtraw/.vertex.rec}"
-local_track_file="$TEMP/${input_filename/.rtraw/.track.rec}"
-local_output_file="$TEMP/${input_filename/.rtraw/.output.root}"
+local_norec_file="$TEMP/${input_filename/.esd/.norec.esd}"
+local_vertex_file="$TEMP/${input_filename/.esd/.vertex.rec}"
+local_track_file="$TEMP/${input_filename/.esd/.track.rec}"
+local_output_file="$TEMP/${input_filename/.esd/.output.root}"
 output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
 
 echo "Output filename: $output_file"
@@ -50,24 +51,23 @@ xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
     source /cvmfs/juno.ihep.ac.cn/el9_amd64_gcc11/Release/J25.5.0/setup.sh
     echo "TUTORIALROOT = ${TUTORIALROOT}"
 
-    echo "Running share/tut_rtraw2rec.py for file: $local_input_file"
+    echo "Running rec_header_remover.py for file: $local_input_file"
 
-    python ${TUTORIALROOT}/share/tut_rtraw2rec.py \
+    python rec_header_remover.py \
+        --input "$local_input_file" \
+        --output "$local_norec_file"
+
+    echo "Running share/tut_calib2rec.py for file: $local_norec_file"
+
+    python ${TUTORIALROOT}/share/tut_calib2rec.py \
         --loglevel Info \
         --evtmax -1 \
         --method qctr \
         --global-tag MixedPhase_J25.7.2 \
-        --waverec-method cotiwaverec \
-        --Calib 1 \
-        --pmtcalibsvc-ChargeAlgType 0 \
-        --pmtcalibsvc-ReadDB 1 \
-        --pmtcalibsvc-DBcur 20250210 \
-        --input "$local_input_file" \
+        --input "$local_norec_file" \
         --output "$local_vertex_file" \
         --output-stream /Event/CdLpmtCalib:on \
-        --output-stream /Event/CdTrigger:on \
-        --output-stream /Event/WpCalib:on \
-        --output-stream /Event/WpTrigger:on
+        --output-stream /Event/WpCalib:on
 )
 
 (

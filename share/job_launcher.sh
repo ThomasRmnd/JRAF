@@ -64,7 +64,7 @@ mapfile -t file_list < <(xrdfs "$EOS_BASE" ls "$input_path")
 
 echo "Number of file before applying run number: ${#file_list[@]}"
 
-file_list=($(printf "%s\n" "${file_list[@]}" | grep "RUN\.${run_number}\."))
+file_list=($(printf "%s\n" "${file_list[@]}" | grep "RUN\.${run_number}\.*\.esd"))
 
 echo "Number of file after applying run number: ${#file_list[@]}"
 
