@@ -4,11 +4,12 @@ import os
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("path", type=str, help="Input file path")
+parser.add_argument("--input", type=str, help="Input file path")
+parser.add_argument("--output", type=str, help="Output file path")
 args = parser.parse_args()
 
-ipath = args.path
-opath = args.path
+ipath = args.input
+opath = args.output
 
 if not os.path.exists(ipath):
     print(f"[ERROR] Input file does not exist: {ipath}", file=sys.stderr, flush=True)
