@@ -16,7 +16,8 @@ public:
 
 private:
 
-
+    double totq_p;
+    double totq_d;
 
 };
 

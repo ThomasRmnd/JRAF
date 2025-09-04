@@ -15,7 +15,10 @@ FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name) :
 {}
 
 bool FirstCrossCheckAnalysis::initialize() {
-    return Analysis::initialize();
+    if (!Analysis::initialize()) return false;
+    m_tree->Branch("totq_p", &totq_p);
+    m_tree->Branch("totq_d", &totq_d);
+    return true; 
 }
 
 void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
@@ -144,12 +147,14 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         posy_p = ibd_.prompt.pos.y;
         posz_p = ibd_.prompt.pos.z;
         e_p = ibd_.prompt.energy;
+        totq_p = ibd_.prompt.totq;
         sec_p = ibd_.prompt.ts.GetSec();
         nsec_p = ibd_.prompt.ts.GetNanoSec();
         posx_d = ibd_.delayed.pos.x;
         posy_d = ibd_.delayed.pos.y;
         posz_d = ibd_.delayed.pos.z;
         e_d = ibd_.delayed.energy;
+        totq_d = ibd_.delayed.totq;
         sec_d = ibd_.delayed.ts.GetSec();
         nsec_d = ibd_.delayed.ts.GetNanoSec();
         m_tree->Fill();
