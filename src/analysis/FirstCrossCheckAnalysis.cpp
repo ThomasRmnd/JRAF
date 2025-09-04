@@ -73,9 +73,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
 
         bool is_vetoed = false;
         for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
-            if (cut.trkptr) {
-                LogInfo << prompt.ts << " - " << cut.trkptr->ts << " = " << prompt.ts - cut.trkptr->ts << ' ' << (prompt.ts - cut.trkptr->ts < TimeStamp{0, 2000000}) << ' ' << (!cut.isIn(prompt)) << '\n';
-            }
+            LogInfo << prompt.ts << " - " << cut.m_trk.ts << " = " << prompt.ts - cut.m_trk.ts << ' ' << (prompt.ts - cut.m_trk.ts < TimeStamp{0, 2000000}) << ' ' << (!cut.isIn(prompt)) << '\n';
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             break;

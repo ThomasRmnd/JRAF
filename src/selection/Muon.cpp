@@ -1,23 +1,24 @@
 #include "selection/Muon.hpp"
 
+MuonSelection::MuonSelection(const track& trk) :
+    m_trk{trk}
+{}
+
 BasicMuonVetoSelection::BasicMuonVetoSelection(const track& trk, double radius, const TimeStamp& its, const TimeStamp& fts) :
+    MuonSelection{trk},
     m_cyl{trk.ipos, trk.fpos, radius},
     m_win{trk.ts, its, fts}
-{
-    trkptr = &trk;
-}
+{}
 
 bool BasicMuonVetoSelection::isIn(const vertex& vtx) const {
     return m_cyl.isIn(vtx) && m_win.isIn(vtx);
 }
 
 EvolutiveCylindricalMuonVetoSelection::EvolutiveCylindricalMuonVetoSelection(const track& trk, double iradius, double tcoef) :
-    m_trk{trk},
+    MuonSelection{trk},
     m_iradius{iradius},
     m_tcoef{tcoef}
-{
-    trkptr = &trk;
-}
+{}
 
 bool EvolutiveCylindricalMuonVetoSelection::isIn(const vertex& vtx) const {
     if (vtx.ts < m_trk.ts) return false;
@@ -29,11 +30,10 @@ bool EvolutiveCylindricalMuonVetoSelection::isIn(const vertex& vtx) const {
 }
 
 WaterPoolMuonVetoSelection::WaterPoolMuonVetoSelection(const track& trk, const TimeStamp& fts) :
+    MuonSelection{trk},
     m_rts{trk.ts},
     m_fts{fts}
-{
-    trkptr = &trk;
-}
+{}
 
 bool WaterPoolMuonVetoSelection::isIn(const vertex& vtx) const {
     TimeStamp diff = vtx.ts - m_rts;

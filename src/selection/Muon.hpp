@@ -11,11 +11,13 @@ class MuonSelection : public Selection {
 
 public:
 
+    MuonSelection(const track& trk);
+
     virtual ~MuonSelection() override = default;
 
     virtual bool isIn(const vertex& vtx) const = 0;
 
-    const track* trkptr = nullptr;
+    track m_trk;
 
 };
 
@@ -48,7 +50,6 @@ public:
 
 private:
 
-    track m_trk;
     double m_iradius;
     double m_tcoef;
 
