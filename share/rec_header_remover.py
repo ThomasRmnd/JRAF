@@ -19,7 +19,7 @@ if os.path.exists(opath):
     print(f"[WARN] Output file already exist: {opath}", flush=True)
 
 print(f"[INFO] Processing file: {ipath}", flush=True)
-print(f"[INFO] Output file will be: {opath}")
+print(f"[INFO] Output file will be: {opath}", flush=True)
 
 # === Sniper ====
 import Sniper

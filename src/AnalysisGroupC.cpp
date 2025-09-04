@@ -208,8 +208,13 @@ bool AnalysisGroupC::execute() {
         LogInfo << "CdLpmtCalibHeader: " << cd_lpmt_calib_hdr << ", WpCalibHeader: " << wp_calib_hdr << '\n';
         LogInfo << "Last muon time: CD = " << m_cd_last_muon << ", WP = " << m_wp_last_muon << '\n';
         LogInfo << "Delta time since last muon: CD = " << ts - m_cd_last_muon << ", WP = " << ts - m_wp_last_muon << '\n';
+        
+        if (m_iEvt == 1ul) {
+            is_possibly_cd_muon = true;
+            is_possibly_wp_muon = true;
+        }
         // if ((!cd_lpmt_calib_hdr || !cd_trig_hdr) && (!wp_calib_hdr || !wp_trig_hdr)) {
-        if (!cd_lpmt_calib_hdr && !wp_calib_hdr) {
+        else if (!cd_lpmt_calib_hdr && !wp_calib_hdr) {
             is_possibly_cd_muon = true;
         }
         else if (

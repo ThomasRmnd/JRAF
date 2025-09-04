@@ -118,5 +118,5 @@ hep_sub job_worker.sh \
   -m 4096 \
   -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
   -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \
-  -wt short \
+  -wt default \
   -name agrpc_${run_number}_batch
