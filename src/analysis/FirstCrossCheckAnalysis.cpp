@@ -15,7 +15,7 @@ FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name) :
 {}
 
 bool FirstCrossCheckAnalysis::initialize() {
-    return true;
+    return Analysis::initialize();
 }
 
 void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
