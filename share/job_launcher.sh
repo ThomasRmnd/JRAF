@@ -42,7 +42,6 @@ while [[ $# -gt 0 ]]; do
             property_file="$2"
             shift 2
             ;;
-        *)
         --skip-if-exists)
             skip_if_exists=true
             shift
