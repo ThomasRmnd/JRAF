@@ -1,7 +1,6 @@
 #!/bin/bash
 
 EOS_BASE="root://junoeos01.ihep.ac.cn:1094/"
-LIST_FILE="edm_file_list.txt"
 
 log_level=3
 time_window=("-2.0" "2.0")
@@ -57,6 +56,8 @@ if [[ -z "$input_path" || -z "$run_number" || -z "$output_path" ]]; then
     echo "Usage: $0 --input-path <path> --run-number <number> --output-path <path> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
     exit 1
 fi
+
+LIST_FILE="edm_file_list_${run_number}.txt"
 
 echo "Listing ROOT files from EOS..."
 mapfile -t file_list < <(xrdfs "$EOS_BASE" ls "$input_path")
