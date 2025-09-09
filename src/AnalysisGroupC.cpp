@@ -9,6 +9,7 @@
 #include "Event/CdLpmtCalibHeader.h"
 #include "Event/CdTrackRecHeader.h"
 #include "Event/CdTriggerHeader.h"
+#include "Event/OecHeader.h"
 #include "Event/WpCalibHeader.h"
 #include "Event/WpRecHeader.h"
 #include "Event/WpTriggerHeader.h"
@@ -199,13 +200,13 @@ bool AnalysisGroupC::execute() {
         bool is_possibly_cd_muon = false;
         bool is_possibly_wp_muon = false;
 
+        JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(nav);
         JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
-        // JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
+        JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
         JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
-        // JM::WpTriggerHeader* wp_trig_hdr = JM::getHeaderObject<JM::WpTriggerHeader>(nav);
-        // LogInfo << "CdLpmtCalibHeader: " << cd_lpmt_calib_hdr << ", CdTriggerHeader: " << cd_trig_hdr 
-        //         << ", WpCalibHeader: " << wp_calib_hdr << ", WpTriggerHeader: " << wp_trig_hdr << '\n';
-        LogInfo << "CdLpmtCalibHeader: " << cd_lpmt_calib_hdr << ", WpCalibHeader: " << wp_calib_hdr << '\n';
+        JM::WpTriggerHeader* wp_trig_hdr = JM::getHeaderObject<JM::WpTriggerHeader>(nav);
+        LogInfo << "OecHeader: " << oec_hdr << ", CdLpmtCalibHeader: " << cd_lpmt_calib_hdr << ", CdTriggerHeader: " << cd_trig_hdr 
+                << ", WpCalibHeader: " << wp_calib_hdr << ", WpTriggerHeader: " << wp_trig_hdr << '\n';
         LogInfo << "Last muon time: CD = " << m_cd_last_muon << ", WP = " << m_wp_last_muon << '\n';
         LogInfo << "Delta time since last muon: CD = " << ts - m_cd_last_muon << ", WP = " << ts - m_wp_last_muon << '\n';
         
@@ -213,8 +214,7 @@ bool AnalysisGroupC::execute() {
             is_possibly_cd_muon = true;
             is_possibly_wp_muon = true;
         }
-        // if ((!cd_lpmt_calib_hdr || !cd_trig_hdr) && (!wp_calib_hdr || !wp_trig_hdr)) {
-        else if (!cd_lpmt_calib_hdr && !wp_calib_hdr) {
+        else if (!oec_hdr || (!cd_lpmt_calib_hdr && !wp_calib_hdr) || (!cd_trig_hdr && !wp_trig_hdr)) {
             is_possibly_cd_muon = true;
         }
         else if (

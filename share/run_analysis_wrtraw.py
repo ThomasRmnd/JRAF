@@ -4,6 +4,7 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, help="Input filepath")
+parser.add_argument("--input-rtraw", type=str, help="Input RTRAW filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
 parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
 parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
@@ -45,28 +46,12 @@ import RootIOSvc
 input_file = [ifilepath]
 ri_svc = task.createSvc("RootInputSvc/InputSvc")
 ri_svc.property("InputFile").set(input_file)
-
-output_streams = {
-    # === Calib ===
-    "/Event/CdLpmtCalib": ofilepath,
-    "/Event/CdSpmtCalib": ofilepath,
-    "/Event/WpCalib": ofilepath,
-    "/Event/TtCalib": ofilepath,
-    # === Rec ===
-    "/Event/CdVertexRec": ofilepath,
-    "/Event/CdTrackRec": ofilepath,
-    "/Event/WpRec": ofilepath,
-    "/Event/TtRec": ofilepath
-}
-ro_svc = task.createSvc("RootOutputSvc/OutputSvc")
-ro_svc.property("OutputStreams").set(output_streams)
+ri_svc.property("InputCorrelationFile").set(args.input_rtraw)
 
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
-import CdWpTtChi2RecTool
 alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(1)
-alg.useRecTool("CdWpTtChi2RecTool")
 
 alg.property("Pmt3inchTimeReso").set(15.0) # 15.0
 alg.property("Pmt20inchTimeReso").set(8.0)
@@ -76,7 +61,8 @@ alg.property("Use20inchPMT").set(True)
 alg.property("ChosenDetectors").set(3) # 1: CD, 2: WP, 4: TT
 alg.property("UseJointLoader").set(True) 
 alg.property("LoaderTimeWindow").set([-500.0, 500.0]) # ns
-alg.property("ReconstructMuonMode").set(True)
+alg.property("ReconstructMuonMode").set(False)
+alg.property("OutputFilename").set(ofilepath)
 
 task.setEvtMax(-1)
 if not task.run():

@@ -16,7 +16,7 @@ struct vertex {
     TimeStamp ts;
     std::string type;
 
-    vertex(const JM::RecVertex& vtx_, double totq_, const TimeStamp& ts_, const std::string& type_);
+    vertex(const vec3& pos_, double energy_, double totq_, const TimeStamp& ts_, const std::string& type_);
 
 };
 

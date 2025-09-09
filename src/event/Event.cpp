@@ -5,6 +5,7 @@
 #include "Event/CdLpmtCalibHeader.h"
 #include "Event/CdTrackRecHeader.h"
 #include "Event/CdVertexRecHeader.h"
+#include "Event/OecHeader.h"
 #include "Event/SimHeader.h"
 #include "Event/WpRecHeader.h"
 #include "EvtNavigator/EvtNavHelper.h"
@@ -56,20 +57,25 @@ void Event::loadWpTrack(JM::EvtNavigator* nav) {
 }
 
 void Event::loadCdVertex(JM::EvtNavigator* nav) {
-    JM::CdVertexRecHeader* hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav);
-    if (!hdr || !hdr->event()) return;
-    const std::vector<JM::RecVertex*>& vtxs = hdr->event()->vertices();
-    for (const JM::RecVertex* vtx : vtxs) {
-        loadVertex(vtx);
-    }
+    // JM::CdVertexRecHeader* hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav);
+    // if (!hdr || !hdr->event()) return;
+    // const std::vector<JM::RecVertex*>& vtxs = hdr->event()->vertices();
+    // for (const JM::RecVertex* vtx : vtxs) {
+    //     loadVertex(vtx);
+    // }
+    JM::OecHeader* hdr = JM::getHeaderObject<JM::OecHeader>(nav);
+    if (!hdr || !hdr->event("JM::OecEvt")) return;
+    JM::OecEvt* evt = dynamic_cast<JM::OecEvt*>(hdr->event("JM::OecEvt"));
+    vertices.emplace_back(
+        vec3{evt->getVertexX(), evt->getVertexY(), evt->getVertexZ()},
+        evt->getEnergy(),
+        totq,
+        ts,
+        type
+    );
 }
 
 void Event::loadTrack(const JM::RecTrack* trk, const track::loc& det) {
     if (!trk) return;
     tracks.emplace_back(*trk, ts, det);
-}
-
-void Event::loadVertex(const JM::RecVertex* vtx) {
-    if (!vtx) return;
-    vertices.emplace_back(*vtx, totq, ts, type);
 }
