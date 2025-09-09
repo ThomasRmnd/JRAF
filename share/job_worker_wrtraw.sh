@@ -54,17 +54,17 @@ xrdcp "${EOS_BASE}${input_esd_file}" "$local_input_esd_file"
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 echo "TUTORIALROOT = ${TUTORIALROOT}"
 
-echo "Running run_muon.py for file: $local_input_esd_file"
+echo "Running run_muon_wrtraw.py for file: $local_input_esd_file"
 
-python run_muon.py \
+python run_muon_wrtraw.py \
   --input "$local_input_esd_file" \
   --input-rtraw "$local_input_rtraw_file" \
   --output "$local_track_file" \
   "${EXTRA_ARGS[@]}"
 
-echo "Running run_analysis.py for file: $local_track_file"
+echo "Running run_analysis_wrtraw.py for file: $local_track_file"
 
-python run_analysis.py \
+python run_analysis_wrtraw.py \
   --input "$local_track_file" \
   --input-rtraw "$local_input_rtraw_file" \
   --output "$local_output_file" \
