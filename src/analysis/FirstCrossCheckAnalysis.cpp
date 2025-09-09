@@ -68,8 +68,8 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         if (!fiducial_vol_cut.isIn(prompt)) continue;
         LogInfo << "Prompt in fiducial volume\n";
         if (
-            upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt) ||
-            lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)
+            (upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)) ||
+            (lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt))
         ) continue;
         LogInfo << "Prompt is not a chimney\n";
 
@@ -106,8 +106,8 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             if (!fiducial_vol_cut.isIn(delayed)) continue;
             LogInfo << "Delayed in fiducial volume\n";
             if (
-                upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt) ||
-                lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)
+                (upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)) ||
+                (lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt))
             ) continue;
             LogInfo << "Delayed is not a chimney\n";
 
