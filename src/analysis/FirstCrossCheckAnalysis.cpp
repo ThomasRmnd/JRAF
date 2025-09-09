@@ -53,8 +53,9 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     }
 
     FiducialVolumeSelection fiducial_vol_cut{17200.0};
-    HeightVolumeSelection height_vol_cut{-17700.0, 11000.0};
-    XYRadiusVolumeSelection xyradius_vol_cut{3000.0, 17700.0};
+    HeightVolumeSelection lower_height_vol_cut{-20050.0, -11000.0};
+    HeightVolumeSelection upper_height_vol_cut{ 11000.0,  20050.0};
+    XYRadiusVolumeSelection xyradius_vol_cut{0.0, 3000.0};
     double prompt_lower_thold = 1500.0;
     double prompt_upper_thold = 20000.0;
     double delayed_lower_thold = 3700.0;
@@ -66,10 +67,11 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) continue;
         LogInfo << "Prompt in fiducial volume\n";
-        if (!height_vol_cut.isIn(prompt)) continue;
-        LogInfo << "Prompt below max height\n";
-        if (!xyradius_vol_cut.isIn(prompt)) continue;
-        LogInfo << "Prompt outside XY radius\n";
+        if (
+            upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt) ||
+            lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)
+        ) continue;
+        LogInfo << "Prompt is not a chimney\n";
 
         if (prompt.totq < prompt_lower_thold || prompt_upper_thold < prompt.totq) continue;
         LogInfo << "Prompt in energy range\n";
@@ -103,10 +105,11 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) continue;
             LogInfo << "Delayed in fiducial volume\n";
-            if (!height_vol_cut.isIn(delayed)) continue;
-            LogInfo << "Delayed below max height\n";
-            if (!xyradius_vol_cut.isIn(delayed)) continue;
-            LogInfo << "Delayed outside XY radius\n";
+            if (
+                upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt) ||
+                lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)
+            ) continue;
+            LogInfo << "Delayed is not a chimney\n";
 
             if (delayed.totq < delayed_lower_thold || delayed_upper_thold < delayed.totq) continue;
             LogInfo << "Delayed in energy range\n";
