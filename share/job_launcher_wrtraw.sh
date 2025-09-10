@@ -5,24 +5,21 @@ EOS_BASE="root://junoeos01.ihep.ac.cn/"
 log_level=3
 time_window=("-2.0" "2.0")
 skip_if_exists=false
+list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v1"
 
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
-        --rtraw-path)
-            rtraw_path="$2"
-            shift 2
-            ;;
-        --esd-path)
-            esd_path="$2"
-            shift 2
-            ;;
         --run-number)
             run_number="$2"
             shift 2
             ;;
         --output-path)
             output_path="$2"
+            shift 2
+            ;;
+        --list-base)
+            list_base="$2"
             shift 2
             ;;
         --file-offset)
@@ -56,26 +53,20 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -z "$rtraw_path" || -z "$esd_path" || -z "$run_number" || -z "$output_path" ]]; then
-    echo "Usage: $0 --rtraw-path <path> --esd-path <path> --run-number <number> --output-path <path> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
+if [[ -z "$run_number" || -z "$output_path" ]]; then
+    echo "Usage: $0 --run-number <number> --output-path <path> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
     exit 1
 fi
 
-RTRAW_LIST_FILE="edm_rtraw_list_${run_number}.txt"
-ESD_LIST_FILE="edm_esd_list_${run_number}.txt"
+RTRAW_LIST_FILE="${list_base}/rtraw_list/run_${run_number}.txt"
+ESD_LIST_FILE="${list_base}/esd_list/run_${run_number}.txt"
 
 echo "Listing ROOT files from EOS..."
-mapfile -t rtraw_list < <(xrdfs "$EOS_BASE" ls "$rtraw_path")
-mapfile -t esd_list < <(xrdfs "$EOS_BASE" ls "$esd_path")
+mapfile -t rtraw_list < <(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE")
+mapfile -t esd_list   < <(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE")
 
-echo "Number of rtraw file before applying run number: ${#rtraw_list[@]}"
-echo "Number of esd file before applying run number: ${#esd_list[@]}"
-
-rtraw_list=($(printf "%s\n" "${rtraw_list[@]}" | grep "RUN\.${run_number}.*\.rtraw"))
-esd_list=($(printf "%s\n" "${esd_list[@]}" | grep "RUN\.${run_number}.*\.esd"))
-
-echo "Number of rtraw file after applying run number: ${#rtraw_list[@]}"
-echo "Number of esd file after applying run number: ${#esd_list[@]}"
+echo "Number of rtraw file: ${#rtraw_list[@]}"
+echo "Number of esd file: ${#esd_list[@]}"
 
 if [[ -z "$file_offset" ]]; then
     file_offset=0
@@ -110,13 +101,7 @@ if (( job_count == 0 )); then
     exit 1
 fi
 
-printf "%s\n" "${rtraw_list[@]}" > "$output_path/$RTRAW_LIST_FILE"
-printf "%s\n" "${esd_list[@]}" > "$output_path/$ESD_LIST_FILE"
-
-extra_args=""
-
-extra_args+=" --time-window ${time_window[0]} ${time_window[1]}"
-extra_args+=" --log-level $log_level"
+extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
 
 if [[ "$skip_if_exists" == true ]]; then
     extra_args+=" --skip-if-exists"
@@ -134,7 +119,7 @@ mkdir -p "$output_path"
 # --- Submit batch jobs ---
 echo "Submitting $job_count jobs with hep_sub..."
 hep_sub job_worker_wrtraw.sh \
-  -argu "%{ProcId} $RTRAW_LIST_FILE $ESD_LIST_FILE $output_path $extra_args" \
+  -argu "%{ProcId} $run_number $list_base $output_path $extra_args" \
   -n "$job_count" \
   -cpu 1 \
   -m 4096 \

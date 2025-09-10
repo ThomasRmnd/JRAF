@@ -2,8 +2,8 @@
 set -e
 
 PROC_ID="$1"
-RTRAW_LIST_FILE="$2"
-ESD_LIST_FILE="$3"
+RUN_NUMBER="$2"
+LIST_BASE="$3"
 OUTPUT_DIR="$4"
 
 shift 4
@@ -24,8 +24,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-input_rtraw_file=$(sed -n "$((PROC_ID + 1))p" "$OUTPUT_DIR/$RTRAW_LIST_FILE")
-input_esd_file=$(sed -n "$((PROC_ID + 1))p" "$OUTPUT_DIR/$ESD_LIST_FILE")
+RTRAW_LIST_FILE="$LIST_BASE/rtraw_list/run_${RUN_NUMBER}.txt"
+ESD_LIST_FILE="$LIST_BASE/esd_list/run_${RUN_NUMBER}.txt"
+
+input_rtraw_file=$(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE" | sed -n "$((PROC_ID + 1))p")
+input_esd_file=$(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE" | sed -n "$((PROC_ID + 1))p")
+
 if [[ -z "$input_rtraw_file" || -z $input_esd_file ]]; then
     echo "No input file found for PROC_ID=$PROC_ID"
     exit 1
@@ -47,9 +51,9 @@ if [[ "$SKIP_IF_EXISTS" == true && -f "$output_file" ]]; then
 fi
 
 echo "Copying rtraw file from EOS: $local_input_rtraw_file"
-xrdcp "${EOS_BASE}${input_rtraw_file}" "$local_input_rtraw_file"
+xrdcp "${input_rtraw_file}" "$local_input_rtraw_file"
 echo "Copying esd file from EOS: $local_input_esd_file"
-xrdcp "${EOS_BASE}${input_esd_file}" "$local_input_esd_file"
+xrdcp "${input_esd_file}" "$local_input_esd_file"
 
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 echo "TUTORIALROOT = ${TUTORIALROOT}"
