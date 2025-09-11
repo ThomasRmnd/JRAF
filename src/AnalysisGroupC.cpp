@@ -229,7 +229,7 @@ bool AnalysisGroupC::execute() {
             is_possibly_wp_muon = true;
         }
         else if (
-            n_cd_used == 0ul && 
+            totq_cd < m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold &&
             ts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
