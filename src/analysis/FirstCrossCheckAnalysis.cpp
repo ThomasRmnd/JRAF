@@ -131,11 +131,15 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
             for (const vertex& cand : aft_vertices) {
-                if (cand.ts <= delayed.ts) continue;
+                if (cand.ts == delayed.ts) continue; // same event
+                if (cand.ts < delayed.ts && (prompt_lower_thold <= cand.totq && cand.totq <= prompt_upper_thold)) {
+                    delayed_has_multi = true;
+                    break; // in-between p-d multiplicity
+                }
                 if (!multi_delayed_time.isIn(cand)) continue;
                 if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
                 delayed_has_multi = true;
-                break;
+                break; // after p-d multiplicity
             }
             if (delayed_has_multi) continue;
             LogInfo << "Delayed has no multiplicity\n";
