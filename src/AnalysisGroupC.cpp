@@ -16,6 +16,7 @@
 #include "EvtNavigator/EvtNavHelper.h"
 
 #include "analysis/FirstCrossCheckAnalysis.hpp"
+#include "event/Event.hpp"
 #include "loader/BasicLoader.hpp"
 #include "loader/JointLoader.hpp"
 #include "loader/cd/CdLRangeFiller.hpp"
@@ -145,6 +146,21 @@ bool AnalysisGroupC::initAnalyses() {
         LogError << "Failed to create output file: " << m_ofilename << '\n';
         return false;
     }
+
+    m_daq_tree = new TTree("DAQTree", "DAQTree");
+    if (!m_daq_tree) {
+        LogError << "Failed to create TTree DAQTree\n";
+        return false;
+    }
+    m_daq_tree->Branch("daq_sec", &m_daq_sec);
+    m_daq_tree->Branch("daq_nsec", &m_daq_nsec);
+    m_daq_tree->Branch("muveto_sec", &m_muveto_sec);
+    m_daq_tree->Branch("muveto_nsec", &m_muveto_nsec);
+    m_daq_sec = 0l;
+    m_daq_nsec = 0;
+    m_muveto_sec = 0l;
+    m_muveto_nsec = 0;
+
     m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis"));
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;
@@ -295,6 +311,22 @@ bool AnalysisGroupC::execute() {
         for (std::shared_ptr<Analysis>& analysis : m_analyses) {
             analysis->process(m_buf);
         }
+        if (m_buf->begin() <= m_buf->current() - 1l) {
+            JM::EvtNavigator* prv_nav = (m_buf->current() - 1l)->get();
+            TimeStamp prv_ts{prv_nav->TimeStamp().GetTimeSpec()};
+            TimeStamp daq_ts{m_daq_sec, m_daq_nsec};
+            daq_ts.Add(ts - prv_ts);
+            m_daq_sec = daq_ts.GetSec();
+            m_daq_nsec = daq_ts.GetNanoSec();
+        }
+        Event evt;
+        evt.load(nav);
+        if (!evt.tracks.empty()) {
+            TimeStamp muveto_ts{m_muveto_sec, m_muveto_nsec};
+            muveto_ts.Add(TimeStamp{0, 2000000});
+            m_muveto_sec = muveto_ts.GetSec();
+            m_muveto_nsec = muveto_ts.GetNanoSec();
+        }
     }
 
     return true;
@@ -308,7 +340,11 @@ bool AnalysisGroupC::finalize() {
     }
     else {
         if (!m_file) return false;
+
+        m_daq_tree->Fill();
+
         m_file->cd();
+        m_daq_tree->Write();
         for (std::shared_ptr<Analysis>& ana : m_analyses) {
             if (!ana->write()) return false;
         }

@@ -18,10 +18,6 @@ bool FirstCrossCheckAnalysis::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
-    m_tree->Branch("daq_sec", &m_daq_sec);
-    m_tree->Branch("daq_nsec", &m_daq_nsec);
-    m_tree->Branch("muveto_sec", &m_muveto_sec);
-    m_tree->Branch("muveto_nsec", &m_muveto_nsec);
     return true; 
 }
 
@@ -29,11 +25,6 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     Event __evt;
     __evt.load(buf->curEvt());
     LogInfo << __evt << '\n';
-
-    TimeStamp daq_ts{m_daq_sec, m_daq_nsec};
-    daq_ts.Add(__evt.ts - m_prv_ts);
-    m_daq_sec = daq_ts.GetSec();
-    m_daq_nsec = daq_ts.GetNanoSec();
 
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
@@ -52,12 +43,6 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         }
         else {
             cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        }
-        if (it == buf->current() && !evt.tracks.empty()) {
-            TimeStamp muveto_ts{m_muveto_sec, m_muveto_nsec};
-            muveto_ts.Add(TimeStamp{0, 2000000});
-            m_muveto_sec = muveto_ts.GetSec();
-            m_muveto_nsec = muveto_ts.GetNanoSec();
         }
     }
 

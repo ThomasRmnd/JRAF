@@ -108,6 +108,12 @@ private:
     std::string m_ofilename;
     TFile* m_file;
 
+    TTree* m_daq_tree;
+    time_t m_daq_sec;
+    int m_daq_nsec;
+    time_t m_muveto_sec;
+    int m_muveto_nsec;
+
 	bool initBufSvc(); 
 	bool initGeomSvc();
     bool initRecTool();
