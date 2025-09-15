@@ -18,6 +18,10 @@ bool FirstCrossCheckAnalysis::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
+    m_tree->Branch("daq_sec", &m_daq_sec);
+    m_tree->Branch("daq_nsec", &m_daq_nsec);
+    m_tree->Branch("muveto_sec", &m_muveto_sec);
+    m_tree->Branch("muveto_nsec", &m_muveto_nsec);
     return true; 
 }
 
@@ -25,6 +29,11 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     Event __evt;
     __evt.load(buf->curEvt());
     LogInfo << __evt << '\n';
+
+    TimeStamp daq_ts{m_daq_sec, m_daq_nsec};
+    daq_ts.Add(__evt.ts - m_prv_ts);
+    m_daq_sec = daq_ts.GetSec();
+    m_daq_nsec = daq_ts.GetNanoSec();
 
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
@@ -44,7 +53,14 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         else {
             cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
         }
+        if (it == buf->current() && !evt.tracks.empty()) {
+            TimeStamp muveto_ts{m_muveto_sec, m_muveto_nsec};
+            muveto_ts.Add(TimeStamp{0, 2000000});
+            m_muveto_sec = muveto_ts.GetSec();
+            m_muveto_nsec = muveto_ts.GetNanoSec();
+        }
     }
+
 
     std::vector<WaterPoolMuonVetoSelection> mu_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
@@ -78,7 +94,6 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
 
         bool is_vetoed = false;
         for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
-            LogInfo << prompt.ts << " - " << cut.m_trk.ts << " = " << prompt.ts - cut.m_trk.ts << ' ' << (prompt.ts - cut.m_trk.ts < TimeStamp{0, 2000000}) << ' ' << (!cut.isIn(prompt)) << '\n';
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             break;
@@ -89,8 +104,15 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
         for (const vertex& cand : bef_vertices) {
-            LogInfo << "Before candidate: " << cand << '\n';
             if (!multi_prompt_time.isIn(cand)) continue;
+            if (!fiducial_vol_cut.isIn(cand)) continue;
+            is_vetoed = false;
+            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+                if (!cut.isIn(cand)) continue;
+                is_vetoed = true;
+                break;
+            }
+            if (is_vetoed) continue;
             if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
             prompt_has_multi = true;
             break;
@@ -132,6 +154,14 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             bool delayed_has_multi = false;
             for (const vertex& cand : aft_vertices) {
                 if (cand.ts == delayed.ts) continue; // same event
+                if (!fiducial_vol_cut.isIn(cand)) continue;
+                is_vetoed = false;
+                for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+                    if (!cut.isIn(cand)) continue;
+                    is_vetoed = true;
+                    break;
+                }
+                if (is_vetoed) continue;
                 if (cand.ts < delayed.ts && (prompt_lower_thold <= cand.totq && cand.totq <= prompt_upper_thold)) {
                     delayed_has_multi = true;
                     break; // in-between p-d multiplicity

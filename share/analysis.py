@@ -57,10 +57,10 @@ tree1_name = "events"
 tree2_name = "FirstCrossCheckAnalysis"
 
 mapping = {
-    "energy_p": ("e_p", np.arange(0.0, 12.0, 0.5), r"$E_{p}$ (MeV)"),
-    "energy_d": ("e_d", np.arange(1.5, 3.0, 0.05), r"$E_{d}$ (MeV)"),
-    "n_pe_p": ("totq_p", np.arange(0.0, 20000.0, 1000.0), r"$PEs$"),
-    "n_pe_d": ("totq_d", np.arange(3500.0, 6500.0, 100.0), r"$PEs$"),
+    "energy_p": ("e_p", np.linspace(0.0, 12.0, 100), r"$E_{p}$ (MeV)"),
+    "energy_d": ("e_d", np.linspace(1.5, 3.0, 100), r"$E_{d}$ (MeV)"),
+    "n_pe_p": ("totq_p", np.linspace(0.0, 20000.0, 100), r"$PEs$"),
+    "n_pe_d": ("totq_d", np.linspace(3500.0, 6500.0, 100), r"$PEs$"),
 }
 
 # ---------------- Load ROOT files ----------------
@@ -89,43 +89,49 @@ for sp, np_, sd, nd in zip(data2["sec_p"], data2["nsec_p"], data2["sec_d"], data
 dt2 = np.array(dt2)
 
 extra_vars = {
-    "dr": (dr2, np.arange(0.0, 1.5, 0.05), r"$dr_{p2d}$ (m)"),
-    "dt": (dt2, np.arange(0.0, 2.0, 0.1), r"$dt_{p2d}$ (ms)"),
+    "dr": (dr2, np.linspace(0.0, 1.5, 100), r"$dr_{p2d}$ (m)"),
+    "dt": (dt2, np.linspace(0.0, 2.0, 100), r"$dt_{p2d}$ (ms)"),
 }
 
-# ---------------- Plotting ----------------
-all_vars = list(mapping.keys()) + list(extra_vars.keys())
-nvars = len(all_vars)
+# ---------------- Plotting helper ----------------
+def plot_group(var_list, title):
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharex='col')
+    axes = axes.reshape(2, 2)
+    for i, var in enumerate(var_list):
+        row, col = divmod(i, 2)
+        if var in mapping:
+            var2, bins, xlabel = mapping[var]
+            vals1 = data1[var]
+            vals2 = data2[var2]
+        else:
+            vals1 = data1[var]
+            vals2, bins, xlabel = extra_vars[var]
 
-fig, axes = plt.subplots(2, nvars, figsize=(5*nvars, 10), sharex='col')
+        # Top: overlay
+        ax = axes[0, col]
+        ax.hist(vals1, bins=bins, histtype="step", color="blue", label="Vanessa")
+        ax.hist(vals2, bins=bins, histtype="step", color="red", label="Thomas")
+        ax.set_title(f"{var}")
+        ax.set_ylabel("Entries")
+        ax.legend()
 
-for i, var in enumerate(all_vars):
-    if var in mapping:
-        var2, bins, xlabel = mapping[var]
-        vals1 = data1[var]
-        vals2 = data2[var2]
-    else:
-        vals1 = data1[var]
-        vals2, bins, xlabel = extra_vars[var]
+        # Bottom: residual
+        counts1, _ = np.histogram(vals1, bins=bins)
+        counts2, _ = np.histogram(vals2, bins=bins)
+        bin_centers = 0.5 * (bins[1:] + bins[:-1])
 
-    # --- Top: overlay histograms ---
-    ax = axes[0, i]
-    ax.hist(vals1, bins=bins, histtype="step", color="blue", label="Vanessa")
-    ax.hist(vals2, bins=bins, histtype="step", color="red", label="Thomas")
-    ax.set_title(f"{var} comparison")
-    ax.set_ylabel("Entries")
-    ax.legend()
+        ax_diff = axes[1, col]
+        ax_diff.step(bin_centers, counts1 - counts2, where="mid", color="black")
+        ax_diff.axhline(0, color="gray", linestyle="--")
+        ax_diff.set_xlabel(xlabel)
+        ax_diff.set_ylabel("Δ (V - T)")
 
-    # --- Bottom: residuals (Vanessa - Thomas) ---
-    counts1, _ = np.histogram(vals1, bins=bins)
-    counts2, _ = np.histogram(vals2, bins=bins)
-    bin_centers = 0.5 * (bins[1:] + bins[:-1])
+    fig.suptitle(title, fontsize=16)
 
-    ax_diff = axes[1, i]
-    ax_diff.step(bin_centers, counts1 - counts2, where="mid", color="black")
-    ax_diff.axhline(0, color="gray", linestyle="--")
-    ax_diff.set_xlabel(xlabel)
-    ax_diff.set_ylabel("Δ (V - T)")
+# ---------------- Make three figures ----------------
+plot_group(["energy_p", "energy_d"], "Energy Comparison")
+plot_group(["n_pe_p", "n_pe_d"], "PEs Comparison")
+plot_group(["dr", "dt"], "Distance & Time Comparison")
 
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()

@@ -27,15 +27,15 @@ protected:
     double posy_p;
     double posz_p;
     double e_p;
-    double sec_p;
-    double nsec_p;
+    time_t sec_p;
+    int nsec_p;
 
     double posx_d;
     double posy_d;
     double posz_d;
     double e_d;
-    double sec_d;
-    double nsec_d;
+    time_t sec_d;
+    int nsec_d;
 
 };
 
