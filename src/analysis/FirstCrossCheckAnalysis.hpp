@@ -3,6 +3,8 @@
 
 #include "analysis/Analysis.hpp"
 
+#include "Context/TimeStamp.h"
+
 class FirstCrossCheckAnalysis : public Analysis {
 
 public:
