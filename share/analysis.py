@@ -57,10 +57,10 @@ tree1_name = "events"
 tree2_name = "FirstCrossCheckAnalysis"
 
 mapping = {
-    "energy_p": ("e_p", np.linspace(0.0, 12.0, 100), r"$E_{p}$ (MeV)"),
-    "energy_d": ("e_d", np.linspace(1.5, 3.0, 100), r"$E_{d}$ (MeV)"),
-    "n_pe_p": ("totq_p", np.linspace(0.0, 20000.0, 100), r"$PEs$"),
-    "n_pe_d": ("totq_d", np.linspace(3500.0, 6500.0, 100), r"$PEs$"),
+    "energy_p": ("e_p", np.linspace(0.0, 12.0, 51), r"$E_{p}$ (MeV)"),
+    "energy_d": ("e_d", np.linspace(1.5, 3.0, 51), r"$E_{d}$ (MeV)"),
+    "n_pe_p": ("totq_p", np.linspace(500.0, 21000.0, 51), r"$PEs$"),
+    "n_pe_d": ("totq_d", np.linspace(3500.0, 6500.0, 51), r"$PEs$"),
 }
 
 # ---------------- Load ROOT files ----------------
