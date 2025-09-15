@@ -5,7 +5,7 @@ EOS_BASE="root://junoeos01.ihep.ac.cn/"
 log_level=3
 time_window=("-2.0" "2.0")
 skip_if_exists=false
-list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v1"
+list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v2"
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -126,4 +126,6 @@ hep_sub job_worker_wrtraw.sh \
   -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
   -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \
   -name agrpc_${run_number}_batch
-# -wt short \
+#   -wt short \
+#   -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
+#   -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \
