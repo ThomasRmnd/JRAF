@@ -133,7 +133,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 break;
             }
             if (is_vetoed) continue;
-            LogInfo << "Delayed is is not vetoed\n";
+            LogInfo << "Delayed is not vetoed\n";
 
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
@@ -149,11 +149,13 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 if (is_vetoed) continue;
                 if (cand.ts < delayed.ts && (prompt_lower_thold <= cand.totq && cand.totq <= prompt_upper_thold)) {
                     delayed_has_multi = true;
+                    LogInfo << "Delayed is in the in-between multiplicity cut by " << cand.ts << '\n';
                     break; // in-between p-d multiplicity
                 }
                 if (!multi_delayed_time.isIn(cand)) continue;
                 if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
                 delayed_has_multi = true;
+                LogInfo << "Delayed is in the after multiplicity cut by " << cand.ts << '\n';
                 break; // after p-d multiplicity
             }
             if (delayed_has_multi) continue;
