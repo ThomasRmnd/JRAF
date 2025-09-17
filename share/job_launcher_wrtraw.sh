@@ -123,7 +123,7 @@ hep_sub job_worker_wrtraw.sh \
   -n "$job_count" \
   -cpu 1 \
   -m 4096 \
-  -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
+  -o "/dev/null" \
   -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \
   -name agrpc_${run_number}_batch
 #   -wt short \
