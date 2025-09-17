@@ -91,6 +91,11 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         for (const vertex& cand : bef_vertices) {
             if (!multi_prompt_time.isIn(cand)) continue;
             if (!fiducial_vol_cut.isIn(cand)) continue;
+            if (
+                (upper_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand)) ||
+                (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
+            ) continue;
+            if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
             is_vetoed = false;
             for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
                 if (!cut.isIn(cand)) continue;
@@ -98,7 +103,6 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 break;
             }
             if (is_vetoed) continue;
-            if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
             prompt_has_multi = true;
             break;
         }
@@ -113,8 +117,8 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             if (!fiducial_vol_cut.isIn(delayed)) continue;
             LogInfo << "Delayed in fiducial volume\n";
             if (
-                (upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)) ||
-                (lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt))
+                (upper_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed)) ||
+                (lower_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed))
             ) continue;
             LogInfo << "Delayed is not a chimney\n";
 
@@ -140,6 +144,11 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             for (const vertex& cand : aft_vertices) {
                 if (cand.ts == delayed.ts) continue; // same event
                 if (!fiducial_vol_cut.isIn(cand)) continue;
+                if (
+                    (upper_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand)) ||
+                    (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
+                ) continue;
+                if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
                 is_vetoed = false;
                 for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
                     if (!cut.isIn(cand)) continue;
@@ -147,13 +156,12 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                     break;
                 }
                 if (is_vetoed) continue;
-                if (cand.ts < delayed.ts && (prompt_lower_thold <= cand.totq && cand.totq <= prompt_upper_thold)) {
+                if (cand.ts < delayed.ts) {
                     delayed_has_multi = true;
                     LogInfo << "Delayed is in the in-between multiplicity cut by " << cand.ts << '\n';
                     break; // in-between p-d multiplicity
                 }
                 if (!multi_delayed_time.isIn(cand)) continue;
-                if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
                 delayed_has_multi = true;
                 LogInfo << "Delayed is in the after multiplicity cut by " << cand.ts << '\n';
                 break; // after p-d multiplicity
