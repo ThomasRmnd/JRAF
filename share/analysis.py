@@ -1,3 +1,4 @@
+import argparse
 import uproot
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,36 +51,93 @@ class TimeStamp:
     def __repr__(self):
         dt = datetime.fromtimestamp(self.sec, tz=timezone.utc)
         return dt.strftime(f"%Y-%m-%d %H:%M:%S.{self.nsec:09d} UTC")
+    
+class CodeAnalysis:
+    def __init__(self, name: str, config: dict):
+        self.name = name
+        self.filename = config["filename"]
+        self.treename = config["treename"]
+        self.varmap = config["varmap"]
+        self.data = {}
 
-# Input ROOT files
-file1 = "~/Documents/test/crosscheck_sep8_vanessa.root"
-file2 = "~/Documents/test/RUN.20250826_20250907.summary.root"
+    def load(self):
+        with uproot.open(self.filename) as f:
+            tree = f[self.treename]
+            for var, treename in self.varmap.items():
+                self.data[var] = tree[treename].array(library="np")
 
-tree1_name = "events"
-tree2_name = "FirstCrossCheckAnalysis"
+    def get(self, var):
+        if var in self.data:
+            return self.data[var]
+        raise KeyError(f"{var} not available for {self.name}")
+    
+parser = argparse.ArgumentParser()
+parser.add_argument("--input", type=str, help="Input filepath")
+parser.add_argument("--input-vanessa", type=str, default="", help="Input Vanessa filepath")
+parser.add_argument("--input-cristobal", type=str, default="", help="Input Cristobal filepath")
+args = parser.parse_args()
 
-mapping = {
-    "energy_p": ("e_p", np.linspace(0.0, 12.0, 51), r"$E_{p}$ (MeV)"),
-    "energy_d": ("e_d", np.linspace(1.5, 3.0, 51), r"$E_{d}$ (MeV)"),
-    "n_pe_p": ("totq_p", np.linspace(500.0, 21000.0, 51), "Prompt PEs"),
-    "n_pe_d": ("totq_d", np.linspace(3500.0, 6500.0, 51), "Delayed PEs"),
+analyzer_configs = {
+    "Thomas": {
+        "filename": args.input,
+        "treename": "FirstCrossCheckAnalysis",
+        "varmap": {
+            "e_p": "e_p",
+            "e_d": "e_d",
+            "totq_p": "totq_p",
+            "totq_d": "totq_d",
+            "posx_p": "posx_p",
+            "posy_p": "posy_p",
+            "posz_p": "posz_p",
+            "posx_d": "posx_d",
+            "posy_d": "posy_d",
+            "posz_d": "posz_d",
+            "sec_p": "sec_p",
+            "nsec_p": "nsec_p",
+            "sec_d": "sec_d",
+            "nsec_d": "nsec_d",
+        }
+    },
+    "Vanessa": {
+        "filename": args.input_vanessa,
+        "treename": "events",
+        "varmap": {
+            "e_p": "energy_p",
+            "e_d": "energy_d",
+            "totq_p": "n_pe_p",
+            "totq_d": "n_pe_d",
+        }
+    },
+    "Cristobal": {
+        "filename": args.input_cristobal,
+        "treename": "ibds",
+        "varmap": {
+            "e_p": "p_energy",
+            "e_d": "d_energy",
+            "totq_p": "p_charge",
+            "totq_d": "d_charge",
+        }
+    }
 }
 
-# ---------------- Load ROOT files ----------------
-with uproot.open(file1) as f1, uproot.open(file2) as f2:
-    tree1 = f1[tree1_name]
-    tree2 = f2[tree2_name]
+variables = {
+    "e_p": {"bins": np.linspace(0.0, 12.0, 51), "title": "Prompt energy", "xlabel": r"$E_p$ (MeV)"},
+    "e_d": {"bins": np.linspace(1.5 ,3.0 , 51), "title": "Delayed energy", "xlabel": r"$E_d$ (MeV)"},
+    "totq_p": {"bins": np.linspace(500.0, 21000.0, 51), "title": "Prompt total charge", "xlabel": "Prompt PEs"},
+    "totq_d": {"bins": np.linspace(3500.0, 6500.0, 51), "title": "Delayed total charge", "xlabel": "Delayed PEs"},
+    # "dr": {"bins": np.linspace(0,1.5,51), "xlabel": r"$\Delta r_{p-d}$ (m)", "derived": "geometry"},
+    # "dt": {"bins": np.linspace(0,2,51), "xlabel": r"$\Delta t_{p-d}$ (ms)", "derived": "timestamp"},
+}
 
-    data1 = tree1.arrays(list(mapping.keys()) + ["dr", "dt"], library="np")
-    data2 = tree2.arrays([
-        *[v[0] for v in mapping.values()],
-        "posx_p","posy_p","posz_p",
-        "posx_d","posy_d","posz_d",
-        "sec_p","nsec_p","sec_d","nsec_d"
-    ], library="np")
+analyzers = [
+    CodeAnalysis(name, config) for name, config in analyzer_configs.items()
+    if config["filename"] != ""
+]
+for ana in analyzers:
+    ana.load()
 
 # ---------------- Derived variables ----------------
-pos_p = np.vstack([data2["posx_p"], data2["posy_p"], data2["posz_p"]]).T
+'''pos_p = np.vstack([data2["posx_p"], data2["posy_p"], data2["posz_p"]]).T
 pos_d = np.vstack([data2["posx_d"], data2["posy_d"], data2["posz_d"]]).T
 dr2 = np.linalg.norm(pos_p - pos_d, axis=1) / 1000.0  # m
 
@@ -108,14 +166,71 @@ ex_extra_vars = {
 }
 
 print("Number of events from Vanessa: ", len(data1["energy_p"]))
-print("Number of events from Thomas: ", len(data2["e_p"]))
+print("Number of events from Thomas: ", len(data2["e_p"]))'''
 
 # ---------------- Fitting function ----------------
 def exp_decay(x, A, tau):
     return A * np.exp(-x / tau)
 
+def plot_group_comparison(analyzers, var_list):
+    """
+    Compare multiple analyzers on given variables.
+    For each variable:
+      - Top: overlay of histograms
+      - Bottom: residuals vs the first analyzer
+    Creates one figure per variable.
+    """
+    colors = [
+        "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", 
+        "tab:brown", "tab:pink", "tab:gray", "tab:olive", "tab:cyan"
+    ]
+    for var in var_list:
+        if var in variables:
+            bins = variables[var]["bins"]
+            title = variables[var]["title"]
+            xlabel = variables[var]["xlabel"]
+        else:
+            _, bins, xlabel = extra_vars[var]
+
+        ref_ana = analyzers[0]
+        vals_ref = ref_ana.get(var)
+        counts_ref, _ = np.histogram(vals_ref, bins=bins)
+        bin_centers = 0.5 * (bins[1:] + bins[:-1])
+
+        fig, (ax_top, ax_diff) = plt.subplots(
+            2, 1, figsize=(8, 8), sharex=True,
+            gridspec_kw={'height_ratios': [3, 1]}
+        )
+
+        for ana, color in zip(analyzers, colors):
+            vals = ana.get(var)
+            ax_top.hist(vals, bins=bins, histtype="step", color=color, label=ana.name)
+
+            # Residual vs reference
+            counts, _ = np.histogram(vals, bins=bins)
+            if ana is not ref_ana:
+                ax_diff.step(bin_centers, counts - counts_ref,
+                             where="mid", color=color, label=f"{ana.name}-{ref_ana.name}")
+
+        # Formatting
+        ax_top.set_title(title)
+        ax_top.set_ylabel("Entries")
+        ax_top.legend()
+
+        ax_diff.axhline(0, color="gray", linestyle="--")
+        ax_diff.set_xlabel(xlabel)
+        ax_diff.set_ylabel(r"$\Delta$ Entries")
+        ax_diff.legend()
+
+        plt.tight_layout()
+
+plot_group_comparison(analyzers, ["e_p", "e_d", "totq_p", "totq_d"])
+
+plt.show()
+
+
 # ---------------- Comparison plots (file1 vs file2) ----------------
-def plot_group_comparison(var_list, title):
+'''def plot_group_comparison(var_list, title):
     fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharex='col')
     axes = axes.reshape(2, 2)
     for i, var in enumerate(var_list):
@@ -257,4 +372,4 @@ plot_group_data2(["dr", "dt"], "Distance & Time")
 plot_group_data2(["rho2_p"], "Geometry")
 plot_group_data2(["rho2_d"], "Geometry")
 
-plt.show()
+plt.show()'''

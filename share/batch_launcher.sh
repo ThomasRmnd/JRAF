@@ -1,9 +1,9 @@
 #!/bin/bash
-# batch_launcher_wrtraw.sh
+# batch_launcher.sh
 #
 # Usage:
-#   ./batch_launcher_wrtraw.sh -f PhysicsRun.txt
-#   ./batch_launcher_wrtraw.sh -f PhysicsRun.txt -r 9737 -R 9754
+#   ./batch_launcher.sh -f PhysicsRun.txt
+#   ./batch_launcher.sh -f PhysicsRun.txt -r 9737 -R 9754
 #
 # PhysicsRun.txt layout:
 #   run_number output_path
@@ -44,6 +44,6 @@ while read -r run outpath; do
     fi
 
     echo ">>> Launching run $run -> $outpath"
-    sh job_launcher_wrtraw.sh --run-number "$run" --output-path "$outpath"
+    sh job_launcher.sh --run-number "$run" --output-path "$outpath"
 
 done < "$FILE"

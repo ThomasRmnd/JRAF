@@ -2,12 +2,13 @@
 set -e
 
 PROC_ID="$1"
-LIST_FILE="$2"
-OUTPUT_DIR="$3"
+RUN_NUMBER="$2"
+LIST_BASE="$3"
+OUTPUT_DIR="$4"
 
-shift 3
+shift 4
 
-EOS_BASE="root://junoeos01.ihep.ac.cn:1094/"
+EOS_BASE="root://junoeos01.ihep.ac.cn/"
 SKIP_IF_EXISTS=false
 
 while [[ $# -gt 0 ]]; do
@@ -23,18 +24,23 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-input_file=$(sed -n "$((PROC_ID + 1))p" "$OUTPUT_DIR/$LIST_FILE")
-if [[ -z "$input_file" ]]; then
+RTRAW_LIST_FILE="$LIST_BASE/rtraw_list/run_${RUN_NUMBER}.txt"
+ESD_LIST_FILE="$LIST_BASE/esd_list/run_${RUN_NUMBER}.txt"
+
+input_rtraw_file=$(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE" | sed -n "$((PROC_ID + 1))p")
+input_esd_file=$(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE" | sed -n "$((PROC_ID + 1))p")
+
+if [[ -z "$input_rtraw_file" || -z $input_esd_file ]]; then
     echo "No input file found for PROC_ID=$PROC_ID"
     exit 1
 fi
 
-input_filename=$(basename "$input_file")
-local_input_file="$TEMP/$input_filename"
-local_norec_file="$TEMP/${input_filename/.esd/.norec.esd}"
-local_vertex_file="$TEMP/${input_filename/.esd/.vertex.rec}"
-local_track_file="$TEMP/${input_filename/.esd/.track.rec}"
-local_output_file="$TEMP/${input_filename/.esd/.output.root}"
+input_rtraw_filename=$(basename "$input_rtraw_file")
+input_esd_filename=$(basename "$input_esd_file")
+local_input_rtraw_file="$TEMP/$input_rtraw_filename"
+local_input_esd_file="$TEMP/$input_esd_filename"
+local_track_file="$TEMP/${input_esd_filename/.esd/.track.rec}"
+local_output_file="$TEMP/${input_esd_filename/.esd/.output.root}"
 output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
 
 echo "Output filename: $output_file"
@@ -44,50 +50,29 @@ if [[ "$SKIP_IF_EXISTS" == true && -f "$output_file" ]]; then
     exit 0
 fi
 
-echo "Copying file from EOS: $input_file"
-xrdcp "${EOS_BASE}${input_file}" "$local_input_file"
+echo "Copying rtraw file from EOS: $local_input_rtraw_file"
+xrdcp "${input_rtraw_file}" "$local_input_rtraw_file"
+echo "Copying esd file from EOS: $local_input_esd_file"
+xrdcp "${input_esd_file}" "$local_input_esd_file"
 
-(
-    source /cvmfs/juno.ihep.ac.cn/el9_amd64_gcc11/Release/J25.5.0/setup.sh
-    echo "TUTORIALROOT = ${TUTORIALROOT}"
+source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
+echo "TUTORIALROOT = ${TUTORIALROOT}"
 
-    echo "Running rec_header_remover.py for file: $local_input_file"
+echo "Running run_muon.py for file: $local_input_esd_file"
 
-    python rec_header_remover.py \
-        --input "$local_input_file" \
-        --output "$local_norec_file"
+python run_muon.py \
+  --input "$local_input_esd_file" \
+  --input-rtraw "$local_input_rtraw_file" \
+  --output "$local_track_file" \
+  "${EXTRA_ARGS[@]}"
 
-    echo "Running share/tut_calib2rec.py for file: $local_norec_file"
+echo "Running run_analysis.py for file: $local_track_file"
 
-    python ${TUTORIALROOT}/share/tut_calib2rec.py \
-        --loglevel Info \
-        --evtmax -1 \
-        --method qctr \
-        --global-tag MixedPhase_J25.7.2 \
-        --input "$local_norec_file" \
-        --output "$local_vertex_file" \
-        --output-stream /Event/CdLpmtCalib:on \
-        --output-stream /Event/WpCalib:on
-)
-
-(
-    source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
-    echo "TUTORIALROOT = ${TUTORIALROOT}"
-
-    echo "Running run_muon.py for file: $local_vertex_file"
-
-    python run_muon.py \
-      --input "$local_vertex_file" \
-      --output "$local_track_file" \
-      "${EXTRA_ARGS[@]}"
-
-    echo "Running run_analysis.py for file: $local_track_file"
-
-    python run_analysis.py \
-      --input "$local_track_file" \
-      --output "$local_output_file" \
-      "${EXTRA_ARGS[@]}"
-)
+python run_analysis.py \
+  --input "$local_track_file" \
+  --input-rtraw "$local_input_rtraw_file" \
+  --output "$local_output_file" \
+  "${EXTRA_ARGS[@]}"
 
 echo "Copying result to $output_file"
 cp "$local_output_file" "$output_file"

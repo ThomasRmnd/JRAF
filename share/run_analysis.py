@@ -4,6 +4,7 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, help="Input filepath")
+parser.add_argument("--input-rtraw", type=str, help="Input RTRAW filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
 parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
 parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
@@ -45,6 +46,7 @@ import RootIOSvc
 input_file = [ifilepath]
 ri_svc = task.createSvc("RootInputSvc/InputSvc")
 ri_svc.property("InputFile").set(input_file)
+ri_svc.property("InputCorrelationFile").set(args.input_rtraw)
 
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
