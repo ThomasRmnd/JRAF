@@ -38,9 +38,12 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("Use3inchPMT", m_flagUse3inch = true);
     declProp("Use20inchPMT", m_flagUse20inch = true);
     declProp("ChosenDetectors", m_chosenDetectors = 0b111);
+
     declProp("UseJointLoader", m_useJointLoader = false);
     declProp("LoaderTimeWindow", m_loaderTimeWindow = {-500.0, 500.0});
+
     declProp("ReconstructMuonMode", m_reconstruct_muon_mode = false);
+    declProp("FirstReconstructionFile", m_first_reconstruction_file = true);
     declProp("OutputFilename", m_ofilename = "output.root");
 }
 
@@ -226,7 +229,7 @@ bool AnalysisGroupC::execute() {
         LogInfo << "Last muon time: CD = " << m_cd_last_muon << ", WP = " << m_wp_last_muon << '\n';
         LogInfo << "Delta time since last muon: CD = " << ts - m_cd_last_muon << ", WP = " << ts - m_wp_last_muon << '\n';
         
-        if (m_iEvt == 1ul) {
+        if (m_first_reconstruction_file && m_iEvt == 1ul) {
             is_possibly_cd_muon = true;
             is_possibly_wp_muon = true;
         }

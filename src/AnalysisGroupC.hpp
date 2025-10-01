@@ -78,6 +78,7 @@ private:
     // Muon selection variable
 
     bool m_reconstruct_muon_mode;
+    bool m_first_reconstruction_file;
     double m_cd_muon_totq_thold = 30000.0;
     double m_wp_muon_totq_thold = 400.0;
     TimeStamp m_cd_afterpulse_thold{0, 50000};

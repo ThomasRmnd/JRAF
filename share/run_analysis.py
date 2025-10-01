@@ -3,8 +3,8 @@ import os
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--input", type=str, help="Input filepath")
-parser.add_argument("--input-rtraw", type=str, help="Input RTRAW filepath")
+parser.add_argument("--input", type=str, nargs="+", help="Input filepath")
+parser.add_argument("--input-rtraw", type=str, nargs="+", help="Input RTRAW filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
 parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
 parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
@@ -12,6 +12,7 @@ args = parser.parse_args()
 
 ifilepath = args.input
 ofilepath = args.output
+rtraw_ifilepath = args.input_rtraw
 lower_tw, upper_tw = args.time_window
 loglevel = args.log_level
 
@@ -43,10 +44,9 @@ tt_geom_svc = task.createSvc("TTGeomSvc")
 
 # ~~~~~~~~~~ RootIOSvc ~~~~~~~~~~
 import RootIOSvc
-input_file = [ifilepath]
 ri_svc = task.createSvc("RootInputSvc/InputSvc")
-ri_svc.property("InputFile").set(input_file)
-ri_svc.property("InputCorrelationFile").set(args.input_rtraw)
+ri_svc.property("InputFile").set(ifilepath)
+ri_svc.property("InputCorrelationFile").set(rtraw_ifilepath)
 
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
@@ -59,8 +59,10 @@ alg.property("PmtTTTimeReso").set(2.0)
 alg.property("Use3inchPMT").set(True)
 alg.property("Use20inchPMT").set(True)
 alg.property("ChosenDetectors").set(3) # 1: CD, 2: WP, 4: TT
+
 alg.property("UseJointLoader").set(True) 
 alg.property("LoaderTimeWindow").set([-500.0, 500.0]) # ns
+
 alg.property("ReconstructMuonMode").set(False)
 alg.property("OutputFilename").set(ofilepath)
 

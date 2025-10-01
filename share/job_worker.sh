@@ -64,6 +64,7 @@ python run_muon.py \
   --input "$local_input_esd_file" \
   --input-rtraw "$local_input_rtraw_file" \
   --output "$local_track_file" \
+  --first-reconstruction-file \
   "${EXTRA_ARGS[@]}"
 
 echo "Running run_analysis.py for file: $local_track_file"

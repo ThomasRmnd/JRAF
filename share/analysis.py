@@ -1,9 +1,12 @@
 import argparse
-import uproot
-import numpy as np
-import matplotlib.pyplot as plt
 from datetime import datetime, timezone
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoLocator, AutoMinorLocator, MultipleLocator
+import numpy as np
 from scipy.optimize import curve_fit
+import uproot
 
 class TimeStamp:
     __slots__ = ('sec', 'nsec')
@@ -52,12 +55,94 @@ class TimeStamp:
         dt = datetime.fromtimestamp(self.sec, tz=timezone.utc)
         return dt.strftime(f"%Y-%m-%d %H:%M:%S.{self.nsec:09d} UTC")
     
+mpl.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Computer Modern Roman", "Times"],
+    # small preamble to support \text and amsmath usage
+    "text.latex.preamble": r"\usepackage{amsmath}\usepackage{siunitx}",
+    "font.size": 14,
+    "axes.labelsize": 14,
+    "axes.titlesize": 14,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14,
+    "legend.fontsize": 14,
+    "figure.dpi": 100,
+})
+    
+def set_plot_style(ax):
+    """
+    Apply uniform 'publication-like' style:
+      - LaTeX font
+      - Major ticks adapting to axis range
+      - Minor ticks automatically subdivided
+      - Inward ticks on all sides
+    """
+    # Major ticks: auto locator
+    ax.xaxis.set_major_locator(AutoLocator())
+    ax.yaxis.set_major_locator(AutoLocator())
+
+    # Minor ticks: automatically subdivide (default: 4 per major interval)
+    ax.xaxis.set_minor_locator(AutoMinorLocator())
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+
+    # Tick params: inward, both sides
+    ax.tick_params(which="both", direction="in", top=True, right=True,
+                   length=4, width=1, labelsize=12)
+    ax.tick_params(which="major", length=6, width=1.2)
+    ax.tick_params(which="minor", length=3, width=1)
+
+def set_plot_colorbar_style(ax):
+    """
+    Apply uniform 'publication-like' style:
+      - LaTeX font
+      - Major ticks adapting to axis range
+      - Minor ticks automatically subdivided
+      - Inward ticks on all sides
+    """
+    ax.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False)
+    ax.tick_params(axis="y", which="both", direction="in", right=True, left=True)
+    
+def analyze_daqtree(filename):
+    """Special analysis for Thomas' DAQTree"""
+    with uproot.open(filename) as f:
+        if "DAQTree" not in f:
+            print("[INFO] No DAQTree found in file")
+            return
+
+        tree = f["DAQTree"]
+
+        daq_sec = tree["daq_sec"].array(library="np")
+        daq_nsec = tree["daq_nsec"].array(library="np")
+        muveto_sec = tree["muveto_sec"].array(library="np")
+        muveto_nsec = tree["muveto_nsec"].array(library="np")
+
+        daq_ts = daq_sec.astype(np.float64) + daq_nsec * 1e-9
+        muveto_ts = muveto_sec.astype(np.float64) + muveto_nsec * 1e-9
+
+        daq_sum = daq_ts.sum()
+        muveto_sum = muveto_ts.sum()
+
+        daq_hours = daq_sum / 3600
+        daq_days = daq_sum / 86400
+        muveto_hours = muveto_sum / 3600
+        muveto_days = muveto_sum / 86400
+
+        perc = 100.0 * muveto_sum / daq_sum if daq_sum > 0 else float("nan")
+
+        print("=== DAQTree Analysis ===")
+        print(f"DAQ total time     : {daq_sum:.3e} s = {daq_hours:.3f} h = {daq_days:.3f} d")
+        print(f"MuVeto total time  : {muveto_sum:.3e} s = {muveto_hours:.3f} h = {muveto_days:.3f} d")
+        print(f"MuVeto / DAQ ratio : {perc:.3f} %")
+        print("========================")
+    
 class CodeAnalysis:
     def __init__(self, name: str, config: dict):
         self.name = name
         self.filename = config["filename"]
         self.treename = config["treename"]
-        self.varmap = config["varmap"]
+        self.varmap = config.get("varmap", {})
+        self.derived = config.get("derived", {})
         self.data = {}
 
     def load(self):
@@ -69,7 +154,41 @@ class CodeAnalysis:
     def get(self, var):
         if var in self.data:
             return self.data[var]
+
+        if var in self.derived:
+            self.data[var] = self.derived[var](self)
+            return self.data[var]
+
         raise KeyError(f"{var} not available for {self.name}")
+
+def dr_thomas(ana):
+    dx = ana.get("posx_p") - ana.get("posx_d")
+    dy = ana.get("posy_p") - ana.get("posy_d")
+    dz = ana.get("posz_p") - ana.get("posz_d")
+    return np.sqrt(dx**2 + dy**2 + dz**2)
+
+def dt_thomas(ana):
+    sec_p, nsec_p = ana.get("sec_p"), ana.get("nsec_p")
+    sec_d, nsec_d = ana.get("sec_d"), ana.get("nsec_d")
+
+    ts_p = np.array([TimeStamp(s, ns) for s, ns in zip(sec_p, nsec_p)])
+    ts_d = np.array([TimeStamp(s, ns) for s, ns in zip(sec_d, nsec_d)])
+
+    dt_vals = np.array([(td - tp).to_sec() for tp, td in zip(ts_p, ts_d)])
+    return dt_vals
+
+
+def rho_p_thomas(ana):
+    return np.sqrt(ana.get("posx_p")**2 + ana.get("posy_p")**2)
+
+def z_p_thomas(ana):
+    return ana.get("posz_p")
+
+def rho_d_thomas(ana):
+    return np.sqrt(ana.get("posx_d")**2 + ana.get("posy_d")**2)
+
+def z_d_thomas(ana):
+    return ana.get("posz_d")
     
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, help="Input filepath")
@@ -96,6 +215,14 @@ analyzer_configs = {
             "nsec_p": "nsec_p",
             "sec_d": "sec_d",
             "nsec_d": "nsec_d",
+        },
+        "derived": {
+            "dr": dr_thomas,
+            "dt": dt_thomas,
+            "rho_p": rho_p_thomas,
+            "rho_d": rho_d_thomas,
+            "z_p": z_p_thomas,
+            "z_d": z_d_thomas
         }
     },
     "Vanessa": {
@@ -121,12 +248,36 @@ analyzer_configs = {
 }
 
 variables = {
-    "e_p": {"bins": np.linspace(0.0, 12.0, 51), "title": "Prompt energy", "xlabel": r"$E_p$ (MeV)"},
-    "e_d": {"bins": np.linspace(1.5 ,3.0 , 51), "title": "Delayed energy", "xlabel": r"$E_d$ (MeV)"},
-    "totq_p": {"bins": np.linspace(500.0, 21000.0, 51), "title": "Prompt total charge", "xlabel": "Prompt PEs"},
-    "totq_d": {"bins": np.linspace(3500.0, 6500.0, 51), "title": "Delayed total charge", "xlabel": "Delayed PEs"},
-    # "dr": {"bins": np.linspace(0,1.5,51), "xlabel": r"$\Delta r_{p-d}$ (m)", "derived": "geometry"},
-    # "dt": {"bins": np.linspace(0,2,51), "xlabel": r"$\Delta t_{p-d}$ (ms)", "derived": "timestamp"},
+    "e_p": {
+        "bins": np.linspace(0.0, 12.0, 51), 
+        "title": r"$\text{Prompt energy}$", 
+        "xlabel": r"$E_p$ (MeV)"
+    },
+    "e_d": {
+        "bins": np.linspace(1.5 ,3.0 , 51), 
+        "title": r"$\text{Delayed energy}$", 
+        "xlabel": r"$E_d$ (MeV)"
+    },
+    "totq_p": {
+        "bins": np.linspace(500.0, 21000.0, 51), 
+        "title": r"$\text{Prompt total charge}$", 
+        "xlabel": r"$\text{Prompt PEs}$"
+    },
+    "totq_d": {
+        "bins": np.linspace(3500.0, 6500.0, 51), 
+        "title": r"$\text{Delayed total charge}$", 
+        "xlabel": r"$\text{Delayed PEs}$"
+    },
+    "dr": {
+        "bins": np.linspace(0.0, 1.5, 51),
+        "title": r"$\text{Prompt-delayed distance}$",
+        "xlabel": r"$\Delta r_{p-d}$ (m)"
+    },
+    "dt": {
+        "bins": np.linspace(0.0, 2.0, 51),
+        "title": r"$\text{Prompt-delayed time}$",
+        "xlabel": r"$\Delta t_{p-d}$ (ms)"
+    },
 }
 
 analyzers = [
@@ -136,50 +287,14 @@ analyzers = [
 for ana in analyzers:
     ana.load()
 
-# ---------------- Derived variables ----------------
-'''pos_p = np.vstack([data2["posx_p"], data2["posy_p"], data2["posz_p"]]).T
-pos_d = np.vstack([data2["posx_d"], data2["posy_d"], data2["posz_d"]]).T
-dr2 = np.linalg.norm(pos_p - pos_d, axis=1) / 1000.0  # m
-
-dt2 = []
-for sp, np_, sd, nd in zip(data2["sec_p"], data2["nsec_p"], data2["sec_d"], data2["nsec_d"]):
-    tp = TimeStamp(sp, np_)
-    td = TimeStamp(sd, nd)
-    dt2.append((td.to_sec() - tp.to_sec()) * 1000.0)  # ms
-dt2 = np.array(dt2)
-
-rho2_p = data2["posx_p"]**2 + data2["posy_p"]**2
-rho2_d = data2["posx_d"]**2 + data2["posy_d"]**2
-z_p = data2["posz_p"]
-z_d = data2["posz_d"]
-
-extra_vars = {
-    "dr": (dr2, np.linspace(0.0, 1.5, 51), r"$\Delta r_{p-d}$ (m)"),
-    "dt": (dt2, np.linspace(0.0, 2.0, 51), r"$\Delta t_{p-d}$ (ms)"),
-}
-
-ex_extra_vars = {
-    "rho2_p": (rho2_p, np.linspace(0, 325e6, 51), r"Prompt $\rho^2$ (mm)"),
-    "rho2_d": (rho2_d, np.linspace(0, 325e6, 51), r"Delayed $\rho^2$ (mm)"),
-    "z_p": (z_p, np.linspace(-20e3, 20e3, 51), r"Prompt $z$ (mm)"),
-    "z_d": (z_d, np.linspace(-20e3, 20e3, 51), r"Delayed $z$ (mm)"),
-}
-
-print("Number of events from Vanessa: ", len(data1["energy_p"]))
-print("Number of events from Thomas: ", len(data2["e_p"]))'''
+# if args.input:
+#     analyze_daqtree(args.input)
 
 # ---------------- Fitting function ----------------
 def exp_decay(x, A, tau):
     return A * np.exp(-x / tau)
 
 def plot_group_comparison(analyzers, var_list):
-    """
-    Compare multiple analyzers on given variables.
-    For each variable:
-      - Top: overlay of histograms
-      - Bottom: residuals vs the first analyzer
-    Creates one figure per variable.
-    """
     colors = [
         "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", 
         "tab:brown", "tab:pink", "tab:gray", "tab:olive", "tab:cyan"
@@ -189,8 +304,6 @@ def plot_group_comparison(analyzers, var_list):
             bins = variables[var]["bins"]
             title = variables[var]["title"]
             xlabel = variables[var]["xlabel"]
-        else:
-            _, bins, xlabel = extra_vars[var]
 
         ref_ana = analyzers[0]
         vals_ref = ref_ana.get(var)
@@ -204,172 +317,86 @@ def plot_group_comparison(analyzers, var_list):
 
         for ana, color in zip(analyzers, colors):
             vals = ana.get(var)
-            ax_top.hist(vals, bins=bins, histtype="step", color=color, label=ana.name)
+            ax_top.hist(vals, bins=bins, histtype="step", color=color, linewidth=1.6, label=ana.name)
 
-            # Residual vs reference
             counts, _ = np.histogram(vals, bins=bins)
             if ana is not ref_ana:
                 ax_diff.step(bin_centers, counts - counts_ref,
-                             where="mid", color=color, label=f"{ana.name}-{ref_ana.name}")
+                             where="mid", color=color, linewidth=1.6, label=f"{ana.name}-{ref_ana.name}")
 
-        # Formatting
+        set_plot_style(ax_top)
+        set_plot_style(ax_diff)
+
+        # Labels (use LaTeX expressions)
         ax_top.set_title(title)
-        ax_top.set_ylabel("Entries")
-        ax_top.legend()
+        ax_top.set_ylabel(r"Entries")
+        ax_top.legend(frameon=False)
 
         ax_diff.axhline(0, color="gray", linestyle="--")
         ax_diff.set_xlabel(xlabel)
         ax_diff.set_ylabel(r"$\Delta$ Entries")
-        ax_diff.legend()
 
-        plt.tight_layout()
+        plt.tight_layout(pad=0.6)
+
+def plot_geometry_and_time(analyzers):
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    ana = analyzers[0]  # e.g. Thomas
+
+    # --- rho2_p vs z_p ---
+    ax = axes[0, 0]
+    set_plot_style(ax)
+    rho2 = ana.get("rho_p")**2 / 1e6 # m^2
+    z = ana.get("posz_p") / 1000.0  # m
+    h = ax.hist2d(rho2, z, bins=(50, 50), cmap="viridis", cmin=1)
+    ax.set_xlabel(r"$\rho^2_p$ (m$^2$)")
+    ax.set_ylabel(r"$z_p$ (m)")
+    cbar = fig.colorbar(h[3], ax=ax, label=r"Entries")
+    set_plot_colorbar_style(cbar.ax)   # make colorbar ticks consistent
+
+    # --- rho2_d vs z_d ---
+    ax = axes[0, 1]
+    set_plot_style(ax)
+    rho2 = ana.get("rho_d")**2 / 1e6 # m^2
+    z = ana.get("posz_d") / 1000.0  # m
+    h = ax.hist2d(rho2, z, bins=(50, 50), cmap="viridis", cmin=1)
+    ax.set_xlabel(r"$\rho^2_d$ (m$^2$)")
+    ax.set_ylabel(r"$z_d$ (m)")
+    cbar = fig.colorbar(h[3], ax=ax, label=r"Entries")
+    set_plot_colorbar_style(cbar.ax)
+
+    # --- dr histogram ---
+    ax = axes[1, 0]
+    set_plot_style(ax)
+    dr_vals = ana.get("dr") / 1000.0 # m
+    ax.hist(dr_vals, bins=np.linspace(0, 1.5, 51), histtype="step", color="tab:blue")
+    ax.set_xlabel(r"$\Delta r_{p-d}$ (m)")
+    ax.set_ylabel(r"Entries")
+
+    # --- dt histogram with exponential fit ---
+    ax = axes[1, 1]
+    set_plot_style(ax)
+    dt_vals = ana.get("dt") * 1000.0 # ms
+    counts, edges = np.histogram(dt_vals, bins=np.linspace(0.0, 2.0, 51))
+    bin_centers = 0.5 * (edges[:-1] + edges[1:])
+    ax.errorbar(bin_centers, counts, yerr=np.sqrt(counts), fmt='o', color="tab:blue")
+
+    mask = counts > 0
+    if mask.sum() > 2:
+        popt, pcov = curve_fit(exp_decay, bin_centers[mask], counts[mask], p0=(counts.max(), 0.5))
+        A_fit, tau_fit_ms = popt
+        tau_err_ms = np.sqrt(np.diag(pcov))[1]
+        tau_fit_us = tau_fit_ms * 1000.0
+        tau_err_us = tau_err_ms * 1000.0
+        ax.plot(bin_centers, exp_decay(bin_centers, *popt), "b--",
+            label=fr"$\tau = {tau_fit_us:.1f} \pm {tau_err_us:.1f}\,\mu\mathrm{{s}}$")
+        ax.legend(frameon=False)
+
+    ax.set_xlabel(r"$\Delta t_{p-d}$ (ms)")
+    ax.set_ylabel(r"Entries")
+
+    plt.tight_layout(pad=0.6)
 
 plot_group_comparison(analyzers, ["e_p", "e_d", "totq_p", "totq_d"])
+plot_geometry_and_time(analyzers)
 
 plt.show()
-
-
-# ---------------- Comparison plots (file1 vs file2) ----------------
-'''def plot_group_comparison(var_list, title):
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharex='col')
-    axes = axes.reshape(2, 2)
-    for i, var in enumerate(var_list):
-        row, col = divmod(i, 2)
-        if var in mapping:
-            var2, bins, xlabel = mapping[var]
-            vals1 = data1[var]
-            vals2 = data2[var2]
-        else:
-            vals1 = data1[var]
-            vals2, bins, xlabel = extra_vars[var]
-
-        # Top: overlay
-        ax = axes[0, col]
-        ax.hist(vals1, bins=bins, histtype="step", color="blue", label="Vanessa")
-        ax.hist(vals2, bins=bins, histtype="step", color="red", label="Thomas")
-        ax.set_title(f"{var}")
-        ax.set_ylabel("Entries")
-        ax.legend()
-
-        # Bottom: residual
-        counts1, _ = np.histogram(vals1, bins=bins)
-        counts2, _ = np.histogram(vals2, bins=bins)
-        bin_centers = 0.5 * (bins[1:] + bins[:-1])
-
-        ax_diff = axes[1, col]
-        ax_diff.step(bin_centers, counts1 - counts2, where="mid", color="black")
-        ax_diff.axhline(0, color="gray", linestyle="--")
-        ax_diff.set_xlabel(xlabel)
-        ax_diff.set_ylabel("Δ (V - T)")
-
-    fig.suptitle(title, fontsize=16)
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-
-# ---------------- File2-only plots (one row only, with rho² vs z) ----------------
-def plot_group_data2(var_list, title):
-    plt.style.use("default")  # white background
-
-    fig, axes = plt.subplots(1, len(var_list), figsize=(6 * len(var_list), 6))
-
-    # If only one variable, axes is not a list
-    if len(var_list) == 1:
-        axes = [axes]
-
-    for i, var in enumerate(var_list):
-        ax = axes[i]
-
-        if var in mapping:
-            var2, bins, xlabel = mapping[var]
-            vals2 = data2[var2]
-
-            counts, bins, _ = ax.hist(vals2, bins=bins, histtype="step", color="tab:blue")
-
-            # If dt: fit exponential (convert ms -> µs for tau)
-            if var == "dt":
-                bin_centers = 0.5 * (bins[:-1] + bins[1:])
-                mask = (counts > 0)
-                if mask.sum() > 2:
-                    popt, _ = curve_fit(exp_decay, bin_centers[mask], counts[mask],
-                                        p0=(counts.max(), 0.5))
-                    A_fit, tau_fit_ms = popt
-                    tau_fit_us = tau_fit_ms * 1000.0
-                    ax.plot(bin_centers, exp_decay(bin_centers, *popt), "b--",
-                            label=f"Fit: A exp(-x/τ)\nτ = {tau_fit_us:.1f} µs")
-
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel("Entries")
-
-        elif var in extra_vars:
-            vals2, bins, xlabel = extra_vars[var]
-
-            if var == "dt":
-                # Histogram counts and bin centers
-                counts, edges = np.histogram(vals2, bins=bins)
-                bin_centers = 0.5 * (edges[:-1] + edges[1:])
-                errors = np.sqrt(counts)  # Poisson errors
-
-                # Plot with error bars
-                ax.errorbar(bin_centers, counts, yerr=errors, fmt='o', color="tab:blue")
-
-                # Fit exponential decay
-                mask = counts > 0
-                if mask.sum() > 2:
-                    popt, pcov = curve_fit(exp_decay, bin_centers[mask], counts[mask], p0=(counts.max(), 0.5))
-                    A_fit, tau_fit_ms = popt
-                    tau_err_ms = np.sqrt(np.diag(pcov))[1]  # uncertainty of tau in ms
-                    tau_fit_us = tau_fit_ms * 1000.0       # convert to µs
-                    tau_err_us = tau_err_ms * 1000.0       # convert to µs
-                    ax.plot(bin_centers, exp_decay(bin_centers, *popt), "b--",
-                        label=f"Fit: A exp(-x/τ)\nτ = {tau_fit_us:.1f} ± {tau_err_us:.1f} µs")
-                    ax.legend()
-            else:
-                # Other variables: plain histogram
-                ax.hist(vals2, bins=bins, histtype="step", color="tab:blue")
-
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel("Entries")
-
-        elif var == "rho2_p" or var == "rho2_d":
-            # Prompt
-            rho2, rho_bins, rho_label = ex_extra_vars[var]
-            rho2 /= 1e6  # m²
-            rho_bins /= 1e6  # m²
-            rho_label = rho_label.replace("mm", "m")
-            if var == "rho2_p":
-                z, z_bins, z_label = ex_extra_vars["z_p"]
-            if var == "rho2_d":
-                z, z_bins, z_label = ex_extra_vars["z_d"]
-            z /= 1000.0  # m
-            z_bins /= 1000.0  # m
-            z_label = z_label.replace("mm", "m")
-
-            # Make white background
-            ax.set_facecolor("white")
-            fig.patch.set_facecolor("white")
-
-            # 2D histogram
-            h = ax.hist2d(rho2, z, bins=(rho_bins, z_bins), cmap="viridis", cmin=1)
-
-            ax.set_xlabel(rho_label)
-            ax.set_ylabel(z_label)
-
-            # Add colorbar
-            cbar = plt.colorbar(h[3], ax=ax)
-            cbar.set_label("Counts")
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-
-# ---------------- Make all figures ----------------
-plot_group_comparison(["energy_p", "energy_d"], "Energy Comparison")
-plot_group_comparison(["n_pe_p", "n_pe_d"], "PEs Comparison")
-plot_group_comparison(["dr", "dt"], "Distance & Time Comparison")
-
-plot_group_data2(["energy_p", "energy_d"], "Energy Distributions")
-plot_group_data2(["n_pe_p", "n_pe_d"], "PEs Distributions")
-plot_group_data2(["dr", "dt"], "Distance & Time")
-plot_group_data2(["rho2_p"], "Geometry")
-plot_group_data2(["rho2_d"], "Geometry")
-
-plt.show()'''
