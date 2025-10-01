@@ -71,7 +71,7 @@ prev_num=""
 count=0
 
 for f in "${esd_list[@]}"; do
-    fname=$(basename "$f")
+    fname=${f##*/}
     echo "Current file: $fname"
 
     if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
@@ -81,6 +81,7 @@ for f in "${esd_list[@]}"; do
         echo "Warning: could not extract file number from $fname" >&2
         continue
     fi
+    # fname=$(basename "$f")
     # file_number=$(echo "$fname" | sed -n 's/^.*\.[0-9]\{14\}\.\([0-9]*\)_.*$/\1/p')
     # file_number=$((10#$file_number))
 
