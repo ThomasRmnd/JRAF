@@ -101,7 +101,7 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     
     track_files+=("$local_track")
     rtraw_files+=("$local_rtraw")
-    ((idx++))
+    idx=$((idx + 1))
     
     log "=== Completed iteration $i, idx now=$idx ==="
 done
