@@ -37,7 +37,6 @@ echo "Output file: $final_output"
 track_files=()
 rtraw_files=()
 
-first_flag="--first-reconstruction-file True"
 idx=0
 
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
@@ -48,6 +47,7 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     rtraw_file="${rtraw_list[$i]}"
 
     fname=${esd_file##*/}
+    echo "Current file: $fname"
 
     if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
         file_number=${BASH_REMATCH[1]}
@@ -67,7 +67,9 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     local_track="$TEMP/${fname/.esd/.track.rec}"
 
     echo "Copying files for file_number=$file_number"
+    echo "Local esd: $local_esd"
     xrdcp "$esd_file" "$local_esd"
+    echo "Local rtraw: $local_rtraw"
     xrdcp "$rtraw_file" "$local_rtraw"
 
     echo "Running run_muon.py on $fname"
