@@ -73,8 +73,16 @@ count=0
 for f in "${esd_list[@]}"; do
     fname=$(basename "$f")
     echo "Current file: $fname"
-    file_number=$(echo "$fname" | sed -n 's/^.*\.[0-9]\{14\}\.\([0-9]*\)_.*$/\1/p')
-    file_number=$((10#$file_number))
+
+    if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
+        file_number=${BASH_REMATCH[1]}
+        file_number=$((10#$file_number))  # strip leading zeros
+    else
+        echo "Warning: could not extract file number from $fname" >&2
+        continue
+    fi
+    # file_number=$(echo "$fname" | sed -n 's/^.*\.[0-9]\{14\}\.\([0-9]*\)_.*$/\1/p')
+    # file_number=$((10#$file_number))
 
     if [[ -z "$range_start" ]]; then
         range_start=$file_number
