@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >&2
+}
+
 RANGE_START="$1"
 RANGE_END="$2"
 RUN_NUMBER="$3"
@@ -36,43 +40,49 @@ echo "Output file: $final_output"
 
 track_files=()
 rtraw_files=()
-
 idx=0
 
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 echo "TUTORIALROOT = ${TUTORIALROOT}"
 
 for ((i=0; i<${#esd_list[@]}; i++)); do
+    log "=== Loop iteration $i of ${#esd_list[@]} ==="
+    
     esd_file="${esd_list[$i]}"
     rtraw_file="${rtraw_list[$i]}"
-
     fname=${esd_file##*/}
-    echo "Current file: $fname"
-
+    log "Current file: $fname"
+    
     if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
         file_number=${BASH_REMATCH[1]}
         file_number=$((10#$file_number))
     else
-        echo "Warning: could not extract file number from $fname" >&2
+        log "Warning: could not extract file number from $fname"
         continue
     fi
-
+    
+    log "File number: $file_number (range: $RANGE_START-$RANGE_END)"
+    
     if (( file_number < RANGE_START || file_number > RANGE_END )); then
+        log "Skipping file_number=$file_number (outside range)"
         continue
     fi
-
-    # Local names
+    
+    log "Processing file_number=$file_number"
+    
     local_esd="$TEMP/$(basename "$esd_file")"
     local_rtraw="$TEMP/$(basename "$rtraw_file")"
     local_track="$TEMP/${fname/.esd/.track.rec}"
-
-    echo "Copying files for file_number=$file_number"
-    echo "Local esd: $local_esd"
+    
+    log "Copying ESD file..."
     xrdcp "$esd_file" "$local_esd"
-    echo "Local rtraw: $local_rtraw"
+    log "ESD copied"
+    
+    log "Copying RTRAW file..."
     xrdcp "$rtraw_file" "$local_rtraw"
-
-    echo "Running run_muon.py on $fname"
+    log "RTRAW copied"
+    
+    log "Running run_muon.py (idx=$idx)..."
     if (( idx == 0 )); then
         python run_muon.py \
           --input "$local_esd" \
@@ -87,26 +97,31 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
           --output "$local_track" \
           "${EXTRA_ARGS[@]}"
     fi
-
+    log "run_muon.py completed for file_number=$file_number"
+    
     track_files+=("$local_track")
     rtraw_files+=("$local_rtraw")
     ((idx++))
+    
+    log "=== Completed iteration $i, idx now=$idx ==="
 done
 
+log "Loop finished. Total files processed: $idx"
+log "Track files: ${track_files[*]}"
+
 if (( idx == 0 )); then
-    echo "No files found in range $RANGE_START-$RANGE_END"
+    log "ERROR: No files found in range $RANGE_START-$RANGE_END"
     exit 1
 fi
 
-echo "Running run_analysis.py on ${#track_files[@]} files"
-
+log "Running run_analysis.py on ${#track_files[@]} files"
 python run_analysis.py \
-  --input "${track_files[@]}" \
-  --input-rtraw "${rtraw_files[@]}" \
-  --output "$final_output" \
-  "${EXTRA_ARGS[@]}"
+    --input "${track_files[@]}" \
+    --input-rtraw "${rtraw_files[@]}" \
+    --output "$final_output" \
+    "$@"
+log "run_analysis.py completed"
 
 cp "$final_output" "$OUTPUT_DIR/"
-echo "Final result copied to $OUTPUT_DIR/$(basename "$final_output")"
-
-echo "Done for run $RUN_NUMBER, range $RANGE_START-$RANGE_END"
+log "Final result copied to $OUTPUT_DIR/$(basename "$final_output")"
+log "Done for run $RUN_NUMBER, range $RANGE_START-$RANGE_END"
