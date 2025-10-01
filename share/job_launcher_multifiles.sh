@@ -73,7 +73,7 @@ count=0
 for f in "${esd_list[@]}"; do
     fname=$(basename "$f")
     file_number=$(echo "$fname" | sed -n 's/^.*\.[0-9]\{14\}\.\([0-9]*\)_.*$/\1/p')
-    file_number=$((file_number + 0))
+    file_number=$((10#$file_number))
 
     if [[ -z "$range_start" ]]; then
         range_start=$file_number
