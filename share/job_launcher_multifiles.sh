@@ -72,6 +72,7 @@ count=0
 
 for f in "${esd_list[@]}"; do
     fname=$(basename "$f")
+    echo "Current file: $fname"
     file_number=$(echo "$fname" | sed -n 's/^.*\.[0-9]\{14\}\.\([0-9]*\)_.*$/\1/p')
     file_number=$((10#$file_number))
 
