@@ -70,14 +70,13 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
           --input "$local_esd" \
           --input-rtraw "$local_rtraw" \
           --output "$local_track" \
-          --first-reconstruction-file True \
+          --first-reconstruction-file \
           "${EXTRA_ARGS[@]}"
     else
         python run_muon.py \
           --input "$local_esd" \
           --input-rtraw "$local_rtraw" \
           --output "$local_track" \
-          --first-reconstruction-file False \
           "${EXTRA_ARGS[@]}"
     fi
 
