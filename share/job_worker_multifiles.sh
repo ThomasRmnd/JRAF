@@ -47,7 +47,7 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     esd_file="${esd_list[$i]}"
     rtraw_file="${rtraw_list[$i]}"
 
-    fname=${f##*/}
+    fname=${esd_file##*/}
 
     if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
         file_number=${BASH_REMATCH[1]}
