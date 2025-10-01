@@ -47,9 +47,15 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     esd_file="${esd_list[$i]}"
     rtraw_file="${rtraw_list[$i]}"
 
-    fname=$(basename "$esd_file")
-    file_number=$(echo "$fname" | sed -n 's/^.*\.[0-9]\{14\}\.\([0-9]*\)_.*$/\1/p')
-    file_number=$((file_number + 0))
+    fname=${f##*/}
+
+    if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
+        file_number=${BASH_REMATCH[1]}
+        file_number=$((10#$file_number))
+    else
+        echo "Warning: could not extract file number from $fname" >&2
+        continue
+    fi
 
     if (( file_number < RANGE_START || file_number > RANGE_END )); then
         continue
