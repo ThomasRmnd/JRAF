@@ -38,7 +38,7 @@ date="${timestamp:0:8}"
 final_output="$TEMP/${prefix}${date}.${RANGE_START}-${RANGE_END}${suffix}"
 echo "Output file: $final_output"
 
-trackfile_path="${output_path/\/junofs\/users/\/scratchfs\/juno}"
+trackfile_path="${OUTPUT_DIR/\/junofs\/users/\/scratchfs\/juno}"
 
 track_files=()
 rtraw_files=()
