@@ -82,21 +82,21 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     track_file="$trackfile_path/${fname/.esd/.track.rec}"
     local_track="$TEMP/${fname/.esd/.track.rec}"
     
-    log "Copying ESD file..."
+    log "Copying ESD file $esd_file"
     xrdcp "$esd_file" "$local_esd"
-    log "ESD copied"
+    log "ESD $local_esd copied"
     
-    log "Copying RTRAW file..."
+    log "Copying RTRAW file $rtraw_file"
     xrdcp "$rtraw_file" "$local_rtraw"
-    log "RTRAW copied"
+    log "RTRAW $local_rtraw copied"
 
-    log "Copying track file..."
+    log "Copying track file $track_file"
     cp "$track_file" "$local_track"
-    log "Track copied"
+    log "Track $local_track copied"
     
-    track_files+=("$local_esd")
+    track_files+=("$local_track")
     rtraw_files+=("$local_rtraw")
-    rtraw_files+=("$local_track")
+    rtraw_files+=("$local_esd")
     idx=$((idx + 1))
     
     log "=== Completed iteration $i, idx now=$idx ==="

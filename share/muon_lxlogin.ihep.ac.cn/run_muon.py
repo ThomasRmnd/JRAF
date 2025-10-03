@@ -50,11 +50,6 @@ ri_svc.property("InputFile").set(ifilepath)
 ri_svc.property("InputCorrelationFile").set(rtraw_ifilepath)
 
 output_streams = {
-    # === Calib ===
-    "/Event/CdLpmtCalib": ofilepath,
-    "/Event/CdSpmtCalib": ofilepath,
-    "/Event/WpCalib": ofilepath,
-    "/Event/TtCalib": ofilepath,
     # === Rec ===
     "/Event/CdVertexRec": ofilepath,
     "/Event/CdTrackRec": ofilepath,
