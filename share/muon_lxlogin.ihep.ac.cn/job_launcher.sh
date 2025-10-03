@@ -117,7 +117,7 @@ for r in "${ranges[@]}"; do
     
     echo "Submitting $n_jobs parallel jobs for run $run_number range $start-$end"
     
-    hep_sub job_worker_multifiles.sh \
+    hep_sub job_worker.sh \
         -argu "%{ProcId} $start $end $run_number $list_base $output_path $extra_args" \
         -n "$n_jobs" \
         -cpu 1 \
