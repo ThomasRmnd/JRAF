@@ -14,18 +14,34 @@ EOS_BASE="root://junoeos01.ihep.ac.cn/"
 RTRAW_LIST_FILE="$LIST_BASE/rtraw_list/run_${RUN_NUMBER}.txt"
 ESD_LIST_FILE="$LIST_BASE/esd_list/run_${RUN_NUMBER}.txt"
 
-FILE_IDX=$((RANGE_START + PROC_ID))
+FILE_NUMBER=$((RANGE_START + PROC_ID))
 
 if (( FILE_NUMBER > RANGE_END )); then
     echo "ERROR: FILE_NUMBER=$FILE_NUMBER exceeds RANGE_END=$RANGE_END"
     exit 1
 fi
 
-input_rtraw_file=$(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE" | sed -n "$((FILE_IDX))p")
-input_esd_file=$(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE" | sed -n "$((FILE_IDX))p")
+input_rtraw_file=""
+input_esd_file=""
+
+for ((i=0; i<${#esd_list[@]}; i++)); do
+    esd_file="${esd_list[$i]}"
+    fname=${esd_file##*/}
+    
+    if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
+        file_number=${BASH_REMATCH[1]}
+        file_number=$((10#$file_number))  # strip leading zeros
+        
+        if (( file_number == FILE_NUMBER )); then
+            input_esd_file="$esd_file"
+            input_rtraw_file="${rtraw_list[$i]}"
+            break
+        fi
+    fi
+done
 
 if [[ -z "$input_rtraw_file" || -z "$input_esd_file" ]]; then
-    echo "No input file found for FILE_IDX=$FILE_IDX, PROC_ID=$PROC_ID"
+    echo "No input file found for FILE_NUMBER=$FILE_NUMBER"
     exit 1
 fi
 
@@ -48,7 +64,7 @@ xrdcp "${input_esd_file}" "$local_input_esd_file"
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 echo "TUTORIALROOT = ${TUTORIALROOT}"
 
-echo "Running run_muon.py for file: $local_input_esd_file (FILE_IDX=$FILE_IDX, PROC_ID=$PROC_ID)"
+echo "Running run_muon.py for file: $local_input_esd_file (FILE_NUMBER=$FILE_NUMBER, PROC_ID=$PROC_ID)"
 
 if (( PROC_ID == 0 )); then
     echo "Using --first-reconstruction-file flag"
@@ -70,4 +86,4 @@ fi
 echo "Copying result to $output_file"
 cp "$local_output_file" "$output_file"
 
-echo "Done (FILE_IDX=$FILE_IDX, PROC_ID=$PROC_ID)"
+echo "Done (FILE_NUMBER=$FILE_NUMBER, PROC_ID=$PROC_ID)"
