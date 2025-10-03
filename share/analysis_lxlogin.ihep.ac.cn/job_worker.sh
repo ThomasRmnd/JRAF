@@ -79,7 +79,7 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     
     local_esd="$TEMP/$fname"
     local_rtraw="$TEMP/$(basename "$rtraw_file")"
-    local_track="$trackfile_path/${fname/.esd/.track.rec}"
+    track_file="$trackfile_path/${fname/.esd/.track.rec}"
     local_track="$TEMP/${fname/.esd/.track.rec}"
     
     log "Copying ESD file..."
@@ -94,7 +94,7 @@ for ((i=0; i<${#esd_list[@]}; i++)); do
     cp "$track_file" "$local_track"
     log "Track copied"
     
-    track_files+=("$local_track")
+    track_files+=("$local_esd")
     rtraw_files+=("$local_rtraw")
     rtraw_files+=("$local_track")
     idx=$((idx + 1))
