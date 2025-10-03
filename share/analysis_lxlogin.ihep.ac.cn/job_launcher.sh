@@ -50,8 +50,6 @@ if [[ -z "$run_number" || -z "$output_path" ]]; then
     exit 1
 fi
 
-output_path="${output_path/\/junofs\/users/\/scratchfs\/juno}"
-
 RTRAW_LIST_FILE="${list_base}/rtraw_list/run_${run_number}.txt"
 ESD_LIST_FILE="${list_base}/esd_list/run_${run_number}.txt"
 
@@ -113,16 +111,16 @@ mkdir -p "$output_path"
 for r in "${ranges[@]}"; do
     start=${r%-*}
     end=${r#*-}
-    n_jobs=$((end - start + 1))  # +1 because range is inclusive
-    
-    echo "Submitting $n_jobs parallel jobs for run $run_number range $start-$end"
-    
+    echo "Submitting job for run $run_number range $start-$end"
     hep_sub job_worker.sh \
-        -argu "%{ProcId} $start $end $run_number $list_base $output_path $extra_args" \
-        -n "$n_jobs" \
+        -argu "$start $end $run_number $list_base $output_path $extra_args" \
         -cpu 1 \
         -m 4096 \
-        -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}_%{ProcId}.log" \
-        -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}_%{ProcId}.err" \
+        -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.log" \
+        -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.err" \
         -name "agrpc_${run_number}_${start}_${end}_batch"
+        #   -wt short \
+        #   -o/e "/dev/null"
+        #   -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.log" \
+        #   -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.err" \
 done
