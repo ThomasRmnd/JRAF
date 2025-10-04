@@ -54,11 +54,11 @@ bool AnalysisGroupC::initialize() {
 
     if (!initBufSvc()) return false;
     if (!initGeomSvc()) return false;
-    if (!initLoader()) return false;
 
     if (m_reconstruct_muon_mode) {
         m_cd_last_muon = TimeStamp{0, 0};
         m_wp_last_muon = TimeStamp{0, 0};
+        if (!initLoader()) return false;
         if (!initRecTool()) return false;
     }
     else {
@@ -171,50 +171,37 @@ bool AnalysisGroupC::initAnalyses() {
     return true;
 }
 
-// Cuts for cross-check (as of August 29th)
-// Muon Veto (CD+WP)	CD npe > 30k, WP npe > 400 with ±500 ns coincidence → 2 ms veto (50 μs dead time for CD, 4 μs dead time for WP)
-// Muon Veto (WP-only)	WP npe > 400 → 2 ms veto (4 μs dead time)
-// Muon Veto (CD-only)	CD npe > 30k, no WP trigger > 400 npe in ±500 ns and after >2 ms from the last tagged muon → 2 ms veto
-// Job/files veto	Veto the first 2 ms for each job
-// No header veto	2 ms veto after events without (OecHeader) & (CdLpmtCalibHeader or WpCalibHeader) & (CdTriggerHeader or WpTriggerHeader)
-// Delayed NPE	Qdelayed∈[3700,6000]Qdelayed​∈[3700,6000]
-// Prompt NPE	Qprompt∈[1500,20000]Qprompt​∈[1500,20000]
-// Distance p–d	Δr<1.5 mΔr<1.5m
-// Time p–d	1 μs<Δt<2 ms1μs<Δt<2ms
-// Multiplicity	No events in prompt energy within 2 ms before the prompt or after the delayed event
-// Fiducial Volume	r<17.2r<17.2 m ; (z<15.5z<15.5 m & ρ>3.0ρ>3.0 m)
-
 bool AnalysisGroupC::execute() {
     LogInfo << "---------- Processing event by AnalysisGroupC: " << ++m_iEvt << " ----------\n";
-
-    if (!m_loader->load(m_buf)) return false;
-
-    std::size_t n_cd_used = 0ul, n_wp_used = 0ul, n_tt_used = 0ul;
-    for (PmtProp& pmt : m_pmtTable) {
-        if (!pmt.used) continue;
-        if (pmt.loc == 1) ++n_cd_used;
-        else if (pmt.loc == 2) ++n_wp_used;
-        else if (pmt.loc == 3) ++n_tt_used;
-    }
-
-    LogInfo << "Number of PMTs in CD used: " << n_cd_used << '\n';
-    LogInfo << "Number of PMTs in WP used: " << n_wp_used << '\n';
-    LogInfo << "Number of PMTs in TT used: " << n_tt_used << '\n';
-
-    double totq_cd = std::accumulate(m_pmtTable.begin(), m_pmtTable.end(), 0.0, 
-        [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_20INCH) == pmt.type) ? pmt.q : 0.0 ); } 
-    );
-    double totq_wp = std::accumulate(m_pmtTable.begin(), m_pmtTable.end(), 0.0, 
-        [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_WP) == pmt.type) ? pmt.q : 0.0 ); } 
-    );
 
     JM::EvtNavigator* nav = m_buf->curEvt();
     TimeStamp ts{nav->TimeStamp().GetTimeSpec()};
 
-    LogInfo << "TimeStamp: " << ts << '\n';
-    LogInfo << "TotQ: CD = " << totq_cd << ", WP = " << totq_wp << '\n';
-
     if (m_reconstruct_muon_mode) {
+
+        if (!m_loader->load(m_buf)) return false;
+
+        std::size_t n_cd_used = 0ul, n_wp_used = 0ul, n_tt_used = 0ul;
+        for (PmtProp& pmt : m_pmtTable) {
+            if (!pmt.used) continue;
+            if (pmt.loc == 1) ++n_cd_used;
+            else if (pmt.loc == 2) ++n_wp_used;
+            else if (pmt.loc == 3) ++n_tt_used;
+        }
+
+        LogInfo << "Number of PMTs in CD used: " << n_cd_used << '\n';
+        LogInfo << "Number of PMTs in WP used: " << n_wp_used << '\n';
+        LogInfo << "Number of PMTs in TT used: " << n_tt_used << '\n';
+
+        double totq_cd = std::accumulate(m_pmtTable.begin(), m_pmtTable.end(), 0.0, 
+            [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_20INCH) == pmt.type) ? pmt.q : 0.0 ); } 
+        );
+        double totq_wp = std::accumulate(m_pmtTable.begin(), m_pmtTable.end(), 0.0, 
+            [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_WP) == pmt.type) ? pmt.q : 0.0 ); } 
+        );
+
+        LogInfo << "TimeStamp: " << ts << '\n';
+        LogInfo << "TotQ: CD = " << totq_cd << ", WP = " << totq_wp << '\n';
 
         bool is_possibly_cd_muon = false;
         bool is_possibly_wp_muon = false;
@@ -336,9 +323,8 @@ bool AnalysisGroupC::execute() {
 }
 
 bool AnalysisGroupC::finalize() {
-    if (m_loader && !m_loader->finalize()) return false;
-    
     if (m_reconstruct_muon_mode) {
+        if (m_loader && !m_loader->finalize()) return false;
         if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
     }
     else {

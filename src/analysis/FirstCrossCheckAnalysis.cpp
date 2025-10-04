@@ -22,10 +22,6 @@ bool FirstCrossCheckAnalysis::initialize() {
 }
 
 void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
-    Event __evt;
-    __evt.load(buf->curEvt());
-    LogInfo << __evt << '\n';
-
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -42,6 +38,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             aft_vertices.insert(aft_vertices.end(), evt.vertices.begin(), evt.vertices.end());
         }
         else {
+            LogInfo << evt << '\n';
             cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
         }
     }
