@@ -122,7 +122,9 @@ for r in "${ranges[@]}"; do
         -n "$n_jobs" \
         -cpu 1 \
         -m 4096 \
-        -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}_%{ProcId}.log" \
+        -o "/dev/null" \
         -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}_%{ProcId}.err" \
         -name "agrpc_${run_number}_${start}_${end}_batch"
+        # -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}_%{ProcId}.log" \
+        # -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}_%{ProcId}.err" \
 done
