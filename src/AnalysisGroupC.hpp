@@ -50,6 +50,8 @@ struct ContextFileTracker {
             next = filename;
             change = true;
         }
+        LogInfo << "Current filename: " << current << '\n';
+        LogInfo << "Target filename: " << target << '\n';
         return current == target;
     }
 

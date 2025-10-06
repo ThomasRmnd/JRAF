@@ -26,6 +26,8 @@ if (( ${#rtraw_list[@]} != ${#esd_list[@]} )); then
     exit 1
 fi
 
+num_files=${#esd_list[@]}
+
 get_file_number() {
     local fname=$1
     if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
