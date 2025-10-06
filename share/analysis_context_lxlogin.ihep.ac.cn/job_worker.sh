@@ -38,7 +38,7 @@ get_file_number() {
 }
 
 target_esd="${esd_list[$PROC_ID]}"
-target_fname=$(basename "$target_esd")
+target_fname=$(basename "${target_esd/.esd/.track.rec}")
 target_num=$(get_file_number "$target_fname")
 if [[ -z $target_num ]]; then
     log "Error: cannot extract file number from $target_fname"
