@@ -2,10 +2,9 @@
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 
-list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v2.1"
-file_range=100
-time_window=("-2.0" "2.0")
 log_level=3
+time_window=("-2.0" "2.0")
+list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v2.1"
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -20,6 +19,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --list-base)
             list_base="$2"
+            shift 2
+            ;;
+        --file-offset)
+            file_offset="$2"
             shift 2
             ;;
         --file-range)
@@ -60,45 +63,41 @@ mapfile -t esd_list   < <(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE")
 echo "Number of rtraw file: ${#rtraw_list[@]}"
 echo "Number of esd file: ${#esd_list[@]}"
 
-if ! [[ "$file_range" =~ ^[0-9]+$ ]]; then
-    echo "file-range must be a non-negative integer"
+if [[ -z "$file_offset" ]]; then
+    file_offset=0
+fi
+
+if [[ -z "$file_range" ]]; then
+    file_range=$(( ${#rtraw_list[@]} - file_offset ))
+fi
+
+if ! [[ "$file_offset" =~ ^[0-9]+$ && "$file_range" =~ ^[0-9]+$ ]]; then
+    echo "file-offset and file-range must be non-negative integers"
     exit 1
 fi
 
-ranges=()
-range_start=""
-prev_num=""
-count=0
+echo "Total number of file: [$file_offset, $file_range]"
 
-for f in "${esd_list[@]}"; do
-    fname=${f##*/}
-    echo "Current file: $fname"
+rtraw_list=("${rtraw_list[@]:$file_offset:$file_range}")
+esd_list=("${esd_list[@]:$file_offset:$file_range}")
 
-    if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
-        file_number=${BASH_REMATCH[1]}
-        file_number=$((10#$file_number))  # strip leading zeros
-    else
-        echo "Warning: could not extract file number from $fname" >&2
-        continue
-    fi
+job_count_rtraw=${#rtraw_list[@]}
+job_count_esd=${#esd_list[@]}
 
-    if [[ -z "$range_start" ]]; then
-        range_start=$file_number
-        count=1
-    else
-        if (( file_number == prev_num + 1 && count < $file_range )); then
-            ((count++))
-        else
-            ranges+=("$range_start-$prev_num")
-            range_start=$file_number
-            count=1
-        fi
-    fi
-    prev_num=$file_number
-done
-ranges+=("$range_start-$prev_num")
+if (( job_count_rtraw != job_count_esd )); then
+    echo "Error: mismatch between rtraw files ($job_count_rtraw) and esd files ($job_count_esd)"
+    exit 1
+fi
+
+job_count=${#rtraw_list[@]}
+
+if (( job_count == 0 )); then
+    echo "No ROOT files found in $input_path"
+    exit 1
+fi
 
 extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
+
 
 # if [[ -z "$property_file" ]]; then
 #     property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
@@ -108,19 +107,17 @@ extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_
 
 mkdir -p "$output_path"
 
-for r in "${ranges[@]}"; do
-    start=${r%-*}
-    end=${r#*-}
-    echo "Submitting job for run $run_number range $start-$end"
-    hep_sub job_worker_multifiles.sh \
-        -argu "$start $end $run_number $list_base $output_path $extra_args" \
-        -cpu 1 \
-        -m 4096 \
-        -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.log" \
-        -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.err" \
-        -name "agrpc_${run_number}_${start}_${end}_batch"
-        #   -wt short \
-        #   -o/e "/dev/null"
-        #   -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.log" \
-        #   -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.err" \
-done
+# --- Submit batch jobs ---
+echo "Submitting $job_count jobs with hep_sub..."
+hep_sub job_worker.sh \
+  -argu "%{ProcId} $run_number $list_base $output_path $extra_args" \
+  -n "$job_count" \
+  -cpu 1 \
+  -m 4096 \
+  -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
+  -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \
+  -name agrpc_${run_number}_batch
+#   -wt short \
+#   -o/e "/dev/null"
+#   -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
+#   -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \

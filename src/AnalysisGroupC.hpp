@@ -4,6 +4,7 @@
 #include "SniperKernel/AlgBase.h"
 
 #include <deque>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -20,11 +21,39 @@
 #include "Geometry/IPMTParamSvc.h"
 #include "Geometry/IRecGeomSvc.hh"
 #include "Geometry/ITTGeomSvc.hh"
+#include "RootIOSvc/RootInputSvc.h"
 #include "RecTools/IRecMuonTool.h"
 #include "RecTools/PmtProp.h"
 
 #include "analysis/Analysis.hpp"
 #include "loader/Loader.hpp"
+
+struct ContextFileTracker {
+
+    std::string target;
+    std::string current;
+    std::string next;
+    bool change = false;
+
+    bool isTarget(RootInputSvc* iptSvc) {
+        if (target.empty()) return true;
+        if (current.empty()) {
+            current = std::filesystem::path(iptSvc->getInputStream("EvtNavigator")->streamname()).filename().string();
+            next = current;
+        }
+        if (change) {
+            current = next;
+            change = false;
+        }
+        std::string filename = std::filesystem::path(iptSvc->getInputStream("EvtNavigator")->streamname()).filename().string();
+        if (filename != current) {
+            next = filename;
+            change = true;
+        }
+        return current == target;
+    }
+
+};
 
 class AnalysisGroupC : public AlgBase {
 
@@ -49,6 +78,7 @@ private:
     IRecGeomSvc* m_rgSvc;
     ITTGeomSvc* m_ttgSvc;
     IPMTParamSvc* m_pmtSvc;
+    RootInputSvc* m_iptSvc;
 
     // Loader
 
@@ -102,6 +132,7 @@ private:
     double m_upper_height = 11000.0;
     double m_xyradius_thold = 3000.0;
 
+    ContextFileTracker m_contextTracker;
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 
     // Output file

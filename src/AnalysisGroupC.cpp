@@ -45,6 +45,7 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("ReconstructMuonMode", m_reconstruct_muon_mode = false);
     declProp("FirstReconstructionFile", m_first_reconstruction_file = true);
     declProp("OutputFilename", m_ofilename = "output.root");
+    declProp("TargetInputFilename", m_contextTracker.target);
 }
 
 bool AnalysisGroupC::initialize() {
@@ -54,6 +55,13 @@ bool AnalysisGroupC::initialize() {
 
     if (!initBufSvc()) return false;
     if (!initGeomSvc()) return false;
+
+    SniperPtr<RootInputSvc> iptSvc(getParent(), "InputSvc");
+    if (iptSvc.invalid()) {
+        LogError << "Can't find InputSvc." << std::endl;
+        return false;
+    }
+    m_iptSvc = iptSvc.data();
 
     if (m_reconstruct_muon_mode) {
         m_cd_last_muon = TimeStamp{0, 0};
@@ -298,6 +306,7 @@ bool AnalysisGroupC::execute() {
     }
 
     else {
+        if (!m_contextTracker.isTarget(m_iptSvc)) return true;
         for (std::shared_ptr<Analysis>& analysis : m_analyses) {
             analysis->process(m_buf);
         }
