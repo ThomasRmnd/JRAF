@@ -37,16 +37,25 @@ get_file_number() {
     fi
 }
 
-target_esd="${esd_list[$PROC_ID]}"
-target_fname=$(basename "${target_esd/.esd/.track.rec}")
-target_num=$(get_file_number "$target_fname")
+input_esd_file="${esd_list[$PROC_ID]}"
+input_esd_filename=$(basename "$input_esd_file")
+
+input_track_path="${OUTPUT_DIR/\/junofs\/users/\/scratchfs\/juno}"
+input_track_filename="${input_esd_filename/.esd/.track.rec}"
+input_track_file="$input_track_path/$input_track_filename"
+
+target_num=$(get_file_number "$input_esd_filename")
+
+local_output_file="$TEMP/${input_esd_filename/.esd/.output.root}"
+output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
+
 if [[ -z $target_num ]]; then
-    log "Error: cannot extract file number from $target_fname"
+    log "Error: cannot extract file number from $input_track_filename"
     exit 1
 fi
 target_num=$((10#$target_num))
 
-log "Target file: $target_fname (index=$PROC_ID, number=$target_num)"
+log "Target file: $input_track_filename (index=$PROC_ID, number=$target_num)"
 
 indices_to_process=("$PROC_ID")
 
@@ -78,8 +87,6 @@ log "Files to process (indices): ${indices_to_process[*]}"
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 log "TUTORIALROOT = ${TUTORIALROOT}"
 
-trackfile_path="${OUTPUT_DIR/\/junofs\/users/\/scratchfs\/juno}"
-
 track_files=()
 rtraw_files=()
 idx=0
@@ -92,7 +99,7 @@ for i in "${indices_to_process[@]}"; do
 
     local_esd="$TEMP/$fname"
     local_rtraw="$TEMP/$(basename "$rtraw_file")"
-    track_file="$trackfile_path/${fname/.esd/.track.rec}"
+    track_file="$input_track_path/${fname/.esd/.track.rec}"
     local_track="$TEMP/${fname/.esd/.track.rec}"
 
     xrdcp "$esd_file" "$local_esd"
@@ -110,19 +117,14 @@ if (( idx == 0 )); then
     exit 1
 fi
 
-first_input=$(basename "${esd_list[${indices_to_process[0]}]}")
-prefix=$(echo "$first_input" | sed -E 's/^(.*\.)[0-9]{14}\..*/\1/')
-suffix=$(echo "$first_input" | sed -E 's/^.*\.[0-9]{14}\.[0-9]+(.*)$/\1/')
-final_output="$TEMP/${prefix}${target_num}${suffix}"
-
 log "Running run_analysis.py on ${#track_files[@]} files"
 python run_analysis.py \
     --input "${track_files[@]}" \
     --input-rtraw "${rtraw_files[@]}" \
-    --output "$final_output" \
-    --target-input-filename "$target_fname" \
+    --output "$local_output_file" \
+    --target-input-filename "$input_track_filename" \
     "${EXTRA_ARGS[@]}"
 
-cp "$final_output" "$OUTPUT_DIR/"
-log "Final result copied to $OUTPUT_DIR/$(basename "$final_output")"
-log "Done for run $RUN_NUMBER (target $target_fname)"
+cp "$local_output_file" "$output_file"
+log "Final result copied to $output_file"
+log "Done for run $RUN_NUMBER (target $input_track_filename)"
