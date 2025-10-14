@@ -56,11 +56,13 @@ input_rtraw_filename=$(basename "$input_rtraw_file")
 input_esd_filename=$(basename "$input_esd_file")
 
 output_path=""
+tt_reco_filepath=""
 if [[ "$input_esd_file" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
     esd_version="${BASH_REMATCH[1]}"
     year="${BASH_REMATCH[2]}"
     monthday="${BASH_REMATCH[3]}"
     output_path="/scratchfs/juno/traymond/analysis/ibd/${year}/${monthday}"
+    tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
     campaign="${BASH_REMATCH[1]}"
     stream="${BASH_REMATCH[2]}"
@@ -68,6 +70,7 @@ elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]
     run_group="${BASH_REMATCH[4]}"
     run_number="${BASH_REMATCH[5]}"
     output_path="/scratchfs/juno/traymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+    tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 else
     echo "Error: unrecognized esd file path format: $input_esd_file"
     exit 1
@@ -75,33 +78,6 @@ fi
 mkdir -p "$output_path"
 
 echo "output_path: ${output_path}" 1>&2
-
-# input esd filename should have the format: 
-# - /eos/juno/esd/<esd version>/<year>/<month><day>/RUN.<RUN_NUMBER>.*
-# - /eos/juno-kup/<campaign>/<stream>/<run_bucket>/<run_group>/<run>/RUN.<RUN_NUMBER>.*
-
-# we want for tt_reco_filepath:
-# - /eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/<year>/<month><day>/RUN.<RUN_NUMBER>.*
-# - /eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/<run_bucket>/<run_group>/<run>/RUN.<RUN_NUMBER>.*
-
-tt_reco_filepath=""
-if [[ "$input_esd_file" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
-    esd_version="${BASH_REMATCH[1]}"
-    year="${BASH_REMATCH[2]}"
-    monthday="${BASH_REMATCH[3]}"
-    tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*"
-elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
-    campaign="${BASH_REMATCH[1]}"
-    stream="${BASH_REMATCH[2]}"
-    run_bucket="${BASH_REMATCH[3]}"
-    run_group="${BASH_REMATCH[4]}"
-    run_number="${BASH_REMATCH[5]}"
-    tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*"
-else
-    echo "Error: unrecognized esd file path format: $input_esd_file"
-    exit 1
-fi
-
 echo "tt_reco_filepath: $tt_reco_filepath" 1>&2
 
 local_input_rtraw_file="$TEMP/$input_rtraw_filename"
