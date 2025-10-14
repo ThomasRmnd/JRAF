@@ -120,11 +120,11 @@ bool AnalysisGroupC::initLoader() {
     DetectorType chosen_det = static_cast<DetectorType>(m_chosenDetectors);    
     if ( (chosen_det & DetectorType::CD) == DetectorType::CD ) {
         if (m_flagUse20inch && m_flagUse3inch) 
-            cd_filler = std::make_shared<CdRangeFiller>("CdRangeFiller", m_sigmaPmt20inch, m_sigmaPmt3inch, &m_pmtSvc);
+            cd_filler = std::make_shared<CdRangeFiller>("CdRangeFiller", m_sigmaPmt20inch, m_sigmaPmt3inch);
         else if (m_flagUse20inch)
-            cd_filler = std::make_shared<CdLRangeFiller>("CdLRangeFiller", m_sigmaPmt20inch, &m_pmtSvc);
+            cd_filler = std::make_shared<CdLRangeFiller>("CdLRangeFiller", m_sigmaPmt20inch);
         else if (m_flagUse3inch) 
-            cd_filler = std::make_shared<CdSRangeFiller>("CdSRangeFiller", m_sigmaPmt3inch, &m_pmtSvc);
+            cd_filler = std::make_shared<CdSRangeFiller>("CdSRangeFiller", m_sigmaPmt3inch);
         // else cd_filler = nullptr;
     }
     if ( (chosen_det & DetectorType::WP) == DetectorType::WP ) {
