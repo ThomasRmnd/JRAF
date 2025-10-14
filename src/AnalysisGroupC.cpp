@@ -224,6 +224,7 @@ bool AnalysisGroupC::execute() {
     if (m_reconstruct_muon_mode) {
 
         if (!m_loader->load(m_buf)) return false;
+        if (!m_classifyLoader->load(m_buf)) return false;
 
         std::size_t n_cd_used = 0ul, n_wp_used = 0ul, n_tt_used = 0ul;
         for (PmtProp& pmt : m_pmtTable) {
@@ -416,6 +417,7 @@ bool AnalysisGroupC::execute() {
 bool AnalysisGroupC::finalize() {
     if (m_reconstruct_muon_mode) {
         if (m_loader && !m_loader->finalize()) return false;
+        if (m_classifyLoader && !m_classifyLoader->finalize()) return false;
         if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
     }
     else {
