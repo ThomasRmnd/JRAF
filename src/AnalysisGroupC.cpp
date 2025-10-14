@@ -150,7 +150,7 @@ bool AnalysisGroupC::initLoader() {
         wp_filler_classify = std::make_shared<AkiraWpRangeFiller>("AkiraWpRangeFiller", m_sigmaPmt20inch);
     }
 
-    m_classifyLoader = std::make_unique<BasicLoader>("BasicLoader", &m_rgSvc, &m_classifyPmtTable, nullptr, wp_filler_classify, nullptr);
+    m_classifyLoader = std::make_unique<BasicLoader>("BasicLoader", &m_classifyPmtTable, nullptr, wp_filler_classify, nullptr, m_rgSvc);
     if (!m_classifyLoader) {
         LogError << "Failed to create classify loader\n";
         return false;
