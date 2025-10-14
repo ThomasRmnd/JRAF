@@ -82,7 +82,7 @@ else
     exit 1
 fi
 
-echo "tt_reco_filepath: $tt_reco_filepath" 2>&1
+echo "tt_reco_filepath: $tt_reco_filepath" 1>&2
 
 local_input_rtraw_file="$TEMP/$input_rtraw_filename"
 local_input_esd_file="$TEMP/$input_esd_filename"
