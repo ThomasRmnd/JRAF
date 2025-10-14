@@ -355,14 +355,14 @@ bool AnalysisGroupC::execute() {
             JM::addHeaderObject(nav, wp_hdr);
         }
 
-        if (m_ttRecoFile.find(ts)) {
+        if (m_ttRecoFile.find(ts) && m_ttRecoFile.ntracks >= 1) {
             if (m_ttRecoFile.ntracks > 100) {
                 LogWarn << "More than 100 tracks reconstructed by the TT!\n";
             }
 
             JM::TtRecHeader* tt_hdr = new JM::TtRecHeader();
             JM::TtRecEvt* tt_evt = new JM::TtRecEvt();
-            
+                
             for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 100); ++k) {
                 if (m_ttRecoFile.npts[k] < 3) continue;
                 float coeff[6] = {
