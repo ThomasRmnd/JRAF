@@ -1,210 +1,210 @@
-9737 /junofs/users/traymond/analysis/ibd/2025/0826
-9739 /junofs/users/traymond/analysis/ibd/2025/0826
-9740 /junofs/users/traymond/analysis/ibd/2025/0826
-9754 /junofs/users/traymond/analysis/ibd/2025/0827
-9755 /junofs/users/traymond/analysis/ibd/2025/0827
-9756 /junofs/users/traymond/analysis/ibd/2025/0827
-9757 /junofs/users/traymond/analysis/ibd/2025/0827
-9766 /junofs/users/traymond/analysis/ibd/2025/0828
-9767 /junofs/users/traymond/analysis/ibd/2025/0828
-9768 /junofs/users/traymond/analysis/ibd/2025/0828
-9769 /junofs/users/traymond/analysis/ibd/2025/0828
-9770 /junofs/users/traymond/analysis/ibd/2025/0828
-9771 /junofs/users/traymond/analysis/ibd/2025/0828
-9773 /junofs/users/traymond/analysis/ibd/2025/0829
-9774 /junofs/users/traymond/analysis/ibd/2025/0829
-9775 /junofs/users/traymond/analysis/ibd/2025/0829
-9776 /junofs/users/traymond/analysis/ibd/2025/0829
-9777 /junofs/users/traymond/analysis/ibd/2025/0829
-9778 /junofs/users/traymond/analysis/ibd/2025/0829
-9779 /junofs/users/traymond/analysis/ibd/2025/0829
-9780 /junofs/users/traymond/analysis/ibd/2025/0829
-9781 /junofs/users/traymond/analysis/ibd/2025/0829
-9782 /junofs/users/traymond/analysis/ibd/2025/0829
-9783 /junofs/users/traymond/analysis/ibd/2025/0829
-9784 /junofs/users/traymond/analysis/ibd/2025/0830
-9785 /junofs/users/traymond/analysis/ibd/2025/0830
-9786 /junofs/users/traymond/analysis/ibd/2025/0830
-9787 /junofs/users/traymond/analysis/ibd/2025/0830
-9788 /junofs/users/traymond/analysis/ibd/2025/0830
-9789 /junofs/users/traymond/analysis/ibd/2025/0830
-9790 /junofs/users/traymond/analysis/ibd/2025/0830
-9794 /junofs/users/traymond/analysis/ibd/2025/0830
-9796 /junofs/users/traymond/analysis/ibd/2025/0830
-9797 /junofs/users/traymond/analysis/ibd/2025/0830
-9800 /junofs/users/traymond/analysis/ibd/2025/0830
-9801 /junofs/users/traymond/analysis/ibd/2025/0830
-9802 /junofs/users/traymond/analysis/ibd/2025/0831
-9803 /junofs/users/traymond/analysis/ibd/2025/0831
-9804 /junofs/users/traymond/analysis/ibd/2025/0831
-9805 /junofs/users/traymond/analysis/ibd/2025/0831
-9807 /junofs/users/traymond/analysis/ibd/2025/0831
-9808 /junofs/users/traymond/analysis/ibd/2025/0831
-9816 /junofs/users/traymond/analysis/ibd/2025/0831
-9817 /junofs/users/traymond/analysis/ibd/2025/0831
-9818 /junofs/users/traymond/analysis/ibd/2025/0831
-9819 /junofs/users/traymond/analysis/ibd/2025/0831
-9820 /junofs/users/traymond/analysis/ibd/2025/0901
-9821 /junofs/users/traymond/analysis/ibd/2025/0901
-9822 /junofs/users/traymond/analysis/ibd/2025/0901
-9824 /junofs/users/traymond/analysis/ibd/2025/0901
-9825 /junofs/users/traymond/analysis/ibd/2025/0901
-9826 /junofs/users/traymond/analysis/ibd/2025/0901
-9827 /junofs/users/traymond/analysis/ibd/2025/0901
-9829 /junofs/users/traymond/analysis/ibd/2025/0901
-9830 /junofs/users/traymond/analysis/ibd/2025/0901
-9831 /junofs/users/traymond/analysis/ibd/2025/0901
-9832 /junofs/users/traymond/analysis/ibd/2025/0901
-9833 /junofs/users/traymond/analysis/ibd/2025/0901
-9834 /junofs/users/traymond/analysis/ibd/2025/0901
-9835 /junofs/users/traymond/analysis/ibd/2025/0902
-9837 /junofs/users/traymond/analysis/ibd/2025/0902
-9838 /junofs/users/traymond/analysis/ibd/2025/0902
-9839 /junofs/users/traymond/analysis/ibd/2025/0902
-9840 /junofs/users/traymond/analysis/ibd/2025/0902
-9841 /junofs/users/traymond/analysis/ibd/2025/0902
-9842 /junofs/users/traymond/analysis/ibd/2025/0902
-9846 /junofs/users/traymond/analysis/ibd/2025/0902
-9847 /junofs/users/traymond/analysis/ibd/2025/0902
-9848 /junofs/users/traymond/analysis/ibd/2025/0902
-9849 /junofs/users/traymond/analysis/ibd/2025/0902
-9850 /junofs/users/traymond/analysis/ibd/2025/0902
-9851 /junofs/users/traymond/analysis/ibd/2025/0903
-9856 /junofs/users/traymond/analysis/ibd/2025/0903
-9857 /junofs/users/traymond/analysis/ibd/2025/0903
-9858 /junofs/users/traymond/analysis/ibd/2025/0903
-9859 /junofs/users/traymond/analysis/ibd/2025/0903
-9860 /junofs/users/traymond/analysis/ibd/2025/0903
-9866 /junofs/users/traymond/analysis/ibd/2025/0903
-9867 /junofs/users/traymond/analysis/ibd/2025/0903
-9868 /junofs/users/traymond/analysis/ibd/2025/0903
-9869 /junofs/users/traymond/analysis/ibd/2025/0903
-9870 /junofs/users/traymond/analysis/ibd/2025/0903
-9871 /junofs/users/traymond/analysis/ibd/2025/0904
-9872 /junofs/users/traymond/analysis/ibd/2025/0904
-9873 /junofs/users/traymond/analysis/ibd/2025/0904
-9874 /junofs/users/traymond/analysis/ibd/2025/0904
-9875 /junofs/users/traymond/analysis/ibd/2025/0904
-9876 /junofs/users/traymond/analysis/ibd/2025/0904
-9877 /junofs/users/traymond/analysis/ibd/2025/0904
-9878 /junofs/users/traymond/analysis/ibd/2025/0904
-9879 /junofs/users/traymond/analysis/ibd/2025/0904
-9880 /junofs/users/traymond/analysis/ibd/2025/0904
-9881 /junofs/users/traymond/analysis/ibd/2025/0904
-9882 /junofs/users/traymond/analysis/ibd/2025/0904
-9883 /junofs/users/traymond/analysis/ibd/2025/0905
-9884 /junofs/users/traymond/analysis/ibd/2025/0905
-9885 /junofs/users/traymond/analysis/ibd/2025/0905
-9886 /junofs/users/traymond/analysis/ibd/2025/0905
-9889 /junofs/users/traymond/analysis/ibd/2025/0905
-9890 /junofs/users/traymond/analysis/ibd/2025/0905
-9891 /junofs/users/traymond/analysis/ibd/2025/0905
-9892 /junofs/users/traymond/analysis/ibd/2025/0905
-9893 /junofs/users/traymond/analysis/ibd/2025/0905
-9894 /junofs/users/traymond/analysis/ibd/2025/0905
-9895 /junofs/users/traymond/analysis/ibd/2025/0905
-9896 /junofs/users/traymond/analysis/ibd/2025/0906
-9897 /junofs/users/traymond/analysis/ibd/2025/0906
-9898 /junofs/users/traymond/analysis/ibd/2025/0906
-9899 /junofs/users/traymond/analysis/ibd/2025/0906
-9900 /junofs/users/traymond/analysis/ibd/2025/0906
-9901 /junofs/users/traymond/analysis/ibd/2025/0906
-9902 /junofs/users/traymond/analysis/ibd/2025/0906
-9904 /junofs/users/traymond/analysis/ibd/2025/0906
-9905 /junofs/users/traymond/analysis/ibd/2025/0906
-9906 /junofs/users/traymond/analysis/ibd/2025/0906
-9907 /junofs/users/traymond/analysis/ibd/2025/0906
-9908 /junofs/users/traymond/analysis/ibd/2025/0907
-9909 /junofs/users/traymond/analysis/ibd/2025/0907
-9910 /junofs/users/traymond/analysis/ibd/2025/0907
-9911 /junofs/users/traymond/analysis/ibd/2025/0907
-9912 /junofs/users/traymond/analysis/ibd/2025/0907
-9913 /junofs/users/traymond/analysis/ibd/2025/0907
-9919 /junofs/users/traymond/analysis/ibd/2025/0907
-9920 /junofs/users/traymond/analysis/ibd/2025/0907
-9921 /junofs/users/traymond/analysis/ibd/2025/0907
-9922 /junofs/users/traymond/analysis/ibd/2025/0907
-9923 /junofs/users/traymond/analysis/ibd/2025/0907
-9926 /junofs/users/traymond/analysis/ibd/2025/0908
-9927 /junofs/users/traymond/analysis/ibd/2025/0908
-9928 /junofs/users/traymond/analysis/ibd/2025/0908
-9929 /junofs/users/traymond/analysis/ibd/2025/0908
-9930 /junofs/users/traymond/analysis/ibd/2025/0908
-9932 /junofs/users/traymond/analysis/ibd/2025/0908
-9933 /junofs/users/traymond/analysis/ibd/2025/0908
-9940 /junofs/users/traymond/analysis/ibd/2025/0908
-9944 /junofs/users/traymond/analysis/ibd/2025/0908
-9949 /junofs/users/traymond/analysis/ibd/2025/0908
-9958 /junofs/users/traymond/analysis/ibd/2025/0908
-9964 /junofs/users/traymond/analysis/ibd/2025/0909
-9965 /junofs/users/traymond/analysis/ibd/2025/0909
-9966 /junofs/users/traymond/analysis/ibd/2025/0909
-9967 /junofs/users/traymond/analysis/ibd/2025/0909
-9968 /junofs/users/traymond/analysis/ibd/2025/0909
-9972 /junofs/users/traymond/analysis/ibd/2025/0909
-10020 /junofs/users/traymond/analysis/ibd/2025/0909
-10021 /junofs/users/traymond/analysis/ibd/2025/0909
-10022 /junofs/users/traymond/analysis/ibd/2025/0909
-10026 /junofs/users/traymond/analysis/ibd/2025/0909
-10027 /junofs/users/traymond/analysis/ibd/2025/0910
-10028 /junofs/users/traymond/analysis/ibd/2025/0910
-10029 /junofs/users/traymond/analysis/ibd/2025/0910
-10030 /junofs/users/traymond/analysis/ibd/2025/0910
-10031 /junofs/users/traymond/analysis/ibd/2025/0910
-10034 /junofs/users/traymond/analysis/ibd/2025/0910
-10035 /junofs/users/traymond/analysis/ibd/2025/0910
-10036 /junofs/users/traymond/analysis/ibd/2025/0910
-10037 /junofs/users/traymond/analysis/ibd/2025/0910
-10038 /junofs/users/traymond/analysis/ibd/2025/0910
-10040 /junofs/users/traymond/analysis/ibd/2025/0910
-10046 /junofs/users/traymond/analysis/ibd/2025/0910
-10050 /junofs/users/traymond/analysis/ibd/2025/0910
-10051 /junofs/users/traymond/analysis/ibd/2025/0911
-10052 /junofs/users/traymond/analysis/ibd/2025/0911
-10053 /junofs/users/traymond/analysis/ibd/2025/0911
-10054 /junofs/users/traymond/analysis/ibd/2025/0911
-10055 /junofs/users/traymond/analysis/ibd/2025/0911
-10059 /junofs/users/traymond/analysis/ibd/2025/0911
-10067 /junofs/users/traymond/analysis/ibd/2025/0911
-10077 /junofs/users/traymond/analysis/ibd/2025/0911
-10083 /junofs/users/traymond/analysis/ibd/2025/0911
-10084 /junofs/users/traymond/analysis/ibd/2025/0911
-10086 /junofs/users/traymond/analysis/ibd/2025/0911
-10089 /junofs/users/traymond/analysis/ibd/2025/0911
-10091 /junofs/users/traymond/analysis/ibd/2025/0912
-10093 /junofs/users/traymond/analysis/ibd/2025/0912
-10094 /junofs/users/traymond/analysis/ibd/2025/0912
-10095 /junofs/users/traymond/analysis/ibd/2025/0912
-10096 /junofs/users/traymond/analysis/ibd/2025/0912
-10099 /junofs/users/traymond/analysis/ibd/2025/0912
-10100 /junofs/users/traymond/analysis/ibd/2025/0912
-10121 /junofs/users/traymond/analysis/ibd/2025/0912
-10122 /junofs/users/traymond/analysis/ibd/2025/0912
-10123 /junofs/users/traymond/analysis/ibd/2025/0912
-10124 /junofs/users/traymond/analysis/ibd/2025/0912
-10125 /junofs/users/traymond/analysis/ibd/2025/0913
-10126 /junofs/users/traymond/analysis/ibd/2025/0913
-10128 /junofs/users/traymond/analysis/ibd/2025/0913
-10129 /junofs/users/traymond/analysis/ibd/2025/0913
-10130 /junofs/users/traymond/analysis/ibd/2025/0913
-10131 /junofs/users/traymond/analysis/ibd/2025/0913
-10132 /junofs/users/traymond/analysis/ibd/2025/0913
-10133 /junofs/users/traymond/analysis/ibd/2025/0913
-10134 /junofs/users/traymond/analysis/ibd/2025/0913
-10135 /junofs/users/traymond/analysis/ibd/2025/0913
-10136 /junofs/users/traymond/analysis/ibd/2025/0913
-10140 /junofs/users/traymond/analysis/ibd/2025/0913
-10141 /junofs/users/traymond/analysis/ibd/2025/0914
-10142 /junofs/users/traymond/analysis/ibd/2025/0914
-10143 /junofs/users/traymond/analysis/ibd/2025/0914
-10144 /junofs/users/traymond/analysis/ibd/2025/0914
-10145 /junofs/users/traymond/analysis/ibd/2025/0914
-10147 /junofs/users/traymond/analysis/ibd/2025/0914
-10148 /junofs/users/traymond/analysis/ibd/2025/0914
-10149 /junofs/users/traymond/analysis/ibd/2025/0914
-10150 /junofs/users/traymond/analysis/ibd/2025/0914
-10151 /junofs/users/traymond/analysis/ibd/2025/0914
-10152 /junofs/users/traymond/analysis/ibd/2025/0914
-10153 /junofs/users/traymond/analysis/ibd/2025/0914
-10154 /junofs/users/traymond/analysis/ibd/2025/0914
-10155 /junofs/users/traymond/analysis/ibd/2025/0915
+9737
+9739
+9740
+9754
+9755
+9756
+9757
+9766
+9767
+9768
+9769
+9770
+9771
+9773
+9774
+9775
+9776
+9777
+9778
+9779
+9780
+9781
+9782
+9783
+9784
+9785
+9786
+9787
+9788
+9789
+9790
+9794
+9796
+9797
+9800
+9801
+9802
+9803
+9804
+9805
+9807
+9808
+9816
+9817
+9818
+9819
+9820
+9821
+9822
+9824
+9825
+9826
+9827
+9829
+9830
+9831
+9832
+9833
+9834
+9835
+9837
+9838
+9839
+9840
+9841
+9842
+9846
+9847
+9848
+9849
+9850
+9851
+9856
+9857
+9858
+9859
+9860
+9866
+9867
+9868
+9869
+9870
+9871
+9872
+9873
+9874
+9875
+9876
+9877
+9878
+9879
+9880
+9881
+9882
+9883
+9884
+9885
+9886
+9889
+9890
+9891
+9892
+9893
+9894
+9895
+9896
+9897
+9898
+9899
+9900
+9901
+9902
+9904
+9905
+9906
+9907
+9908
+9909
+9910
+9911
+9912
+9913
+9919
+9920
+9921
+9922
+9923
+9926
+9927
+9928
+9929
+9930
+9932
+9933
+9940
+9944
+9949
+9958
+9964
+9965
+9966
+9967
+9968
+9972
+10020
+10021
+10022
+10026
+10027
+10028
+10029
+10030
+10031
+10034
+10035
+10036
+10037
+10038
+10040
+10046
+10050
+10051
+10052
+10053
+10054
+10055
+10059
+10067
+10077
+10083
+10084
+10086
+10089
+10091
+10093
+10094
+10095
+10096
+10099
+10100
+10121
+10122
+10123
+10124
+10125
+10126
+10128
+10129
+10130
+10131
+10132
+10133
+10134
+10135
+10136
+10140
+10141
+10142
+10143
+10144
+10145
+10147
+10148
+10149
+10150
+10151
+10152
+10153
+10154
+10155
