@@ -14,16 +14,12 @@ while [[ $# -gt 0 ]]; do
             run_number="$2"
             shift 2
             ;;
-        --output-path)
-            output_path="$2"
-            shift 2
-            ;;
-        --list-base)
-            list_base="$2"
-            shift 2
-            ;;
         --file-range)
             file_range="$2"
+            shift 2
+            ;;
+        --property-file)
+            property_file="$2"
             shift 2
             ;;
         --time-window)
@@ -34,10 +30,6 @@ while [[ $# -gt 0 ]]; do
             log_level="$2"
             shift 2
             ;;
-        --property-file)
-            property_file="$2"
-            shift 2
-            ;;
         *)
             echo "Unknown argument: $1"
             exit 1
@@ -45,12 +37,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -z "$run_number" || -z "$output_path" ]]; then
-    echo "Usage: $0 --run-number <number> --output-path <path> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
+if [[ -z "$run_number" ]]; then
+    echo "Usage: $0 --run-number <number> [--file-range <num>] [--property-file <path>] [--time-window <num> <num>] [--log-level <num>]"
     exit 1
 fi
-
-output_path="${output_path/\/junofs\/users/\/scratchfs\/juno}"
 
 RTRAW_LIST_FILE="${list_base}/rtraw_list/run_${run_number}.txt"
 ESD_LIST_FILE="${list_base}/esd_list/run_${run_number}.txt"
@@ -107,8 +97,6 @@ if [[ -z "$property_file" ]]; then
 fi
 extra_args+=" --property-file $property_file"
 
-mkdir -p "$output_path"
-
 for r in "${ranges[@]}"; do
     start=${r%-*}
     end=${r#*-}
@@ -117,7 +105,7 @@ for r in "${ranges[@]}"; do
     echo "Submitting $n_jobs parallel jobs for run $run_number range $start-$end"
     
     hep_sub job_worker.sh \
-        -argu "%{ProcId} $start $end $run_number $list_base $output_path $extra_args" \
+        -argu "%{ProcId} $start $end $run_number $list_base $extra_args" \
         -n "$n_jobs" \
         -cpu 1 \
         -m 4096 \

@@ -34,8 +34,8 @@ if [[ -z "$FILE" ]]; then
     usage
 fi
 
-while read -r run outpath; do
-    [[ -z "$run" || -z "$outpath" ]] && continue
+while read -r run; do
+    [[ -z "$run" ]] && continue
 
     if [[ -n "$LOWER" && -n "$UPPER" ]]; then
         if (( run < LOWER || run > UPPER )); then
@@ -43,7 +43,7 @@ while read -r run outpath; do
         fi
     fi
 
-    echo ">>> Launching run $run -> $outpath"
-    sh job_launcher.sh --run-number "$run" --output-path "$outpath"
+    echo ">>> Launching run $run"
+    sh job_launcher.sh --run-number "$run"
 
 done < "$FILE"

@@ -6,8 +6,7 @@ RANGE_START="$2"
 RANGE_END="$3"
 RUN_NUMBER="$4"
 LIST_BASE="$5"
-OUTPUT_DIR="$6"
-shift 6
+shift 5
 EXTRA_ARGS=("$@")
 
 FILE_NUMBER=$((RANGE_START + PROC_ID))
@@ -56,6 +55,27 @@ fi
 input_rtraw_filename=$(basename "$input_rtraw_file")
 input_esd_filename=$(basename "$input_esd_file")
 
+output_path=""
+if [[ "$input_esd_file" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
+    esd_version="${BASH_REMATCH[1]}"
+    year="${BASH_REMATCH[2]}"
+    monthday="${BASH_REMATCH[3]}"
+    output_path="/scratchfs/juno/traymond/analysis/ibd/${year}/${monthday}"
+elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+    campaign="${BASH_REMATCH[1]}"
+    stream="${BASH_REMATCH[2]}"
+    run_bucket="${BASH_REMATCH[3]}"
+    run_group="${BASH_REMATCH[4]}"
+    run_number="${BASH_REMATCH[5]}"
+    output_path="/scratchfs/juno/traymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+else
+    echo "Error: unrecognized esd file path format: $input_esd_file"
+    exit 1
+fi
+mkdir -p "$output_path"
+
+echo "output_path: ${output_path}" 1>&2
+
 # input esd filename should have the format: 
 # - /eos/juno/esd/<esd version>/<year>/<month><day>/RUN.<RUN_NUMBER>.*
 # - /eos/juno-kup/<campaign>/<stream>/<run_bucket>/<run_group>/<run>/RUN.<RUN_NUMBER>.*
@@ -87,7 +107,7 @@ echo "tt_reco_filepath: $tt_reco_filepath" 1>&2
 local_input_rtraw_file="$TEMP/$input_rtraw_filename"
 local_input_esd_file="$TEMP/$input_esd_filename"
 local_output_file="$TEMP/${input_esd_filename/.esd/.track.rec}"
-output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
+output_file="$output_path/$(basename "$local_output_file")"
 
 echo "Output filename: $output_file"
 
