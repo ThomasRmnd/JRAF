@@ -42,6 +42,9 @@ geom.property("GeomFile").set("default")
 geom.property("GeomPathInRoot").set("JunoGeom")
 geom.property("FastInit").set(True)
 
+# ~~~~~~~~~~ PMTParamSvc ~~~~~~~~~~
+pmt_param_svc = task.createSvc("PMTParamSvc")
+
 # ~~~~~~~~~~ TTGeomSvc ~~~~~~~~~~
 tt_geom_svc = task.createSvc("TTGeomSvc")
 
