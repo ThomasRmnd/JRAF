@@ -13,10 +13,6 @@ while [[ $# -gt 0 ]]; do
             run_number="$2"
             shift 2
             ;;
-        --output-path)
-            output_path="$2"
-            shift 2
-            ;;
         --list-base)
             list_base="$2"
             shift 2
@@ -48,8 +44,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -z "$run_number" || -z "$output_path" ]]; then
-    echo "Usage: $0 --run-number <number> --output-path <path> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
+if [[ -z "$run_number" ]]; then
+    echo "Usage: $0 --run-number <number> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
     exit 1
 fi
 
@@ -105,12 +101,10 @@ extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_
 
 # extra_args="--property-file $property_file"
 
-mkdir -p "$output_path"
-
 # --- Submit batch jobs ---
 echo "Submitting $job_count jobs with hep_sub..."
 hep_sub job_worker.sh \
-  -argu "%{ProcId} $run_number $list_base $output_path $extra_args" \
+  -argu "%{ProcId} $run_number $list_base $extra_args" \
   -n "$job_count" \
   -cpu 1 \
   -m 4096 \

@@ -9,9 +9,7 @@ RANGE_START="$1"
 RANGE_END="$2"
 RUN_NUMBER="$3"
 LIST_BASE="$4"
-OUTPUT_DIR="$5"
-
-shift 5
+shift 4
 EXTRA_ARGS=("$@")
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
@@ -30,15 +28,39 @@ fi
 echo "Processing run $RUN_NUMBER, range $RANGE_START-$RANGE_END"
 echo "Temporary dir: $TEMP"
 
-first_input=$(basename "${esd_list[0]}")
+first_input="${esd_list[0]}"
+first_input_filename=$(basename "$first_input")
 
-prefix=$(echo "$first_input" | sed -E 's/^(.*\.)[0-9]{14}\..*/\1/')
-suffix=$(echo "$first_input" | sed -E 's/^.*\.[0-9]{14}\.[0-9]+(.*)$/\1/')
+output_path=""
+trackfile_path=""
+if [[ "$first_input" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
+    esd_version="${BASH_REMATCH[1]}"
+    year="${BASH_REMATCH[2]}"
+    monthday="${BASH_REMATCH[3]}"
+    output_path="/junofs/users/traymond/analysis/ibd/${year}/${monthday}"
+    trackfile_path="/scratchfs/juno/traymond/analysis/ibd/${year}/${monthday}"
+elif [[ "$first_input" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+    campaign="${BASH_REMATCH[1]}"
+    stream="${BASH_REMATCH[2]}"
+    run_bucket="${BASH_REMATCH[3]}"
+    run_group="${BASH_REMATCH[4]}"
+    run_number="${BASH_REMATCH[5]}"
+    output_path="/junofs/users/traymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+    trackfile_path="/scratchfs/juno/traymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+else
+    echo "Error: unrecognized esd file path format: $first_input"
+    exit 1
+fi
+mkdir -p "$output_path"
+
+echo "output_path: ${output_path}" 1>&2
+echo "trackfile_path: ${trackfile_path}" 1>&2
+
+prefix=$(echo "$first_input_filename" | sed -E 's/^(.*\.)[0-9]{14}\..*/\1/')
+suffix=$(echo "$first_input_filename" | sed -E 's/^.*\.[0-9]{14}\.[0-9]+(.*)$/\1/')
 date="${timestamp:0:8}"
 final_output="$TEMP/${prefix}${date}.${RANGE_START}-${RANGE_END}${suffix}"
 echo "Output file: $final_output"
-
-trackfile_path="${OUTPUT_DIR/\/junofs\/users/\/scratchfs\/juno}"
 
 track_files=()
 rtraw_files=()
@@ -118,6 +140,6 @@ python run_analysis.py \
     "$@"
 log "run_analysis.py completed"
 
-cp "$final_output" "$OUTPUT_DIR/"
-log "Final result copied to $OUTPUT_DIR/$(basename "$final_output")"
+cp "$final_output" "$output_path/"
+log "Final result copied to $output_path/$(basename "$final_output")"
 log "Done for run $RUN_NUMBER, range $RANGE_START-$RANGE_END"

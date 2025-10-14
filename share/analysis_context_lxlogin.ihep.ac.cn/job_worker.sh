@@ -8,9 +8,7 @@ log() {
 PROC_ID="$1"
 RUN_NUMBER="$2"
 LIST_BASE="$3"
-OUTPUT_DIR="$4"
-
-shift 4
+shift 3
 EXTRA_ARGS=("$@")
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
@@ -40,14 +38,37 @@ get_file_number() {
 input_esd_file="${esd_list[$PROC_ID]}"
 input_esd_filename=$(basename "$input_esd_file")
 
-input_track_path="${OUTPUT_DIR/\/junofs\/users/\/scratchfs\/juno}"
+output_path=""
+input_track_path=""
+if [[ "$input_esd_file" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
+    esd_version="${BASH_REMATCH[1]}"
+    year="${BASH_REMATCH[2]}"
+    monthday="${BASH_REMATCH[3]}"
+    output_path="/junofs/users/traymond/analysis/ibd/${year}/${monthday}"
+    input_track_path="/scratchfs/juno/traymond/analysis/ibd/${year}/${monthday}"
+elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+    campaign="${BASH_REMATCH[1]}"
+    stream="${BASH_REMATCH[2]}"
+    run_bucket="${BASH_REMATCH[3]}"
+    run_group="${BASH_REMATCH[4]}"
+    run_number="${BASH_REMATCH[5]}"
+    output_path="/junofs/users/traymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+    input_track_path="/scratchfs/juno/traymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+else
+    echo "Error: unrecognized esd file path format: $input_esd_file"
+    exit 1
+fi
+mkdir -p "$output_path"
+
+echo "output_path: ${output_path}" 1>&2
+
 input_track_filename="${input_esd_filename/.esd/.track.rec}"
 input_track_file="$input_track_path/$input_track_filename"
 
 target_num=$(get_file_number "$input_esd_filename")
 
 local_output_file="$TEMP/${input_esd_filename/.esd/.output.root}"
-output_file="$OUTPUT_DIR/$(basename "$local_output_file")"
+output_file="$output_path/$(basename "$local_output_file")"
 
 if [[ -z $target_num ]]; then
     log "Error: cannot extract file number from $input_track_filename"
