@@ -1,4 +1,4 @@
-#include "loader/wp/AkiraWpRangeFiller.h"
+#include "loader/wp/AkiraWpRangeFiller.hpp"
 
 #include "SniperKernel/ToolFactory.h"
 
@@ -6,7 +6,7 @@
 #include "EvtNavigator/EvtNavHelper.h"
 #include "Identifier/WpID.h"
 
-#include "utils/load_helper.h"
+#include "utils/LoadHelper.hpp"
 
 DECLARE_TOOL(AkiraWpRangeFiller);
 
