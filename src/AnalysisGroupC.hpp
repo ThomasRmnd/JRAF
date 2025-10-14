@@ -89,6 +89,8 @@ struct TtRecoFile {
         chain->SetBranchAddress("Coeff5", &coeff5);
         chain->SetBranchAddress("Chi2", &chi2);
 
+        LogInfo << "TtRecoFile has " << chain->GetEntries() << " entries\n";
+
         return true;
     }
 
