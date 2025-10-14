@@ -10,12 +10,16 @@
 #include "Event/CdTrackRecHeader.h"
 #include "Event/CdTriggerHeader.h"
 #include "Event/OecHeader.h"
+#include "Event/TtRecHeader.h"
 #include "Event/WpCalibHeader.h"
 #include "Event/WpRecHeader.h"
 #include "Event/WpTriggerHeader.h"
 #include "EvtNavigator/EvtNavHelper.h"
 
 #include "analysis/FirstCrossCheckAnalysis.hpp"
+#include "analysis/IBDWithCylindricalCut.hpp"
+#include "analysis/MultiplicityWindowCut.hpp"
+#include "analysis/TtCosmoStudy.hpp"
 #include "event/Event.hpp"
 #include "loader/BasicLoader.hpp"
 #include "loader/JointLoader.hpp"
@@ -23,6 +27,7 @@
 #include "loader/cd/CdRangeFiller.hpp"
 #include "loader/cd/CdSRangeFiller.hpp"
 #include "loader/tt/TtRangeFiller.hpp"
+#include "loader/wp/AkiraWpRangeFiller.hpp"
 #include "loader/wp/WpRangeFiller.hpp"
 
 DECLARE_ALGORITHM(AnalysisGroupC);
@@ -32,6 +37,8 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     m_iEvt{0u}
 {
     declProp("RecTool", m_recToolName);
+    declProp("ClassifyTool", m_classifyToolName);
+
     declProp("Pmt3inchTimeReso", m_sigmaPmt3inch = 1.0);
     declProp("Pmt20inchTimeReso", m_sigmaPmt20inch = 8.0);
     declProp("PmtTTTimeReso", m_sigmaPmtTt = 2.0); // The sigma is not true, a placeholder
@@ -42,8 +49,8 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("UseJointLoader", m_useJointLoader = false);
     declProp("LoaderTimeWindow", m_loaderTimeWindow = {-500.0, 500.0});
 
+    declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("ReconstructMuonMode", m_reconstruct_muon_mode = false);
-    declProp("FirstReconstructionFile", m_first_reconstruction_file = true);
     declProp("OutputFilename", m_ofilename = "output.root");
     declProp("TargetInputFilename", m_contextTracker.target);
 }
@@ -66,6 +73,7 @@ bool AnalysisGroupC::initialize() {
     if (m_reconstruct_muon_mode) {
         m_cd_last_muon = TimeStamp{0, 0};
         m_wp_last_muon = TimeStamp{0, 0};
+        if (!m_ttRecoFile.init()) return false;
         if (!initLoader()) return false;
         if (!initRecTool()) return false;
     }
@@ -109,35 +117,47 @@ bool AnalysisGroupC::initLoader() {
     std::shared_ptr<RangeFiller<WpGeom>> wp_filler = nullptr;
     std::shared_ptr<RangeFiller<TtGeom>> tt_filler = nullptr;
 
-    DetectorType chosen_detector_type = static_cast<DetectorType>(m_chosenDetectors);
-
-    if ( (chosen_detector_type & DetectorType::CD) == DetectorType::CD ) {
+    DetectorType chosen_det = static_cast<DetectorType>(m_chosenDetectors);    
+    if ( (chosen_det & DetectorType::CD) == DetectorType::CD ) {
         if (m_flagUse20inch && m_flagUse3inch) 
-            cd_filler = std::make_shared<CdRangeFiller>("CdRangeFiller", m_sigmaPmt20inch, m_sigmaPmt3inch);
+            cd_filler = std::make_shared<CdRangeFiller>("CdRangeFiller", m_sigmaPmt20inch, m_sigmaPmt3inch, &m_pmtSvc);
         else if (m_flagUse20inch)
-            cd_filler = std::make_shared<CdLRangeFiller>("CdLRangeFiller", m_sigmaPmt20inch);
+            cd_filler = std::make_shared<CdLRangeFiller>("CdLRangeFiller", m_sigmaPmt20inch, &m_pmtSvc);
         else if (m_flagUse3inch) 
-            cd_filler = std::make_shared<CdSRangeFiller>("CdSRangeFiller", m_sigmaPmt3inch);
+            cd_filler = std::make_shared<CdSRangeFiller>("CdSRangeFiller", m_sigmaPmt3inch, &m_pmtSvc);
         // else cd_filler = nullptr;
     }
-    if ( (chosen_detector_type & DetectorType::WP) == DetectorType::WP ) {
-        wp_filler = std::make_shared<WpRangeFiller>("WpRangeFiller", m_sigmaPmt20inch);
+    if ( (chosen_det & DetectorType::WP) == DetectorType::WP ) {
+    	wp_filler = std::make_shared<WpRangeFiller>("WpRangeFiller", m_sigmaPmt20inch);
     }
-    if ( (chosen_detector_type & DetectorType::TT) == DetectorType::TT ) {
-        tt_filler = std::make_shared<TtRangeFiller>("TtRangeFiller", m_sigmaPmtTt, m_ttgSvc);
-    }
+    // if ( (m_chosen_detectors & DetectorType::TT) == DetectorType::TT ) {
+    // 	tt_filler = std::make_shared<TtRangeFiller>("TtRangeFiller", m_sigma_pmt_tt, &m_tt_svc);
+    // }
 
     if (m_useJointLoader)
-        m_loader = std::make_shared<JointLoader>("JointLoader", &m_pmtTable, m_loaderTimeWindow, cd_filler, wp_filler, tt_filler, m_rgSvc);
+        m_loader = std::make_unique<JointLoader>("JointLoader", &m_rgSvc, &m_pmtTable, m_loaderTimeWindow, cd_filler, wp_filler, tt_filler);
     else
-        m_loader = std::make_shared<BasicLoader>("BasicLoader", &m_pmtTable, cd_filler, wp_filler, tt_filler, m_rgSvc);
+        m_loader = std::make_unique<BasicLoader>("BasicLoader", &m_rgSvc, &m_pmtTable, cd_filler, wp_filler, tt_filler);
 
     if (!m_loader) {
-        LogError << "Failed to create loader\n";
+        LogError << "Failed to create loader." << '\n';
         return false;
     }
-    
-    return m_loader->initialize();
+    if (!m_loader->initialize()) return false;
+
+    std::shared_ptr<RangeFiller<WpGeom>> wp_filler_classify = nullptr;    
+    if ( (chosen_det & DetectorType::WP) == DetectorType::WP ) {
+        wp_filler_classify = std::make_shared<AkiraWpRangeFiller>("AkiraWpRangeFiller", m_sigmaPmt20inch);
+    }
+
+    m_classifyLoader = std::make_unique<BasicLoader>("BasicLoader", &m_rgSvc, &m_classifyPmtTable, nullptr, wp_filler_classify, nullptr);
+    if (!m_classifyLoader) {
+        LogError << "Failed to create classify loader\n";
+        return false;
+    }
+    if (!m_classifyLoader->initialize()) return false;
+
+    return true;
 }
 
 bool AnalysisGroupC::initRecTool() {
@@ -147,7 +167,15 @@ bool AnalysisGroupC::initRecTool() {
         return false;
     }
     if (!m_recTool->configure(&m_params, &m_pmtTable)) return false;
-    // if (!m_recTool->initialize()) return false;
+	// if (!dynamic_cast<ToolBase*>(m_recTool)->initialize()) return false;
+
+    m_classifyTool = tool<IRecMuonTool>(m_classifyToolName);
+    if (!m_classifyTool) {
+        LogError << "Failed to retrieve classification tool named " << m_classifyToolName << '\n';
+        return false;
+    }
+    if (!m_classifyTool->configure(&m_classifyParams, &m_classifyPmtTable)) return false;
+    // if (!dynamic_cast<ToolBase*>(m_classifyTool)->initialize()) return false;
     return true;
 }
 
@@ -173,6 +201,11 @@ bool AnalysisGroupC::initAnalyses() {
     m_muveto_nsec = 0;
 
     m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis"));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m", 3000.0));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m", 3000.0));
+    m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut"));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;
     }
@@ -224,11 +257,7 @@ bool AnalysisGroupC::execute() {
         LogInfo << "Last muon time: CD = " << m_cd_last_muon << ", WP = " << m_wp_last_muon << '\n';
         LogInfo << "Delta time since last muon: CD = " << ts - m_cd_last_muon << ", WP = " << ts - m_wp_last_muon << '\n';
         
-        if (m_first_reconstruction_file && m_iEvt == 1ul) {
-            is_possibly_cd_muon = true;
-            is_possibly_wp_muon = true;
-        }
-        else if (!oec_hdr || (!cd_lpmt_calib_hdr && !wp_calib_hdr) || (!cd_trig_hdr && !wp_trig_hdr)) {
+        if (!oec_hdr || (!cd_lpmt_calib_hdr && !wp_calib_hdr) || (!cd_trig_hdr && !wp_trig_hdr)) {
             is_possibly_cd_muon = true;
         }
         else if (
@@ -259,54 +288,111 @@ bool AnalysisGroupC::execute() {
             is_possibly_cd_muon = true;
         }
 
-        /* RecTrks* trks = new RecTrks();
-        if (!m_recTool->reconstruct(trks)) {
-            LogWarn << "Failed to execute the reconstruction tool\n";
-            return true;
-        }
-
-        if (!trks->size()) {
-            LogInfo << "No track reconstructed\n";
-            return true;
-        } */
-
         LogInfo << "Is possibly CD muon: " << is_possibly_cd_muon << ", is possibly WP muon: " << is_possibly_wp_muon << '\n';
 
         if (is_possibly_cd_muon) {
+            RecTrks* trks = new RecTrks();
+            if (!m_recTool->reconstruct(trks)) {
+                LogWarn << "Could not reconstruct the event with reconstruction tool\n";
+                trks->addTrk(TVector3(0.0, 0.0, 20000.0), TVector3(0.0, 0.0, -20000.0), 0.0, 0.0, 0.0, -1.0, 1, true, false, false);
+            }
+
             JM::CdTrackRecHeader* cd_hdr = new JM::CdTrackRecHeader();
             JM::CdTrackRecEvt* cd_evt = new JM::CdTrackRecEvt();
 
-            JM::RecTrack* trk = new JM::RecTrack(
-                CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
-                CLHEP::HepLorentzVector(0.0, 0.0, -20000.0, 0.0)
-            );
-            trk->setQuality(1.0f);
-            trk->setPESum(1.0f);
+            TVector3 ipos, opos;
+            double itime, otime;
+            CLHEP::HepLorentzVector ilvec, olvec;
+            bool cd_used = false, wp_used = false, tt_used = false;
 
-            cd_evt->addTrack(trk);
+            for (int i = 0; i < trks->size(); ++i) {
+                cd_used = trks->isCdUsed(i);
+                wp_used = trks->isWpUsed(i);
+                tt_used = trks->isTtUsed(i);
+                ipos = trks->getStart(i);
+                opos = trks->getEnd(i);
+                itime = trks->getITime(i);
+                otime = trks->getOTime(i);
+                ilvec = CLHEP::HepLorentzVector(ipos.x(), ipos.y(), ipos.z(), itime);
+                olvec = CLHEP::HepLorentzVector(opos.x(), opos.y(), opos.z(), otime);
+
+                JM::RecTrack* trk = new JM::RecTrack(ilvec, olvec);
+                trk->setQuality(trks->getQuality(i));
+                trk->setPESum(trks->getNPE(i));
+                cd_evt->addTrack(trk);
+            }
             cd_hdr->setEvent(cd_evt);
             JM::addHeaderObject(nav, cd_hdr);
         }
         else if (is_possibly_wp_muon) {
+            RecTrks* trks = new RecTrks();
+            if (!m_classifyTool->reconstruct(trks)) {
+                LogWarn << "Could not classify the event with classification tool\n";
+                trks->addTrk(TVector3(0.0, 0.0, 20000.0), TVector3(0.0, 0.0, -20000.0), 0.0, 0.0, 0.0, -1.0, 2, false, true, false);
+            }
+
             JM::WpRecHeader* wp_hdr = new JM::WpRecHeader();
             JM::WpRecEvt* wp_evt = new JM::WpRecEvt();
 
-            JM::RecTrack* trk = new JM::RecTrack(
-                CLHEP::HepLorentzVector(0.0, 0.0, 20000.0, 0.0),
-                CLHEP::HepLorentzVector(0.0, 0.0, -20000.0, 0.0)
-            );
-            trk->setQuality(1.0f);
-            trk->setPESum(1.0f);
+            TVector3 ipos, opos;
+            double itime, otime;
+            CLHEP::HepLorentzVector ilvec, olvec;
+            bool cd_used = false, wp_used = false, tt_used = false;
+            for (int i = 0; i < trks->size(); ++i) {
+                cd_used = trks->isCdUsed(i);
+                wp_used = trks->isWpUsed(i);
+                tt_used = trks->isTtUsed(i);
+                ipos = trks->getStart(i);
+                opos = trks->getEnd(i);
+                itime = trks->getITime(i);
+                otime = trks->getOTime(i);
+                ilvec = CLHEP::HepLorentzVector(ipos.x(), ipos.y(), ipos.z(), itime);
+                olvec = CLHEP::HepLorentzVector(opos.x(), opos.y(), opos.z(), otime);
 
-            wp_evt->addTrack(trk);
+                JM::RecTrack* trk = new JM::RecTrack(ilvec, olvec);
+                trk->setQuality(trks->getQuality(i));
+                trk->setPESum(trks->getNPE(i));
+                wp_evt->addTrack(trk);
+            }
             wp_hdr->setEvent(wp_evt);
             JM::addHeaderObject(nav, wp_hdr);
         }
-    
+
+        if (m_ttRecoFile.find(ts)) {
+            if (m_ttRecoFile.ntracks > 100) {
+                LogWarn << "More than 100 tracks reconstructed by the TT!\n";
+            }
+
+            JM::TtRecHeader* tt_hdr = new JM::TtRecHeader();
+            JM::TtRecEvt* tt_evt = new JM::TtRecEvt();
+            
+            for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 100); ++k) {
+                if (m_ttRecoFile.npts[k] < 3) continue;
+                float coeff[6] = {
+                    static_cast<float>(m_ttRecoFile.coeff0[k]),
+                    static_cast<float>(m_ttRecoFile.coeff1[k]),
+                    static_cast<float>(m_ttRecoFile.coeff2[k]),
+                    static_cast<float>(m_ttRecoFile.coeff3[k]),
+                    static_cast<float>(m_ttRecoFile.coeff4[k]),
+                    static_cast<float>(m_ttRecoFile.coeff5[k])
+                };
+                tt_evt->addTrack(m_ttRecoFile.npts[k], coeff, static_cast<float>(m_ttRecoFile.chi2[k]));
+            }
+            tt_hdr->setEvent(tt_evt);
+            JM::addHeaderObject(nav, tt_hdr);
+        }
     }
 
     else {
         if (!m_contextTracker.isTarget(m_iptSvc)) return true;
+        if (m_iEvt == 1ul) {
+            m_targetIsFirst = true;
+            m_targetFirstTs = ts;
+        } 
+        if (m_targetIsFirst) {
+            TimeStamp ts_diff = ts - m_targetFirstTs;
+            if (ts_diff <= TimeStamp{0, 2000000}) return true;
+        }
         for (std::shared_ptr<Analysis>& analysis : m_analyses) {
             analysis->process(m_buf);
         }
@@ -322,7 +408,7 @@ bool AnalysisGroupC::execute() {
         evt.load(nav);
         if (!evt.tracks.empty()) {
             TimeStamp muveto_ts{m_muveto_sec, m_muveto_nsec};
-            muveto_ts.Add(TimeStamp{0, 2000000});
+            muveto_ts.Add(TimeStamp{0, 5000000});
             m_muveto_sec = muveto_ts.GetSec();
             m_muveto_nsec = muveto_ts.GetNanoSec();
         }

@@ -27,6 +27,7 @@ private:
 
     void loadCdTrack(JM::EvtNavigator* nav);
     void loadWpTrack(JM::EvtNavigator* nav);
+    void loadTtTrack(JM::EvtNavigator* nav);
     void loadCdVertex(JM::EvtNavigator* nav);
     void loadTrack(const JM::RecTrack* trk, const track::loc& det);
 

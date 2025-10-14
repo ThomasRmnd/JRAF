@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <TChain.h>
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
@@ -57,6 +58,59 @@ struct ContextFileTracker {
 
 };
 
+struct TtRecoFile {
+
+    std::string filename;
+    std::string treename = "TT";
+    TChain* chain = nullptr;
+    int cur_idx = 0;
+    Int_t ntracks;
+    TTimeStamp* ts = nullptr;
+    Int_t npts[100];
+    Double_t coeff0[100], coeff1[100], coeff2[100], coeff3[100], coeff4[100], coeff5[100];
+    Double_t chi2[100];
+
+    bool init() {
+        chain = new TChain(treename.c_str());
+        if (!chain) {
+            LogError << "Cannot create chain with name " << treename << '\n';
+            return false;
+        }
+        chain->Add(filename.c_str());
+
+        chain->SetBranchAddress("NTracks", &ntracks);
+        chain->SetBranchAddress("NPoints", &npts);
+        chain->SetBranchAddress("start_TS", &ts);
+        chain->SetBranchAddress("Coeff0", &coeff0);
+        chain->SetBranchAddress("Coeff1", &coeff1);
+        chain->SetBranchAddress("Coeff2", &coeff2);
+        chain->SetBranchAddress("Coeff3", &coeff3);
+        chain->SetBranchAddress("Coeff4", &coeff4);
+        chain->SetBranchAddress("Coeff5", &coeff5);
+        chain->SetBranchAddress("Chi2", &chi2);
+
+        return true;
+    }
+
+    bool find(const TimeStamp& ts_) {
+        long nentries = chain->GetEntries();
+        TimeStamp lower_bound = ts_ - TimeStamp{0, 1000};
+        TimeStamp upper_bound = ts_;
+        upper_bound.Add(TimeStamp{0, 1000});
+        for (; cur_idx < nentries; ++cur_idx) {
+            chain->GetEntry(cur_idx);
+            
+            TimeStamp cur_ts{ts->GetTimeSpec()};
+            if (cur_ts < lower_bound) continue;
+            else if (upper_bound < cur_ts) break;
+
+            return true;
+        }
+        return false;
+    }
+
+};
+
 class AnalysisGroupC : public AlgBase {
 
 public:
@@ -82,35 +136,34 @@ private:
     IPMTParamSvc* m_pmtSvc;
     RootInputSvc* m_iptSvc;
 
-    // Loader
-
-    std::shared_ptr<Loader> m_loader;
-
-    // Reconstruction tool
-
-    std::string m_recToolName; 
-    IRecMuonTool* m_recTool; 
-
-    Params m_params; // set of parameters' key/value
-    PmtTable m_pmtTable;
-
     // Properties
 
-    double m_sigmaPmt20inch;
     double m_sigmaPmt3inch;
+    double m_sigmaPmt20inch;
     double m_sigmaPmtTt;
-
-    bool m_flagUse20inch;
     bool m_flagUse3inch;
+    bool m_flagUse20inch;
     int m_chosenDetectors;
 
+    // Reconstruction
+
+    std::string m_recToolName;
+	IRecMuonTool* m_recTool;
+    std::unique_ptr<Loader> m_loader;
     bool m_useJointLoader;
     std::pair<double, double> m_loaderTimeWindow;
+    PmtTable m_pmtTable;
+    Params m_params;
+
+    std::string m_classifyToolName;
+    IRecMuonTool* m_classifyTool;
+    std::unique_ptr<Loader> m_classifyLoader;
+    PmtTable m_classifyPmtTable;
+    Params m_classifyParams;
 
     // Muon selection variable
 
     bool m_reconstruct_muon_mode;
-    bool m_first_reconstruction_file;
     double m_cd_muon_totq_thold = 30000.0;
     double m_wp_muon_totq_thold = 400.0;
     TimeStamp m_cd_afterpulse_thold{0, 50000};
@@ -133,8 +186,11 @@ private:
     double m_fiducial_radius = 17200.0;
     double m_upper_height = 11000.0;
     double m_xyradius_thold = 3000.0;
-
+    
+    TtRecoFile m_ttRecoFile;
     ContextFileTracker m_contextTracker;
+    bool m_targetIsFirst;
+    TimeStamp m_targetFirstTs;
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 
     // Output file

@@ -118,6 +118,11 @@ def analyze_daqtree(filename):
         muveto_nsec = tree["muveto_nsec"].array(library="np")
 
         daq_ts = daq_sec.astype(np.float64) + daq_nsec * 1e-9
+
+        plt.figure()
+        plt.hist(daq_ts)
+        plt.show()
+
         muveto_ts = muveto_sec.astype(np.float64) + muveto_nsec * 1e-9
 
         daq_sum = daq_ts.sum()
@@ -189,6 +194,12 @@ def rho_d_thomas(ana):
 
 def z_d_thomas(ana):
     return ana.get("posz_d")
+
+def r_p_thomas(ana):
+    return np.sqrt(ana.get("posx_p")**2 + ana.get("posy_p")**2 + ana.get("posz_p")**2)
+
+def r_d_thomas(ana):
+    return np.sqrt(ana.get("posx_d")**2 + ana.get("posy_d")**2 + ana.get("posz_d")**2)
     
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, help="Input filepath")
@@ -222,7 +233,9 @@ analyzer_configs = {
             "rho_p": rho_p_thomas,
             "rho_d": rho_d_thomas,
             "z_p": z_p_thomas,
-            "z_d": z_d_thomas
+            "z_d": z_d_thomas,
+            "r_p": r_p_thomas,
+            "r_d": r_d_thomas
         }
     },
     "Vanessa": {
@@ -399,4 +412,47 @@ def plot_geometry_and_time(analyzers):
 plot_group_comparison(analyzers, ["e_p", "e_d", "totq_p", "totq_d"])
 plot_geometry_and_time(analyzers)
 
+mask_FV = (analyzers[0].get("r_p") < 16500.0) & (analyzers[0].get("r_d") < 16500.0)
+
+plt.figure()
+plt.hist(analyzers[0].get("totq_p")[np.logical_not(mask_FV)], bins=50)
+
+plt.figure()
+plt.hist2d(analyzers[0].get("dt") * 1000.0, analyzers[0].get("r_p")**3, bins=(50, 50), cmin=1)
+
+plt.figure()
+plt.hist2d(analyzers[0].get("dt") * 1000.0, analyzers[0].get("e_p"), bins=(50, 50), cmin=1)
+
+plt.figure()
+plt.hist2d(analyzers[0].get("dt")[mask_FV] * 1000.0, analyzers[0].get("e_p")[mask_FV], bins=(50, 50), cmin=1)
+
+plt.figure()
+plt.hist2d(analyzers[0].get("dt") * 1000.0, analyzers[0].get("e_d"), bins=(50, 50), cmin=1)
+
+plt.figure()
+plt.hist2d(analyzers[0].get("dt")[mask_FV] * 1000.0, analyzers[0].get("e_d")[mask_FV], bins=(50, 50), cmin=1)
+
+plt.figure()
+plt.hist2d(analyzers[0].get("e_p"), analyzers[0].get("r_p")**3, bins=(50, 50), cmin=1)
+
+plt.figure()
+dt_vals = analyzers[0].get("dt") * 1000.0  # ms
+dt_vals_FV = dt_vals[mask_FV]
+
+for dt_vals__ in [dt_vals, dt_vals_FV]:
+    counts, edges = np.histogram(dt_vals__, bins=np.linspace(0.0, 2.0, 51)) # density=True
+    bin_centers = 0.5 * (edges[:-1] + edges[1:])
+
+    n_raw, _ = np.histogram(dt_vals__, bins=np.linspace(0.0, 2.0, 51))
+    total = np.sum(n_raw)
+    bin_width = np.diff(edges)
+    yerr = np.sqrt(n_raw) / (total * bin_width)
+
+    plt.errorbar(bin_centers, counts, yerr=yerr, fmt='o')
+
+plt.xlabel(r"$\Delta t$ (ms)")
+plt.ylabel(r"Normalized counts (1/ms)")
+plt.grid(True, alpha=0.4)
+
+plt.tight_layout()
 plt.show()

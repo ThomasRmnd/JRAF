@@ -1,4 +1,4 @@
-#include "analysis/FirstCrossCheckAnalysis.hpp"
+#include "analysis/IBDWithCylindricalCut.hpp"
 
 #include <algorithm>
 
@@ -10,18 +10,19 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name) : 
-    Analysis{name} 
+IBDWithCylindricalCut::IBDWithCylindricalCut(const std::string& name, double cyl_radius) : 
+    Analysis{name}, 
+    m_cyl_radius{cyl_radius} 
 {}
 
-bool FirstCrossCheckAnalysis::initialize() {
+bool IBDWithCylindricalCut::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
     return true; 
 }
 
-void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
+void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -43,10 +44,31 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         }
     }
 
-    std::vector<WaterPoolMuonVetoSelection> mu_cut;
+    std::vector<WaterPoolMuonVetoSelection> mu_wp_bundle_cut;
+    std::vector<BasicMuonVetoSelection> mu_cosmo_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         if (it->empty()) continue;
-        mu_cut.emplace_back(it->front(), TimeStamp{0, 5000000});
+        std::size_t nb_trks_cd = 0ul;
+        for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
+            // std::cout << "[DEBUG] Neutron veto from starting at " << jt->ts << '\n';
+            if (jt->det == track::loc::cd) ++nb_trks_cd;
+        }
+        if (nb_trks_cd > 1) {
+            mu_wp_bundle_cut.emplace_back(*it->begin(), TimeStamp{0, 500000000});
+            // std::cout << "[DEBUG] Bundle veto from starting at " << it->begin()->ts << '\n';
+            continue;
+        }
+        for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
+            mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 5000000});
+            if (jt->det == track::loc::cd) {
+                if (jt->quality == -1.0f) { // track not reconstructed
+                    mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 500000000});
+                }
+                else {
+                    mu_cosmo_cut.emplace_back(*jt, 3000.0, TimeStamp{0, 0}, TimeStamp{0, 1200000000});
+                }
+            }
+        }
     }
 
     FiducialVolumeSelection fiducial_vol_cut{17200.0};
@@ -74,13 +96,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         LogInfo << "Prompt in energy range\n";
 
         bool is_vetoed = false;
-        for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+        for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             break;
         }
         if (is_vetoed) continue;
-        LogInfo << "Prompt is not vetoed\n";
+        LogInfo << "Prompt is not vetoed by muon neutron cut\n";
+
+        is_vetoed = false;
+        for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+            if (!cut.isIn(prompt)) continue;
+            is_vetoed = true;
+            break;
+        }
+        if (is_vetoed) continue;
+        LogInfo << "Prompt is not vetoed by muon cosmogenic cut\n";
 
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
@@ -92,13 +123,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
             ) continue;
             if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
+            
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+            for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
                 if (!cut.isIn(cand)) continue;
                 is_vetoed = true;
                 break;
             }
             if (is_vetoed) continue;
+            is_vetoed = false;
+            for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                if (!cut.isIn(cand)) continue;
+                is_vetoed = true;
+                break;
+            }
+            if (is_vetoed) continue;
+            
             prompt_has_multi = true;
             break;
         }
@@ -127,13 +167,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             LogInfo << "Delayed is correlated in space\n";
 
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+            for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
                 if (!cut.isIn(delayed)) continue;
                 is_vetoed = true;
                 break;
             }
             if (is_vetoed) continue;
-            LogInfo << "Delayed is not vetoed\n";
+            LogInfo << "Delayed is not vetoed by muon neutron cut\n";
+
+            is_vetoed = false;
+            for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                if (!cut.isIn(delayed)) continue;
+                is_vetoed = true;
+                break;
+            }
+            if (is_vetoed) continue;
+            LogInfo << "Delayed is not vetoed by muon cosmogenic cut\n";
 
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
@@ -145,13 +194,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                     (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
                 ) continue;
                 if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
+                
                 is_vetoed = false;
-                for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+                for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
                     if (!cut.isIn(cand)) continue;
                     is_vetoed = true;
                     break;
                 }
                 if (is_vetoed) continue;
+                is_vetoed = false;
+                for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                    if (!cut.isIn(cand)) continue;
+                    is_vetoed = true;
+                    break;
+                }
+                if (is_vetoed) continue;
+
                 if (cand.ts < delayed.ts) {
                     delayed_has_multi = true;
                     LogInfo << "Delayed is in the in-between multiplicity cut by " << cand.ts << '\n';

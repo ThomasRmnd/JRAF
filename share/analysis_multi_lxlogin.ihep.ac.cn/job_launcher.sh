@@ -116,11 +116,9 @@ for r in "${ranges[@]}"; do
         -argu "$start $end $run_number $list_base $output_path $extra_args" \
         -cpu 1 \
         -m 4096 \
+        -wt short \
         -o "/dev/null" \
         -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.err" \
         -name "agrpc_${run_number}_${start}_${end}_batch"
-        #   -wt short \
-        #   -o/e "/dev/null"
         #   -o "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.log" \
-        #   -e "/scratchfs/juno/traymond/agrpc_${run_number}_${start}_${end}.err" \
 done

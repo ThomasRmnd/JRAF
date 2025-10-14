@@ -6,7 +6,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, help="Input filepath")
 parser.add_argument("--input-rtraw", type=str, help="Input RTRAW filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
-parser.add_argument("--first-reconstruction-file", action="store_true", help="First reconstruction file")
 parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
 parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
 args = parser.parse_args()
@@ -76,7 +75,6 @@ alg.property("ChosenDetectors").set(3) # 1: CD, 2: WP, 4: TT
 alg.property("UseJointLoader").set(True) 
 alg.property("LoaderTimeWindow").set([-500.0, 500.0]) # ns
 
-alg.property("FirstReconstructionFile").set(args.first_reconstruction_file)
 alg.property("ReconstructMuonMode").set(True)
 
 task.setEvtMax(-1)

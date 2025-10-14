@@ -13,7 +13,8 @@ struct track {
     enum loc {
         none = 0,
         cd = 1,
-        wp = 2
+        wp = 2,
+        tt = 4
     };
 
     vec3 ipos;
@@ -21,6 +22,7 @@ struct track {
     double totpe;
     TimeStamp ts;
     loc det;
+    float quality;
 
     track(const JM::RecTrack& trk_, const TimeStamp& ts_, const loc& det_);
 
@@ -29,6 +31,24 @@ struct track {
 template<class _Char, class _Traits>
 std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& os, const track& trk) {
     return os << "ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totpe: " << trk.totpe << ", ts: " << trk.ts;
+}
+
+inline track::loc operator|(const track::loc& lhs, const track::loc& rhs) {
+    return static_cast<track::loc>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+
+inline track::loc operator&(const track::loc& lhs, const track::loc& rhs) {
+    return static_cast<track::loc>(static_cast<int>(lhs) & static_cast<int>(rhs));
+}
+
+inline track::loc operator|=(track::loc& lhs, const track::loc& rhs) {
+    lhs = lhs | rhs;
+    return lhs;
+}
+
+inline track::loc operator&=(track::loc& lhs, const track::loc& rhs) {
+    lhs = lhs & rhs;
+    return lhs;
 }
 
 #endif // ANALYSISGROUPC_EVENT_TRACK_HPP_

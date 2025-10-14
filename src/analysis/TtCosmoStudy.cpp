@@ -1,4 +1,4 @@
-#include "analysis/FirstCrossCheckAnalysis.hpp"
+#include "analysis/TtCosmoStudy.hpp"
 
 #include <algorithm>
 
@@ -10,18 +10,27 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name) : 
-    Analysis{name} 
+TtCosmoStudy::TtCosmoStudy(const std::string& name, const TimeStamp& lwr_window, const TimeStamp& upr_window) : 
+    Analysis{name}, 
+    m_lwr_window{lwr_window}, 
+    m_upr_window{upr_window} 
 {}
 
-bool FirstCrossCheckAnalysis::initialize() {
+bool TtCosmoStudy::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
+
+    m_tree->Branch("dlat_p", &dlat_p);
+    m_tree->Branch("dlat_d", &dlat_d);
+    m_tree->Branch("dt_mu2p_sec", &dt_mu2p_sec);
+    m_tree->Branch("dt_mu2d_sec", &dt_mu2d_sec);
+    m_tree->Branch("dt_mu2p_nsec", &dt_mu2p_nsec);
+    m_tree->Branch("dt_mu2d_nsec", &dt_mu2d_nsec);
     return true; 
 }
 
-void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
+void TtCosmoStudy::process(JM::NavBuffer* buf) {
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -43,10 +52,43 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         }
     }
 
-    std::vector<WaterPoolMuonVetoSelection> mu_cut;
+    std::vector<WaterPoolMuonVetoSelection> mu_wp_bundle_cut;
+    std::vector<BasicMuonVetoSelection> mu_cosmo_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         if (it->empty()) continue;
-        mu_cut.emplace_back(it->front(), TimeStamp{0, 5000000});
+        std::vector<track> cd_tracks;
+        std::vector<track> wp_tracks;
+        std::vector<track> tt_tracks;
+        for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
+            mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 5000000});
+            if (jt->det == track::loc::cd) {
+                if (jt->quality != -1.0f) cd_tracks.push_back(*jt);
+            }
+            else if (jt->det == track::loc::wp) {
+                wp_tracks.push_back(*jt);
+            }
+            else if (jt->det == track::loc::tt) {
+                tt_tracks.push_back(*jt);
+            }
+        }
+        if (cd_tracks.size() != 1ul || wp_tracks.size() != 1ul || tt_tracks.size() != 1ul) continue;
+        track cd_trk = cd_tracks.front();
+        track tt_trk = tt_tracks.front();
+        vec3 cd_dir = unit(cd_trk.fpos - cd_trk.ipos);
+        vec3 tt_dir = unit(tt_trk.fpos - tt_trk.ipos);
+        vec3 cd_mid = cd_trk.ipos - dot(cd_trk.ipos, cd_dir) * cd_dir;
+        vec3 tt_mid = tt_trk.ipos - dot(tt_trk.ipos, tt_dir) * tt_dir;
+        double angle_cdtt = angle(cd_dir, tt_dir) * 180 / M_PI;
+        double distance_cdtt = mag(cd_mid - tt_mid);
+        double clippingness = mag(cross(tt_dir, -tt_trk.ipos));
+
+        if (
+            (clippingness > 18.0 || angle_cdtt > 3.0 || distance_cdtt > 1.0) &&
+            (clippingness < 16.0 || clippingness > 18.0 || angle_cdtt > 5.0 || distance_cdtt > 1.5)
+        ) {
+            continue;
+        }
+        mu_cosmo_cut.emplace_back(cd_trk, 3000.0, m_lwr_window, m_upr_window);
     }
 
     FiducialVolumeSelection fiducial_vol_cut{17200.0};
@@ -58,7 +100,8 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     double delayed_lower_thold = 3700.0;
     double delayed_upper_thold = 6000.0;
 
-    std::vector<ibd> ibds;
+    std::vector<ibd> cosmos;
+    std::vector<track> tracks_for_cosmo;
 
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
@@ -74,13 +117,24 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         LogInfo << "Prompt in energy range\n";
 
         bool is_vetoed = false;
-        for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+        for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             break;
         }
         if (is_vetoed) continue;
-        LogInfo << "Prompt is not vetoed\n";
+        LogInfo << "Prompt is not vetoed by muon neutron cut\n";
+
+        is_vetoed = false;
+        const track* trk_cosmo = nullptr;
+        for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+            if (!cut.isIn(prompt)) continue;
+            is_vetoed = true;
+            trk_cosmo = &cut.m_trk;
+            break;
+        }
+        if (!is_vetoed) continue;
+        LogInfo << "Prompt is in cylindrical muon cosmogenic cut\n";
 
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
@@ -92,13 +146,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
             ) continue;
             if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
+            
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+            for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
                 if (!cut.isIn(cand)) continue;
                 is_vetoed = true;
                 break;
             }
             if (is_vetoed) continue;
+            is_vetoed = false;
+            for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                if (!cut.isIn(cand)) continue;
+                is_vetoed = true;
+                break;
+            }
+            if (is_vetoed) continue;
+
             prompt_has_multi = true;
             break;
         }
@@ -127,13 +190,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             LogInfo << "Delayed is correlated in space\n";
 
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+            for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
                 if (!cut.isIn(delayed)) continue;
                 is_vetoed = true;
                 break;
             }
             if (is_vetoed) continue;
-            LogInfo << "Delayed is not vetoed\n";
+            LogInfo << "Delayed is not vetoed by muon neutron cut\n";
+
+            is_vetoed = false;
+            for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                if (!cut.isIn(delayed)) continue;
+                is_vetoed = true;
+                break;
+            }
+            if (!is_vetoed) continue;
+            LogInfo << "Delayed is in cylindrical muon cosmogenic cut\n";
 
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
@@ -145,13 +217,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                     (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
                 ) continue;
                 if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
+                
                 is_vetoed = false;
-                for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+                for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
                     if (!cut.isIn(cand)) continue;
                     is_vetoed = true;
                     break;
                 }
                 if (is_vetoed) continue;
+                is_vetoed = false;
+                for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                    if (!cut.isIn(cand)) continue;
+                    is_vetoed = true;
+                    break;
+                }
+                if (is_vetoed) continue;
+
                 if (cand.ts < delayed.ts) {
                     delayed_has_multi = true;
                     LogInfo << "Delayed is in the in-between multiplicity cut by " << cand.ts << '\n';
@@ -165,12 +246,15 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             if (delayed_has_multi) continue;
             LogInfo << "Delayed has no multiplicity\n";
 
-            ibds.emplace_back(prompt, delayed);
+            cosmos.emplace_back(prompt, delayed);
+            tracks_for_cosmo.push_back(*trk_cosmo);
             LogInfo << "IBD event detected!\n";
         }
     }
 
-    for (const ibd& ibd_ : ibds) {
+    for (std::size_t k = 0ul; k < cosmos.size(); ++k) {
+        const ibd& ibd_ = cosmos[k];
+        const track& trk_ = tracks_for_cosmo[k];
         posx_p = ibd_.prompt.pos.x;
         posy_p = ibd_.prompt.pos.y;
         posz_p = ibd_.prompt.pos.z;
@@ -185,6 +269,14 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         totq_d = ibd_.delayed.totq;
         sec_d = ibd_.delayed.ts.GetSec();
         nsec_d = ibd_.delayed.ts.GetNanoSec();
+
+        vec3 trk_dir = unit(trk_.fpos - trk_.ipos);
+        dlat_p = mag(cross(trk_dir, ibd_.prompt.pos - trk_.ipos));
+        dlat_d = mag(cross(trk_dir, ibd_.delayed.pos - trk_.ipos));
+        dt_mu2p_sec = (ibd_.prompt.ts - trk_.ts).GetSec();
+        dt_mu2d_sec = (ibd_.delayed.ts - trk_.ts).GetSec();
+        dt_mu2p_nsec = (ibd_.prompt.ts - trk_.ts).GetNanoSec();
+        dt_mu2d_nsec = (ibd_.delayed.ts - trk_.ts).GetNanoSec();
         m_tree->Fill();
     }
 }

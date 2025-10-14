@@ -1,4 +1,4 @@
-#include "analysis/FirstCrossCheckAnalysis.hpp"
+#include "analysis/MultiplicityWindowCut.hpp"
 
 #include <algorithm>
 
@@ -10,18 +10,27 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name) : 
+MultiplicityWindowCut::MultiplicityWindowCut(const std::string& name) : 
     Analysis{name} 
 {}
 
-bool FirstCrossCheckAnalysis::initialize() {
+bool MultiplicityWindowCut::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
+
+    m_tree->Branch("window_type", &m_window_type);
+    m_tree->Branch("posx_m", &posx_m);
+    m_tree->Branch("posy_m", &posy_m);
+    m_tree->Branch("posz_m", &posz_m);
+    m_tree->Branch("e_m", &e_m);
+    m_tree->Branch("totq_m", &totq_m);
+    m_tree->Branch("sec_m", &sec_m);
+    m_tree->Branch("nsec_m", &nsec_m);
     return true; 
 }
 
-void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
+void MultiplicityWindowCut::process(JM::NavBuffer* buf) {
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -43,6 +52,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         }
     }
 
+
     std::vector<WaterPoolMuonVetoSelection> mu_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         if (it->empty()) continue;
@@ -59,6 +69,8 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     double delayed_upper_thold = 6000.0;
 
     std::vector<ibd> ibds;
+    std::vector<vertex> multi_vertices;
+    std::vector<unsigned char> multi_window_types;
 
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
@@ -100,9 +112,12 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             }
             if (is_vetoed) continue;
             prompt_has_multi = true;
+            multi_vertices.push_back(cand);
+            multi_window_types.push_back(0);
+            LogInfo << "An event is in the prompt multiplicity cut by " << cand.ts << '\n';
             break;
         }
-        if (prompt_has_multi) continue;
+        // if (prompt_has_multi) continue;
         LogInfo << "Prompt has no multiplicity\n";
 
         WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 5000}, TimeStamp{0, 2000000}};
@@ -154,17 +169,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 if (is_vetoed) continue;
                 if (cand.ts < delayed.ts) {
                     delayed_has_multi = true;
-                    LogInfo << "Delayed is in the in-between multiplicity cut by " << cand.ts << '\n';
+                    multi_vertices.push_back(cand);
+                    multi_window_types.push_back(1);
+                    LogInfo << "An event is in the in-between multiplicity cut by " << cand.ts << '\n';
                     break; // in-between p-d multiplicity
                 }
                 if (!multi_delayed_time.isIn(cand)) continue;
                 delayed_has_multi = true;
-                LogInfo << "Delayed is in the after multiplicity cut by " << cand.ts << '\n';
+                multi_vertices.push_back(cand);
+                multi_window_types.push_back(2);
+                LogInfo << "An event is in the after multiplicity cut by " << cand.ts << '\n';
                 break; // after p-d multiplicity
             }
             if (delayed_has_multi) continue;
             LogInfo << "Delayed has no multiplicity\n";
 
+            if (!prompt_has_multi || !delayed_has_multi) continue;
             ibds.emplace_back(prompt, delayed);
             LogInfo << "IBD event detected!\n";
         }
@@ -185,6 +205,17 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         totq_d = ibd_.delayed.totq;
         sec_d = ibd_.delayed.ts.GetSec();
         nsec_d = ibd_.delayed.ts.GetNanoSec();
-        m_tree->Fill();
+        for (std::size_t k = 0; k < multi_vertices.size(); ++k) {
+            const vertex& v = multi_vertices[k];
+            m_window_type = multi_window_types[k];
+            posx_m = v.pos.x;
+            posy_m = v.pos.y;
+            posz_m = v.pos.z;
+            e_m = v.energy;
+            totq_m = v.totq;
+            sec_m = v.ts.GetSec();
+            nsec_m = v.ts.GetNanoSec();
+            m_tree->Fill();
+        }
     }
 }

@@ -74,22 +74,11 @@ echo "TUTORIALROOT = ${TUTORIALROOT}"
 
 echo "Running run_muon.py for file: $local_input_esd_file (FILE_NUMBER=$FILE_NUMBER, PROC_ID=$PROC_ID)"
 
-if (( PROC_ID == 0 )); then
-    echo "Using --first-reconstruction-file flag"
-    python run_muon.py \
-        --input "$local_input_esd_file" \
-        --input-rtraw "$local_input_rtraw_file" \
-        --output "$local_output_file" \
-        --first-reconstruction-file \
-        "${EXTRA_ARGS[@]}"
-else
-    echo "Not using --first-reconstruction-file flag"
-    python run_muon.py \
-        --input "$local_input_esd_file" \
-        --input-rtraw "$local_input_rtraw_file" \
-        --output "$local_output_file" \
-        "${EXTRA_ARGS[@]}"
-fi
+python run_muon.py \
+    --input "$local_input_esd_file" \
+    --input-rtraw "$local_input_rtraw_file" \
+    --output "$local_output_file" \
+    "${EXTRA_ARGS[@]}"
 
 echo "Copying result to $output_file"
 cp "$local_output_file" "$output_file"
