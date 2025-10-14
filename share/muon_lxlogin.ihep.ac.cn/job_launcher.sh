@@ -102,11 +102,10 @@ ranges+=("$range_start-$prev_num")
 
 extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
 
-# if [[ -z "$property_file" ]]; then
-#     property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
-# fi
-
-# extra_args="--property-file $property_file"
+if [[ -z "$property_file" ]]; then
+    property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
+fi
+extra_args+=" --property-file $property_file"
 
 mkdir -p "$output_path"
 
