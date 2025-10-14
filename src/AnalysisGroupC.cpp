@@ -355,28 +355,40 @@ bool AnalysisGroupC::execute() {
             JM::addHeaderObject(nav, wp_hdr);
         }
 
-        if (m_ttRecoFile.find(ts) && m_ttRecoFile.ntracks >= 1) {
+        if (m_ttRecoFile.find(ts)) {
             if (m_ttRecoFile.ntracks > 100) {
                 LogWarn << "More than 100 tracks reconstructed by the TT!\n";
             }
 
-            JM::TtRecHeader* tt_hdr = new JM::TtRecHeader();
-            JM::TtRecEvt* tt_evt = new JM::TtRecEvt();
-                
-            for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 100); ++k) {
-                if (m_ttRecoFile.npts[k] < 3) continue;
-                float coeff[6] = {
-                    static_cast<float>(m_ttRecoFile.coeff0[k]),
-                    static_cast<float>(m_ttRecoFile.coeff1[k]),
-                    static_cast<float>(m_ttRecoFile.coeff2[k]),
-                    static_cast<float>(m_ttRecoFile.coeff3[k]),
-                    static_cast<float>(m_ttRecoFile.coeff4[k]),
-                    static_cast<float>(m_ttRecoFile.coeff5[k])
-                };
-                tt_evt->addTrack(m_ttRecoFile.npts[k], coeff, static_cast<float>(m_ttRecoFile.chi2[k]));
+            bool is_good_tt_reco = false;
+            if (m_ttRecoFile.ntracks >= 1) {
+                for (Int_t k = 0; k < m_ttRecoFile.ntracks; ++k) {
+                    if (m_ttRecoFile.npts[k] >= 3) {
+                        is_good_tt_reco = true;
+                        break;
+                    }
+                }
             }
-            tt_hdr->setEvent(tt_evt);
-            JM::addHeaderObject(nav, tt_hdr);
+
+            if (is_good_tt_reco) {
+                JM::TtRecHeader* tt_hdr = new JM::TtRecHeader();
+                JM::TtRecEvt* tt_evt = new JM::TtRecEvt();
+                    
+                for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 100); ++k) {
+                    if (m_ttRecoFile.npts[k] < 3) continue;
+                    float coeff[6] = {
+                        static_cast<float>(m_ttRecoFile.coeff0[k]),
+                        static_cast<float>(m_ttRecoFile.coeff1[k]),
+                        static_cast<float>(m_ttRecoFile.coeff2[k]),
+                        static_cast<float>(m_ttRecoFile.coeff3[k]),
+                        static_cast<float>(m_ttRecoFile.coeff4[k]),
+                        static_cast<float>(m_ttRecoFile.coeff5[k])
+                    };
+                    tt_evt->addTrack(m_ttRecoFile.npts[k], coeff, static_cast<float>(m_ttRecoFile.chi2[k]));
+                }
+                tt_hdr->setEvent(tt_evt);
+                JM::addHeaderObject(nav, tt_hdr);
+            }
         }
     }
 
