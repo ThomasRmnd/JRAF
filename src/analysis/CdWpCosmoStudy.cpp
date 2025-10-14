@@ -1,4 +1,4 @@
-#include "analysis/IBDWithCylindricalCut.hpp"
+#include "analysis/CdWpCosmoStudy.hpp"
 
 #include <algorithm>
 
@@ -10,19 +10,27 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-IBDWithCylindricalCut::IBDWithCylindricalCut(const std::string& name, double cyl_radius) : 
+CdWpCosmoStudy::CdWpCosmoStudy(const std::string& name, const TimeStamp& lwr_window, const TimeStamp& upr_window) : 
     Analysis{name}, 
-    m_cyl_radius{cyl_radius} 
+    m_lwr_window{lwr_window}, 
+    m_upr_window{upr_window} 
 {}
 
-bool IBDWithCylindricalCut::initialize() {
+bool CdWpCosmoStudy::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
+
+    m_tree->Branch("dlat_p", &dlat_p);
+    m_tree->Branch("dlat_d", &dlat_d);
+    m_tree->Branch("dt_mu2p_sec", &dt_mu2p_sec);
+    m_tree->Branch("dt_mu2d_sec", &dt_mu2d_sec);
+    m_tree->Branch("dt_mu2p_nsec", &dt_mu2p_nsec);
+    m_tree->Branch("dt_mu2d_nsec", &dt_mu2d_nsec);
     return true; 
 }
 
-void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
+void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -65,7 +73,7 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
             if (jt->det != track::loc::cd) continue;
             if (jt->quality != -1.0f) {
                 cd_tracks.push_back(*jt);
-                mu_cosmo_cut.emplace_back(*jt, 3000.0, TimeStamp{0, 0}, TimeStamp{0, 1200000000});
+                mu_cosmo_cut.emplace_back(*jt, 3000.0, m_lwr_window, m_upr_window);
             }
             else {
                 mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 500000000});
@@ -85,7 +93,8 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
     double delayed_lower_thold = 3700.0;
     double delayed_upper_thold = 6000.0;
 
-    std::vector<ibd> ibds;
+    std::vector<ibd> cosmos;
+    std::vector<track> tracks_for_cosmo;
 
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
@@ -110,13 +119,15 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
         LogInfo << "Prompt is not vetoed by muon neutron cut\n";
 
         is_vetoed = false;
+        const track* trk_cosmo = nullptr;
         for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
+            trk_cosmo = &cut.m_trk;
             break;
         }
-        if (is_vetoed) continue;
-        LogInfo << "Prompt is not vetoed by muon cosmogenic cut\n";
+        if (!is_vetoed) continue;
+        LogInfo << "Prompt is in cylindrical muon cosmogenic cut\n";
 
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
@@ -143,7 +154,7 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
                 break;
             }
             if (is_vetoed) continue;
-            
+
             prompt_has_multi = true;
             break;
         }
@@ -186,8 +197,8 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
                 is_vetoed = true;
                 break;
             }
-            if (is_vetoed) continue;
-            LogInfo << "Delayed is not vetoed by muon cosmogenic cut\n";
+            if (!is_vetoed) continue;
+            LogInfo << "Delayed is in cylindrical muon cosmogenic cut\n";
 
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
@@ -228,12 +239,15 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
             if (delayed_has_multi) continue;
             LogInfo << "Delayed has no multiplicity\n";
 
-            ibds.emplace_back(prompt, delayed);
+            cosmos.emplace_back(prompt, delayed);
+            tracks_for_cosmo.push_back(*trk_cosmo);
             LogInfo << "IBD event detected!\n";
         }
     }
 
-    for (const ibd& ibd_ : ibds) {
+    for (std::size_t k = 0ul; k < cosmos.size(); ++k) {
+        const ibd& ibd_ = cosmos[k];
+        const track& trk_ = tracks_for_cosmo[k];
         posx_p = ibd_.prompt.pos.x;
         posy_p = ibd_.prompt.pos.y;
         posz_p = ibd_.prompt.pos.z;
@@ -248,6 +262,14 @@ void IBDWithCylindricalCut::process(JM::NavBuffer* buf) {
         totq_d = ibd_.delayed.totq;
         sec_d = ibd_.delayed.ts.GetSec();
         nsec_d = ibd_.delayed.ts.GetNanoSec();
+
+        vec3 trk_dir = unit(trk_.fpos - trk_.ipos);
+        dlat_p = mag(cross(trk_dir, ibd_.prompt.pos - trk_.ipos));
+        dlat_d = mag(cross(trk_dir, ibd_.delayed.pos - trk_.ipos));
+        dt_mu2p_sec = (ibd_.prompt.ts - trk_.ts).GetSec();
+        dt_mu2d_sec = (ibd_.delayed.ts - trk_.ts).GetSec();
+        dt_mu2p_nsec = (ibd_.prompt.ts - trk_.ts).GetNanoSec();
+        dt_mu2d_nsec = (ibd_.delayed.ts - trk_.ts).GetNanoSec();
         m_tree->Fill();
     }
 }

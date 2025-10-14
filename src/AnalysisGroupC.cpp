@@ -16,6 +16,7 @@
 #include "Event/WpTriggerHeader.h"
 #include "EvtNavigator/EvtNavHelper.h"
 
+#include "analysis/CdWpCosmoStudy.hpp"
 #include "analysis/FirstCrossCheckAnalysis.hpp"
 #include "analysis/IBDWithCylindricalCut.hpp"
 #include "analysis/MultiplicityWindowCut.hpp"
@@ -202,10 +203,12 @@ bool AnalysisGroupC::initAnalyses() {
 
     m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis"));
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m", 3000.0));
-    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m", 3000.0));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut"));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;
     }

@@ -5,7 +5,11 @@ MODULE
 FILES
 
     src/analysis/Analysis.cpp
+    src/analysis/CdWpCosmoStudy.cpp
     src/analysis/FirstCrossCheckAnalysis.cpp
+    src/analysis/IBDWithCylindricalCut.cpp
+    src/analysis/MultiplicityWindowCut.cpp
+    src/analysis/TtCosmoStudy.cpp
 
     src/event/Event.cpp
     src/event/IBD.cpp
@@ -19,6 +23,7 @@ FILES
     src/loader/cd/CdRangeFiller.cpp
     src/loader/cd/CdSRangeFiller.cpp
     src/loader/tt/TtRangeFiller.cpp
+    src/loader/wp/AkiraWpRangeFiller.cpp
     src/loader/wp/WpRangeFiller.cpp
 
     src/selection/Energy.cpp
