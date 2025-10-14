@@ -135,9 +135,9 @@ bool AnalysisGroupC::initLoader() {
     // }
 
     if (m_useJointLoader)
-        m_loader = std::make_unique<JointLoader>("JointLoader", &m_rgSvc, &m_pmtTable, m_loaderTimeWindow, cd_filler, wp_filler, tt_filler);
+        m_loader = std::make_unique<JointLoader>("JointLoader", &m_pmtTable, m_loaderTimeWindow, cd_filler, wp_filler, tt_filler, m_rgSvc);
     else
-        m_loader = std::make_unique<BasicLoader>("BasicLoader", &m_rgSvc, &m_pmtTable, cd_filler, wp_filler, tt_filler);
+        m_loader = std::make_unique<BasicLoader>("BasicLoader", &m_pmtTable, cd_filler, wp_filler, tt_filler, m_rgSvc);
 
     if (!m_loader) {
         LogError << "Failed to create loader." << '\n';
@@ -303,12 +303,8 @@ bool AnalysisGroupC::execute() {
             TVector3 ipos, opos;
             double itime, otime;
             CLHEP::HepLorentzVector ilvec, olvec;
-            bool cd_used = false, wp_used = false, tt_used = false;
 
             for (int i = 0; i < trks->size(); ++i) {
-                cd_used = trks->isCdUsed(i);
-                wp_used = trks->isWpUsed(i);
-                tt_used = trks->isTtUsed(i);
                 ipos = trks->getStart(i);
                 opos = trks->getEnd(i);
                 itime = trks->getITime(i);
@@ -337,11 +333,8 @@ bool AnalysisGroupC::execute() {
             TVector3 ipos, opos;
             double itime, otime;
             CLHEP::HepLorentzVector ilvec, olvec;
-            bool cd_used = false, wp_used = false, tt_used = false;
+
             for (int i = 0; i < trks->size(); ++i) {
-                cd_used = trks->isCdUsed(i);
-                wp_used = trks->isWpUsed(i);
-                tt_used = trks->isTtUsed(i);
                 ipos = trks->getStart(i);
                 opos = trks->getEnd(i);
                 itime = trks->getITime(i);
