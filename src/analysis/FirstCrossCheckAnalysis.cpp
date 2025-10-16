@@ -26,6 +26,9 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
     std::vector<vertex> aft_vertices;
+    tracks.reserve(buf->size());
+    bef_vertices.reserve(buf->size() / 2);
+    aft_vertices.reserve(buf->size() / 2);
     for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
         JM::EvtNavigator* nav = it->get();
         Event evt;
@@ -62,16 +65,22 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
 
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
-        if (!fiducial_vol_cut.isIn(prompt)) continue;
-        LogInfo << "Prompt in fiducial volume\n";
+        if (!fiducial_vol_cut.isIn(prompt)) {
+            LogInfo << "Prompt not in fiducial volume\n";
+            continue;
+        }
         if (
             (upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)) ||
             (lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt))
-        ) continue;
-        LogInfo << "Prompt is not a chimney\n";
+        ) {
+            LogInfo << "Prompt is a chimney\n";
+            continue;
+        }
 
-        if (prompt.totq < prompt_lower_thold || prompt_upper_thold < prompt.totq) continue;
-        LogInfo << "Prompt in energy range\n";
+        if (prompt.totq < prompt_lower_thold || prompt_upper_thold < prompt.totq) {
+            LogInfo << "Prompt not in energy range\n";
+            continue;
+        }
 
         bool is_vetoed = false;
         for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
@@ -79,8 +88,10 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             is_vetoed = true;
             break;
         }
-        if (is_vetoed) continue;
-        LogInfo << "Prompt is not vetoed\n";
+        if (is_vetoed) {
+            LogInfo << "Prompt is muon vetoed\n";
+            continue;
+        }
 
         WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
@@ -102,29 +113,41 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             prompt_has_multi = true;
             break;
         }
-        if (prompt_has_multi) continue;
-        LogInfo << "Prompt has no multiplicity\n";
+        if (prompt_has_multi) {
+            LogInfo << "Prompt has multiplicity\n";
+            continue;
+        }
 
         WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 5000}, TimeStamp{0, 2000000}};
         SphereVolumeSelection distance_correlation_cut{prompt.pos, 1500.0};
 
         for (const vertex& delayed : aft_vertices) {
             LogInfo << delayed << '\n';
-            if (!fiducial_vol_cut.isIn(delayed)) continue;
-            LogInfo << "Delayed in fiducial volume\n";
+            if (!fiducial_vol_cut.isIn(delayed)) {
+                LogInfo << "Delayed not in fiducial volume\n";
+                continue;
+            }
             if (
                 (upper_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed)) ||
                 (lower_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed))
-            ) continue;
-            LogInfo << "Delayed is not a chimney\n";
+            ) {
+                LogInfo << "Delayed is a chimney\n";
+                continue;
+            }
 
-            if (delayed.totq < delayed_lower_thold || delayed_upper_thold < delayed.totq) continue;
-            LogInfo << "Delayed in energy range\n";
+            if (delayed.totq < delayed_lower_thold || delayed_upper_thold < delayed.totq) {
+                LogInfo << "Delayed not in energy range\n";
+                continue;
+            }
 
-            if (!correlation_time_cut.isIn(delayed)) continue;
-            LogInfo << "Delayed is correlated in time\n";
-            if (!distance_correlation_cut.isIn(delayed)) continue;
-            LogInfo << "Delayed is correlated in space\n";
+            if (!correlation_time_cut.isIn(delayed)) {
+                LogInfo << "Delayed not correlated in time\n";
+                continue;
+            }
+            if (!distance_correlation_cut.isIn(delayed)) {
+                LogInfo << "Delayed not correlated in space\n";
+                continue;
+            }
 
             is_vetoed = false;
             for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
@@ -132,8 +155,10 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 is_vetoed = true;
                 break;
             }
-            if (is_vetoed) continue;
-            LogInfo << "Delayed is not vetoed\n";
+            if (is_vetoed) {
+                LogInfo << "Delayed is muon vetoed\n";
+                continue;
+            }
 
             WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
             bool delayed_has_multi = false;
@@ -162,8 +187,10 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 LogInfo << "Delayed is in the after multiplicity cut by " << cand.ts << '\n';
                 break; // after p-d multiplicity
             }
-            if (delayed_has_multi) continue;
-            LogInfo << "Delayed has no multiplicity\n";
+            if (delayed_has_multi) {
+                LogInfo << "Delayed has multiplicity\n";
+                continue;
+            }
 
             ibds.emplace_back(prompt, delayed);
             LogInfo << "IBD event detected!\n";
