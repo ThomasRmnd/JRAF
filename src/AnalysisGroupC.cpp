@@ -397,7 +397,9 @@ bool AnalysisGroupC::execute() {
         if (m_iEvt == 1ul) {
             m_targetIsFirst = true;
             m_targetFirstTs = ts;
-        } 
+        }
+        LogInfo << "Target input is first " << m_targetIsFirst << '\n';
+        LogInfo << "Current event TimeStamp: " << ts << ", target first event TimeStamp: " << m_targetFirstTs << '\n';
         if (m_targetIsFirst) {
             TimeStamp ts_diff = ts - m_targetFirstTs;
             if (ts_diff <= TimeStamp{0, 2000000}) return true;
