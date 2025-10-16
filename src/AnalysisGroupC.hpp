@@ -192,7 +192,7 @@ private:
     TtRecoFile m_ttRecoFile;
     ContextFileTracker m_contextTracker;
     bool m_targetIsFirst;
-    TimeStamp m_targetFirstTs;
+    TimeStamp m_targetFirstTs{0, 0};
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 
     // Output file
