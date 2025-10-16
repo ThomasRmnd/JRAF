@@ -1,6 +1,7 @@
 #include "analysis/FirstCrossCheckAnalysis.hpp"
 
 #include <algorithm>
+#include <chrono>
 
 #include "SniperKernel/SniperLog.h"
 
@@ -22,6 +23,11 @@ bool FirstCrossCheckAnalysis::initialize() {
 }
 
 void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
+    // DEBUG --- Timing
+    using clock = std::chrono::steady_clock;
+    auto t_start = clock::now();
+    // DEBUG --- Timing
+
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -46,11 +52,19 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
         }
     }
 
+    // DEBUG --- Timing
+    auto t_after_load = clock::now();
+    // DEBUG --- Timing
+
     std::vector<WaterPoolMuonVetoSelection> mu_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         if (it->empty()) continue;
         mu_cut.emplace_back(it->front(), TimeStamp{0, 5000000});
     }
+
+    // DEBUG --- Timing
+    auto t_after_muon = clock::now();
+    // DEBUG --- Timing
 
     FiducialVolumeSelection fiducial_vol_cut{17200.0};
     HeightVolumeSelection lower_height_vol_cut{-20050.0, -11000.0};
@@ -196,6 +210,20 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             LogInfo << "IBD event detected!\n";
         }
     }
+
+    // DEBUG --- Timing
+    auto t_after_loops = clock::now();
+    // DEBUG --- Timing
+
+    auto t_load_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_load - t_start).count();
+    auto t_muon_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_muon - t_after_load).count();
+    auto t_loop_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_loops - t_after_muon).count();
+
+    std::cout << "\n=== Timing report ===\n";
+    std::cout << "1. Loading & classification: " << t_load_ms << " ms\n";
+    std::cout << "2. Muon veto construction:   " << t_muon_ms << " ms\n";
+    std::cout << "3. Prompt–delayed loops:     " << t_loop_ms << " ms\n";
+    std::cout << "=====================\n\n";
 
     for (const ibd& ibd_ : ibds) {
         posx_p = ibd_.prompt.pos.x;
