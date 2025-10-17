@@ -15,7 +15,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
     auto it = s_cache.find(nav);
     if (it != s_cache.end()) {
         if (auto existing = it->second.lock()) {
-            LogDebug << "EventCache: reusing cached event for nav=" << nav << '\n';
+            LogInfo << "EventCache: reusing cached event for nav=" << nav << '\n';
             return existing;
         }
     }
@@ -28,7 +28,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
     }
 
     s_cache[nav] = evt;
-    LogDebug << "EventCache: loaded and cached event for nav=" << nav << '\n';
+    LogInfo << "EventCache: loaded and cached event for nav=" << nav << '\n';
     return evt;
 }
 
