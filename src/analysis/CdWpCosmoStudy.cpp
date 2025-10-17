@@ -5,6 +5,7 @@
 #include "SniperKernel/SniperLog.h"
 
 #include "event/Event.hpp"
+#include "event/EventCache.hpp"
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Muon.hpp"
@@ -38,19 +39,22 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
     tracks.reserve(buf->size());
     bef_vertices.reserve(buf->size() / 2);
     aft_vertices.reserve(buf->size() / 2);
+
     for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
         JM::EvtNavigator* nav = it->get();
-        Event evt;
-        evt.load(nav);
+        if (!nav) continue;
+
+        std::shared_ptr<Event> evt_ptr = EventCache::load(nav);
+        if (!evt_ptr) continue;
+
+        const Event& evt = *evt_ptr;
+
         tracks.push_back(evt.tracks);
         if (it < buf->current()) {
             bef_vertices.insert(bef_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        }
-        else if (buf->current() < it) {
+        } else if (buf->current() < it) {
             aft_vertices.insert(aft_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        }
-        else {
-            LogInfo << evt << '\n';
+        } else {
             cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
         }
     }
