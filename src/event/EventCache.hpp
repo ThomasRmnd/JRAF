@@ -43,7 +43,7 @@ public:
     static std::size_t size();
 
 private:
-    using CacheType = std::unordered_map<JM::EvtNavigator*, std::weak_ptr<Event>>;
+    using CacheType = std::unordered_map<JM::EvtNavigator*, std::shared_ptr<Event>>;
 
     static CacheType s_cache;
 
