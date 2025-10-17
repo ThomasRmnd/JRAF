@@ -12,6 +12,7 @@ FILES
     src/analysis/TtCosmoStudy.cpp
 
     src/event/Event.cpp
+    src/event/EventCache.cpp
     src/event/IBD.cpp
     src/event/Track.cpp
     src/event/Vertex.cpp

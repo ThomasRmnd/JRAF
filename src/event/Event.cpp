@@ -72,21 +72,15 @@ void Event::loadTtTrack(JM::EvtNavigator* nav) {
     std::vector<JM::RecTrack*> trks;
     trks.reserve(ntracks);
     for (int i = 0; i < ntracks; ++i) {
-        JM::RecTrack* trk = new JM::RecTrack();
+        JM::RecTrack trk;
         TVector3 ipos(coeff0[i], coeff1[i], coeff2[i]);
         TVector3 dir(coeff3[i], coeff4[i], coeff5[i]);
         TVector3 fpos = ipos - 2.0 * (ipos * dir) * dir;
-        trk->setStart(CLHEP::HepLorentzVector(ipos.X(), ipos.Y(), ipos.Z()));
-        trk->setEnd(CLHEP::HepLorentzVector(fpos.X(), fpos.Y(), fpos.Z()));
-        trk->setPESum(0.0f);
-        trk->setQuality(chi2[i]);
-        trks.push_back(trk);
-    }
-    for (const JM::RecTrack* trk : trks) {
-        loadTrack(trk, track::loc::tt);
-    }
-    for (JM::RecTrack* trk : trks) {
-        if (trk) delete trk;
+        trk.setStart(CLHEP::HepLorentzVector(ipos.X(), ipos.Y(), ipos.Z()));
+        trk.setEnd(CLHEP::HepLorentzVector(fpos.X(), fpos.Y(), fpos.Z()));
+        trk.setPESum(0.0f);
+        trk.setQuality(chi2[i]);
+        loadTrack(&trk, track::loc::tt);
     }
 }
 
