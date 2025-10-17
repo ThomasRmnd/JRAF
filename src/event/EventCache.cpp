@@ -13,7 +13,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
 
     CacheType::iterator it = s_cache.find(nav);
     if (it != s_cache.end()) {
-        LogDebug << "EventCache: reusing cached event for nav=" << nav << std::endl;
+        LogInfo << "EventCache: reusing cached event for nav=" << nav << std::endl;
         return it->second;
     }
 
@@ -24,7 +24,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
     }
 
     s_cache[nav] = evt;
-    LogDebug << "EventCache: loaded and cached event for nav=" << nav << std::endl;
+    LogInfo << "EventCache: loaded and cached event for nav=" << nav << std::endl;
     return evt;
 }
 
