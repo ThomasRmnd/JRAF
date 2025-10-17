@@ -11,7 +11,8 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
         return nullptr;
     }
 
-    CacheType::iterator it = s_cache.find(nav);
+    // CacheType::iterator it = s_cache.find(nav);
+    CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
     if (it != s_cache.end()) {
         return it->second;
     }
@@ -22,20 +23,23 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
         return nullptr;
     }
 
-    s_cache[nav] = evt;
+    // s_cache[nav] = evt;
+    s_cache[nav->TimeStamp().GetTimeSpec()] = evt;
     LogInfo << "EventCache: loaded and cached event for nav=" << nav << std::endl;
     return evt;
 }
 
 bool EventCache::contains(JM::EvtNavigator* nav)
 {
-    CacheType::iterator it = s_cache.find(nav);
+    // CacheType::iterator it = s_cache.find(nav);
+    CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
     return (it != s_cache.end());
 }
 
 std::shared_ptr<Event> EventCache::get(JM::EvtNavigator* nav)
 {
-    CacheType::iterator it = s_cache.find(nav);
+    // CacheType::iterator it = s_cache.find(nav);
+    CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
     if (it != s_cache.end()) {
         return it->second;
     }
