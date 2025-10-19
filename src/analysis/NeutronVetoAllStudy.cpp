@@ -1,4 +1,4 @@
-#include "analysis/NeutronVetoStudy.hpp"
+#include "analysis/NeutronVetoAllStudy.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -12,11 +12,11 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-NeutronVetoStudy::NeutronVetoStudy(const std::string& name) : 
+NeutronVetoAllStudy::NeutronVetoAllStudy(const std::string& name) : 
     Analysis{name} 
 {}
 
-bool NeutronVetoStudy::initialize() {
+bool NeutronVetoAllStudy::initialize() {
     if (!Analysis::initialize()) return false;
     m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("totq_d", &totq_d);
@@ -31,7 +31,7 @@ bool NeutronVetoStudy::initialize() {
     return true; 
 }
 
-void NeutronVetoStudy::process(JM::NavBuffer* buf) {
+void NeutronVetoAllStudy::process(JM::NavBuffer* buf) {
     std::vector<std::vector<track>> tracks;
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
@@ -74,8 +74,8 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
     double delayed_lower_thold = 3700.0;
     double delayed_upper_thold = 6000.0;
 
-    double spa_neu_radius = 3000.0;
-    TimeStamp spa_neu_time_window = TimeStamp{0, 1500000000};
+    double spa_neu_radius = 40000.0;
+    TimeStamp spa_neu_time_window = TimeStamp{0, 2000000000};
     std::vector<SphereVolumeSelection> spa_neu_cut_sph;
     std::vector<UpperTimeSelection> spa_neu_cut_time;
     std::vector<vertex> spa_neu;

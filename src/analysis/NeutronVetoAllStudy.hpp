@@ -1,17 +1,17 @@
-#ifndef ANALYSISGROUPC_ANALYSIS_NEUTRONVETOSTUDY_HPP_
-#define ANALYSISGROUPC_ANALYSIS_NEUTRONVETOSTUDY_HPP_
+#ifndef ANALYSISGROUPC_ANALYSIS_NEUTRONVETOALLSTUDY_HPP_
+#define ANALYSISGROUPC_ANALYSIS_NEUTRONVETOALLSTUDY_HPP_
 
 #include "analysis/Analysis.hpp"
 
 #include "Context/TimeStamp.h"
 
-class NeutronVetoStudy : public Analysis {
+class NeutronVetoAllStudy : public Analysis {
 
 public:
 
-    NeutronVetoStudy(const std::string& name);
+    NeutronVetoAllStudy(const std::string& name);
 
-    ~NeutronVetoStudy() override = default;
+    ~NeutronVetoAllStudy() override = default;
 
     bool initialize() override;
     void process(JM::NavBuffer* buf) override;
@@ -29,4 +29,4 @@ private:
 
 };
 
-#endif // ANALYSISGROUPC_ANALYSIS_NEUTRONVETOSTUDY_HPP_
+#endif // ANALYSISGROUPC_ANALYSIS_NEUTRONVETOALLSTUDY_HPP_
