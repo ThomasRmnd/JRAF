@@ -16,10 +16,13 @@
 #include "Event/WpTriggerHeader.h"
 #include "EvtNavigator/EvtNavHelper.h"
 
+#include "analysis/CdWpAllCosmoStudy.hpp"
 #include "analysis/CdWpCosmoStudy.hpp"
 #include "analysis/FirstCrossCheckAnalysis.hpp"
 #include "analysis/IBDWithCylindricalCut.hpp"
+#include "analysis/IBDWithNeutronVetoStudy.hpp"
 #include "analysis/MultiplicityWindowCut.hpp"
+#include "analysis/NeutronVetoStudy.hpp"
 #include "analysis/TtCosmoStudy.hpp"
 #include "event/Event.hpp"
 #include "loader/BasicLoader.hpp"
@@ -209,6 +212,9 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<CdWpAllCosmoStudy>("CdWpAllCosmoStudy"));
+    m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy"));
+    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy"));
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;
     }
@@ -402,7 +408,7 @@ bool AnalysisGroupC::execute() {
         LogInfo << "Current event TimeStamp: " << ts << ", target first event TimeStamp: " << m_targetFirstTs << '\n';
         if (m_targetIsFirst) {
             TimeStamp ts_diff = ts - m_targetFirstTs;
-            if (ts_diff <= TimeStamp{0, 2000000}) return true;
+            if (ts_diff <= TimeStamp{0, 5000000}) return true;
         }
         for (std::shared_ptr<Analysis>& analysis : m_analyses) {
             analysis->process(m_buf);
