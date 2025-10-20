@@ -9,7 +9,7 @@ class CdWpCosmoStudy : public Analysis {
 
 public:
 
-    CdWpCosmoStudy(const std::string& name, const TimeStamp& lwr_window, const TimeStamp& upr_window);
+    CdWpCosmoStudy(const std::string& name, double cyl_radius, const TimeStamp& lwr_window, const TimeStamp& upr_window);
 
     ~CdWpCosmoStudy() override = default;
 
@@ -18,6 +18,7 @@ public:
 
 private:
 
+    double m_cyl_radius;
     TimeStamp m_lwr_window, m_upr_window;
 
     double totq_p;

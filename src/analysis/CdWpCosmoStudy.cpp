@@ -11,8 +11,9 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-CdWpCosmoStudy::CdWpCosmoStudy(const std::string& name, const TimeStamp& lwr_window, const TimeStamp& upr_window) : 
+CdWpCosmoStudy::CdWpCosmoStudy(const std::string& name, double cyl_radius, const TimeStamp& lwr_window, const TimeStamp& upr_window) : 
     Analysis{name}, 
+    m_cyl_radius{cyl_radius},
     m_lwr_window{lwr_window}, 
     m_upr_window{upr_window} 
 {}
@@ -80,7 +81,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             if (jt->det != track::loc::cd) continue;
             if (jt->quality != -1.0f) {
                 cd_tracks.push_back(*jt);
-                mu_cosmo_cut.emplace_back(*jt, 3000.0, m_lwr_window, m_upr_window);
+                mu_cosmo_cut.emplace_back(*jt, m_cyl_radius, m_lwr_window, m_upr_window);
             }
             else {
                 mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 500000000});
@@ -100,8 +101,8 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
     double delayed_lower_thold = 3700.0;
     double delayed_upper_thold = 6000.0;
 
+    std::vector<std::vector<track>> tracks_for_cosmo;
     std::vector<ibd> cosmos;
-    std::vector<track> tracks_for_cosmo;
 
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
@@ -135,12 +136,11 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
         }
 
         is_vetoed = false;
-        const track* trk_cosmo = nullptr;
+        std::vector<BasicMuonVetoSelection> trk_cut_cand;
         for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
-            trk_cosmo = &cut.m_trk;
-            break;
+            trk_cut_cand.push_back(cut);
         }
         if (!is_vetoed) {
             LogInfo << "Prompt is not in cylindrical muon cosmogenic cut\n";
@@ -225,10 +225,12 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             }
 
             is_vetoed = false;
-            for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+            // for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+            std::vector<track> trk_cand;
+            for (const BasicMuonVetoSelection& cut : trk_cut_cand) {
                 if (!cut.isIn(delayed)) continue;
                 is_vetoed = true;
-                break;
+                trk_cand.push_back(cut.m_trk);
             }
             if (!is_vetoed) {
                 LogInfo << "Delayed is not in cylindrical muon cosmogenic cut\n";
@@ -277,36 +279,38 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             }
 
             cosmos.emplace_back(prompt, delayed);
-            tracks_for_cosmo.push_back(*trk_cosmo);
+            tracks_for_cosmo.push_back(trk_cand);
             LogInfo << "IBD event detected!\n";
         }
     }
 
     for (std::size_t k = 0ul; k < cosmos.size(); ++k) {
         const ibd& ibd_ = cosmos[k];
-        const track& trk_ = tracks_for_cosmo[k];
-        posx_p = ibd_.prompt.pos.x;
-        posy_p = ibd_.prompt.pos.y;
-        posz_p = ibd_.prompt.pos.z;
-        e_p = ibd_.prompt.energy;
-        totq_p = ibd_.prompt.totq;
-        sec_p = ibd_.prompt.ts.GetSec();
-        nsec_p = ibd_.prompt.ts.GetNanoSec();
-        posx_d = ibd_.delayed.pos.x;
-        posy_d = ibd_.delayed.pos.y;
-        posz_d = ibd_.delayed.pos.z;
-        e_d = ibd_.delayed.energy;
-        totq_d = ibd_.delayed.totq;
-        sec_d = ibd_.delayed.ts.GetSec();
-        nsec_d = ibd_.delayed.ts.GetNanoSec();
+        const std::vector<track>& trk_cand = tracks_for_cosmo[k];
+        for (const track& trk_ : trk_cand) {
+            posx_p = ibd_.prompt.pos.x;
+            posy_p = ibd_.prompt.pos.y;
+            posz_p = ibd_.prompt.pos.z;
+            e_p = ibd_.prompt.energy;
+            totq_p = ibd_.prompt.totq;
+            sec_p = ibd_.prompt.ts.GetSec();
+            nsec_p = ibd_.prompt.ts.GetNanoSec();
+            posx_d = ibd_.delayed.pos.x;
+            posy_d = ibd_.delayed.pos.y;
+            posz_d = ibd_.delayed.pos.z;
+            e_d = ibd_.delayed.energy;
+            totq_d = ibd_.delayed.totq;
+            sec_d = ibd_.delayed.ts.GetSec();
+            nsec_d = ibd_.delayed.ts.GetNanoSec();
 
-        vec3 trk_dir = unit(trk_.fpos - trk_.ipos);
-        dlat_p = mag(cross(trk_dir, ibd_.prompt.pos - trk_.ipos));
-        dlat_d = mag(cross(trk_dir, ibd_.delayed.pos - trk_.ipos));
-        dt_mu2p_sec = (ibd_.prompt.ts - trk_.ts).GetSec();
-        dt_mu2d_sec = (ibd_.delayed.ts - trk_.ts).GetSec();
-        dt_mu2p_nsec = (ibd_.prompt.ts - trk_.ts).GetNanoSec();
-        dt_mu2d_nsec = (ibd_.delayed.ts - trk_.ts).GetNanoSec();
-        m_tree->Fill();
+            vec3 trk_dir = unit(trk_.fpos - trk_.ipos);
+            dlat_p = mag(cross(trk_dir, ibd_.prompt.pos - trk_.ipos));
+            dlat_d = mag(cross(trk_dir, ibd_.delayed.pos - trk_.ipos));
+            dt_mu2p_sec = (ibd_.prompt.ts - trk_.ts).GetSec();
+            dt_mu2d_sec = (ibd_.delayed.ts - trk_.ts).GetSec();
+            dt_mu2p_nsec = (ibd_.prompt.ts - trk_.ts).GetNanoSec();
+            dt_mu2d_nsec = (ibd_.delayed.ts - trk_.ts).GetNanoSec();
+            m_tree->Fill();
+        }
     }
 }

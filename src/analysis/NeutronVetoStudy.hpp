@@ -9,7 +9,7 @@ class NeutronVetoStudy : public Analysis {
 
 public:
 
-    NeutronVetoStudy(const std::string& name);
+    NeutronVetoStudy(const std::string& name, double sph_radius, const TimeStamp& ts_window);
 
     ~NeutronVetoStudy() override = default;
 
@@ -17,6 +17,9 @@ public:
     void process(JM::NavBuffer* buf) override;
 
 private:
+
+    double m_sph_radius;
+    TimeStamp m_ts_window;
 
     double totq_p;
     double totq_d;

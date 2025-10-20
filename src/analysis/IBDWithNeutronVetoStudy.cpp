@@ -144,6 +144,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer* buf) {
         for (std::size_t k = 0ul; k < spa_neu_cut_sph.size(); ++k) {
             if (!spa_neu_cut_sph[k].isIn(prompt) || !spa_neu_cut_time[k].isIn(prompt)) continue;
             is_prompt_neu_spa = true;
+            break;
         }
         if (is_prompt_neu_spa) {
             LogInfo << "Prompt is in spatial-temporal neutron veto\n";
@@ -221,6 +222,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer* buf) {
             for (std::size_t k = 0ul; k < spa_neu_cut_sph.size(); ++k) {
                 if (!spa_neu_cut_sph[k].isIn(delayed) || !spa_neu_cut_time[k].isIn(delayed)) continue;
                 is_delayed_neu_spa = true;
+                break;
             }
             if (is_delayed_neu_spa) {
                 LogInfo << "Delayed is in spatial-temporal neutron veto\n";

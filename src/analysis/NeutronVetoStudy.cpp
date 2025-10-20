@@ -12,8 +12,10 @@
 #include "selection/Muon.hpp"
 #include "selection/Volume.hpp"
 
-NeutronVetoStudy::NeutronVetoStudy(const std::string& name) : 
-    Analysis{name} 
+NeutronVetoStudy::NeutronVetoStudy(const std::string& name, double sph_radius, const TimeStamp& ts_window) :
+    Analysis{name},
+    m_sph_radius{sph_radius},
+    m_ts_window{ts_window}
 {}
 
 bool NeutronVetoStudy::initialize() {
@@ -74,8 +76,6 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
     double delayed_lower_thold = 3700.0;
     double delayed_upper_thold = 6000.0;
 
-    double spa_neu_radius = 3000.0;
-    TimeStamp spa_neu_time_window = TimeStamp{0, 1500000000};
     std::vector<SphereVolumeSelection> spa_neu_cut_sph;
     std::vector<UpperTimeSelection> spa_neu_cut_time;
     std::vector<vertex> spa_neu;
@@ -89,8 +89,8 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
         }
         if (!is_in_veto) continue;
         if (neu.totq < prompt_lower_thold || prompt_upper_thold < neu.totq) continue;
-        spa_neu_cut_sph.emplace_back(neu.pos, spa_neu_radius);
-        spa_neu_cut_time.emplace_back(neu.ts, spa_neu_time_window);
+        spa_neu_cut_sph.emplace_back(neu.pos, m_sph_radius);
+        spa_neu_cut_time.emplace_back(neu.ts, m_ts_window);
         spa_neu.push_back(neu);
     }
     for (const vertex& neu : cur_vertices) {
@@ -102,8 +102,8 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
         }
         if (!is_in_veto) continue;
         if (neu.totq < prompt_lower_thold || prompt_upper_thold < neu.totq) continue;
-        spa_neu_cut_sph.emplace_back(neu.pos, spa_neu_radius);
-        spa_neu_cut_time.emplace_back(neu.ts, spa_neu_time_window);
+        spa_neu_cut_sph.emplace_back(neu.pos, m_sph_radius);
+        spa_neu_cut_time.emplace_back(neu.ts, m_ts_window);
         spa_neu.push_back(neu);
     }
     for (const vertex& neu : aft_vertices) {
@@ -115,13 +115,13 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
         }
         if (!is_in_veto) continue;
         if (neu.totq < prompt_lower_thold || prompt_upper_thold < neu.totq) continue;
-        spa_neu_cut_sph.emplace_back(neu.pos, spa_neu_radius);
-        spa_neu_cut_time.emplace_back(neu.ts, spa_neu_time_window);
+        spa_neu_cut_sph.emplace_back(neu.pos, m_sph_radius);
+        spa_neu_cut_time.emplace_back(neu.ts, m_ts_window);
         spa_neu.push_back(neu);
     }
 
-    std::vector<ibd> ibds;
-    std::vector<vertex> neu_for_ibd;
+    std::vector<std::vector<vertex>> neu_for_ibd;
+    std::vector<ibd> cosmos;
 
     for (const vertex& prompt : cur_vertices) {
         LogInfo << prompt << '\n';
@@ -154,11 +154,11 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
         }
 
         bool is_prompt_neu_spa = false;
-        const vertex* matched_neu = nullptr;
+        std::vector<std::size_t> neu_idx_cand;
         for (std::size_t k = 0ul; k < spa_neu_cut_sph.size(); ++k) {
             if (!spa_neu_cut_sph[k].isIn(prompt) || !spa_neu_cut_time[k].isIn(prompt)) continue;
             is_prompt_neu_spa = true;
-            matched_neu = &spa_neu[k];
+            neu_idx_cand.push_back(k);
         }
         if (!is_prompt_neu_spa) {
             LogInfo << "Prompt is not in spatial-temporal neutron veto\n";
@@ -233,9 +233,12 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
             }
 
             bool is_delayed_neu_spa = false;
-            for (std::size_t k = 0ul; k < spa_neu_cut_sph.size(); ++k) {
+            std::vector<vertex> neu_cand;
+            // for (std::size_t k = 0ul; k < spa_neu_cut_sph.size(); ++k) {
+            for (std::size_t k : neu_idx_cand) {
                 if (!spa_neu_cut_sph[k].isIn(delayed) || !spa_neu_cut_time[k].isIn(delayed)) continue;
                 is_delayed_neu_spa = true;
+                neu_cand.push_back(spa_neu[k]);
             }
             if (!is_delayed_neu_spa) {
                 LogInfo << "Delayed is not in spatial-temporal neutron veto\n";
@@ -274,37 +277,39 @@ void NeutronVetoStudy::process(JM::NavBuffer* buf) {
                 continue;
             }
 
-            ibds.emplace_back(prompt, delayed);
-            neu_for_ibd.push_back(*matched_neu);
+            cosmos.emplace_back(prompt, delayed);
+            neu_for_ibd.push_back(neu_cand);
             LogInfo << "IBD event detected!\n";
         }
     }
 
-    for (std::size_t k = 0ul; k < ibds.size(); ++k) {
-        const ibd& ibd_ = ibds[k];
-        const vertex& neu = neu_for_ibd[k];
-        posx_p = ibd_.prompt.pos.x;
-        posy_p = ibd_.prompt.pos.y;
-        posz_p = ibd_.prompt.pos.z;
-        e_p = ibd_.prompt.energy;
-        totq_p = ibd_.prompt.totq;
-        sec_p = ibd_.prompt.ts.GetSec();
-        nsec_p = ibd_.prompt.ts.GetNanoSec();
-        posx_d = ibd_.delayed.pos.x;
-        posy_d = ibd_.delayed.pos.y;
-        posz_d = ibd_.delayed.pos.z;
-        e_d = ibd_.delayed.energy;
-        totq_d = ibd_.delayed.totq;
-        sec_d = ibd_.delayed.ts.GetSec();
-        nsec_d = ibd_.delayed.ts.GetNanoSec();
+    for (std::size_t k = 0ul; k < cosmos.size(); ++k) {
+        const ibd& ibd_ = cosmos[k];
+        const std::vector<vertex>& neu_cand = neu_for_ibd[k];
+        for (const vertex& neu : neu_cand) {
+            posx_p = ibd_.prompt.pos.x;
+            posy_p = ibd_.prompt.pos.y;
+            posz_p = ibd_.prompt.pos.z;
+            e_p = ibd_.prompt.energy;
+            totq_p = ibd_.prompt.totq;
+            sec_p = ibd_.prompt.ts.GetSec();
+            nsec_p = ibd_.prompt.ts.GetNanoSec();
+            posx_d = ibd_.delayed.pos.x;
+            posy_d = ibd_.delayed.pos.y;
+            posz_d = ibd_.delayed.pos.z;
+            e_d = ibd_.delayed.energy;
+            totq_d = ibd_.delayed.totq;
+            sec_d = ibd_.delayed.ts.GetSec();
+            nsec_d = ibd_.delayed.ts.GetNanoSec();
 
-        posx_e = neu.pos.x;
-        posy_e = neu.pos.y;;
-        posz_e = neu.pos.z;
-        e_e = neu.energy;
-        totq_e = neu.totq;
-        sec_e = neu.ts.GetSec();
-        nsec_e = neu.ts.GetNanoSec();
-        m_tree->Fill();
+            posx_e = neu.pos.x;
+            posy_e = neu.pos.y;;
+            posz_e = neu.pos.z;
+            e_e = neu.energy;
+            totq_e = neu.totq;
+            sec_e = neu.ts.GetSec();
+            nsec_e = neu.ts.GetNanoSec();
+            m_tree->Fill();
+        }
     }
 }
