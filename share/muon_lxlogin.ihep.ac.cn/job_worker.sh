@@ -37,6 +37,8 @@ get_file_number() {
 
 input_esd_file="${esd_list[$PROC_ID]}"
 input_esd_filename=$(basename "$input_esd_file")
+input_rtraw_file="${rtraw_list[$PROC_ID]}"
+input_rtraw_filename=$(basename "$input_rtraw_file")
 
 output_path=""
 tt_reco_filepath=""
@@ -63,7 +65,6 @@ mkdir -p "$output_path"
 echo "output_path: ${output_path}" 1>&2
 echo "tt_reco_filepath: $tt_reco_filepath" 1>&2
 
-input_rtraw_filename=$(basename "${rtraw_list[$PROC_ID]}")
 local_input_rtraw_file="$TEMP/$input_rtraw_filename"
 local_input_esd_file="$TEMP/$input_esd_filename"
 local_output_file="$TEMP/${input_esd_filename/.esd/.track.rec}"
@@ -72,10 +73,10 @@ output_file="$output_path/$(basename "$local_output_file")"
 echo "Output filename: $output_file"
 
 echo "Copying rtraw file from EOS: $local_input_rtraw_file"
-xrdcp "${input_rtraw_file}" "$local_input_rtraw_file"
+xrdcp "${input_rtraw_file}" "${local_input_rtraw_file}"
 
 echo "Copying esd file from EOS: $local_input_esd_file"
-xrdcp "${input_esd_file}" "$local_input_esd_file"
+xrdcp "${input_esd_file}" "${local_input_esd_file}"
 
 source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
 echo "TUTORIALROOT = ${TUTORIALROOT}"
