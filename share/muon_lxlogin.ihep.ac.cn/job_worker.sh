@@ -1,22 +1,18 @@
 #!/bin/bash
 set -e
 
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >&2
+}
+
 PROC_ID="$1"
-RANGE_START="$2"
-RANGE_END="$3"
-RUN_NUMBER="$4"
-LIST_BASE="$5"
-shift 5
+RUN_NUMBER="$2"
+LIST_BASE="$3"
+shift 3
 EXTRA_ARGS=("$@")
 
-FILE_NUMBER=$((RANGE_START + PROC_ID))
-
-if (( FILE_NUMBER > RANGE_END )); then
-    echo "ERROR: FILE_NUMBER=$FILE_NUMBER exceeds RANGE_END=$RANGE_END"
-    exit 1
-fi
-
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
+
 RTRAW_LIST_FILE="$LIST_BASE/rtraw_list/run_${RUN_NUMBER}.txt"
 ESD_LIST_FILE="$LIST_BASE/esd_list/run_${RUN_NUMBER}.txt"
 
@@ -28,31 +24,18 @@ if (( ${#rtraw_list[@]} != ${#esd_list[@]} )); then
     exit 1
 fi
 
-input_rtraw_file=""
-input_esd_file=""
+num_files=${#esd_list[@]}
 
-for ((i=0; i<${#esd_list[@]}; i++)); do
-    esd_file="${esd_list[$i]}"
-    fname=${esd_file##*/}
-    
+get_file_number() {
+    local fname=$1
     if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
-        file_number=${BASH_REMATCH[1]}
-        file_number=$((10#$file_number))  # strip leading zeros
-        
-        if (( file_number == FILE_NUMBER )); then
-            input_esd_file="$esd_file"
-            input_rtraw_file="${rtraw_list[$i]}"
-            break
-        fi
+        echo "${BASH_REMATCH[1]}"
+    else
+        echo ""
     fi
-done
+}
 
-if [[ -z "$input_rtraw_file" || -z "$input_esd_file" ]]; then
-    echo "No input file found for FILE_NUMBER=$FILE_NUMBER"
-    exit 1
-fi
-
-input_rtraw_filename=$(basename "$input_rtraw_file")
+input_esd_file="${esd_list[$PROC_ID]}"
 input_esd_filename=$(basename "$input_esd_file")
 
 output_path=""
@@ -80,6 +63,7 @@ mkdir -p "$output_path"
 echo "output_path: ${output_path}" 1>&2
 echo "tt_reco_filepath: $tt_reco_filepath" 1>&2
 
+input_rtraw_filename=$(basename "${rtraw_list[$PROC_ID]}")
 local_input_rtraw_file="$TEMP/$input_rtraw_filename"
 local_input_esd_file="$TEMP/$input_esd_filename"
 local_output_file="$TEMP/${input_esd_filename/.esd/.track.rec}"

@@ -2,9 +2,9 @@
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 
-log_level=3
-time_window=("-2.0" "2.0")
 list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v2.1"
+time_window=("-2.0" "2.0")
+log_level=3
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -25,16 +25,16 @@ while [[ $# -gt 0 ]]; do
             file_range="$2"
             shift 2
             ;;
+        --property-file)
+            property_file="$2"
+            shift 2
+            ;;
         --time-window)
             time_window=("$2" "$3")
             shift 3
             ;;
         --log-level)
             log_level="$2"
-            shift 2
-            ;;
-        --property-file)
-            property_file="$2"
             shift 2
             ;;
         *)
@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$run_number" ]]; then
-    echo "Usage: $0 --run-number <number> [--file-offset <num>] [--file-range <num>] [--time-window <num> <num>]"
+    echo "Usage: $0 --run-number <number> [--list-base <path>] [--file-offset <num>] [--file-range <num>] [--property-file <path>] [--time-window <num> <num>] [--log-level <num>]"
     exit 1
 fi
 
@@ -94,12 +94,10 @@ fi
 
 extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
 
-
 # if [[ -z "$property_file" ]]; then
 #     property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
 # fi
-
-# extra_args="--property-file $property_file"
+# extra_args+=" --property-file $property_file"
 
 # --- Submit batch jobs ---
 echo "Submitting $job_count jobs with hep_sub..."

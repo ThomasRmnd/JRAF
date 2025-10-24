@@ -17,7 +17,7 @@ RTRAW_LIST_FILE="$LIST_BASE/rtraw_list/run_${RUN_NUMBER}.txt"
 ESD_LIST_FILE="$LIST_BASE/esd_list/run_${RUN_NUMBER}.txt"
 
 mapfile -t rtraw_list < <(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE")
-mapfile -t esd_list   < <(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE")
+mapfile -t esd_list < <(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE")
 
 if (( ${#rtraw_list[@]} != ${#esd_list[@]} )); then
     log "Error: mismatch in rtraw (${#rtraw_list[@]}) vs esd (${#esd_list[@]})"
