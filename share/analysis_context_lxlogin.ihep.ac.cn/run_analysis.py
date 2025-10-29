@@ -54,15 +54,15 @@ import AnalysisGroupC
 alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(1)
 
-alg.property("Pmt3inchTimeReso").set(15.0) # 15.0
-alg.property("Pmt20inchTimeReso").set(8.0)
-alg.property("PmtTTTimeReso").set(2.0)
-alg.property("Use3inchPMT").set(True)
-alg.property("Use20inchPMT").set(True)
-alg.property("ChosenDetectors").set(3) # 1: CD, 2: WP, 4: TT
+alg.useLoader("JointLoader")
+alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
 
-alg.property("UseJointLoader").set(True) 
-alg.property("LoaderTimeWindow").set([-500.0, 500.0]) # ns
+alg.useCdFiller("CdRangeFiller")
+alg.cdfiller.property("Pmt3inchTimeReso").set(15.0)
+alg.cdfiller.property("Pmt20inchTimeReso").set(8.0)
+
+alg.useWpFiller("WpRangeFiller")
+alg.wpfiller.property("PmtTimeReso").set(8.0)
 
 alg.property("ReconstructMuonMode").set(False)
 alg.property("OutputFilename").set(ofilepath)
