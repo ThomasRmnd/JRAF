@@ -1,9 +1,9 @@
 #ifndef ANALYSISGROUPC_SELECTION_VOLUME_HPP_
 #define ANALYSISGROUPC_SELECTION_VOLUME_HPP_
 
-#include "selection/Selection.hpp"
+#include "UtilsThomas/math/vec3.hpp"
 
-#include "utils/vec3.hpp"
+#include "selection/Selection.hpp"
 
 class VolumeSelection : public Selection {
 
