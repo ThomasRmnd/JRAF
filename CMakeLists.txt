@@ -19,24 +19,12 @@ FILES
     src/event/Track.cpp
     src/event/Vertex.cpp
 
-    src/loader/BasicLoader.cpp
-    src/loader/Loader.cpp
-    src/loader/JointLoader.cpp
-    src/loader/cd/CdLRangeFiller.cpp
-    src/loader/cd/CdRangeFiller.cpp
-    src/loader/cd/CdSRangeFiller.cpp
-    src/loader/tt/TtRangeFiller.cpp
-    src/loader/wp/AkiraWpRangeFiller.cpp
-    src/loader/wp/WpRangeFiller.cpp
-
     src/selection/Energy.cpp
     src/selection/IBD.cpp
     src/selection/Muon.cpp
     src/selection/Selection.cpp
     src/selection/Time.cpp
     src/selection/Volume.cpp
-
-    src/utils/LoadHelper.cpp
 
 DEPENDS
 
@@ -47,6 +35,7 @@ DEPENDS
     Identifier
     GeometryLib
     RecTools
+    UtilsThomas
     BufferMemMgrLib
     Context
     EvtNavigator

@@ -24,14 +24,6 @@
 #include "analysis/NeutronVetoStudy.hpp"
 #include "analysis/TtCosmoStudy.hpp"
 #include "event/Event.hpp"
-#include "loader/BasicLoader.hpp"
-#include "loader/JointLoader.hpp"
-#include "loader/cd/CdLRangeFiller.hpp"
-#include "loader/cd/CdRangeFiller.hpp"
-#include "loader/cd/CdSRangeFiller.hpp"
-#include "loader/tt/TtRangeFiller.hpp"
-#include "loader/wp/AkiraWpRangeFiller.hpp"
-#include "loader/wp/WpRangeFiller.hpp"
 
 DECLARE_ALGORITHM(AnalysisGroupC);
 
@@ -39,18 +31,13 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     AlgBase{name},
     m_iEvt{0u}
 {
+    declProp("Loader", m_loaderName = "JointLoader");
+    declProp("CdFiller", m_cdFillerName = "CdRangeFiller");
+    declProp("WpFiller", m_wpFillerName = "WpRangeFiller");
+    declProp("TtFiller", m_ttFillerName = "TtRangeFiller");
+
     declProp("RecTool", m_recToolName);
-    declProp("ClassifyTool", m_classifyToolName);
-
-    declProp("Pmt3inchTimeReso", m_sigmaPmt3inch = 1.0);
-    declProp("Pmt20inchTimeReso", m_sigmaPmt20inch = 8.0);
-    declProp("PmtTTTimeReso", m_sigmaPmtTt = 2.0); // The sigma is not true, a placeholder
-    declProp("Use3inchPMT", m_flagUse3inch = true);
-    declProp("Use20inchPMT", m_flagUse20inch = true);
-    declProp("ChosenDetectors", m_chosenDetectors = 0b111);
-
-    declProp("UseJointLoader", m_useJointLoader = false);
-    declProp("LoaderTimeWindow", m_loaderTimeWindow = {-500.0, 500.0});
+    declProp("ClassifyTool", m_classifyToolName);;
 
     declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("ReconstructMuonMode", m_reconstruct_muon_mode = false);
@@ -59,12 +46,7 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
 }
 
 bool AnalysisGroupC::initialize() {
-    m_params.set("Pmt20inchTimeReso", m_sigmaPmt20inch);
-    m_params.set("Pmt3inchTimeReso", m_sigmaPmt3inch);
-    m_params.set("PmtTTTimeReso", m_sigmaPmtTt);
-
     if (!initBufSvc()) return false;
-    if (!initGeomSvc()) return false;
 
     SniperPtr<RootInputSvc> iptSvc(getParent(), "InputSvc");
     if (iptSvc.invalid()) {
@@ -98,66 +80,25 @@ bool AnalysisGroupC::initBufSvc() {
     return true; 
 }
 
-bool AnalysisGroupC::initGeomSvc() {
-    SniperPtr<IRecGeomSvc> rgSvc(getParent(), "RecGeomSvc");
-    if (rgSvc.invalid()) {
-        LogError << "Failed to get RecGeomSvc instance!\n";
-        return false;
-    }
-    m_rgSvc = rgSvc.data();
-
-    SniperPtr<ITTGeomSvc> ttgSvc(getParent(), "TTGeomSvc");
-    if (ttgSvc.invalid()) {
-        LogError << "Cannot get the TTGeomSvc\n";
-        return false;
-    }
-    m_ttgSvc = ttgSvc.data();
-    return true;
-}
-
 bool AnalysisGroupC::initLoader() {
-    std::shared_ptr<RangeFiller<CdGeom>> cd_filler = nullptr;
-    std::shared_ptr<RangeFiller<WpGeom>> wp_filler = nullptr;
-    std::shared_ptr<RangeFiller<TtGeom>> tt_filler = nullptr;
-
-    DetectorType chosen_det = static_cast<DetectorType>(m_chosenDetectors);    
-    if ( (chosen_det & DetectorType::CD) == DetectorType::CD ) {
-        if (m_flagUse20inch && m_flagUse3inch) 
-            cd_filler = std::make_shared<CdRangeFiller>("CdRangeFiller", m_sigmaPmt20inch, m_sigmaPmt3inch);
-        else if (m_flagUse20inch)
-            cd_filler = std::make_shared<CdLRangeFiller>("CdLRangeFiller", m_sigmaPmt20inch);
-        else if (m_flagUse3inch) 
-            cd_filler = std::make_shared<CdSRangeFiller>("CdSRangeFiller", m_sigmaPmt3inch);
-        // else cd_filler = nullptr;
-    }
-    if ( (chosen_det & DetectorType::WP) == DetectorType::WP ) {
-    	wp_filler = std::make_shared<WpRangeFiller>("WpRangeFiller", m_sigmaPmt20inch);
-    }
-    // if ( (m_chosen_detectors & DetectorType::TT) == DetectorType::TT ) {
-    // 	tt_filler = std::make_shared<TtRangeFiller>("TtRangeFiller", m_sigma_pmt_tt, &m_tt_svc);
-    // }
-
-    if (m_useJointLoader)
-        m_loader = std::make_unique<JointLoader>("JointLoader", &m_pmtTable, m_loaderTimeWindow, cd_filler, wp_filler, tt_filler, m_rgSvc);
-    else
-        m_loader = std::make_unique<BasicLoader>("BasicLoader", &m_pmtTable, cd_filler, wp_filler, tt_filler, m_rgSvc);
-
+    m_loader = tool<Loader>(m_loaderName);
     if (!m_loader) {
-        LogError << "Failed to create loader." << '\n';
+        LogError << "Failed to retrieve reconstruction tool named " << m_loaderName << '\n';
         return false;
     }
-    if (!m_loader->initialize()) return false;
+    RangeFiller<CdFillerTag>* cd_filler = tool<RangeFiller<CdFillerTag>>(m_cdFillerName);
+    RangeFiller<WpFillerTag>* wp_filler = tool<RangeFiller<WpFillerTag>>(m_wpFillerName);
+    RangeFiller<TtFillerTag>* tt_filler = tool<RangeFiller<TtFillerTag>>(m_ttFillerName);
+    if (!m_loader->configure(&m_pmtTable, cd_filler, wp_filler, tt_filler)) return false;
+	if (!m_loader->initialize()) return false;
 
-    std::shared_ptr<RangeFiller<WpGeom>> wp_filler_classify = nullptr;    
-    if ( (chosen_det & DetectorType::WP) == DetectorType::WP ) {
-        wp_filler_classify = std::make_shared<AkiraWpRangeFiller>("AkiraWpRangeFiller", m_sigmaPmt20inch);
-    }
-
-    m_classifyLoader = std::make_unique<BasicLoader>("BasicLoader", &m_classifyPmtTable, nullptr, wp_filler_classify, nullptr, m_rgSvc);
+    m_classifyLoader = tool<Loader>("BasicLoader");
     if (!m_classifyLoader) {
-        LogError << "Failed to create classify loader\n";
+        LogError << "Failed to retrieve reconstruction tool named BasicLoader\n";
         return false;
     }
+    wp_filler = tool<RangeFiller<WpFillerTag>>("AkiraWpRangeFiller");
+    if (!m_classifyLoader->configure(&m_classifyPmtTable, nullptr, wp_filler, nullptr)) return false;
     if (!m_classifyLoader->initialize()) return false;
 
     return true;
@@ -215,7 +156,7 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy"));
     m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s", 3000.0, TimeStamp{0, 1500000000}));
     m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All", 40000.0, TimeStamp{0, 2000000000}));
-    
+
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;
     }

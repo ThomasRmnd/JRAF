@@ -5,8 +5,7 @@
 
 #include "Context/TimeStamp.h"
 #include "Event/RecTrack.h"
-
-#include "utils/vec3.hpp"
+#include "UtilsThomas/math/vec3.hpp"
 
 struct track {
 
