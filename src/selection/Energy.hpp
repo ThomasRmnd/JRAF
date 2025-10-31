@@ -3,46 +3,35 @@
 
 #include "selection/Selection.hpp"
 
-class EnergySelection : public Selection{
+class EnergyRangeSelection : public Selection {
 
 public:
 
-    virtual ~EnergySelection() = default;
+    EnergyRangeSelection(double emin, double emax);
 
-    virtual bool isIn(const vertex& vtx) const = 0;
-
-};
-
-class IntervalEnergySelection : public EnergySelection {
-
-public:
-
-    IntervalEnergySelection(double lower, double upper);
-
-    ~IntervalEnergySelection() override = default;
+    ~EnergyRangeSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    double m_lower;
-    double m_upper;
+    double m_emin, m_emax;
 
 };
 
-class MultiIntervalEnergySelection : public EnergySelection {
+class ChargeRangeSelection : public Selection {
 
 public:
 
-    MultiIntervalEnergySelection(const std::vector<std::shared_ptr<IntervalEnergySelection>>& selecs);
+    ChargeRangeSelection(double qmin, double qmax);
 
-    ~MultiIntervalEnergySelection() override = default;
+    ~ChargeRangeSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    std::vector<std::shared_ptr<IntervalEnergySelection>> m_selecs;
+    double m_qmin, m_qmax;
 
 };
 

@@ -9,19 +9,15 @@ class IBDWithCylindricalCut : public Analysis {
 
 public:
 
-    IBDWithCylindricalCut(const std::string& name, double cyl_radius);
+    IBDWithCylindricalCut(const std::string& name, const std::string& method, double cyl_radius);
 
     ~IBDWithCylindricalCut() override = default;
-
-    bool initialize() override;
+    
     void process(JM::NavBuffer* buf) override;
 
 private:
 
     double m_cyl_radius;
-
-    double totq_p;
-    double totq_d;
 
 };
 

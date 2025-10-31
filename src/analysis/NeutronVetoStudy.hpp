@@ -9,7 +9,7 @@ class NeutronVetoStudy : public Analysis {
 
 public:
 
-    NeutronVetoStudy(const std::string& name, double sph_radius, const TimeStamp& ts_window);
+    NeutronVetoStudy(const std::string& name, const std::string& method, double sph_radius, const TimeStamp& ts_window);
 
     ~NeutronVetoStudy() override = default;
 
@@ -20,9 +20,6 @@ private:
 
     double m_sph_radius;
     TimeStamp m_ts_window;
-
-    double totq_p;
-    double totq_d;
 
     double posx_e, posy_e, posz_e;
     double e_e;

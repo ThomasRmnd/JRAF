@@ -10,18 +10,12 @@
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Muon.hpp"
+#include "selection/Vertex.hpp"
 #include "selection/Volume.hpp"
 
-FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name) : 
-    Analysis{name} 
+FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name, const std::string& method) : 
+    Analysis{name, method} 
 {}
-
-bool FirstCrossCheckAnalysis::initialize() {
-    if (!Analysis::initialize()) return false;
-    m_tree->Branch("totq_p", &totq_p);
-    m_tree->Branch("totq_d", &totq_d);
-    return true; 
-}
 
 void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     // DEBUG --- Timing
@@ -33,51 +27,29 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
     std::vector<vertex> aft_vertices;
-    tracks.reserve(buf->size());
-    bef_vertices.reserve(buf->size() / 2);
-    aft_vertices.reserve(buf->size() / 2);
-
-    for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
-        JM::EvtNavigator* nav = it->get();
-        if (!nav) continue;
-
-        std::shared_ptr<Event> evt_ptr = EventCache::load(nav);
-        if (!evt_ptr) continue;
-
-        const Event& evt = *evt_ptr;
-
-        tracks.push_back(evt.tracks);
-        if (it < buf->current()) {
-            bef_vertices.insert(bef_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        } else if (buf->current() < it) {
-            aft_vertices.insert(aft_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        } else {
-            cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        }
-    }
+    extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
 
     // DEBUG --- Timing
     auto t_after_load = clock::now();
     // DEBUG --- Timing
 
-    std::vector<WaterPoolMuonVetoSelection> mu_cut;
+    std::vector<TimeRangeMuonVetoSelection> mu_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         if (it->empty()) continue;
-        mu_cut.emplace_back(it->front(), TimeStamp{0, 5000000});
+        mu_cut.emplace_back(it->front(), TimeStamp{0, 0}, TimeStamp{0, 5000000});
     }
 
     // DEBUG --- Timing
     auto t_after_muon = clock::now();
     // DEBUG --- Timing
 
-    FiducialVolumeSelection fiducial_vol_cut{17200.0};
-    HeightVolumeSelection lower_height_vol_cut{-20050.0, -11000.0};
-    HeightVolumeSelection upper_height_vol_cut{ 11000.0,  20050.0};
-    XYRadiusVolumeSelection xyradius_vol_cut{0.0, 3000.0};
-    double prompt_lower_thold = 1500.0;
-    double prompt_upper_thold = 20000.0;
-    double delayed_lower_thold = 3700.0;
-    double delayed_upper_thold = 6000.0;
+    FiducialVolumeSelection fiducial_vol_cut{16500.0};
+    ChimneySelection chimney_cut{15500.0, 3000.0};
+    // ChargeRangeSelection prompt_charge_cut{1500.0, 20000.0};
+    // ChargeRangeSelection delayed_charge_cut{4000.0, 6000.0};
+    EnergyRangeSelection prompt_energy_cut{0.7, 12.0};
+    EnergyRangeSelection delayed_energy_cut{2.0, 2.5};
+    EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
     std::vector<ibd> ibds;
 
@@ -87,21 +59,18 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             LogInfo << "Prompt not in fiducial volume\n";
             continue;
         }
-        if (
-            (upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)) ||
-            (lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt))
-        ) {
+        if (chimney_cut.isIn(prompt)) {
             LogInfo << "Prompt is a chimney\n";
             continue;
         }
 
-        if (prompt.totq < prompt_lower_thold || prompt_upper_thold < prompt.totq) {
+        if (!prompt_energy_cut.isIn(prompt)) {
             LogInfo << "Prompt not in energy range\n";
             continue;
         }
 
         bool is_vetoed = false;
-        for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+        for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             break;
@@ -111,18 +80,15 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             continue;
         }
 
-        WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
+        TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
         for (const vertex& cand : bef_vertices) {
             if (!multi_prompt_time.isIn(cand)) continue;
-            if (!fiducial_vol_cut.isIn(cand)) continue;
-            if (
-                (upper_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand)) ||
-                (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
-            ) continue;
-            if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
+            // if (!fiducial_vol_cut.isIn(cand)) continue;
+            // if (chimney_cut.isIn(cand)) continue;
+            if (!multiplicity_energy_cut.isIn(cand)) continue;
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+            for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                 if (!cut.isIn(cand)) continue;
                 is_vetoed = true;
                 break;
@@ -136,8 +102,7 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
             continue;
         }
 
-        WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 5000}, TimeStamp{0, 2000000}};
-        SphereVolumeSelection distance_correlation_cut{prompt.pos, 1500.0};
+        VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
         for (const vertex& delayed : aft_vertices) {
             LogInfo << delayed << '\n';
@@ -145,30 +110,23 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 LogInfo << "Delayed not in fiducial volume\n";
                 continue;
             }
-            if (
-                (upper_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed)) ||
-                (lower_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed))
-            ) {
-                LogInfo << "Delayed is a chimney\n";
-                continue;
-            }
+            // if (chimney_cut.isIn(delayed)) {
+            //     LogInfo << "Delayed is a chimney\n";
+            //     continue;
+            // }
 
-            if (delayed.totq < delayed_lower_thold || delayed_upper_thold < delayed.totq) {
+            if (!delayed_energy_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in energy range\n";
                 continue;
             }
 
-            if (!correlation_time_cut.isIn(delayed)) {
-                LogInfo << "Delayed not correlated in time\n";
-                continue;
-            }
-            if (!distance_correlation_cut.isIn(delayed)) {
-                LogInfo << "Delayed not correlated in space\n";
+            if (!correlation_cut.isIn(delayed)) {
+                LogInfo << "Delayed not correlated\n";
                 continue;
             }
 
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+            for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                 if (!cut.isIn(delayed)) continue;
                 is_vetoed = true;
                 break;
@@ -178,18 +136,15 @@ void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
                 continue;
             }
 
-            WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
+            TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
             bool delayed_has_multi = false;
             for (const vertex& cand : aft_vertices) {
                 if (cand.ts == delayed.ts) continue; // same event
-                if (!fiducial_vol_cut.isIn(cand)) continue;
-                if (
-                    (upper_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand)) ||
-                    (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
-                ) continue;
-                if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
+                // if (!fiducial_vol_cut.isIn(cand)) continue;
+                // if (chimney_cut.isIn(cand)) continue;
+                if (!multiplicity_energy_cut.isIn(cand)) continue;
                 is_vetoed = false;
-                for (const WaterPoolMuonVetoSelection& cut : mu_cut) {
+                for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                     if (!cut.isIn(cand)) continue;
                     is_vetoed = true;
                     break;

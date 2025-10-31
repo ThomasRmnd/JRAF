@@ -7,67 +7,50 @@
 #include "selection/Time.hpp"
 #include "selection/Volume.hpp"
 
-class MuonSelection : public Selection {
+class MuonVetoSelection : public Selection {
 
 public:
 
-    MuonSelection(const track& trk);
+    MuonVetoSelection(const track& trk);
 
-    virtual ~MuonSelection() override = default;
+    virtual ~MuonVetoSelection() = default;
 
     virtual bool isIn(const vertex& vtx) const = 0;
 
-    track m_trk;
+    const track c_trk;
 
 };
 
-class BasicMuonVetoSelection : public MuonSelection {
+class TimeRangeMuonVetoSelection : public MuonVetoSelection {
 
 public:
 
-    BasicMuonVetoSelection(const track& trk, double radius, const TimeStamp& its, const TimeStamp& fts);
+    TimeRangeMuonVetoSelection(const track& trk, const TimeStamp& its, const TimeStamp& fts);
 
-    ~BasicMuonVetoSelection() override = default;
+    ~TimeRangeMuonVetoSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    CylinderVolumeSelection m_cyl;
-    WindowTimeSelection m_win;
+    TimeRangeSelection m_trs;
 
 };
 
-class EvolutiveCylindricalMuonVetoSelection : public MuonSelection {
+class CylindricalMuonVetoSelection : public MuonVetoSelection {
 
 public:
 
-    EvolutiveCylindricalMuonVetoSelection(const track& trk, double iradius, double tcoef);
+    CylindricalMuonVetoSelection(const track& trk, double radius, const TimeStamp& its, const TimeStamp& fts);
 
-    ~EvolutiveCylindricalMuonVetoSelection() override = default;
-    
-    bool isIn(const vertex& vtx) const override;
-
-private:
-
-    double m_iradius;
-    double m_tcoef;
-
-};
-
-class WaterPoolMuonVetoSelection : public MuonSelection {
-
-public:
-
-    WaterPoolMuonVetoSelection(const track& trk, const TimeStamp& fts);
-
-    ~WaterPoolMuonVetoSelection() override = default;
+    ~CylindricalMuonVetoSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    TimeStamp m_rts, m_fts;
+    CylindricalSelection m_cyl; 
+    TimeRangeSelection m_trs;   
 
 };
 

@@ -5,21 +5,11 @@
 
 #include "selection/Selection.hpp"
 
-class VolumeSelection : public Selection {
+class FiducialVolumeSelection : public Selection {
 
 public:
 
-    virtual ~VolumeSelection() = default;
-
-    virtual bool isIn(const vertex& vtx) const = 0;
-
-};
-
-class FiducialVolumeSelection : public VolumeSelection {
-
-public:
-
-    FiducialVolumeSelection(double radius);
+    FiducialVolumeSelection(double thold);
 
     ~FiducialVolumeSelection() override = default;
 
@@ -27,75 +17,91 @@ public:
 
 private:
 
-    double m_radius;
+    double m_thold2;
 
 };
 
-class HeightVolumeSelection : public VolumeSelection {
+class HeigthRangeSelection : public Selection {
+
 public:
 
-    HeightVolumeSelection(double lower_height, double upper_height);
+    HeigthRangeSelection(double zmin, double zmax);
 
-    ~HeightVolumeSelection() override = default;
+    ~HeigthRangeSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    double m_lower_height;
-    double m_upper_height;
+    double m_zmin, m_zmax;
 
 };
 
-class XYRadiusVolumeSelection : public VolumeSelection {
+class RadialRangeSelection : public Selection {
 
 public:
 
-    XYRadiusVolumeSelection(double radius_lower, double radius_upper);
+    RadialRangeSelection(double rhomin, double rhomax);
 
-    ~XYRadiusVolumeSelection() override = default;
+    ~RadialRangeSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    double m_radius_lower;
-    double m_radius_upper;
+    double m_rhomin2, m_rhomax2;
 
 };
 
-class SphereVolumeSelection : public VolumeSelection {
+class ChimneySelection : public Selection {
 
 public:
 
-    SphereVolumeSelection(const vec3& pos, double radius);
-    
-    ~SphereVolumeSelection() override = default;
+    ChimneySelection(double z, double rho);
+
+    ~ChimneySelection() override = default;
+
+    bool isIn(const vertex& vtx) const override;
+
+private:
+
+    HeigthRangeSelection m_bot;
+    HeigthRangeSelection m_up;
+    RadialRangeSelection m_rad;
+
+};
+
+class SphereSelection : public Selection {
+
+public:
+
+    SphereSelection(const vec3& pos, double radius);
+
+    ~SphereSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
     vec3 m_pos;
-    double m_radius;
+    double m_radius2;
 
 };
 
-class CylinderVolumeSelection : public VolumeSelection {
+class CylindricalSelection : public Selection {
 
 public:
 
-    CylinderVolumeSelection(const vec3& ipos, const vec3& fpos, double radius);
+    CylindricalSelection(const vec3& ipos, const vec3& fpos, double radius);
 
-    ~CylinderVolumeSelection() override = default;
+    ~CylindricalSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    vec3 m_ipos;
-    vec3 m_fpos;
-    double m_radius;
+    vec3 m_ipos, m_dir;
+    double m_radius2;
 
 };
 

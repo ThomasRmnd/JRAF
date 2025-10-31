@@ -9,7 +9,7 @@ class MultiplicityWindowCut : public Analysis {
 
 public:
 
-    MultiplicityWindowCut(const std::string& name);
+    MultiplicityWindowCut(const std::string& name, const std::string& method);
 
     ~MultiplicityWindowCut() override = default;
 
@@ -17,9 +17,6 @@ public:
     void process(JM::NavBuffer* buf) override;
 
 private:
-
-    double totq_p;
-    double totq_d;
 
     unsigned char m_window_type; // 0: before, 1: between, 2: after
     double posx_m;

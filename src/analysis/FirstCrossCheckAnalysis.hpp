@@ -9,17 +9,11 @@ class FirstCrossCheckAnalysis : public Analysis {
 
 public:
 
-    FirstCrossCheckAnalysis(const std::string& name);
+    FirstCrossCheckAnalysis(const std::string& name, const std::string& method);
 
     ~FirstCrossCheckAnalysis() override = default;
 
-    bool initialize() override;
     void process(JM::NavBuffer* buf) override;
-
-private:
-
-    double totq_p;
-    double totq_d;
 
 };
 

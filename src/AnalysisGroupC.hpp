@@ -164,6 +164,8 @@ private:
     ContextFileTracker m_contextTracker;
     bool m_targetIsFirst;
     TimeStamp m_targetFirstTs{0, 0};
+    TimeStamp m_previousTs{0, 0};
+    TimeStamp m_vetoTs{0, 0};
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 
     // Output file

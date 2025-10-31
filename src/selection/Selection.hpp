@@ -1,6 +1,7 @@
 #ifndef ANALYSISGROUPC_SELECTION_SELECTION_HPP_
 #define ANALYSISGROUPC_SELECTION_SELECTION_HPP_
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -16,19 +17,97 @@ public:
 
 };
 
-class CombinedSelection : public Selection {
+class MethodSelection : public Selection {
 
 public:
 
-    CombinedSelection(const std::vector<std::shared_ptr<Selection>>& selections);
+    MethodSelection(const std::string& method) :
+        m_method{method}
+    {}
 
-    ~CombinedSelection() override = default;
+    ~MethodSelection() override = default;
+
+    bool isIn(const vertex& vtx) const override {
+        return vtx.method == m_method;
+    }
+
+private:
+
+    std::string m_method;
+
+};
+
+// ----------------------------------------------
+// Logical classes 
+// ----------------------------------------------
+
+class LogicalAndSelection : public Selection {
+
+public:
+
+    LogicalAndSelection(const std::shared_ptr<Selection>& lhs, const std::shared_ptr<Selection>& rhs);
+
+    ~LogicalAndSelection() override = default;
 
     bool isIn(const vertex& vtx) const override;
 
 private:
 
-    std::vector<std::shared_ptr<Selection>> m_selections;
+    std::shared_ptr<Selection> m_lhs, m_rhs;
+
+};
+
+std::shared_ptr<Selection> logical_and(const std::shared_ptr<Selection>& lhs, const std::shared_ptr<Selection>& rhs);
+
+class LogicalOrSelection : public Selection {
+
+public:
+
+    LogicalOrSelection(const std::shared_ptr<Selection>& lhs, const std::shared_ptr<Selection>& rhs);
+
+    ~LogicalOrSelection() override = default;
+
+    bool isIn(const vertex& vtx) const override;
+
+private:
+
+    std::shared_ptr<Selection> m_lhs, m_rhs;
+
+};
+
+std::shared_ptr<Selection> logical_or(const std::shared_ptr<Selection>& lhs, const std::shared_ptr<Selection>& rhs);
+
+class LogicalNotSelection : public Selection {
+
+public:
+
+    LogicalNotSelection(const std::shared_ptr<Selection>& sel);
+
+    ~LogicalNotSelection() override = default;
+
+    bool isIn(const vertex& vtx) const override;
+
+private:
+
+    std::shared_ptr<Selection> m_sel;
+
+};
+
+std::shared_ptr<Selection> logical_not(const std::shared_ptr<Selection>& sel);
+
+class FunctionalSelection : public Selection {
+
+public:
+
+    FunctionalSelection(const std::function<bool(const vertex&)>& func);
+
+    ~FunctionalSelection() override = default;
+
+    bool isIn(const vertex& vtx) const override;
+
+private:
+
+    std::function<bool(const vertex&)> m_func;
 
 };
 

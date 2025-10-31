@@ -9,17 +9,11 @@ class IBDWithNeutronVetoStudy : public Analysis {
 
 public:
 
-    IBDWithNeutronVetoStudy(const std::string& name);
+    IBDWithNeutronVetoStudy(const std::string& name, const std::string& method);
 
     ~IBDWithNeutronVetoStudy() override = default;
 
-    bool initialize() override;
     void process(JM::NavBuffer* buf) override;
-
-private:
-
-    double totq_p;
-    double totq_d;
 
 };
 

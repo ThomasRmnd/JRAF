@@ -1,21 +1,19 @@
 #include "selection/Energy.hpp"
 
-IntervalEnergySelection::IntervalEnergySelection(double lower, double upper) :
-    m_lower{lower},
-    m_upper{upper}
+EnergyRangeSelection::EnergyRangeSelection(double emin, double emax) :
+    m_emin{emin},
+    m_emax{emax}
 {}
 
-bool IntervalEnergySelection::isIn(const vertex& vtx) const {
-    return m_lower <= vtx.energy && vtx.energy <= m_upper;
+bool EnergyRangeSelection::isIn(const vertex& vtx) const {
+    return m_emin <= vtx.energy && vtx.energy <= m_emax;
 }
 
-MultiIntervalEnergySelection::MultiIntervalEnergySelection(const std::vector<std::shared_ptr<IntervalEnergySelection>>& selecs) :
-    m_selecs(selecs)
+ChargeRangeSelection::ChargeRangeSelection(double qmin, double qmax) :
+    m_qmin{qmin},
+    m_qmax{qmax}
 {}
 
-bool MultiIntervalEnergySelection::isIn(const vertex& vtx) const {
-    for (const std::shared_ptr<IntervalEnergySelection>& selec : m_selecs) {
-        if (selec->isIn(vtx)) return true;
-    }
-    return false;
+bool ChargeRangeSelection::isIn(const vertex& vtx) const {
+    return m_qmin <= vtx.totq && vtx.totq <= m_qmax;
 }

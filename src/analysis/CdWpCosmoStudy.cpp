@@ -9,10 +9,11 @@
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Muon.hpp"
+#include "selection/Vertex.hpp"
 #include "selection/Volume.hpp"
 
-CdWpCosmoStudy::CdWpCosmoStudy(const std::string& name, double cyl_radius, const TimeStamp& lwr_window, const TimeStamp& upr_window) : 
-    Analysis{name}, 
+CdWpCosmoStudy::CdWpCosmoStudy(const std::string& name, const std::string& method, double cyl_radius, const TimeStamp& lwr_window, const TimeStamp& upr_window) : 
+    Analysis{name, method}, 
     m_cyl_radius{cyl_radius},
     m_lwr_window{lwr_window}, 
     m_upr_window{upr_window} 
@@ -20,9 +21,6 @@ CdWpCosmoStudy::CdWpCosmoStudy(const std::string& name, double cyl_radius, const
 
 bool CdWpCosmoStudy::initialize() {
     if (!Analysis::initialize()) return false;
-    m_tree->Branch("totq_p", &totq_p);
-    m_tree->Branch("totq_d", &totq_d);
-
     m_tree->Branch("dlat_p", &dlat_p);
     m_tree->Branch("dlat_d", &dlat_d);
     m_tree->Branch("dt_mu2p_sec", &dt_mu2p_sec);
@@ -37,43 +35,22 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
     std::vector<vertex> aft_vertices;
-    tracks.reserve(buf->size());
-    bef_vertices.reserve(buf->size() / 2);
-    aft_vertices.reserve(buf->size() / 2);
+    extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
 
-    for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
-        JM::EvtNavigator* nav = it->get();
-        if (!nav) continue;
-
-        std::shared_ptr<Event> evt_ptr = EventCache::load(nav);
-        if (!evt_ptr) continue;
-
-        const Event& evt = *evt_ptr;
-
-        tracks.push_back(evt.tracks);
-        if (it < buf->current()) {
-            bef_vertices.insert(bef_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        } else if (buf->current() < it) {
-            aft_vertices.insert(aft_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        } else {
-            cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        }
-    }
-
-    std::vector<WaterPoolMuonVetoSelection> mu_wp_bundle_cut;
-    std::vector<BasicMuonVetoSelection> mu_cosmo_cut;
+    std::vector<TimeRangeMuonVetoSelection> mu_wp_bundle_cut;
+    std::vector<CylindricalMuonVetoSelection> mu_cosmo_cut;
     for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         if (it->empty()) continue;
         std::vector<track> cd_tracks;
         std::vector<track> wp_tracks;
         std::vector<track> tt_tracks;
         for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
-            mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 5000000});
+            mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 5000000});
             if (jt->det != track::loc::wp) continue;
             wp_tracks.push_back(*jt);
         }
         if (wp_tracks.size() > 1ul) {
-            mu_wp_bundle_cut.emplace_back(*it->begin(), TimeStamp{0, 500000000});
+            mu_wp_bundle_cut.emplace_back(*it->begin(), TimeStamp{0, 0}, TimeStamp{0, 500000000});
             // std::cout << "[DEBUG] Bundle veto from starting at " << it->begin()->ts << '\n';
             continue;
         }
@@ -84,7 +61,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
                 mu_cosmo_cut.emplace_back(*jt, m_cyl_radius, m_lwr_window, m_upr_window);
             }
             else {
-                mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 500000000});
+                mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 500000000});
             }
             // else if (jt->det == track::loc::tt) {
             //     tt_tracks.push_back(*jt);
@@ -92,14 +69,13 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
         }
     }
 
-    FiducialVolumeSelection fiducial_vol_cut{17200.0};
-    HeightVolumeSelection lower_height_vol_cut{-20050.0, -11000.0};
-    HeightVolumeSelection upper_height_vol_cut{ 11000.0,  20050.0};
-    XYRadiusVolumeSelection xyradius_vol_cut{0.0, 3000.0};
-    double prompt_lower_thold = 1500.0;
-    double prompt_upper_thold = 20000.0;
-    double delayed_lower_thold = 3700.0;
-    double delayed_upper_thold = 6000.0;
+    FiducialVolumeSelection fiducial_vol_cut{16500.0};
+    ChimneySelection chimney_cut{15500.0, 3000.0};
+    // ChargeRangeSelection prompt_charge_cut{1500.0, 20000.0};
+    // ChargeRangeSelection delayed_charge_cut{4000.0, 6000.0};
+    EnergyRangeSelection prompt_energy_cut{0.7, 12.0};
+    EnergyRangeSelection delayed_energy_cut{2.0, 2.5};
+    EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
     std::vector<std::vector<track>> tracks_for_cosmo;
     std::vector<ibd> cosmos;
@@ -110,22 +86,18 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             LogInfo << "Prompt not in fiducial volume\n";
             continue;
         }
-
-        if (
-            (upper_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt)) ||
-            (lower_height_vol_cut.isIn(prompt) && xyradius_vol_cut.isIn(prompt))
-        ) {
+        if (chimney_cut.isIn(prompt)) {
             LogInfo << "Prompt is a chimney\n";
             continue;
         }
 
-        if (prompt.totq < prompt_lower_thold || prompt_upper_thold < prompt.totq) {
+        if (!prompt_energy_cut.isIn(prompt)) {
             LogInfo << "Prompt not in energy range\n";
             continue;
         }
 
         bool is_vetoed = false;
-        for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
+        for (const TimeRangeMuonVetoSelection& cut : mu_wp_bundle_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             break;
@@ -136,8 +108,8 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
         }
 
         is_vetoed = false;
-        std::vector<BasicMuonVetoSelection> trk_cut_cand;
-        for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+        std::vector<CylindricalMuonVetoSelection> trk_cut_cand;
+        for (const CylindricalMuonVetoSelection& cut : mu_cosmo_cut) {
             if (!cut.isIn(prompt)) continue;
             is_vetoed = true;
             trk_cut_cand.push_back(cut);
@@ -147,26 +119,22 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             continue;
         }
 
-        WindowTimeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -2000000}, TimeStamp{0, 0}};
+        TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
         for (const vertex& cand : bef_vertices) {
             if (!multi_prompt_time.isIn(cand)) continue;
-            if (!fiducial_vol_cut.isIn(cand)) continue;
-            if (
-                (upper_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand)) ||
-                (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
-            ) continue;
-            if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
-            
+            // if (!fiducial_vol_cut.isIn(cand)) continue;
+            // if (chimney_cut.isIn(cand)) continue;
+            if (!multiplicity_energy_cut.isIn(cand)) continue;
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
+            for (const TimeRangeMuonVetoSelection& cut : mu_wp_bundle_cut) {
                 if (!cut.isIn(cand)) continue;
                 is_vetoed = true;
                 break;
             }
             if (is_vetoed) continue;
             is_vetoed = false;
-            for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+            for (const CylindricalMuonVetoSelection& cut : mu_cosmo_cut) {
                 if (!cut.isIn(cand)) continue;
                 is_vetoed = true;
                 break;
@@ -181,8 +149,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             continue;
         }
 
-        WindowTimeSelection correlation_time_cut{prompt.ts, TimeStamp{0, 5000}, TimeStamp{0, 2000000}};
-        SphereVolumeSelection distance_correlation_cut{prompt.pos, 1500.0};
+        VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
         for (const vertex& delayed : aft_vertices) {
             LogInfo << delayed << '\n';
@@ -190,31 +157,23 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
                 LogInfo << "Delayed not in fiducial volume\n";
                 continue;
             }
+            // if (chimney_cut.isIn(delayed)) {
+            //     LogInfo << "Delayed is a chimney\n";
+            //     continue;
+            // }
 
-            if (
-                (upper_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed)) ||
-                (lower_height_vol_cut.isIn(delayed) && xyradius_vol_cut.isIn(delayed))
-            ) {
-                LogInfo << "Delayed is a chimney\n";
-                continue;
-            }
-
-            if (delayed.totq < delayed_lower_thold || delayed_upper_thold < delayed.totq) {
+            if (!delayed_energy_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in energy range\n";
                 continue;
             }
 
-            if (!correlation_time_cut.isIn(delayed)) {
-                LogInfo << "Delayed is not correlated in time\n";
-                continue;
-            }
-            if (!distance_correlation_cut.isIn(delayed)) {
-                LogInfo << "Delayed is not correlated in space\n";
+            if (!correlation_cut.isIn(delayed)) {
+                LogInfo << "Delayed not correlated\n";
                 continue;
             }
 
             is_vetoed = false;
-            for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
+            for (const TimeRangeMuonVetoSelection& cut : mu_wp_bundle_cut) {
                 if (!cut.isIn(delayed)) continue;
                 is_vetoed = true;
                 break;
@@ -225,38 +184,34 @@ void CdWpCosmoStudy::process(JM::NavBuffer* buf) {
             }
 
             is_vetoed = false;
-            // for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+            // for (const CylindricalMuonVetoSelection& cut : mu_cosmo_cut) {
             std::vector<track> trk_cand;
-            for (const BasicMuonVetoSelection& cut : trk_cut_cand) {
+            for (const CylindricalMuonVetoSelection& cut : trk_cut_cand) {
                 if (!cut.isIn(delayed)) continue;
                 is_vetoed = true;
-                trk_cand.push_back(cut.m_trk);
+                trk_cand.push_back(cut.c_trk);
             }
             if (!is_vetoed) {
                 LogInfo << "Delayed is not in cylindrical muon cosmogenic cut\n";
                 continue;
             }
 
-            WindowTimeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 2000000}};
+            TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
             bool delayed_has_multi = false;
             for (const vertex& cand : aft_vertices) {
                 if (cand.ts == delayed.ts) continue; // same event
-                if (!fiducial_vol_cut.isIn(cand)) continue;
-                if (
-                    (upper_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand)) ||
-                    (lower_height_vol_cut.isIn(cand) && xyradius_vol_cut.isIn(cand))
-                ) continue;
-                if (cand.totq < prompt_lower_thold || prompt_upper_thold < cand.totq) continue;
-                
+                // if (!fiducial_vol_cut.isIn(cand)) continue;
+                // if (chimney_cut.isIn(cand)) continue;
+                if (!multiplicity_energy_cut.isIn(cand)) continue;
                 is_vetoed = false;
-                for (const WaterPoolMuonVetoSelection& cut : mu_wp_bundle_cut) {
+                for (const TimeRangeMuonVetoSelection& cut : mu_wp_bundle_cut) {
                     if (!cut.isIn(cand)) continue;
                     is_vetoed = true;
                     break;
                 }
                 if (is_vetoed) continue;
                 is_vetoed = false;
-                for (const BasicMuonVetoSelection& cut : mu_cosmo_cut) {
+                for (const CylindricalMuonVetoSelection& cut : mu_cosmo_cut) {
                     if (!cut.isIn(cand)) continue;
                     is_vetoed = true;
                     break;

@@ -20,10 +20,10 @@ FILES
     src/event/Vertex.cpp
 
     src/selection/Energy.cpp
-    src/selection/IBD.cpp
     src/selection/Muon.cpp
     src/selection/Selection.cpp
     src/selection/Time.cpp
+    src/selection/Vertex.cpp
     src/selection/Volume.cpp
 
 DEPENDS

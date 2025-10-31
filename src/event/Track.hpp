@@ -16,6 +16,7 @@ struct track {
         tt = 4
     };
 
+    std::string method;
     vec3 ipos;
     vec3 fpos;
     double totpe;
@@ -23,13 +24,13 @@ struct track {
     loc det;
     float quality;
 
-    track(const JM::RecTrack& trk_, const TimeStamp& ts_, const loc& det_);
+    track(const std::string& method_, const JM::RecTrack& trk_, const TimeStamp& ts_, const loc& det_);
 
 };
 
 template<class _Char, class _Traits>
 std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& os, const track& trk) {
-    return os << "ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totpe: " << trk.totpe << ", ts: " << trk.ts;
+    return os << "method: " << method << ", ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totpe: " << trk.totpe << ", ts: " << trk.ts;
 }
 
 inline track::loc operator|(const track::loc& lhs, const track::loc& rhs) {
