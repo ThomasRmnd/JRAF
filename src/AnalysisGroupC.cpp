@@ -237,6 +237,24 @@ void AnalysisGroupC::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& metho
     }
 }
 
+void AnalysisGroupC::addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices) {
+    if (!oec_hdr || !oec_hdr->event("JM::OecEvt")) return;
+    JM::OecEvt* oec_evt = dynamic_cast<JM::OecEvt*>(oec_hdr->event("JM::OecEvt"));
+    vertices.push_back(vertex{
+        "Oec", vec3{oec_evt->getVertexX(), oec_evt->getVertexY(), oec_evt->getVertexZ()}, oec_evt->getEnergy(), totq, ts, "Unknown"
+    });
+}
+
+void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices) {
+    if (!cdv_hdr || !cdv_hdr->event()) return;
+    const std::vector<JM::RecVertex*>& rec_vertices = cdv_hdr->event()->vertices();
+    for (JM::RecVertex* v : rec_vertices) {
+        vertices.push_back(vertex{
+            method, vec3{v->x(), v->y(), v->z()}, v->energy(), totq, ts, "Unknown"
+        });
+    }
+}
+
 bool AnalysisGroupC::execute() {
     LogInfo << "---------- Processing event by AnalysisGroupC: " << ++m_iEvt << " ----------\n";
 
@@ -315,6 +333,8 @@ bool AnalysisGroupC::execute() {
 
         std::vector<track> tracks;
         if (is_possibly_cd_muon) {
+            JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt());
+            addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
             JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt(), "/Event/CdTrackRecClassify");
             addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
 
@@ -327,6 +347,8 @@ bool AnalysisGroupC::execute() {
         else if (is_possibly_wp_muon) {
             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
+            JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
+            addTrack(classify_wpt_hdr, "CdClassify", curts, tracks);
             
             RecTrks rtrks;
             if (!m_classifyTool->reconstruct(&rtrks)) {
@@ -366,13 +388,19 @@ bool AnalysisGroupC::execute() {
             }
         }
 
-        if (tracks.empty()) { // not a muon event load from EvtNavigator
-            evt = EventCache::load(bufwrap.curEvt()); // trigger the caching mechanism
-        }
-        else {
-            evt->tracks = tracks;
-            EventCache::insert(curts, evt);
-        }
+        std::vector<vertex> vertices;
+        JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav);
+        addVertex(basic_cdv_hdr, "Basic", curts, totq_cd, vertices);
+        JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav, "/Event/CdVertexRecJVertex");
+        addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
+        JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav, "/Event/CdVertexRecMixedPhase");
+        addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, totq_cd, vertices);
+        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav, "/Event/CdVertexRecOMILREC");
+        addVertex(omilrec_cdv_hdr, "OMILREC", curts, totq_cd, vertices);
+
+        evt->tracks = tracks;
+        evt->vertices = vertices;
+        EventCache::insert(curts, evt);
     }
 
     JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(nav);

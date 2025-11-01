@@ -33,9 +33,9 @@ bool Event::load(JM::EvtNavigator* nav) {
     if (sim_hdr) type = sim_hdr->getEventType();
     else type = "Unknown";
 
-    loadCdTrack(nav);
-    loadWpTrack(nav);
-    loadTtTrack(nav);
+    // loadCdTrack(nav);
+    // loadWpTrack(nav);
+    // loadTtTrack(nav);
     loadCdVertex(nav);
     return true;
 }

@@ -19,6 +19,8 @@
 
 #include "Context/TimeStamp.h"
 #include "Event/CdTrackRecHeader.h"
+#include "Event/CdVertexRecHeader.h"
+#include "Event/OecHeader.h"
 #include "Event/TtRecHeader.h"
 #include "Event/WpRecHeader.h"
 #include "EvtNavigator/NavBuffer.h"
@@ -213,6 +215,8 @@ private:
     void addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
     void addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
     void addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
+    void addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices);
+    void addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices);
 
 };
 
