@@ -1,6 +1,6 @@
 #include "analysis/Analysis.hpp"
 
-#include <iostream>
+#include "SniperKernel/SniperLog.h"
 
 #include "event/Event.hpp"
 #include "event/EventCache.hpp"
@@ -48,30 +48,30 @@ void Analysis::extractEvent(JM::NavBuffer* buf, std::vector<std::vector<track>>&
     aft_vertices.reserve(buf->size() / 2);
 
     for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
-        JM::EvtNavigator* nav = it->get();
-        if (!nav) continue;
-
-        std::shared_ptr<Event> evt_ptr = EventCache::load(nav);
-        if (!evt_ptr) continue;
+        std::shared_ptr<Event> evt_ptr = EventCache::load(it->get());
+        if (!evt_ptr) {
+            LogWarn << "Event is nullptr\n";
+            continue;
+        }
 
         const Event& evt = *evt_ptr;
 
         tracks.push_back(evt.tracks);
 
         if (it < buf->current()) {
-            for (const auto& v : evt.vertices) {
+            for (const vertex& v : evt.vertices) {
                 if (m_method_sel.isIn(v)) {
                     bef_vertices.push_back(v);
                 }
             }
         } else if (buf->current() < it) {
-            for (const auto& v : evt.vertices) {
+            for (const vertex& v : evt.vertices) {
                 if (m_method_sel.isIn(v)) {
                     aft_vertices.push_back(v);
                 }
             }
         } else {
-            for (const auto& v : evt.vertices) {
+            for (const vertex& v : evt.vertices) {
                 if (m_method_sel.isIn(v)) {
                     cur_vertices.push_back(v);
                 }

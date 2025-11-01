@@ -401,6 +401,7 @@ bool AnalysisGroupC::execute() {
         evt->tracks = tracks;
         evt->vertices = vertices;
         EventCache::insert(curts, evt);
+        LogInfo << *evt << '\n';
     }
 
     JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(nav);
