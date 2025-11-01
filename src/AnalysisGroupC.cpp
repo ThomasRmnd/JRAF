@@ -278,6 +278,11 @@ bool AnalysisGroupC::execute() {
         if (ts_diff <= TimeStamp{0, 5000000}) return true;
     }
 
+    // DEBUG --- Timing
+    using clock = std::chrono::steady_clock;
+    auto t_start = clock::now();
+    // DEBUG --- Timing
+
     NavBufferWrapper bufwrap(*m_buf);
     for (; bufwrap.current() != bufwrap.end(); bufwrap.next()) {
         if (EventCache::contains(bufwrap.curEvt())) continue;
@@ -406,6 +411,10 @@ bool AnalysisGroupC::execute() {
         LogInfo << *evt << '\n';
     }
 
+    // DEBUG --- Timing
+    auto t_after_load = clock::now();
+    // DEBUG --- Timing
+
     JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(nav);
     JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
     // JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
@@ -436,6 +445,18 @@ bool AnalysisGroupC::execute() {
         m_muveto_sec = muveto_ts.GetSec();
         m_muveto_nsec = muveto_ts.GetNanoSec();
     }
+
+    // DEBUG --- Timing
+    auto t_after_analysis = clock::now();
+    // DEBUG --- Timing
+
+    auto t_load_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_load - t_start).count();
+    auto t_loop_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_analysis - t_after_load).count();
+
+    std::cout << "\n=== Timing report ===\n";
+    std::cout << "1. Loading:  " << t_load_ms << " ms\n";
+    std::cout << "2. Analysis: " << t_loop_ms << " ms\n";
+    std::cout << "=====================\n\n";
 
     return true;
 }
