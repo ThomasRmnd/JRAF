@@ -34,28 +34,7 @@ void TtCosmoStudy::process(JM::NavBuffer* buf) {
     std::vector<vertex> cur_vertices;
     std::vector<vertex> bef_vertices;
     std::vector<vertex> aft_vertices;
-    tracks.reserve(buf->size());
-    bef_vertices.reserve(buf->size() / 2);
-    aft_vertices.reserve(buf->size() / 2);
-
-    for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
-        JM::EvtNavigator* nav = it->get();
-        if (!nav) continue;
-
-        std::shared_ptr<Event> evt_ptr = EventCache::load(nav);
-        if (!evt_ptr) continue;
-
-        const Event& evt = *evt_ptr;
-
-        tracks.push_back(evt.tracks);
-        if (it < buf->current()) {
-            bef_vertices.insert(bef_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        } else if (buf->current() < it) {
-            aft_vertices.insert(aft_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        } else {
-            cur_vertices.insert(cur_vertices.end(), evt.vertices.begin(), evt.vertices.end());
-        }
-    }
+    extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
 
     std::vector<TimeRangeMuonVetoSelection> mu_wp_bundle_cut;
     std::vector<CylindricalMuonVetoSelection> mu_cosmo_cut;

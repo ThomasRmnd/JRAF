@@ -28,6 +28,11 @@ public:
     static std::shared_ptr<Event> load(JM::EvtNavigator* nav);
 
     /**
+     *  @brief Manually insert or update an event in the cache
+     */
+    static void insert(const TimeStamp& ts, const std::shared_ptr<Event>& evt);
+
+    /**
      * @brief Check whether an event for the given navigator is already cached.
      */
     static bool contains(JM::EvtNavigator* nav);

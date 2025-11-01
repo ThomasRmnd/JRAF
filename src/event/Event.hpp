@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "Context/TimeStamp.h"
-#include "EvtNavigator/EvtNavigator.h"
+#include "EvtNavigator/NavBuffer.h"
 
 #include "event/Track.hpp"
 #include "event/Vertex.hpp"

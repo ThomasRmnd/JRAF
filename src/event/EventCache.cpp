@@ -4,10 +4,9 @@
 
 EventCache::CacheType EventCache::s_cache;
 
-std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
-{
+std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
     if (!nav) {
-        LogError << "EventCache::load: nullptr navigator" << std::endl;
+        LogError << "EventCache::load: nullptr navigator\n";
         return nullptr;
     }
 
@@ -19,14 +18,19 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav)
 
     std::shared_ptr<Event> evt = std::make_shared<Event>();
     if (!evt->load(nav)) {
-        LogError << "EventCache::load: failed to load event for nav=" << nav << std::endl;
+        LogError << "EventCache::load: failed to load event for nav=" << nav << '\n';
         return nullptr;
     }
 
     // s_cache[nav] = evt;
     s_cache[nav->TimeStamp().GetTimeSpec()] = evt;
-    LogInfo << "EventCache: loaded and cached event for nav=" << nav << std::endl;
+    LogInfo << "EventCache: loaded and cached event for nav=" << nav << '\n';
     return evt;
+}
+
+void EventCache::insert(const TimeStamp& ts, const std::shared_ptr<Event>& evt) {
+    // s_cache[nav] = evt;
+    s_cache[ts] = evt;
 }
 
 bool EventCache::contains(JM::EvtNavigator* nav)

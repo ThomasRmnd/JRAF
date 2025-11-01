@@ -11,3 +11,13 @@ track::track(const std::string& method_, const JM::RecTrack& trk_, const TimeSta
     det{det_},
     quality{trk_.quality()}
 {}
+
+track::track(const std::string& method_, const vec3& ipos_, const vec3& fpos_, double totpe_, const TimeStamp& ts_, const loc& det_, float quality_) :
+    method{method_},
+    ipos{ipos_},
+    fpos{fpos_},
+    totpe{totpe_},
+    ts{ts_},
+    det{det_},
+    quality{quality_}
+{}

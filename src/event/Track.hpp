@@ -25,6 +25,7 @@ struct track {
     float quality;
 
     track(const std::string& method_, const JM::RecTrack& trk_, const TimeStamp& ts_, const loc& det_);
+    track(const std::string& method_, const vec3& ipos_, const vec3& fpos_, double totpe_, const TimeStamp& ts_, const loc& det_, float quality_);
 
 };
 

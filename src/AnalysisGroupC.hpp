@@ -28,6 +28,7 @@
 #include "UtilsThomas/loader/Loader.hpp"
 
 #include "analysis/Analysis.hpp"
+#include "event/Event.hpp"
 
 struct ContextFileTracker {
 
@@ -119,6 +120,7 @@ public:
 
     NavBufferWrapper(JM::NavBuffer& buf) {
         m_dBuf.assign(buf.begin(), buf.end());
+        m_iCur = 0;
     }
 
     ~NavBufferWrapper() override = default;
@@ -147,7 +149,8 @@ public:
 
 private:
 
-    std::size_t m_iEvt;
+    std::size_t m_iEvt = 0ul;
+    TimeStamp m_tsEvt{0, 0};
     
     JM::NavBuffer* m_buf;
     RootInputSvc* m_iptSvc;
@@ -172,7 +175,6 @@ private:
 
     // Muon selection variable
 
-    bool m_reconstruct_muon_mode;
     double m_cd_muon_totq_thold = 30000.0;
     double m_wp_muon_totq_thold = 400.0;
     TimeStamp m_cd_afterpulse_thold{0, 50000};
@@ -203,6 +205,11 @@ private:
     bool initRecTool();
     bool initLoader();
     bool initAnalyses();
+
+    void addTrack(RecTrks& rec_tracks, const std::string& method, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks);
+    void addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
+    void addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
+    void addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
 
 };
 
