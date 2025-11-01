@@ -5,7 +5,7 @@
 #  Purpose: Automate hep_sub job submissions for single ESD–RTRAW processing
 #--------------------------------------------------------------------------------------------------
 
-set -euxo pipefail
+set -euo pipefail
 IFS=$'\n\t'
 
 #==============================
