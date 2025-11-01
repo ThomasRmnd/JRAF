@@ -241,7 +241,7 @@ void AnalysisGroupC::addVertex(JM::OecHeader* oec_hdr, const std::string& method
     if (!oec_hdr || !oec_hdr->event("JM::OecEvt")) return;
     JM::OecEvt* oec_evt = dynamic_cast<JM::OecEvt*>(oec_hdr->event("JM::OecEvt"));
     vertices.push_back(vertex{
-        "Oec", vec3{oec_evt->getVertexX(), oec_evt->getVertexY(), oec_evt->getVertexZ()}, oec_evt->getEnergy(), totq, ts, "Unknown"
+        method, vec3{oec_evt->getVertexX(), oec_evt->getVertexY(), oec_evt->getVertexZ()}, oec_evt->getEnergy(), totq, ts, "Unknown"
     });
 }
 
@@ -389,13 +389,15 @@ bool AnalysisGroupC::execute() {
         }
 
         std::vector<vertex> vertices;
-        JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav);
+        JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
+        addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
+        JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt());
         addVertex(basic_cdv_hdr, "Basic", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav, "/Event/CdVertexRecJVertex");
+        JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecJVertex");
         addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav, "/Event/CdVertexRecMixedPhase");
+        JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecMixedPhase");
         addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav, "/Event/CdVertexRecOMILREC");
+        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC");
         addVertex(omilrec_cdv_hdr, "OMILREC", curts, totq_cd, vertices);
 
         evt->tracks = tracks;
