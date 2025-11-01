@@ -5,6 +5,7 @@
 
 #include "SniperKernel/SniperLog.h"
 
+#include "analysis/NavBufferCache.hpp"
 #include "event/Event.hpp"
 #include "event/EventCache.hpp"
 #include "event/IBD.hpp"
@@ -17,12 +18,12 @@ IBDWithNeutronVetoStudy::IBDWithNeutronVetoStudy(const std::string& name, const 
     Analysis{name, method} 
 {}
 
-void IBDWithNeutronVetoStudy::process(JM::NavBuffer* buf) {
-    std::vector<std::vector<track>> tracks;
-    std::vector<vertex> cur_vertices;
-    std::vector<vertex> bef_vertices;
-    std::vector<vertex> aft_vertices;
-    extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
+void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
+    const std::vector<std::vector<track>>& tracks = NavBufferCache::getTracks(m_method);
+    const std::vector<vertex>& cur_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Current);
+    const std::vector<vertex>& bef_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Before);
+    const std::vector<vertex>& aft_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::After);
+    // extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
 
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
     std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;

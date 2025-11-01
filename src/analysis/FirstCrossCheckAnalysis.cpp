@@ -18,7 +18,7 @@ FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name, const 
     Analysis{name, method} 
 {}
 
-void FirstCrossCheckAnalysis::process(JM::NavBuffer* buf) {
+void FirstCrossCheckAnalysis::process(JM::NavBuffer*) {
     const std::vector<std::vector<track>>& tracks = NavBufferCache::getTracks(m_method);
     const std::vector<vertex>& cur_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Current);
     const std::vector<vertex>& bef_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Before);
