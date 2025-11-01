@@ -3,6 +3,7 @@
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 
 list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
+property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
 time_window=("-2.0" "2.0")
 log_level=3
 
@@ -92,12 +93,7 @@ if (( job_count == 0 )); then
     exit 1
 fi
 
-extra_args="--time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
-
-if [[ -z "$property_file" ]]; then
-    property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
-fi
-extra_args+=" --property-file $property_file"
+extra_args="--property-file $property_file --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
 
 # --- Submit batch jobs ---
 echo "Submitting $job_count jobs with hep_sub..."
