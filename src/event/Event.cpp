@@ -106,5 +106,5 @@ void Event::loadCdVertex(JM::EvtNavigator* nav) {
 
 void Event::loadTrack(const std::string& method, const JM::RecTrack* trk, const track::loc& det) {
     if (!trk) return;
-    tracks.emplace_back(*trk, ts, det);
+    tracks.emplace_back(method, *trk, ts, det);
 }
