@@ -3,7 +3,6 @@
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 
 list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
-property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
 time_window=("-2.0" "2.0")
 log_level=3
 
