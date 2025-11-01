@@ -28,7 +28,6 @@
 #include "UtilsThomas/loader/Loader.hpp"
 
 #include "analysis/Analysis.hpp"
-#include "event/EventMgr.hpp"
 
 struct ContextFileTracker {
 
@@ -110,6 +109,26 @@ struct TtRecoFile {
             return true;
         }
         return false;
+    }
+
+};
+
+class NavBufferWrapper : public JM::NavBuffer {
+
+public:
+
+    NavBufferWrapper(JM::NavBuffer& buf) {
+        m_dBuf.assign(buf.begin(), buf.end());
+    }
+
+    ~NavBufferWrapper() override = default;
+
+    void prev() {
+        --m_iCur;
+    }
+
+    void next() {
+        ++m_iCur;
     }
 
 };

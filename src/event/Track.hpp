@@ -30,7 +30,7 @@ struct track {
 
 template<class _Char, class _Traits>
 std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& os, const track& trk) {
-    return os << "method: " << method << ", ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totpe: " << trk.totpe << ", ts: " << trk.ts;
+    return os << "method: " << trk.method << ", ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totpe: " << trk.totpe << ", ts: " << trk.ts;
 }
 
 inline track::loc operator|(const track::loc& lhs, const track::loc& rhs) {
