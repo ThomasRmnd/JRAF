@@ -21,15 +21,11 @@ class MethodSelection : public Selection {
 
 public:
 
-    MethodSelection(const std::string& method) :
-        m_method{method}
-    {}
+    MethodSelection(const std::string& method);
 
     ~MethodSelection() override = default;
 
-    bool isIn(const vertex& vtx) const override {
-        return vtx.method == m_method;
-    }
+    bool isIn(const vertex& vtx) const override;
 
 private:
 

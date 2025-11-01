@@ -45,7 +45,7 @@ void Event::loadCdTrack(JM::EvtNavigator* nav) {
     if (!hdr || !hdr->event()) return;
     const std::vector<JM::RecTrack*>& trks = hdr->event()->tracks();
     for (const JM::RecTrack* trk : trks) {
-        loadTrack(trk, track::loc::cd);
+        loadTrack("CdBasic", trk, track::loc::cd);
     }
 }
 
@@ -54,7 +54,7 @@ void Event::loadWpTrack(JM::EvtNavigator* nav) {
     if (!hdr || !hdr->event()) return;
     const std::vector<JM::RecTrack*>& trks = hdr->event()->tracks();
     for (const JM::RecTrack* trk : trks) {
-        loadTrack(trk, track::loc::wp);
+        loadTrack("WpBasic", trk, track::loc::wp);
     }
 }
 
@@ -80,7 +80,7 @@ void Event::loadTtTrack(JM::EvtNavigator* nav) {
         trk.setEnd(CLHEP::HepLorentzVector(fpos.X(), fpos.Y(), fpos.Z()));
         trk.setPESum(0.0f);
         trk.setQuality(chi2[i]);
-        loadTrack(&trk, track::loc::tt);
+        loadTrack("TtBasic", &trk, track::loc::tt);
     }
 }
 
@@ -95,6 +95,7 @@ void Event::loadCdVertex(JM::EvtNavigator* nav) {
     if (!hdr || !hdr->event("JM::OecEvt")) return;
     JM::OecEvt* evt = dynamic_cast<JM::OecEvt*>(hdr->event("JM::OecEvt"));
     vertices.emplace_back(
+        "Oec",
         vec3{evt->getVertexX(), evt->getVertexY(), evt->getVertexZ()},
         evt->getEnergy(),
         totq,
@@ -103,7 +104,7 @@ void Event::loadCdVertex(JM::EvtNavigator* nav) {
     );
 }
 
-void Event::loadTrack(const JM::RecTrack* trk, const track::loc& det) {
+void Event::loadTrack(const std::string& method, const JM::RecTrack* trk, const track::loc& det) {
     if (!trk) return;
     tracks.emplace_back(*trk, ts, det);
 }
