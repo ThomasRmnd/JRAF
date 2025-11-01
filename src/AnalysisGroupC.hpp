@@ -18,6 +18,9 @@
 #include <TTree.h>
 
 #include "Context/TimeStamp.h"
+#include "Event/CdTrackRecHeader.h"
+#include "Event/TtRecHeader.h"
+#include "Event/WpRecHeader.h"
 #include "EvtNavigator/NavBuffer.h"
 #include "Geometry/IPMTParamSvc.h"
 #include "Geometry/IRecGeomSvc.hh"
