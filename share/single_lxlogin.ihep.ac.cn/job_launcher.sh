@@ -1,113 +1,210 @@
 #!/bin/bash
 
+#--------------------------------------------------------------------------------------------------
+#  JUNO job submission helper
+#  Purpose: Automate hep_sub job submissions for single ESD–RTRAW processing
+#--------------------------------------------------------------------------------------------------
+
+set -euo pipefail
+IFS=$'\n\t'
+
+#==============================
+# Configuration defaults
+#==============================
+
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
+LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
+TIME_WINDOW=("-2.0" "2.0")
+LOG_LEVEL=3
 
-list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
-time_window=("-2.0" "2.0")
-log_level=3
+#==============================
+# Utility functions
+#==============================
 
-while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        --run-number)
-            run_number="$2"
-            shift 2
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log() {
+    local level="$1"; shift
+    local message="$*"
+    local timestamp
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    local level_num=0
+    local color="$NC"
+    case "$level" in
+        ERROR) level_num=1; color="$RED" ;;
+        WARN)  level_num=2; color="$YELLOW" ;;
+        INFO)  level_num=3; color="$GREEN" ;;
+        DEBUG) level_num=4; color="$CYAN" ;;
+        ALL)   level_num=5; color="$BLUE" ;;
+        *)     level_num=3; color="$NC" ;;
+    esac
+
+    if (( level_num > LOG_LEVEL )); then
+        return
+    fi
+
+    local prefix="${color}[$timestamp][$level]${NC}"
+
+    case "$level" in
+        DEBUG|INFO)
+            echo -e "${prefix} $message" >&1
             ;;
-        --list-base)
-            list_base="$2"
-            shift 2
+        WARN|ERROR)
+            echo -e "${prefix} $message" >&2
             ;;
-        --file-offset)
-            file_offset="$2"
-            shift 2
-            ;;
-        --file-range)
-            file_range="$2"
-            shift 2
-            ;;
-        --property-file)
-            property_file="$2"
-            shift 2
-            ;;
-        --time-window)
-            time_window=("$2" "$3")
-            shift 3
-            ;;
-        --log-level)
-            log_level="$2"
-            shift 2
+        ALL)
+            echo -e "${prefix} $message" >&1
+            echo -e "${prefix} $message" >&2
             ;;
         *)
-            echo "Unknown argument: $1"
-            exit 1
+            echo -e "${prefix} $message" >&1
             ;;
     esac
-done
+}
 
-if [[ -z "$run_number" ]]; then
-    echo "Usage: $0 --run-number <number> [--list-base <path>] [--file-offset <num>] [--file-range <num>] [--property-file <path>] [--time-window <num> <num>] [--log-level <num>]"
-    exit 1
-fi
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") --run-number <number> [options]
 
-RTRAW_LIST_FILE="${list_base}/rtraw_list/run_${run_number}.txt"
-ESD_LIST_FILE="${list_base}/esd_list/run_${run_number}.txt"
+Required:
+  --run-number <number>        Run number to process
 
-echo "Listing ROOT files from EOS..."
-mapfile -t rtraw_list < <(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE")
-mapfile -t esd_list   < <(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE")
+Optional:
+  --list-base <path>           Path to list base (default: $LIST_BASE)
+  --file-offset <num>          Starting index in the file list (default: 0)
+  --file-range <num>           Number of files to process (default: all)
+  --property-file <path>       Path to property file
+  --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
+  --log-level <num>            Logging level (default: $LOG_LEVEL)
+  --help                       Show this help message and exit
+EOF
+}
 
-echo "Number of rtraw file: ${#rtraw_list[@]}"
-echo "Number of esd file: ${#esd_list[@]}"
+#==============================
+# Parse command-line arguments
+#==============================
 
-if [[ -z "$file_offset" ]]; then
-    file_offset=0
-fi
+parse_args() {
+    if [[ $# -eq 0 ]]; then
+        usage
+        exit 1
+    fi
 
-if [[ -z "$file_range" ]]; then
-    file_range=$(( ${#rtraw_list[@]} - file_offset ))
-fi
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --run-number)    RUN_NUMBER="$2"; shift 2 ;;
+            --list-base)     LIST_BASE="$2"; shift 2 ;;
+            --file-offset)   FILE_OFFSET="$2"; shift 2 ;;
+            --file-range)    FILE_RANGE="$2"; shift 2 ;;
+            --property-file) PROPERTY_FILE="$2"; shift 2 ;;
+            --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
+            --log-level)     LOG_LEVEL="$2"; shift 2 ;;
+            --help)          usage; exit 0 ;;
+            *) echo -e "${RED}Unknown argument:${NC} $1"; usage; exit 1 ;;
+        esac
+    done
 
-if ! [[ "$file_offset" =~ ^[0-9]+$ && "$file_range" =~ ^[0-9]+$ ]]; then
-    echo "file-offset and file-range must be non-negative integers"
-    exit 1
-fi
+    if [[ -z "${RUN_NUMBER:-}" ]]; then
+        echo -e "${RED}Error:${NC} --run-number is required"
+        usage
+        exit 1
+    fi
+}
 
-echo "Total number of file: [$file_offset, $file_range]"
+#==============================
+# Load and validate file lists
+#==============================
 
-rtraw_list=("${rtraw_list[@]:$file_offset:$file_range}")
-esd_list=("${esd_list[@]:$file_offset:$file_range}")
+load_file_lists() {
+    local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
+    local esd_list_file="${LIST_BASE}/esd_list/run_${RUN_NUMBER}.txt"
 
-job_count_rtraw=${#rtraw_list[@]}
-job_count_esd=${#esd_list[@]}
+    log INFO "Listing ROOT files from EOS..."
+    mapfile -t RTRAW_LIST < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file")
+    mapfile -t ESD_LIST   < <(xrdfs "$EOS_BASE" cat "$esd_list_file")
 
-if (( job_count_rtraw != job_count_esd )); then
-    echo "Error: mismatch between rtraw files ($job_count_rtraw) and esd files ($job_count_esd)"
-    exit 1
-fi
+    log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
+    log INFO "Number of ESD   files: ${#ESD_LIST[@]}"
+}
 
-job_count=${#rtraw_list[@]}
 
-if (( job_count == 0 )); then
-    echo "No ROOT files found in $input_path"
-    exit 1
-fi
+#==============================
+# Prepare submission arguments
+#==============================
 
-extra_args="--time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
+prepare_job_arrays() {
+    FILE_OFFSET="${FILE_OFFSET:-0}"
+    FILE_RANGE="${FILE_RANGE:-$(( ${#RTRAW_LIST[@]} - FILE_OFFSET ))}"
 
-if [[ -z "$property_file" ]]; then
-    property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
-fi
-extra_args+=" --property-file $property_file"
+    if ! [[ "$FILE_OFFSET" =~ ^[0-9]+$ && "$FILE_RANGE" =~ ^[0-9]+$ ]]; then
+        log ERROR "file-offset and file-range must be non-negative integers"
+        exit 1
+    fi
 
-# --- Submit batch jobs ---
-echo "Submitting $job_count jobs with hep_sub..."
-hep_sub job_worker.sh \
-  -argu "%{ProcId} $run_number $list_base $extra_args" \
-  -n "$job_count" \
-  -cpu 1 \
-  -m 4096 \
-  -wt short \
-  -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
-  -e "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.err" \
-  -name agrpc_${run_number}_batch
-#   -o "/scratchfs/juno/traymond/agrpc_${run_number}_%{ProcId}.log" \
+    log INFO "Processing range: offset=$FILE_OFFSET, count=$FILE_RANGE"
+
+    RTRAW_LIST=("${RTRAW_LIST[@]:$FILE_OFFSET:$FILE_RANGE}")
+    ESD_LIST=("${ESD_LIST[@]:$FILE_OFFSET:$FILE_RANGE}")
+
+    JOB_COUNT_RTRAW=${#RTRAW_LIST[@]}
+    JOB_COUNT_ESD=${#ESD_LIST[@]}
+
+    if (( JOB_COUNT_RTRAW != JOB_COUNT_ESD )); then
+        log ERROR "Mismatch between RTRAW ($JOB_COUNT_RTRAW) and ESD ($JOB_COUNT_ESD) files"
+        exit 1
+    fi
+
+    JOB_COUNT=${JOB_COUNT_RTRAW}
+
+    if (( JOB_COUNT == 0 )); then
+        log ERROR "No ROOT files found for run ${RUN_NUMBER}"
+        exit 1
+    fi
+
+    PROPERTY_FILE="${PROPERTY_FILE:-/junofs/users/traymond/reconstruction/esd/properties/RUN.${RUN_NUMBER}.Properties.json}"
+
+    EXTRA_ARGS=(
+        "--property-file" "$PROPERTY_FILE"
+        "--time-window" "${TIME_WINDOW[0]}" "${TIME_WINDOW[1]}"
+        "--log-level" "$LOG_LEVEL"
+    )
+}
+
+#==============================
+# Submit jobs via hep_sub
+#==============================
+
+submit_jobs() {
+    log INFO "Submitting ${JOB_COUNT} jobs via hep_sub..."
+
+    hep_sub job_worker.sh \
+        -argu "%{ProcId} ${RUN_NUMBER} ${LIST_BASE} ${EXTRA_ARGS[*]}" \
+        -n "$JOB_COUNT" \
+        -cpu 1 \
+        -m 4096 \
+        -wt short \
+        -o "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.log" \
+        -e "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.err" \
+        -name "agrpc_${RUN_NUMBER}_batch"
+
+    log INFO "All jobs submitted successfully."
+}
+
+#==============================
+# Main
+#==============================
+
+main() {
+    parse_args "$@"
+    load_file_lists
+    prepare_job_arrays
+    submit_jobs
+}
+
+main "$@"
