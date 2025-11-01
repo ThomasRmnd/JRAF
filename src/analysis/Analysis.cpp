@@ -7,6 +7,7 @@
 
 Analysis::Analysis(const std::string& name, const std::string& method) :
     m_name{name},
+    m_method{method},
     m_method_sel{method}
 {}
 

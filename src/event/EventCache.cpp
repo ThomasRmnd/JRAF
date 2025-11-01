@@ -3,6 +3,8 @@
 #include "SniperKernel/SniperLog.h"
 
 EventCache::CacheType EventCache::s_cache;
+std::size_t EventCache::s_insert_counter = 0;
+constexpr std::size_t EventCache::s_clean_interval;
 
 std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
     if (!nav) {
@@ -10,8 +12,8 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
         return nullptr;
     }
 
-    // CacheType::iterator it = s_cache.find(nav);
-    CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
+    TimeStamp ts{nav->TimeStamp().GetTimeSpec()};
+    CacheType::iterator it = s_cache.find(ts);
     if (it != s_cache.end()) {
         return it->second;
     }
@@ -22,27 +24,27 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
         return nullptr;
     }
 
-    // s_cache[nav] = evt;
-    s_cache[nav->TimeStamp().GetTimeSpec()] = evt;
+    s_cache[ts] = evt;
+    ++s_insert_counter;
+
+    if (s_insert_counter % s_clean_interval == 0 && !s_cache.empty()) {
+        clean(ts, TimeStamp{0, 10000000000});
+    }
+
     LogInfo << "EventCache: loaded and cached event for nav=" << nav << '\n';
     return evt;
 }
 
 void EventCache::insert(const TimeStamp& ts, const std::shared_ptr<Event>& evt) {
-    // s_cache[nav] = evt;
     s_cache[ts] = evt;
 }
 
-bool EventCache::contains(JM::EvtNavigator* nav)
-{
-    // CacheType::iterator it = s_cache.find(nav);
+bool EventCache::contains(JM::EvtNavigator* nav) {
     CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
     return (it != s_cache.end());
 }
 
-std::shared_ptr<Event> EventCache::get(JM::EvtNavigator* nav)
-{
-    // CacheType::iterator it = s_cache.find(nav);
+std::shared_ptr<Event> EventCache::get(JM::EvtNavigator* nav) {
     CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
     if (it != s_cache.end()) {
         return it->second;
@@ -50,7 +52,19 @@ std::shared_ptr<Event> EventCache::get(JM::EvtNavigator* nav)
     return nullptr;
 }
 
-std::size_t EventCache::size()
-{
+std::size_t EventCache::size() {
     return s_cache.size();
+}
+
+void EventCache::clean(const TimeStamp& newest_ts, const TimeStamp& window) {
+    const TimeStamp allowed = newest_ts - window;
+
+    EventCache::CacheType::iterator it = s_cache.lower_bound(allowed);
+    if (it == s_cache.begin()) return;
+
+    std::size_t removed = std::distance(s_cache.begin(), it);
+    s_cache.erase(s_cache.begin(), it);
+
+    LogInfo << "EventCache: cleaned " << removed << " old events (older than "
+             << window.GetSec() << "s, new size=" << s_cache.size() << ")\n";
 }

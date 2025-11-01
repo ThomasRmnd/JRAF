@@ -48,11 +48,18 @@ public:
      */
     static std::size_t size();
 
+    /**
+     * @brief Remove entries older than (ts - window)
+     */
+    static void clean(const TimeStamp& ts, const TimeStamp& window);
+
 private:
-    // using CacheType = std::unordered_map<JM::EvtNavigator*, std::shared_ptr<Event>>;
     using CacheType = std::map<TimeStamp, std::shared_ptr<Event>>;
 
     static CacheType s_cache;
+
+    static constexpr std::size_t s_clean_interval = 20000;
+    static std::size_t s_insert_counter;
 
     // Private constructor to prevent instantiation.
     EventCache() = default;

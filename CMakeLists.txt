@@ -10,6 +10,7 @@ FILES
     src/analysis/IBDWithCylindricalCut.cpp
     src/analysis/IBDWithNeutronVetoStudy.cpp
     src/analysis/MultiplicityWindowCut.cpp
+    src/analysis/NavBufferCache.cpp
     src/analysis/NeutronVetoStudy.cpp
     src/analysis/TtCosmoStudy.cpp
 

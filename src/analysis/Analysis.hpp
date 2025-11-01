@@ -27,6 +27,7 @@ protected:
     std::string m_name;
     TTree* m_tree = nullptr;
 
+    std::string m_method;
     MethodSelection m_method_sel;
 
     double posx_p;
