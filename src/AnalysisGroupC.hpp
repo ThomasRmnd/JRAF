@@ -25,9 +25,10 @@
 #include "RootIOSvc/RootInputSvc.h"
 #include "RecTools/IRecMuonTool.h"
 #include "RecTools/PmtProp.h"
+#include "UtilsThomas/loader/Loader.hpp"
 
 #include "analysis/Analysis.hpp"
-#include "UtilsThomas/loader/Loader.hpp"
+#include "event/EventMgr.hpp"
 
 struct ContextFileTracker {
 

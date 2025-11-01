@@ -22,7 +22,7 @@ struct vertex {
 
 template<class _Char, class _Traits>
 std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& os, const vertex& vtx) {
-    return os << "method: " << method << ", pos: " << vtx.pos << ", energy: " << vtx.energy << ", totq: " << vtx.totq << ", ts: " << vtx.ts;
+    return os << "method: " << vtx.method << ", pos: " << vtx.pos << ", energy: " << vtx.energy << ", totq: " << vtx.totq << ", ts: " << vtx.ts;
 }
 
 #endif // ANALYSISGROUPC_EVENT_VERTEX_HPP_

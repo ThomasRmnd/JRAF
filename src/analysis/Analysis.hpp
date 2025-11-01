@@ -6,6 +6,8 @@
 
 #include "EvtNavigator/NavBuffer.h"
 
+#include "event/Track.hpp"
+#include "event/Vertex.hpp"
 #include "selection/Selection.hpp"
 
 class Analysis {
