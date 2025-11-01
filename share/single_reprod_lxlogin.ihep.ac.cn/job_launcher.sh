@@ -49,14 +49,11 @@ if [[ -z "$run_number" ]]; then
     exit 1
 fi
 
-RTRAW_LIST_FILE="${list_base}/rtraw_list/run_${run_number}.txt"
 ESD_LIST_FILE="${list_base}/esd_list/run_${run_number}.txt"
 
 echo "Listing ROOT files from EOS..."
-mapfile -t rtraw_list < <(xrdfs "$EOS_BASE" cat "$RTRAW_LIST_FILE")
 mapfile -t esd_list   < <(xrdfs "$EOS_BASE" cat "$ESD_LIST_FILE")
 
-echo "Number of rtraw file: ${#rtraw_list[@]}"
 echo "Number of esd file: ${#esd_list[@]}"
 
 if [[ -z "$file_offset" ]]; then
@@ -64,7 +61,7 @@ if [[ -z "$file_offset" ]]; then
 fi
 
 if [[ -z "$file_range" ]]; then
-    file_range=$(( ${#rtraw_list[@]} - file_offset ))
+    file_range=$(( ${#esd_list[@]} - file_offset ))
 fi
 
 if ! [[ "$file_offset" =~ ^[0-9]+$ && "$file_range" =~ ^[0-9]+$ ]]; then
@@ -74,30 +71,21 @@ fi
 
 echo "Total number of file: [$file_offset, $file_range]"
 
-rtraw_list=("${rtraw_list[@]:$file_offset:$file_range}")
 esd_list=("${esd_list[@]:$file_offset:$file_range}")
 
-job_count_rtraw=${#rtraw_list[@]}
-job_count_esd=${#esd_list[@]}
-
-if (( job_count_rtraw != job_count_esd )); then
-    echo "Error: mismatch between rtraw files ($job_count_rtraw) and esd files ($job_count_esd)"
-    exit 1
-fi
-
-job_count=${#rtraw_list[@]}
+job_count=${#esd_list[@]}
 
 if (( job_count == 0 )); then
     echo "No ROOT files found in $input_path"
     exit 1
 fi
 
-extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
+extra_args="--time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
 
-# if [[ -z "$property_file" ]]; then
-#     property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
-# fi
-# extra_args+=" --property-file $property_file"
+if [[ -z "$property_file" ]]; then
+    property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
+fi
+extra_args+=" --property-file $property_file"
 
 # --- Submit batch jobs ---
 echo "Submitting $job_count jobs with hep_sub..."

@@ -1,21 +1,21 @@
 import argparse
 import json
-import os
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--input", type=str, help="Input filepath")
-parser.add_argument("--input-rtraw", type=str, help="Input RTRAW filepath")
+parser.add_argument("--input", type=str, nargs="+", help="Input filepath")
+parser.add_argument("--input-rtraw", type=str, nargs="+", help="Input RTRAW filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
+parser.add_argument("--target-input-filename", type=str, default="", help="Target input filename")
+parser.add_argument("--tt-reco-filepath", type=str, default="", help="TT reco filepath")
 parser.add_argument("--property-file", type=str, help="Filepath of the property file")
-parser.add_argument("--tt-reco-filepath", type=str, help="TT reco filepath")
 parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
 parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
 args = parser.parse_args()
 
 ifilepath = args.input
-rtraw_ifilepath = args.input_rtraw
 ofilepath = args.output
+rtraw_ifilepath = args.input_rtraw
 lower_tw, upper_tw = args.time_window
 loglevel = args.log_level
 
@@ -41,11 +41,7 @@ geom = task.createSvc("RecGeomSvc")
 geom.property("GeomFile").set("default")
 geom.property("GeomPathInRoot").set("JunoGeom")
 geom.property("FastInit").set(True)
-
-# ~~~~~~~~~~ PMTParamSvc ~~~~~~~~~~
 pmt_param_svc = task.createSvc("PMTParamSvc")
-
-# ~~~~~~~~~~ TTGeomSvc ~~~~~~~~~~
 tt_geom_svc = task.createSvc("TTGeomSvc")
 
 # ~~~~~~~~~~ RootIOSvc ~~~~~~~~~~
@@ -54,25 +50,10 @@ ri_svc = task.createSvc("RootInputSvc/InputSvc")
 ri_svc.property("InputFile").set(ifilepath)
 ri_svc.property("InputCorrelationFile").set(rtraw_ifilepath)
 
-output_streams = {
-    # === Rec ===
-    "/Event/CdVertexRec": ofilepath,
-    "/Event/CdTrackRec": ofilepath,
-    "/Event/WpRec": ofilepath,
-    "/Event/TtRec": ofilepath
-}
-ro_svc = task.createSvc("RootOutputSvc/OutputSvc")
-ro_svc.property("OutputStreams").set(output_streams)
-
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
-import CdWpTtChi2RecTool
-import WpMuonClassifyRecTool
 alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(loglevel)
-
-alg.useRecTool("CdWpTtChi2RecTool")
-alg.useClassifyTool("WpMuonClassifyRecTool")
 
 alg.useLoader("JointLoader")
 alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
@@ -87,8 +68,11 @@ alg.wpfiller.property("PmtTimeReso").set(8.0)
 alg.useClassifyLoader()
 alg.classify_wpfiller.property("PmtTimeReso").set(8.0)
 
-alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
-alg.property("ReconstructMuonMode").set(True)
+import CdWpTtChi2RecTool
+import WpMuonClassifyRecTool
+
+alg.useRecTool("CdWpTtChi2RecTool")
+alg.useClassifyTool("WpMuonClassifyRecTool")
 
 if args.property_file:
     try:
@@ -106,6 +90,10 @@ alg.classifytool.property("WpMuonClassifyRecToolMaxChargeThreshold").set(200.0)
 alg.classifytool.property("WpMuonClassifyRecToolDistanceThreshold").set(6500.0)
 alg.classifytool.property("UseAdditionalGainCorrection").set(True)
 alg.classifytool.property("AdditionalGainCorrectionPath").set("/junofs/users/traymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
+
+alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
+alg.property("OutputFilename").set(ofilepath)
+alg.property("TargetInputFilename").set(args.target_input_filename)
 
 task.setEvtMax(-1)
 if not task.run():

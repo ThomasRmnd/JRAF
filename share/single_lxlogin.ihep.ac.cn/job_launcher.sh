@@ -92,7 +92,7 @@ if (( job_count == 0 )); then
     exit 1
 fi
 
-extra_args=" --time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
+extra_args="--time-window ${time_window[0]} ${time_window[1]} --log-level $log_level"
 
 if [[ -z "$property_file" ]]; then
     property_file="/junofs/users/traymond/reconstruction/esd/properties/RUN.${run_number}.Properties.json"
