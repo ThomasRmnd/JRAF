@@ -138,18 +138,18 @@ bool AnalysisGroupC::initAnalyses() {
     m_muveto_sec = 0l;
     m_muveto_nsec = 0;
 
-    // m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__Oec", "Oec"));
-    // m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__Oec", "Oec", 3000.0));
-    // m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__Oec", "Oec", 5000.0));
-    // m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__Oec", "Oec"));
-    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__Oec", "Oec", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__Oec", "Oec", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
-    // m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    // m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__Oec", "Oec", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    // m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__Oec", "Oec", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
-    // m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy__Oec", "Oec"));
-    // m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__Oec", "Oec", 3000.0, TimeStamp{0, 1500000000}));
-    // m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 2000000000}));
+    m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__Oec", "Oec"));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__Oec", "Oec", 3000.0));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__Oec", "Oec", 5000.0));
+    m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__Oec", "Oec"));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__Oec", "Oec", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__Oec", "Oec", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__Oec", "Oec", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__Oec", "Oec", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy__Oec", "Oec"));
+    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__Oec", "Oec", 3000.0, TimeStamp{0, 1500000000}));
+    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 2000000000}));
 
     m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__OMILREC", "OMILREC"));
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__OMILREC", "OMILREC", 3000.0));
