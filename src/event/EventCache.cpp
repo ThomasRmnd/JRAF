@@ -28,7 +28,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
     ++s_insert_counter;
 
     if (s_insert_counter % s_clean_interval == 0 && !s_cache.empty()) {
-        clean(ts, TimeStamp{0, 10000000000});
+        clean(ts, TimeStamp{10, 0});
     }
 
     LogInfo << "EventCache: loaded and cached event for nav=" << nav << '\n';
