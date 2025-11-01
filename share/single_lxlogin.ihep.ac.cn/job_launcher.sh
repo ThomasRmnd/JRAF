@@ -5,8 +5,14 @@
 #  Purpose: Automate hep_sub job submissions for single ESD–RTRAW processing
 #--------------------------------------------------------------------------------------------------
 
-set -euo pipefail
+set -euxo pipefail
 IFS=$'\n\t'
+
+#==============================
+# Utility functions
+#==============================
+
+source /junofs/users/traymond/bash/logging.sh
 
 #==============================
 # Configuration defaults
@@ -16,57 +22,6 @@ EOS_BASE="root://junoeos01.ihep.ac.cn/"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
-
-#==============================
-# Utility functions
-#==============================
-
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log() {
-    local level="$1"; shift
-    local message="$*"
-    local timestamp
-    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
-
-    local level_num=0
-    local color="$NC"
-    case "$level" in
-        ERROR) level_num=1; color="$RED" ;;
-        WARN)  level_num=2; color="$YELLOW" ;;
-        INFO)  level_num=3; color="$GREEN" ;;
-        DEBUG) level_num=4; color="$CYAN" ;;
-        ALL)   level_num=5; color="$BLUE" ;;
-        *)     level_num=3; color="$NC" ;;
-    esac
-
-    if (( level_num > LOG_LEVEL )); then
-        return
-    fi
-
-    local prefix="${color}[$timestamp][$level]${NC}"
-
-    case "$level" in
-        DEBUG|INFO)
-            echo -e "${prefix} $message" >&1
-            ;;
-        WARN|ERROR)
-            echo -e "${prefix} $message" >&2
-            ;;
-        ALL)
-            echo -e "${prefix} $message" >&1
-            echo -e "${prefix} $message" >&2
-            ;;
-        *)
-            echo -e "${prefix} $message" >&1
-            ;;
-    esac
-}
 
 usage() {
     cat <<EOF
