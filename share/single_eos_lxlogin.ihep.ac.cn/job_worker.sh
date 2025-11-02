@@ -159,6 +159,7 @@ main() {
     
     source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
     log INFO "Environment loaded (TUTORIALROOT=${TUTORIALROOT})"
+    log INFO "Temporary directory: ${TEMP}"
 
     esd_files=()
     rtraw_files=()

@@ -157,8 +157,9 @@ main() {
 
     resolve_output_paths "$input_esd_file"
     
-    source /afs/ihep.ac.cn/users/t/traymond/J25.3.0/git_junosw_J25_load.sh
+    source /pbs/home/t/traymond/J25.6.1_Modified/git_junosw_J25_load.sh
     log INFO "Environment loaded (TUTORIALROOT=${TUTORIALROOT})"
+    log INFO "Temporary directory: ${TMPDIR}"
 
     esd_files=()
     rtraw_files=()
