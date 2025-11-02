@@ -154,6 +154,7 @@ main() {
     include_neighbor "$PROC_ID" "prev"
     include_neighbor "$PROC_ID" "next"
 
+    indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
 
     resolve_output_paths "$input_esd_file"
@@ -176,8 +177,6 @@ main() {
         esd_files+=("$local_esd_file")
         rtraw_files+=("$local_rtraw_file")
     done
-
-    log INFO "TMPDIR contents: $(ls -1 "${TMPDIR}" | tr '\n' ' ')"
 
     local_output_file="${TMPDIR}/${input_esd_filename/.esd/.output.root}"
     output_file="$output_path/$(basename "$local_output_file")"

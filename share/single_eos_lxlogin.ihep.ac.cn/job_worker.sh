@@ -153,6 +153,7 @@ main() {
     include_neighbor "$PROC_ID" "prev"
     include_neighbor "$PROC_ID" "next"
 
+    indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
 
     resolve_output_paths "$input_esd_file"
