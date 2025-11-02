@@ -18,7 +18,6 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 # Configuration defaults
 #==============================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
 TIME_WINDOW=("-2.0" "2.0")
@@ -151,7 +150,7 @@ submit_jobs() {
         --time="0-00:30:00" \
         --mail-user="thomas.raymond@iphc.cnrs.fr" \
         --mail-type="FAIL" \
-        "$SCRIPT_DIR/job_worker.sh" \
+        job_worker.sh \
         "$RUN_NUMBER" "$LIST_BASE" "${EXTRA_ARGS[@]}"
 
     log INFO "All jobs submitted successfully"

@@ -18,7 +18,6 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 # Configuration defaults
 #==============================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 
 #==============================
@@ -182,7 +181,7 @@ main() {
     output_file="$output_path/$(basename "$local_output_file")"
 
     log INFO "Running reconstruction with run.py..."
-    python "$SCRIPT_DIR/run.py" \
+    python run.py \
         --input "${esd_files[@]}" \
         --input-rtraw "${rtraw_files[@]}" \
         --output "$local_output_file" \

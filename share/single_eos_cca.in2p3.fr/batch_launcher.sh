@@ -18,7 +18,6 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 # Configuration defaults
 #==============================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4/Physics_good_run_list.txt"
 
@@ -97,7 +96,7 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(bash "$SCRIPT_DIR/job_launcher.sh" --run-number "$run")
+        local cmd=(bash job_launcher.sh --run-number "$run")
 
         if "${cmd[@]}"; then
             log INFO "Run $run submitted successfully"
