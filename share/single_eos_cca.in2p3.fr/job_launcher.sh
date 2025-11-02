@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #--------------------------------------------------------------------------------------------------
-#  JUNO job submission helper
+#  JUNO Job Submission Helper
 #  Purpose: Automate hep_sub job submissions for single ESD–RTRAW processing
 #--------------------------------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ IFS=$'\n\t'
 # Utility functions
 #==============================
 
-source /junofs/users/traymond/bash/logging.sh
+source /pbs/home/t/traymond/share/bash/logging.sh
 
 #==============================
 # Configuration defaults
@@ -22,6 +22,10 @@ EOS_BASE="root://junoeos01.ihep.ac.cn/"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
+
+#==============================
+# Usage & Argument Parsing
+#==============================
 
 usage() {
     cat <<EOF
@@ -41,10 +45,6 @@ Optional:
 EOF
 }
 
-#==============================
-# Parse command-line arguments
-#==============================
-
 parse_args() {
     if [[ $# -eq 0 ]]; then
         usage
@@ -60,13 +60,13 @@ parse_args() {
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
-            --help)          usage; exit 0 ;;
-            *) echo -e "${RED}Unknown argument:${NC} $1"; usage; exit 1 ;;
+            --help|-h)       usage; exit 0 ;;
+            *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
     done
 
     if [[ -z "${RUN_NUMBER:-}" ]]; then
-        echo -e "${RED}Error:${NC} --run-number is required"
+        log ERROR "--run-number is required"
         usage
         exit 1
     fi
@@ -138,17 +138,22 @@ prepare_job_arrays() {
 submit_jobs() {
     log INFO "Submitting ${JOB_COUNT} jobs via hep_sub..."
 
-    hep_sub job_worker.sh \
-        -argu "%{ProcId} ${RUN_NUMBER} ${LIST_BASE} ${EXTRA_ARGS[*]}" \
-        -n "$JOB_COUNT" \
-        -cpu 1 \
-        -m 4096 \
-        -wt short \
-        -o "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.log" \
-        -e "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.err" \
-        -name "agrpc_${RUN_NUMBER}_batch"
+    sbatch \
+        --job-name="agrpc_${RUN_NUMBER}_batch" \
+        --output="/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{a}.log" \
+        --error="/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{a}.err" \
+        --array="0-$((JOB_COUNT - 1))" \
+        --partition="htc" \
+        --ntasks=1 \
+        --cpus-per-task=1 \
+        --mem="4G" \
+        --time="0-00:30:00" \
+        --mail-user="thomas.raymond@iphc.cnrs.fr" \
+        --mail-type="FAIL" \
+        job_worker.sh \
+        "$RUN_NUMBER" "$LIST_BASE" "${EXTRA_ARGS[@]}"
 
-    log INFO "All jobs submitted successfully."
+    log INFO "All jobs submitted successfully"
 }
 
 #==============================
