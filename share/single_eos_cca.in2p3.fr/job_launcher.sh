@@ -151,7 +151,7 @@ submit_jobs() {
         --time="0-00:30:00" \
         --mail-user="thomas.raymond@iphc.cnrs.fr" \
         --mail-type="FAIL" \
-        "$SCRIPT_DIR/job_launcher.sh" \
+        "$SCRIPT_DIR/job_worker.sh" \
         "$RUN_NUMBER" "$LIST_BASE" "${EXTRA_ARGS[@]}"
 
     log INFO "All jobs submitted successfully"
