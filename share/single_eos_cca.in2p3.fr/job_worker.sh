@@ -60,8 +60,16 @@ load_file_lists() {
     local esd_list_file="${LIST_BASE}/esd_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file")
-    mapfile -t ESD_LIST   < <(xrdfs "$EOS_BASE" cat "$esd_list_file")
+
+    if ! mapfile -t RTRAW_LIST < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file" 2> >(grep -v 'SecClnt' >&2)); then
+        log ERROR "Failed to load RTRAW list from EOS ($rtraw_list_file)"
+        exit 1
+    fi
+
+    if ! mapfile -t ESD_LIST < <(xrdfs "$EOS_BASE" cat "$esd_list_file" 2> >(grep -v 'SecClnt' >&2)); then
+        log ERROR "Failed to load ESD list from EOS ($esd_list_file)"
+        exit 1
+    fi
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
     log INFO "Number of ESD   files: ${#ESD_LIST[@]}"
@@ -82,7 +90,7 @@ include_neighbor() {
         next) step=1 ;;
         *) log WARN "Invalid direction '$direction' in include_neighbor"; return 1 ;;
     esac
-    
+
     local neighbor=$(( index + step ))
 
     (( neighbor < 0 || neighbor >= ${#ESD_LIST[@]} )) && return 1
