@@ -18,6 +18,7 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 # Configuration defaults
 #==============================
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4/Physics_good_run_list.txt"
 
