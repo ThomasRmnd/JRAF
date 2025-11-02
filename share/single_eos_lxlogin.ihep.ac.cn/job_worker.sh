@@ -75,7 +75,14 @@ get_file_number() {
 include_neighbor() {
     local index="$1"
     local direction="$2"
-    local step=$(( direction == "prev" ? -1 : 1 ))
+    local step
+
+    case "$direction" in
+        prev) step=-1 ;;
+        next) step=1 ;;
+        *) log WARN "Invalid direction '$direction' in include_neighbor"; return 1 ;;
+    esac
+    
     local neighbor=$(( index + step ))
 
     (( neighbor < 0 || neighbor >= ${#ESD_LIST[@]} )) && return 1
