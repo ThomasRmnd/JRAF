@@ -106,12 +106,13 @@ include_neighbor() {
 resolve_output_paths() {
     local input_esd_file="$1"
 
+    tt_reco_filepath=""
     if [[ "$input_esd_file" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
         esd_version="${BASH_REMATCH[1]}"
         year="${BASH_REMATCH[2]}"
         monthday="${BASH_REMATCH[3]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${year}/${monthday}"
-        tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        # tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
         campaign="${BASH_REMATCH[1]}"
         stream="${BASH_REMATCH[2]}"
@@ -119,7 +120,7 @@ resolve_output_paths() {
         run_group="${BASH_REMATCH[4]}"
         run_number="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
-        tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        # tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     else
         log ERROR "Unrecognized ESD path format: $input_esd_file"
         exit 1
