@@ -122,7 +122,7 @@ prepare_job_arrays() {
         exit 1
     fi
 
-    PROPERTY_FILE="${PROPERTY_FILE:-/junofs/users/traymond/reconstruction/esd/properties/RUN.${RUN_NUMBER}.Properties.json}"
+    PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/esd/properties/RUN.${RUN_NUMBER}.Properties.json}"
 
     EXTRA_ARGS=(
         "--property-file" "$PROPERTY_FILE"
