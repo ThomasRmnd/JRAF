@@ -89,7 +89,7 @@ alg.classifytool.property("WpMuonClassifyRecToolInitialChargeCut").set(28.0)
 alg.classifytool.property("WpMuonClassifyRecToolMaxChargeThreshold").set(200.0)
 alg.classifytool.property("WpMuonClassifyRecToolDistanceThreshold").set(6500.0)
 alg.classifytool.property("UseAdditionalGainCorrection").set(True)
-alg.classifytool.property("AdditionalGainCorrectionPath").set("/junofs/users/traymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
+alg.classifytool.property("AdditionalGainCorrectionPath").set("/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
 
 alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
 alg.property("OutputFilename").set(ofilepath)
