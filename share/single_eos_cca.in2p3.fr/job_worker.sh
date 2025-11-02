@@ -177,6 +177,8 @@ main() {
         rtraw_files+=("$local_rtraw_file")
     done
 
+    log INFO "TMPDIR contents: $(ls -1 "${TMPDIR}" | tr '\n' ' ')"
+
     local_output_file="${TMPDIR}/${input_esd_filename/.esd/.output.root}"
     output_file="$output_path/$(basename "$local_output_file")"
 
