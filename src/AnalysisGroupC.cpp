@@ -356,13 +356,15 @@ bool AnalysisGroupC::execute() {
             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
             JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
-            addTrack(classify_wpt_hdr, "CdClassify", curts, tracks);
+            addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
             
-            RecTrks rtrks;
-            if (!m_classifyTool->reconstruct(&rtrks)) {
-                LogWarn << "Could not classify the event with classification tool\n";
+            if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
+                RecTrks rtrks;
+                if (!m_classifyTool->reconstruct(&rtrks)) {
+                    LogWarn << "Could not classify the event with classification tool\n";
+                }
+                addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
             }
-            addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
         }
         if ( (is_possibly_cd_muon || is_possibly_wp_muon) && tracks.empty() ) {
             tracks.push_back(track{"CdBasic", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, 0.0, curts, track::loc::cd, -1.0});

@@ -17,7 +17,7 @@ void NavBufferCache::prepare(JM::NavBuffer* buf, const std::vector<std::string>&
         md.vertices[VertexRegion::Before].reserve(buf->size() / 2);
         md.vertices[VertexRegion::After].reserve(buf->size() / 2);
 
-        for (auto it = buf->begin(); it != buf->end(); ++it) {
+        for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
             JM::EvtNavigator* nav = it->get();
             std::shared_ptr<Event> evt = EventCache::load(nav);
             if (!evt) continue;

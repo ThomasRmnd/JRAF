@@ -32,21 +32,26 @@ void IBDWithCylindricalCut::process(JM::NavBuffer*) {
         std::vector<track> cd_tracks;
         std::vector<track> wp_tracks;
         std::vector<track> tt_tracks;
+        bool has_cdclassify = false;
+        bool has_cdwpttchi2 = false;
         for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
             mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 5000000});
-            if (jt->det != track::loc::wp) continue;
+            if (jt->method == "CdClassify") has_cdclassify = true;
+            if (jt->method == "CdWpTtChi2") has_cdwpttchi2 = true;
+            if (jt->method != "WpBasic" /* jt->det != track::loc::wp */) continue;
             wp_tracks.push_back(*jt);
         }
+        bool has_cdclassify_but_no_cdwpttchi2 = has_cdclassify && !has_cdwpttchi2;
         if (wp_tracks.size() > 1ul) {
             mu_wp_bundle_cut.emplace_back(*it->begin(), TimeStamp{0, 0}, TimeStamp{0, 500000000});
             // std::cout << "[DEBUG] Bundle veto from starting at " << it->begin()->ts << '\n';
             continue;
         }
         for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
-            if (jt->det != track::loc::cd) continue;
-            if (jt->quality != -1.0f) {
+            if (jt->method != "CdWpTtChi2" /* jt->det != track::loc::cd */) continue;
+            if (jt->quality != -1.0f && !has_cdclassify_but_no_cdwpttchi2) {
                 cd_tracks.push_back(*jt);
-                mu_cosmo_cut.emplace_back(*jt, 3000.0, TimeStamp{0, 0}, TimeStamp{0, 1200000000});
+                mu_cosmo_cut.emplace_back(*jt, m_cyl_radius, TimeStamp{0, 0}, TimeStamp{0, 1200000000});
             }
             else {
                 mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 500000000});

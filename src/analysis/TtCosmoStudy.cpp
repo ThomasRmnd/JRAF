@@ -46,10 +46,10 @@ void TtCosmoStudy::process(JM::NavBuffer*) {
         std::vector<track> tt_tracks;
         for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
             mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 5000000});
-            if (jt->det == track::loc::cd) {
+            if (jt->method == "CdWpTtChi2" /* jt->det == track::loc::cd */) {
                 if (jt->quality != -1.0f) cd_tracks.push_back(*jt);
             }
-            else if (jt->det == track::loc::wp) {
+            else if (jt->method == "WpBasic" /* jt->det == track::loc::wp */) {
                 wp_tracks.push_back(*jt);
             }
             else if (jt->det == track::loc::tt) {
