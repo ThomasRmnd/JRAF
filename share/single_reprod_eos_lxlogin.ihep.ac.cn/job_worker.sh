@@ -228,6 +228,8 @@ main() {
     input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
     input_reprod_filename=$(basename "$input_reprod_file")
 
+    resolve_output_paths "$input_reprod_file"
+
     local_output_file="${TEMP}/${input_reprod_filename/.esd/.output.root}"
     output_file="$output_path/$(basename "$local_output_file")"
 
