@@ -96,7 +96,7 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(bash "$SCRIPT_DIR/job_launcher.sh" --run-number "$run")
+        local cmd=(bash /job_launcher.sh --run-number "$run")
 
         if "${cmd[@]}"; then
             log INFO "Run $run submitted successfully"
