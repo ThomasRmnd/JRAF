@@ -103,7 +103,7 @@ include_neighbor() {
 resolve_output_paths() {
     local input_reprod_file="$1"
 
-    if [[ "$input_reprod_file" =~ /eos/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+    if [[ "$input_reprod_file" =~ /eos/juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
         campaign="${BASH_REMATCH[1]}"
         stream="${BASH_REMATCH[2]}"
         run_bucket="${BASH_REMATCH[3]}"
@@ -173,7 +173,7 @@ rtraw_to_reprod_filename() {
     local selected_group
     selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
 
-    local reprod_path="${eos_base}//eos/juno/juno-reprod/ReProd25B/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    local reprod_path="${eos_base}/eos/juno/juno-reprod/ReProd25B/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
 
     echo "$reprod_path"
 }

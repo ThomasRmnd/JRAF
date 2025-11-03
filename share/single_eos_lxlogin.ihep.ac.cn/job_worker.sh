@@ -112,7 +112,7 @@ resolve_output_paths() {
         monthday="${BASH_REMATCH[3]}"
         output_path="/junofs/users/traymond/analysis/ibd/${year}/${monthday}"
         tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
-    elif [[ "$input_esd_file" =~ /eos/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+    elif [[ "$input_esd_file" =~ /eos/juno/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
         campaign="${BASH_REMATCH[1]}"
         stream="${BASH_REMATCH[2]}"
         run_bucket="${BASH_REMATCH[3]}"
