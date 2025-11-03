@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Multi-Submission Helper
-#  Purpose: Automate hep_sub job multi-submissions for single ESD–RTRAW processing
+#  Purpose: Automate hep_sub job multi-submissions for ReProd processing
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -12,7 +12,7 @@ IFS=$'\n\t'
 # Utility functions
 #==============================
 
-source /junofs/users/traymond/bash/logging.sh
+source /pbs/home/t/traymond/share/bash/logging.sh
 
 #==============================
 # Configuration defaults

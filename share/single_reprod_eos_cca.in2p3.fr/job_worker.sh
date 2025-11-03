@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Worker
-#  Purpose: Process a single ESD–RTRAW pair, with optional neighboring files
+#  Purpose: Process a single ReProd, with optional neighboring files
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -28,11 +28,11 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") <run_number> <list_base> [extra_args...]
 
-Process a single ESD–RTRAW pair identified by run and process ID.
+Process a single ReProd identified by run and process ID.
 
 Arguments:
   <run_number>    Run number to process
-  <list_base>     Path to the list base directory (contains rtraw_list/esd_list)
+  <list_base>     Path to the list base directory (contains rtraw_list)
   [extra_args...] Optional additional arguments passed to run.py
 EOF
 }
@@ -56,14 +56,11 @@ parse_args() {
 
 load_file_lists() {
     local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
-    local esd_list_file="${LIST_BASE}/esd_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file")
-    mapfile -t ESD_LIST   < <(xrdfs "$EOS_BASE" cat "$esd_list_file")
+    mapfile -t RTRAW_LIST   < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
-    log INFO "Number of ESD   files: ${#ESD_LIST[@]}"
 }
 
 get_file_number() {
@@ -84,10 +81,10 @@ include_neighbor() {
 
     local neighbor=$(( index + step ))
 
-    (( neighbor < 0 || neighbor >= ${#ESD_LIST[@]} )) && return 0
+    (( neighbor < 0 || neighbor >= ${#RTRAW_LIST[@]} )) && return 0
 
     local fname
-    fname=$(basename "${ESD_LIST[$neighbor]}")
+    fname=$(basename "${RTRAW_LIST[$neighbor]}")
     local num
     num=$(get_file_number "$fname")
     num=$((10#$num))
@@ -103,16 +100,9 @@ include_neighbor() {
 #==============================
 
 resolve_output_paths() {
-    local input_esd_file="$1"
+    local input_reprod_file="$1"
 
-    tt_reco_filepath=""
-    if [[ "$input_esd_file" =~ /eos/juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
-        esd_version="${BASH_REMATCH[1]}"
-        year="${BASH_REMATCH[2]}"
-        monthday="${BASH_REMATCH[3]}"
-        output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${year}/${monthday}"
-        # tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
-    elif [[ "$input_esd_file" =~ /eos/juno/juno-kup/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+    if [[ "$input_reprod_file" =~ /eos/juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
         campaign="${BASH_REMATCH[1]}"
         stream="${BASH_REMATCH[2]}"
         run_bucket="${BASH_REMATCH[3]}"
@@ -120,15 +110,73 @@ resolve_output_paths() {
         run_number="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
         # tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath=""
     else
-        log ERROR "Unrecognized ESD path format: $input_esd_file"
+        log ERROR "Unrecognized ReProd path format: $input_reprod_file"
         exit 1
     fi
 
     mkdir -p "$output_path"
     log INFO "Output path: $output_path"
-    log DEBUG "TT reco file path: $tt_reco_filepath"
 }
+
+#==============================
+# RTRAW to ReProd filename
+#==============================
+
+rtraw_to_reprod_filename() {
+    local fpath="$1"
+    local fname
+    fname=$(basename "$fpath")
+
+    local run stream run_bucket run_group
+
+    if [[ "$fpath" =~ /eos/juno/rtraw/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
+        run="${BASH_REMATCH[3]}"
+        bucket_val=$(( (10#$run / 1000) * 1000 ))
+        group_val=$(( (10#$run / 100) * 100 ))
+        run_bucket=$(printf "%08d" "$bucket_val")
+        run_group=$(printf "%08d" "$group_val")
+
+    elif [[ "$fpath" =~ /eos/juno/juno-rtraw/([^/]+)/([^/]+)/([0-9]+)/([0-9]+)/([0-9]+)/RUN\.([0-9]+)\. ]]; then
+        run="${BASH_REMATCH[6]}"
+        stream="${BASH_REMATCH[2]}"
+        run_bucket="${BASH_REMATCH[3]}"
+        run_group="${BASH_REMATCH[4]}"
+    else
+        echo "ERROR: can't extract run number or structure from path: $fpath" >&2
+        exit 1
+    fi
+
+    if [[ -z "${stream:-}" ]]; then
+        if [[ "$fname" =~ \.([^.]+)\.[0-9]{14}\.[0-9]+_ ]]; then
+            stream="${BASH_REMATCH[1]}"
+        else
+            stream="unknown_stream"
+        fi
+    fi
+
+    local output_reprod_filename="${fname/.rtraw/.esd}"
+
+    local base_dir="/eos/juno/juno-reprod/ReProd25B/${stream}/${run_bucket}"
+    local eos_base="root://junoeos01.ihep.ac.cn/"
+
+    local candidate_groups
+    candidate_groups=$(xrdfs "$eos_base" ls "$base_dir" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
+
+    if [[ -z "$candidate_groups" ]]; then
+        echo "ERROR: no run_group directory found under $base_dir" >&2
+        exit 1
+    fi
+
+    local selected_group
+    selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
+
+    local reprod_path="${eos_base}/eos/juno/juno-reprod/ReProd25B/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+
+    echo "$reprod_path"
+}
+
 
 #==============================
 # Main Execution
@@ -138,13 +186,12 @@ main() {
     parse_args "$@"
     load_file_lists
 
-    input_esd_file="${ESD_LIST[$PROC_ID]}"
     input_rtraw_file="${RTRAW_LIST[$PROC_ID]}"
-    input_esd_filename=$(basename "$input_esd_file")
+    input_rtraw_filename=$(basename "$input_rtraw_file")
 
-    target_num=$(get_file_number "$input_esd_filename")
+    target_num=$(get_file_number "$input_rtraw_filename")
     if [[ -z $target_num ]]; then
-        log ERROR "Cannot extract file number from $input_esd_filename"
+        log ERROR "Cannot extract file number from $input_rtraw_filename"
         exit 1
     fi
     target_num=$((10#$target_num))
@@ -156,36 +203,40 @@ main() {
     indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
 
-    resolve_output_paths "$input_esd_file"
+    input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
     
     source /pbs/home/t/traymond/J25.6.1_Modified/git_junosw_J25_load.sh
     log INFO "Environment loaded (TUTORIALROOT=${TUTORIALROOT})"
     log INFO "Temporary directory: ${TMPDIR}"
 
-    esd_files=()
-    rtraw_files=()
+    reprod_files=()
 
     for idx in "${indices_to_process[@]}"; do
-        local_esd_file="${TMPDIR}/$(basename "${ESD_LIST[$idx]}")"
-        local_rtraw_file="${TMPDIR}/$(basename "${RTRAW_LIST[$idx]}")"
+        input_rtraw_file="${RTRAW_LIST[$idx]}"
+        input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
+        local_reprod_file="${TMPDIR}/$(basename "${input_reprod_file}")"
 
         log INFO "Copying input files for index $idx"
-        xrdcp "${ESD_LIST[$idx]}" "$local_esd_file"
-        xrdcp "${RTRAW_LIST[$idx]}" "$local_rtraw_file"
+        xrdcp "${input_reprod_file}" "$local_reprod_file"
 
-        esd_files+=("$local_esd_file")
-        rtraw_files+=("$local_rtraw_file")
+        reprod_files+=("$local_reprod_file")
     done
 
-    local_output_file="${TMPDIR}/${input_esd_filename/.esd/.output.root}"
+    input_rtraw_file="${RTRAW_LIST[$PROC_ID]}"
+    input_rtraw_filename=$(basename "$input_rtraw_file")
+    input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
+    input_reprod_filename=$(basename "$input_reprod_file")
+
+    resolve_output_paths "$input_reprod_file"
+
+    local_output_file="${TMPDIR}/${input_reprod_filename/.esd/.output.root}"
     output_file="$output_path/$(basename "$local_output_file")"
 
     log INFO "Running reconstruction with run.py..."
     python run.py \
-        --input "${esd_files[@]}" \
-        --input-rtraw "${rtraw_files[@]}" \
+        --input "${reprod_files[@]}" \
         --output "$local_output_file" \
-        --target-input-filename "$input_esd_filename" \
+        --target-input-filename "$input_reprod_filename" \
         --tt-reco-filepath "$tt_reco_filepath" \
         "${EXTRA_ARGS[@]}"
 
