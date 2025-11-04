@@ -159,7 +159,8 @@ rtraw_to_reprod_filename() {
 
     local output_reprod_filename="${fname/.rtraw/.esd}"
 
-    local base_dir="/eos/juno/juno-reprod/ReProd25B/${stream}/${run_bucket}"
+    # ReProd25B
+    local base_dir="/eos/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}"
     local eos_base="root://junoeos01.ihep.ac.cn/"
 
     local candidate_groups
@@ -173,7 +174,7 @@ rtraw_to_reprod_filename() {
     local selected_group
     selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
 
-    local reprod_path="${eos_base}/eos/juno/juno-reprod/ReProd25B/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    local reprod_path="${eos_base}/eos/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
 
     echo "$reprod_path"
 }
