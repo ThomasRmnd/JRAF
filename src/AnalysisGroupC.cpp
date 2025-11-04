@@ -139,20 +139,20 @@ bool AnalysisGroupC::initAnalyses() {
     m_muveto_sec = 0l;
     m_muveto_nsec = 0;
 
-    m_methods = std::vector<std::string>{"Oec", "OMILREC", "MixedPhase", "JVertex"};
+    m_methods = std::vector<std::string>{"Oec", "OMILREC", "MixedPhase", "OMILREC_JVtx" /* "JVertex" */};
 
-    m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__Oec", "Oec"));
-    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__Oec", "Oec", 3000.0));
-    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__Oec", "Oec", 5000.0));
-    m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__Oec", "Oec"));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__Oec", "Oec", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__Oec", "Oec", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
-    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__Oec", "Oec", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__Oec", "Oec", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
-    m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy__Oec", "Oec"));
-    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__Oec", "Oec", 3000.0, TimeStamp{0, 1500000000}));
-    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 2000000000}));
+    // m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__Oec", "Oec"));
+    // m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__Oec", "Oec", 3000.0));
+    // m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__Oec", "Oec", 5000.0));
+    // m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__Oec", "Oec"));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__Oec", "Oec", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__Oec", "Oec", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    // m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    // m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__Oec", "Oec", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    // m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__Oec", "Oec", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    // m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy__Oec", "Oec"));
+    // m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__Oec", "Oec", 3000.0, TimeStamp{0, 1500000000}));
+    // m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__Oec", "Oec", 40000.0, TimeStamp{0, 2000000000}));
 
     m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__OMILREC", "OMILREC"));
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__OMILREC", "OMILREC", 3000.0));
@@ -180,18 +180,18 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__MixedPhase", "MixedPhase", 3000.0, TimeStamp{0, 1500000000}));
     m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__MixedPhase", "MixedPhase", 40000.0, TimeStamp{0, 2000000000}));
 
-    m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__JVertex", "JVertex"));
-    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__JVertex", "JVertex", 3000.0));
-    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__JVertex", "JVertex", 5000.0));
-    m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__JVertex", "JVertex"));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__JVertex", "JVertex", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__JVertex", "JVertex", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
-    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__JVertex", "JVertex", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__JVertex", "JVertex", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__JVertex", "JVertex", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
-    m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy__JVertex", "JVertex"));
-    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__JVertex", "JVertex", 3000.0, TimeStamp{0, 1500000000}));
-    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__JVertex", "JVertex", 40000.0, TimeStamp{0, 2000000000}));
+    m_analyses.push_back(std::make_shared<FirstCrossCheckAnalysis>("FirstCrossCheckAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__OMILREC_JVtx", "OMILREC_JVtx", 3000.0));
+    m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__OMILREC_JVtx", "OMILREC_JVtx", 5000.0));
+    m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__OMILREC_JVtx", "OMILREC_JVtx"));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__OMILREC_JVtx", "OMILREC_JVtx", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__OMILREC_JVtx", "OMILREC_JVtx", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__OMILREC_JVtx", "OMILREC_JVtx", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    m_analyses.push_back(std::make_shared<IBDWithNeutronVetoStudy>("IBDWithNeutronVetoStudy__OMILREC_JVtx", "OMILREC_JVtx"));
+    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_3m_1_5s__OMILREC_JVtx", "OMILREC_JVtx", 3000.0, TimeStamp{0, 1500000000}));
+    m_analyses.push_back(std::make_shared<NeutronVetoStudy>("NeutronVetoStudy_All__OMILREC_JVtx", "OMILREC_JVtx", 40000.0, TimeStamp{0, 2000000000}));
 
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;
@@ -399,16 +399,20 @@ bool AnalysisGroupC::execute() {
         }
 
         std::vector<vertex> vertices;
-        JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
-        addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt());
-        addVertex(basic_cdv_hdr, "Basic", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecJVertex");
-        addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
+        // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
+        // addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
+        // JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt());
+        // addVertex(basic_cdv_hdr, "Basic", curts, totq_cd, vertices);
+        // JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecJVertex");
+        // addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
         JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecMixedPhase");
         addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, totq_cd, vertices);
         JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC");
         addVertex(omilrec_cdv_hdr, "OMILREC", curts, totq_cd, vertices);
+        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_JVtx");
+        addVertex(omilrec_cdv_hdr, "OMILREC_JVtx", curts, totq_cd, vertices);
+        // JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_MPV");
+        // addVertex(omilrec_cdv_hdr, "OMILREC_MPV", curts, totq_cd, vertices);
 
         evt->tracks = tracks;
         evt->vertices = vertices;

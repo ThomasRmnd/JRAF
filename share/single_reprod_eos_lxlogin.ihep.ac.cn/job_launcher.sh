@@ -132,9 +132,10 @@ submit_jobs() {
         -cpu 1 \
         -m 4096 \
         -wt short \
-        -o "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.log" \
+        -o "/dev/null" \
         -e "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.err" \
         -name "agrpc_${RUN_NUMBER}_batch"
+    # "/scratchfs/juno/traymond/agrpc_${RUN_NUMBER}_%{ProcId}.log"
 
     log INFO "All jobs submitted successfully"
 }
