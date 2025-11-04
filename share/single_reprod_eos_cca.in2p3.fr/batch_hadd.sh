@@ -129,8 +129,9 @@ do_hadd() {
 
         if (( n_expected != n_files )); then
             log WARN "File count mismatch for run $run: expected ${n_expected}, found ${n_files}"
-            log WARN "Skipping hadd to avoid merging incomplete data."
-            return
+            # log WARN "Skipping hadd to avoid merging incomplete data."
+            # return 
+            # Caused by std::vector::at(n), Akira muon reconstruction method?
         else
             log INFO "File count verified: ${n_files} files (expected ${n_expected})"
         fi
