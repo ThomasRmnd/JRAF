@@ -409,10 +409,10 @@ bool AnalysisGroupC::execute() {
         addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, totq_cd, vertices);
         JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC");
         addVertex(omilrec_cdv_hdr, "OMILREC", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_JVtx");
-        addVertex(omilrec_cdv_hdr, "OMILREC_JVtx", curts, totq_cd, vertices);
-        // JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_MPV");
-        // addVertex(omilrec_cdv_hdr, "OMILREC_MPV", curts, totq_cd, vertices);
+        JM::CdVertexRecHeader* omilrec_jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_JVtx");
+        addVertex(omilrec_jvertex_cdv_hdr, "OMILREC_JVtx", curts, totq_cd, vertices);
+        // JM::CdVertexRecHeader* omilrec_mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_MPV");
+        // addVertex(omilrec_mixedphase_cdv_hdr, "OMILREC_MPV", curts, totq_cd, vertices);
 
         evt->tracks = tracks;
         evt->vertices = vertices;
