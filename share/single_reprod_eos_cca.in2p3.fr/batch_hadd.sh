@@ -19,7 +19,8 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 BASE_OUTPUT_DIR="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd"
-RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4/Physics_good_run_list.txt"
+LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
+RUN_LIST_PATH="${LIST_BASE}/Physics_good_run_list.txt"
 
 LOWER_BOUND=""
 UPPER_BOUND=""
@@ -92,7 +93,7 @@ do_hadd() {
 
     local bucket_val=$(( (10#$run / 1000) * 1000 ))
     local group_val=$(( (10#$run / 100) * 100 ))
-
+    
     local run_bucket=$(printf "%08d" "$bucket_val")
     local run_group=$(printf "%08d" "$group_val")
 
@@ -113,23 +114,40 @@ do_hadd() {
         return
     fi
 
-    local output_dir="${BASE_OUTPUT_DIR}/summary"
-    mkdir -p "$output_dir"
-    local output_file="${output_dir}/RUN.${run}.output.reprod.cca.root"
-
-    log INFO "Merging files in $run_dir ..."
     local files=("$run_dir"/*.root)
-
-    if (( ${#files[@]} == 0 )); then
+    local n_files=${#files[@]}
+    if (( n_files == 0 )); then
         log WARN "No ROOT files to merge for run $run"
         return
     fi
 
+    local list_file="${LIST_BASE}/rtraw_list/run_${run}.txt"
+
+    if xrdfs "$EOS_BASE" stat "$list_file" &>/dev/null; then
+        local n_expected
+        n_expected=$(xrdfs "$EOS_BASE" cat "$list_file" | grep -v '^[[:space:]]*$' | wc -l | tr -d '[:space:]')
+
+        if (( n_expected != n_files )); then
+            log WARN "File count mismatch for run $run: expected ${n_expected}, found ${n_files}"
+            log WARN "Skipping hadd to avoid merging incomplete data."
+            return
+        else
+            log INFO "File count verified: ${n_files} files (expected ${n_expected})"
+        fi
+    else
+        log WARN "No run list found for run $run on EOS (expected ${list_file}) — skipping count check."
+    fi
+
+
+    local output_dir="${BASE_OUTPUT_DIR}/summary"
+    mkdir -p "$output_dir"
+    local output_file="${output_dir}/RUN.${run}.output.reprod.cca.root"
+
+    log INFO "Merging ${n_files} files in $run_dir ..."
     hadd -f "$output_file" "${files[@]}" && \
         log INFO "Merged successfully -> $output_file" || \
         log ERROR "hadd failed for run $run"
 }
-
 
 #==============================
 # Main
