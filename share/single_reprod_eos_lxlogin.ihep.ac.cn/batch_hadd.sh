@@ -11,14 +11,14 @@ IFS=$'\n\t'
 # Utility functions
 #==============================
 
-source /pbs/home/t/traymond/share/bash/logging.sh
+source /junofs/users/traymond/bash/logging.sh
 
 #==============================
 # Configuration defaults
 #==============================
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
-BASE_OUTPUT_DIR="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd"
+BASE_OUTPUT_DIR="/junofs/users/traymond/analysis/ibd"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 RUN_LIST_PATH="${LIST_BASE}/Physics_good_run_list.txt"
 
@@ -142,7 +142,7 @@ do_hadd() {
 
     local output_dir="${BASE_OUTPUT_DIR}/summary"
     mkdir -p "$output_dir"
-    local output_file="${output_dir}/RUN.${run}.output.reprod25c.cca.root"
+    local output_file="${output_dir}/RUN.${run}.output.reprod25c.lxlogin.root"
 
     log INFO "Merging ${n_files} files in $run_dir ..."
     hadd -f "$output_file" "${files[@]}" && \
