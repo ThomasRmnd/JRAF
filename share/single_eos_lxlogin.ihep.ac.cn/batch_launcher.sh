@@ -19,7 +19,7 @@ source /junofs/users/traymond/bash/logging.sh
 #==============================
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
-RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4/Physics_good_run_list.txt"
+RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
 
 LOWER_BOUND=""
 UPPER_BOUND=""

@@ -2,7 +2,7 @@
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 
-list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
+list_base="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 file_range=100
 time_window=("-2.0" "2.0")
 log_level=3

@@ -19,7 +19,7 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 #==============================
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
-LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.4"
+LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
 
