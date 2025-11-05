@@ -128,7 +128,7 @@ submit_jobs() {
 
     sbatch \
         --job-name="agrpc_${RUN_NUMBER}_batch" \
-        --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_%a.log" \
+        --output="/dev/null" \
         --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/err/agrpc_${RUN_NUMBER}_%a.err" \
         --array="0-$((JOB_COUNT - 1))" \
         --partition="htc" \
