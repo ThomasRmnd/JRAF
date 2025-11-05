@@ -159,7 +159,7 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__OMILREC", "OMILREC", 3000.0));
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__OMILREC", "OMILREC", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__OMILREC", "OMILREC"));
-    m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis", "OMILREC"));
+    m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis__OMILREC", "OMILREC"));
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC", "OMILREC", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC", "OMILREC", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__OMILREC", "OMILREC", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
@@ -173,7 +173,7 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__MixedPhase", "MixedPhase", 3000.0));
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__MixedPhase", "MixedPhase", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__MixedPhase", "MixedPhase"));
-    m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis", "MixedPhase"));
+    m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis__MixedPhase", "MixedPhase"));
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__MixedPhase", "MixedPhase", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__MixedPhase", "MixedPhase", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__MixedPhase", "MixedPhase", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
@@ -187,7 +187,7 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_3m__OMILREC_JVtx", "OMILREC_JVtx", 3000.0));
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__OMILREC_JVtx", "OMILREC_JVtx", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__OMILREC_JVtx", "OMILREC_JVtx"));
-    m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis", "OMILREC_JVtx"));
+    m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__OMILREC_JVtx", "OMILREC_JVtx", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
