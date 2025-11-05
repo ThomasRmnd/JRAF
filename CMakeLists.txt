@@ -6,6 +6,7 @@ FILES
 
     src/analysis/Analysis.cpp
     src/analysis/CdWpCosmoStudy.cpp
+    src/analysis/CosmoRateWithNeutronAnalysis.cpp
     src/analysis/FirstCrossCheckAnalysis.cpp
     src/analysis/IBDWithCylindricalCut.cpp
     src/analysis/IBDWithNeutronVetoStudy.cpp
