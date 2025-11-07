@@ -160,8 +160,8 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__OMILREC", "OMILREC", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__OMILREC", "OMILREC"));
     m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis__OMILREC", "OMILREC"));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC", "OMILREC", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC", "OMILREC", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC", "OMILREC", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC", "OMILREC", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__OMILREC", "OMILREC", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__OMILREC", "OMILREC", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__OMILREC", "OMILREC", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
@@ -174,8 +174,8 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__MixedPhase", "MixedPhase", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__MixedPhase", "MixedPhase"));
     m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis__MixedPhase", "MixedPhase"));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__MixedPhase", "MixedPhase", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__MixedPhase", "MixedPhase", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__MixedPhase", "MixedPhase", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__MixedPhase", "MixedPhase", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__MixedPhase", "MixedPhase", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__MixedPhase", "MixedPhase", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__MixedPhase", "MixedPhase", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
@@ -188,8 +188,8 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDWithCylindricalCut>("IBDWithCylindricalCut_5m__OMILREC_JVtx", "OMILREC_JVtx", 5000.0));
     m_analyses.push_back(std::make_shared<MultiplicityWindowCut>("MultiplicityWindowCut__OMILREC_JVtx", "OMILREC_JVtx"));
     m_analyses.push_back(std::make_shared<CosmoRateWithNeutronAnalysis>("CosmoRateWithNeutronAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
-    m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_sig__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
+    // m_analyses.push_back(std::make_shared<TtCosmoStudy>("TtCosmoStudy_bkg__OMILREC_JVtx", "OMILREC_JVtx", TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_All__OMILREC_JVtx", "OMILREC_JVtx", 40000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_sig__OMILREC_JVtx", "OMILREC_JVtx", 3000.0, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}));
     m_analyses.push_back(std::make_shared<CdWpCosmoStudy>("CdWpCosmoStudy_bkg__OMILREC_JVtx", "OMILREC_JVtx", 3000.0, TimeStamp{0, -1200000000}, TimeStamp{0, -5000000}));
@@ -442,6 +442,10 @@ bool AnalysisGroupC::execute() {
     
     EventContext events(m_buf, m_methods);
 
+    // DEBUG --- Timing
+    auto t_after_context = clock::now();
+    // DEBUG --- Timing
+
     // --------------------
     // Per-analysis timing
     // --------------------
@@ -457,6 +461,10 @@ bool AnalysisGroupC::execute() {
             std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before).count()
         );
     }
+
+    // DEBUG --- Timing
+    auto t_after_analysis = clock::now();
+    // DEBUG --- Timing
 
     if (m_buf->begin() <= m_buf->current() - 1l) {
         JM::EvtNavigator* prv_nav = (m_buf->current() - 1l)->get();
@@ -475,15 +483,19 @@ bool AnalysisGroupC::execute() {
     }
 
     // DEBUG --- Timing
-    auto t_after_analysis = clock::now();
+    auto t_after_daq = clock::now();
     // DEBUG --- Timing
 
     auto t_load_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_load - t_start).count();
-    auto t_loop_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_analysis - t_after_load).count();
+    auto t_context_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_context - t_after_load).count();
+    auto t_analysis_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_analysis - t_after_context).count();
+    auto t_daq_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_daq - t_after_analysis).count();
 
     std::cout << "\n=== Timing report ===\n";
     std::cout << "1. Loading:  " << t_load_ms << " ms\n";
-    std::cout << "2. Analysis: " << t_loop_ms << " ms\n";
+    std::cout << "2. Context: " << t_context_ms << " ms\n";
+    std::cout << "3. Analysis: " << t_analysis_ms << " ms\n";
+    std::cout << "2. DAQ: " << t_daq_ms << " ms\n";
     std::cout << "=====================\n\n";
 
     std::cout << "-- Per-analysis breakdown --\n";
