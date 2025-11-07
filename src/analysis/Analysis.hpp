@@ -4,10 +4,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-#include "EvtNavigator/NavBuffer.h"
-
-#include "event/Track.hpp"
-#include "event/Vertex.hpp"
+#include "event/EventContext.hpp"
 #include "selection/Selection.hpp"
 
 class Analysis {
@@ -19,7 +16,8 @@ public:
     virtual ~Analysis() = default;
 
     virtual bool initialize();
-    virtual void process(JM::NavBuffer* buf) = 0;
+    const std::string& method() const;
+    virtual void process(const EventContext::View& events) = 0;
     virtual bool write();
 
 protected:
@@ -45,8 +43,6 @@ protected:
     double totq_d;
     time_t sec_d;
     int nsec_d;
-
-    void extractEvent(JM::NavBuffer* buf, std::vector<std::vector<track>>& tracks, std::vector<vertex>& cur_vertices, std::vector<vertex>& bef_vertices, std::vector<vertex>& aft_vertices);
 
 };
 

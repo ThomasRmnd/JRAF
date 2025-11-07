@@ -14,7 +14,7 @@ public:
     ~MultiplicityWindowCut() override = default;
 
     bool initialize() override;
-    void process(JM::NavBuffer* buf) override;
+    void process(const EventContext::View& events) override;
 
 private:
 

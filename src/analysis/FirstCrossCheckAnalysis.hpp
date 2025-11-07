@@ -3,8 +3,6 @@
 
 #include "analysis/Analysis.hpp"
 
-#include "Context/TimeStamp.h"
-
 class FirstCrossCheckAnalysis : public Analysis {
 
 public:
@@ -13,7 +11,7 @@ public:
 
     ~FirstCrossCheckAnalysis() override = default;
 
-    void process(JM::NavBuffer* buf) override;
+    void process(const EventContext::View& events) override;
 
 };
 

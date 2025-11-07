@@ -4,9 +4,6 @@
 
 #include "SniperKernel/SniperLog.h"
 
-#include "analysis/NavBufferCache.hpp"
-#include "event/Event.hpp"
-#include "event/EventCache.hpp"
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Muon.hpp"
@@ -30,30 +27,25 @@ bool TtCosmoStudy::initialize() {
     return true; 
 }
 
-void TtCosmoStudy::process(JM::NavBuffer*) {
-    const std::vector<std::vector<track>>& tracks = NavBufferCache::getTracks(m_method);
-    const std::vector<vertex>& cur_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Current);
-    const std::vector<vertex>& bef_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Before);
-    const std::vector<vertex>& aft_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::After);
-    // extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
-
+void TtCosmoStudy::process(const EventContext::View& events) {
     std::vector<TimeRangeMuonVetoSelection> mu_wp_bundle_cut;
     std::vector<CylindricalMuonVetoSelection> mu_cosmo_cut;
-    for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
-        if (it->empty()) continue;
+    for (const track& trk : events.tracks()) {
+        mu_wp_bundle_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 5000000});
+
         std::vector<track> cd_tracks;
         std::vector<track> wp_tracks;
         std::vector<track> tt_tracks;
-        for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
-            mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 5000000});
-            if (jt->method == "CdWpTtChi2" /* jt->det == track::loc::cd */) {
-                if (jt->quality != -1.0f) cd_tracks.push_back(*jt);
+        for (const track& trk2 : events.tracks()) {
+            if (trk2.ts != trk.ts) continue;
+            if (trk2.method == "CdWpTtChi2" /* trk.det == track::loc::cd */) {
+                if (trk2.quality != -1.0) cd_tracks.push_back(trk2);
             }
-            else if (jt->method == "WpBasic" /* jt->det == track::loc::wp */) {
-                wp_tracks.push_back(*jt);
+            else if (trk2.method == "WpBasic" /* trk.det == track::loc::wp */) {
+                wp_tracks.push_back(trk2);
             }
-            else if (jt->det == track::loc::tt) {
-                tt_tracks.push_back(*jt);
+            else if (trk2.det == track::loc::tt) {
+                tt_tracks.push_back(trk2);
             }
         }
         if (cd_tracks.size() != 1ul || wp_tracks.size() != 1ul || tt_tracks.size() != 1ul) continue;
@@ -87,7 +79,7 @@ void TtCosmoStudy::process(JM::NavBuffer*) {
     std::vector<ibd> cosmos;
     std::vector<track> tracks_for_cosmo;
 
-    for (const vertex& prompt : cur_vertices) {
+    for (const vertex& prompt : events.current()) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) {
             LogInfo << "Prompt not in fiducial volume\n";
@@ -129,7 +121,7 @@ void TtCosmoStudy::process(JM::NavBuffer*) {
 
         TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
-        for (const vertex& cand : bef_vertices) {
+        for (const vertex& cand : events.before()) {
             if (!multi_prompt_time.isIn(cand)) continue;
             // if (!fiducial_vol_cut.isIn(cand)) continue;
             // if (chimney_cut.isIn(cand)) continue;
@@ -159,7 +151,7 @@ void TtCosmoStudy::process(JM::NavBuffer*) {
 
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
-        for (const vertex& delayed : aft_vertices) {
+        for (const vertex& delayed : events.after()) {
             LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in fiducial volume\n";
@@ -204,7 +196,7 @@ void TtCosmoStudy::process(JM::NavBuffer*) {
 
             TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
             bool delayed_has_multi = false;
-            for (const vertex& cand : aft_vertices) {
+            for (const vertex& cand : events.after()) {
                 if (cand.ts == delayed.ts) continue; // same event
                 // if (!fiducial_vol_cut.isIn(cand)) continue;
                 // if (chimney_cut.isIn(cand)) continue;

@@ -1,59 +1,14 @@
 import argparse
-from datetime import datetime, timezone
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, AutoMinorLocator, MultipleLocator
 import numpy as np
 from scipy.optimize import curve_fit
 import uproot
 
-class TimeStamp:
-    __slots__ = ('sec', 'nsec')
-
-    def __init__(self, sec: int, nsec: int):
-        self.sec = int(sec)
-        self.nsec = int(nsec)
-        self.normalize()
-
-    def normalize(self):
-        while (self.nsec < 0):
-            self.nsec += 1_000_000_000
-            self.sec -= 1
-        while (self.nsec >= 1_000_000_000):
-            self.nsec -= 1_000_000_000
-            self.sec += 1
-
-    def to_sec(self):
-        return self.sec + self.nsec * 1e-9
-
-    def to_nsec(self):
-        return self.sec * 1_000_000_000 + self.nsec
-
-    def __add__(self, other):
-        return TimeStamp(self.sec + other.sec, self.nsec + other.nsec)
-
-    def __sub__(self, other):
-        return TimeStamp(self.sec - other.sec, self.nsec - other.nsec)
-
-    def __lt__(self, other):
-        return (self.sec, self.nsec) < (other.sec, other.nsec)
-
-    def __le__(self, other):
-        return (self.sec, self.nsec) <= (other.sec, other.nsec)
-
-    def __gt__(self, other):
-        return (self.sec, self.nsec) > (other.sec, other.nsec)
-
-    def __ge__(self, other):
-        return (self.sec, self.nsec) >= (other.sec, other.nsec)
-
-    def __eq__(self, other):
-        return (self.sec, self.nsec) == (other.sec, other.nsec)
-
-    def __repr__(self):
-        dt = datetime.fromtimestamp(self.sec, tz=timezone.utc)
-        return dt.strftime(f"%Y-%m-%d %H:%M:%S.{self.nsec:09d} UTC")
+from daq import sum_daq_muon, sum_daq_time
+from plot_style import set_plot_style, set_plot_colorbar_style
+from timestamp import TimeStamp
     
 mpl.rcParams.update({
     "text.usetex": True,
@@ -69,77 +24,6 @@ mpl.rcParams.update({
     "legend.fontsize": 14,
     "figure.dpi": 100,
 })
-    
-def set_plot_style(ax):
-    """
-    Apply uniform 'publication-like' style:
-      - LaTeX font
-      - Major ticks adapting to axis range
-      - Minor ticks automatically subdivided
-      - Inward ticks on all sides
-    """
-    # Major ticks: auto locator
-    ax.xaxis.set_major_locator(AutoLocator())
-    ax.yaxis.set_major_locator(AutoLocator())
-
-    # Minor ticks: automatically subdivide (default: 4 per major interval)
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
-
-    # Tick params: inward, both sides
-    ax.tick_params(which="both", direction="in", top=True, right=True,
-                   length=4, width=1, labelsize=12)
-    ax.tick_params(which="major", length=6, width=1.2)
-    ax.tick_params(which="minor", length=3, width=1)
-
-def set_plot_colorbar_style(ax):
-    """
-    Apply uniform 'publication-like' style:
-      - LaTeX font
-      - Major ticks adapting to axis range
-      - Minor ticks automatically subdivided
-      - Inward ticks on all sides
-    """
-    ax.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False)
-    ax.tick_params(axis="y", which="both", direction="in", right=True, left=True)
-    
-def analyze_daqtree(filename):
-    """Special analysis for Thomas' DAQTree"""
-    with uproot.open(filename) as f:
-        if "DAQTree" not in f:
-            print("[INFO] No DAQTree found in file")
-            return
-
-        tree = f["DAQTree"]
-
-        daq_sec = tree["daq_sec"].array(library="np")
-        daq_nsec = tree["daq_nsec"].array(library="np")
-        muveto_sec = tree["muveto_sec"].array(library="np")
-        muveto_nsec = tree["muveto_nsec"].array(library="np")
-
-        daq_ts = daq_sec.astype(np.float64) + daq_nsec * 1e-9
-
-        plt.figure()
-        plt.hist(daq_ts)
-        plt.show()
-
-        muveto_ts = muveto_sec.astype(np.float64) + muveto_nsec * 1e-9
-
-        daq_sum = daq_ts.sum()
-        muveto_sum = muveto_ts.sum()
-
-        daq_hours = daq_sum / 3600
-        daq_days = daq_sum / 86400
-        muveto_hours = muveto_sum / 3600
-        muveto_days = muveto_sum / 86400
-
-        perc = 100.0 * muveto_sum / daq_sum if daq_sum > 0 else float("nan")
-
-        print("=== DAQTree Analysis ===")
-        print(f"DAQ total time     : {daq_sum:.3e} s = {daq_hours:.3f} h = {daq_days:.3f} d")
-        print(f"MuVeto total time  : {muveto_sum:.3e} s = {muveto_hours:.3f} h = {muveto_days:.3f} d")
-        print(f"MuVeto / DAQ ratio : {perc:.3f} %")
-        print("========================")
     
 class CodeAnalysis:
     def __init__(self, name: str, config: dict):
@@ -300,8 +184,19 @@ analyzers = [
 for ana in analyzers:
     ana.load()
 
-# if args.input:
-#     analyze_daqtree(args.input)
+if args.input:
+    daq_days = sum_daq_time(args.input)
+    daq_hours = daq_days * 24.0
+    daq_sum = daq_hours * 3600.0
+    muveto_days = sum_daq_muon(args.input)
+    muveto_hours = muveto_days * 24.0
+    muveto_sum = muveto_hours * 3600.0
+    perc = muveto_days / daq_days
+    print("=== DAQTree Analysis ===")
+    print(f"DAQ total time     : {daq_sum:.3e} s = {daq_hours:.3f} h = {daq_days:.3f} d")
+    print(f"MuVeto total time  : {muveto_sum:.3e} s = {muveto_hours:.3f} h = {muveto_days:.3f} d")
+    print(f"MuVeto / DAQ ratio : {perc:.3f} %")
+    print("========================")
 
 # ---------------- Fitting function ----------------
 def exp_decay(x, A, tau):

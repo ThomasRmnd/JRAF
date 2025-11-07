@@ -1,9 +1,9 @@
 #include "analysis/CosmoRateWithNeutronAnalysis.hpp"
 
+#include <set>
+
 #include "SniperKernel/SniperLog.h"
 
-#include "analysis/NavBufferCache.hpp"
-#include "event/EventCache.hpp"
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Vertex.hpp"
@@ -31,21 +31,17 @@ bool CosmoRateWithNeutronAnalysis::initialize() {
     return true;
 }
 
-void CosmoRateWithNeutronAnalysis::process(JM::NavBuffer*) {
-    const std::vector<std::vector<track>>& tracks = NavBufferCache::getTracks(m_method);
-    const std::vector<vertex>& cur_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Current);
-    const std::vector<vertex>& bef_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Before);
-    const std::vector<vertex>& aft_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::After);
-    // extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
-
+void CosmoRateWithNeutronAnalysis::process(const EventContext::View& events) {
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
     std::vector<MuonAssociatedWithNeutron> mu_neu_cut;
-    for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
-        if (it->empty()) continue;
-        mu_cut.emplace_back(it->front(), TimeStamp{0, 0}, TimeStamp{0, 5000000});
+    std::set<TimeStamp> visited;
+    for (const track& trk : events.tracks()) {
+        if (visited.find(trk.ts) != visited.end()) continue;
+        visited.insert(trk.ts);
+        mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 5000000});
         mu_neu_cut.emplace_back(
-            TimeRangeMuonVetoSelection{it->front(), TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}},
-            TimeRangeMuonVetoSelection{it->front(), TimeStamp{0, 20000}, TimeStamp{0, 2000000}}
+            TimeRangeMuonVetoSelection{trk, TimeStamp{0, 5000000}, TimeStamp{0, 1200000000}},
+            TimeRangeMuonVetoSelection{trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000}}
         );
     }
 
@@ -57,21 +53,7 @@ void CosmoRateWithNeutronAnalysis::process(JM::NavBuffer*) {
     EnergyRangeSelection delayed_energy_cut{2.0, 2.5};
     EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
-    for (const vertex& neu : bef_vertices) {
-        if (!delayed_energy_cut.isIn(neu)) continue;
-        for (MuonAssociatedWithNeutron& mu : mu_neu_cut) {
-            if (!mu.neu_veto.isIn(neu)) continue;
-            mu.neu.push_back(neu);
-        }
-    }
-    for (const vertex& neu : cur_vertices) {
-        if (!delayed_energy_cut.isIn(neu)) continue;
-        for (MuonAssociatedWithNeutron& mu : mu_neu_cut) {
-            if (!mu.neu_veto.isIn(neu)) continue;
-            mu.neu.push_back(neu);
-        }
-    }
-    for (const vertex& neu : aft_vertices) {
+    for (const vertex& neu : events.vertices()) {
         if (!delayed_energy_cut.isIn(neu)) continue;
         for (MuonAssociatedWithNeutron& mu : mu_neu_cut) {
             if (!mu.neu_veto.isIn(neu)) continue;
@@ -81,7 +63,7 @@ void CosmoRateWithNeutronAnalysis::process(JM::NavBuffer*) {
 
     std::vector<ibd> ibds;
 
-    for (const vertex& prompt : cur_vertices) {
+    for (const vertex& prompt : events.current()) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) {
             LogInfo << "Prompt not in fiducial volume\n";
@@ -110,7 +92,7 @@ void CosmoRateWithNeutronAnalysis::process(JM::NavBuffer*) {
 
         TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
-        for (const vertex& cand : bef_vertices) {
+        for (const vertex& cand : events.before()) {
             if (!multi_prompt_time.isIn(cand)) continue;
             // if (!fiducial_vol_cut.isIn(cand)) continue;
             // if (chimney_cut.isIn(cand)) continue;
@@ -132,7 +114,7 @@ void CosmoRateWithNeutronAnalysis::process(JM::NavBuffer*) {
 
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
-        for (const vertex& delayed : aft_vertices) {
+        for (const vertex& delayed : events.after()) {
             LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in fiducial volume\n";
@@ -166,7 +148,7 @@ void CosmoRateWithNeutronAnalysis::process(JM::NavBuffer*) {
 
             TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
             bool delayed_has_multi = false;
-            for (const vertex& cand : aft_vertices) {
+            for (const vertex& cand : events.after()) {
                 if (cand.ts == delayed.ts) continue; // same event
                 // if (!fiducial_vol_cut.isIn(cand)) continue;
                 // if (chimney_cut.isIn(cand)) continue;

@@ -4,9 +4,6 @@
 
 #include "SniperKernel/SniperLog.h"
 
-#include "analysis/NavBufferCache.hpp"
-#include "event/Event.hpp"
-#include "event/EventCache.hpp"
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Muon.hpp"
@@ -31,43 +28,36 @@ bool CdWpCosmoStudy::initialize() {
     return true; 
 }
 
-void CdWpCosmoStudy::process(JM::NavBuffer*) {
-    const std::vector<std::vector<track>>& tracks = NavBufferCache::getTracks(m_method);
-    const std::vector<vertex>& cur_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Current);
-    const std::vector<vertex>& bef_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Before);
-    const std::vector<vertex>& aft_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::After);
-    // extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
-
+void CdWpCosmoStudy::process(const EventContext::View& events) {
     std::vector<TimeRangeMuonVetoSelection> mu_wp_bundle_cut;
     std::vector<CylindricalMuonVetoSelection> mu_cosmo_cut;
-    for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
-        if (it->empty()) continue;
+    for (const track& trk : events.tracks()) {
         std::vector<track> cd_tracks;
         std::vector<track> wp_tracks;
         std::vector<track> tt_tracks;
         bool has_cdclassify = false;
         bool has_cdwpttchi2 = false;
-        for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
-            mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 5000000});
-            if (jt->method == "CdClassify") has_cdclassify = true;
-            if (jt->method == "CdWpTtChi2") has_cdwpttchi2 = true;
-            if (jt->method != "WpBasic" /* jt->det != track::loc::wp */) continue;
-            wp_tracks.push_back(*jt);
+        for (const track& trk2 : events.tracks()) {
+            mu_wp_bundle_cut.emplace_back(trk2, TimeStamp{0, 0}, TimeStamp{0, 5000000});
+            if (trk2.method == "CdClassify") has_cdclassify = true;
+            if (trk2.method == "CdWpTtChi2") has_cdwpttchi2 = true;
+            if (trk2.method != "WpBasic" /* jt->det != track::loc::wp */) continue;
+            wp_tracks.push_back(trk2);
         }
         bool has_cdclassify_but_no_cdwpttchi2 = has_cdclassify && !has_cdwpttchi2;
         if (wp_tracks.size() > 1ul) {
-            mu_wp_bundle_cut.emplace_back(*it->begin(), TimeStamp{0, 0}, TimeStamp{0, 500000000});
+            mu_wp_bundle_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 500000000});
             // std::cout << "[DEBUG] Bundle veto from starting at " << it->begin()->ts << '\n';
             continue;
         }
-        for (std::vector<track>::const_iterator jt = it->begin(); jt != it->end(); ++jt) {
-            if (jt->method != "CdWpTtChi2" /* jt->det != track::loc::cd */) continue;
-            if (jt->quality != -1.0f && !has_cdclassify_but_no_cdwpttchi2) {
-                cd_tracks.push_back(*jt);
-                mu_cosmo_cut.emplace_back(*jt, m_cyl_radius, m_lwr_window, m_upr_window);
+        for (const track& trk2 : events.tracks()) {
+            if (trk2.method != "CdWpTtChi2" /* jt->det != track::loc::cd */) continue;
+            if (trk2.quality != -1.0f && !has_cdclassify_but_no_cdwpttchi2) {
+                cd_tracks.push_back(trk2);
+                mu_cosmo_cut.emplace_back(trk2, m_cyl_radius, m_lwr_window, m_upr_window);
             }
             else {
-                mu_wp_bundle_cut.emplace_back(*jt, TimeStamp{0, 0}, TimeStamp{0, 500000000});
+                mu_wp_bundle_cut.emplace_back(trk2, TimeStamp{0, 0}, TimeStamp{0, 500000000});
             }
             // else if (jt->det == track::loc::tt) {
             //     tt_tracks.push_back(*jt);
@@ -86,7 +76,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer*) {
     std::vector<std::vector<track>> tracks_for_cosmo;
     std::vector<ibd> cosmos;
 
-    for (const vertex& prompt : cur_vertices) {
+    for (const vertex& prompt : events.current()) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) {
             LogInfo << "Prompt not in fiducial volume\n";
@@ -127,7 +117,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer*) {
 
         TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
-        for (const vertex& cand : bef_vertices) {
+        for (const vertex& cand : events.before()) {
             if (!multi_prompt_time.isIn(cand)) continue;
             // if (!fiducial_vol_cut.isIn(cand)) continue;
             // if (chimney_cut.isIn(cand)) continue;
@@ -157,7 +147,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer*) {
 
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
-        for (const vertex& delayed : aft_vertices) {
+        for (const vertex& delayed : events.after()) {
             LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in fiducial volume\n";
@@ -204,7 +194,7 @@ void CdWpCosmoStudy::process(JM::NavBuffer*) {
 
             TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
             bool delayed_has_multi = false;
-            for (const vertex& cand : aft_vertices) {
+            for (const vertex& cand : events.after()) {
                 if (cand.ts == delayed.ts) continue; // same event
                 // if (!fiducial_vol_cut.isIn(cand)) continue;
                 // if (chimney_cut.isIn(cand)) continue;

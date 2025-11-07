@@ -5,9 +5,6 @@
 
 #include "SniperKernel/SniperLog.h"
 
-#include "analysis/NavBufferCache.hpp"
-#include "event/Event.hpp"
-#include "event/EventCache.hpp"
 #include "event/IBD.hpp"
 #include "selection/Energy.hpp"
 #include "selection/Muon.hpp"
@@ -18,19 +15,12 @@ IBDWithNeutronVetoStudy::IBDWithNeutronVetoStudy(const std::string& name, const 
     Analysis{name, method} 
 {}
 
-void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
-    const std::vector<std::vector<track>>& tracks = NavBufferCache::getTracks(m_method);
-    const std::vector<vertex>& cur_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Current);
-    const std::vector<vertex>& bef_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::Before);
-    const std::vector<vertex>& aft_vertices = NavBufferCache::getVertices(m_method, NavBufferCache::VertexRegion::After);
-    // extractEvent(buf, tracks, cur_vertices, bef_vertices, aft_vertices);
-
+void IBDWithNeutronVetoStudy::process(const EventContext::View& events) {
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
     std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;
-    for (std::vector<std::vector<track>>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
-        if (it->empty()) continue;
-        mu_cut.emplace_back(it->front(), TimeStamp{0, 0}, TimeStamp{0, 5000000});
-        mu_spa_neu_cut.emplace_back(it->front(), TimeStamp{0, 20000}, TimeStamp{0, 2000000});
+    for (const track& trk : events.tracks()) {
+        mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 5000000});
+        mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
     }
 
     FiducialVolumeSelection fiducial_vol_cut{16500.0};
@@ -43,29 +33,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
     EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
     std::vector<VertexCorrelationSelection> spa_neu_cut;
-    for (const vertex& neu : bef_vertices) {
-        bool is_in_veto = false;
-        for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
-            if (!cut.isIn(neu)) continue;
-            is_in_veto = true;
-            break;
-        }
-        if (!is_in_veto) continue;
-        if (!spa_neu_energy_cut.isIn(neu)) continue;
-        spa_neu_cut.emplace_back(neu, 4000.0, TimeStamp{0, 0}, TimeStamp{0, 1200000000});
-    }
-    for (const vertex& neu : cur_vertices) {
-        bool is_in_veto = false;
-        for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
-            if (!cut.isIn(neu)) continue;
-            is_in_veto = true;
-            break;
-        }
-        if (!is_in_veto) continue;
-        if (!spa_neu_energy_cut.isIn(neu)) continue;
-        spa_neu_cut.emplace_back(neu, 4000.0, TimeStamp{0, 0}, TimeStamp{0, 1200000000});
-    }
-    for (const vertex& neu : aft_vertices) {
+    for (const vertex& neu : events.vertices()) {
         bool is_in_veto = false;
         for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
             if (!cut.isIn(neu)) continue;
@@ -79,7 +47,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
 
     std::vector<ibd> ibds;
 
-    for (const vertex& prompt : cur_vertices) {
+    for (const vertex& prompt : events.current()) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) {
             LogInfo << "Prompt not in fiducial volume\n";
@@ -119,7 +87,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
 
         TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
         bool prompt_has_multi = false;
-        for (const vertex& cand : bef_vertices) {
+        for (const vertex& cand : events.before()) {
             if (!multi_prompt_time.isIn(cand)) continue;
             // if (!fiducial_vol_cut.isIn(cand)) continue;
             // if (chimney_cut.isIn(cand)) continue;
@@ -141,7 +109,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
 
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
-        for (const vertex& delayed : aft_vertices) {
+        for (const vertex& delayed : events.after()) {
             LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in fiducial volume\n";
@@ -186,7 +154,7 @@ void IBDWithNeutronVetoStudy::process(JM::NavBuffer*) {
 
             TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
             bool delayed_has_multi = false;
-            for (const vertex& cand : aft_vertices) {
+            for (const vertex& cand : events.after()) {
                 if (cand.ts == delayed.ts) continue; // same event
                 // if (!fiducial_vol_cut.isIn(cand)) continue;
                 // if (chimney_cut.isIn(cand)) continue;

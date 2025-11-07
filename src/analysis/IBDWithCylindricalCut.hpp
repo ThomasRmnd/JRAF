@@ -13,7 +13,7 @@ public:
 
     ~IBDWithCylindricalCut() override = default;
     
-    void process(JM::NavBuffer* buf) override;
+    void process(const EventContext::View& events) override;
 
 private:
 

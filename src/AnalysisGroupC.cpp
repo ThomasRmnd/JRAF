@@ -22,7 +22,6 @@
 #include "analysis/IBDWithCylindricalCut.hpp"
 #include "analysis/IBDWithNeutronVetoStudy.hpp"
 #include "analysis/MultiplicityWindowCut.hpp"
-#include "analysis/NavBufferCache.hpp"
 #include "analysis/NeutronVetoStudy.hpp"
 #include "analysis/TtCosmoStudy.hpp"
 #include "event/EventCache.hpp"
@@ -440,11 +439,10 @@ bool AnalysisGroupC::execute() {
     TimeStamp ts_diff = m_tsEvt - m_vetoTs;
     if (ts_diff <= TimeStamp{0, 5000000}) return true;
 
-    NavBufferCache::prepare(m_buf, m_methods);
+    EventContext events(m_buf, m_methods);
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
-        analysis->process(m_buf);
+        analysis->process(events.view(analysis->method()));
     }
-    NavBufferCache::clear();
 
     if (m_buf->begin() <= m_buf->current() - 1l) {
         JM::EvtNavigator* prv_nav = (m_buf->current() - 1l)->get();

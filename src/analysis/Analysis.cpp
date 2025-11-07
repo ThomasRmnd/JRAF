@@ -2,9 +2,6 @@
 
 #include "SniperKernel/SniperLog.h"
 
-#include "event/Event.hpp"
-#include "event/EventCache.hpp"
-
 Analysis::Analysis(const std::string& name, const std::string& method) :
     m_name{name},
     m_method{method},
@@ -36,47 +33,13 @@ bool Analysis::initialize() {
     return true;
 }
 
+const std::string& Analysis::method() const {
+    return m_method;
+}
+
 bool Analysis::write() {
     if (m_tree) {
         m_tree->Write();
     }
     return true;
-}
-
-void Analysis::extractEvent(JM::NavBuffer* buf, std::vector<std::vector<track>>& tracks, std::vector<vertex>& cur_vertices, std::vector<vertex>& bef_vertices, std::vector<vertex>& aft_vertices) {
-    tracks.reserve(buf->size());
-    bef_vertices.reserve(buf->size() / 2);
-    aft_vertices.reserve(buf->size() / 2);
-
-    for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
-        std::shared_ptr<Event> evt_ptr = EventCache::load(it->get());
-        if (!evt_ptr) {
-            LogWarn << "Event is nullptr\n";
-            continue;
-        }
-
-        const Event& evt = *evt_ptr;
-
-        tracks.push_back(evt.tracks);
-
-        if (it < buf->current()) {
-            for (const vertex& v : evt.vertices) {
-                if (m_method_sel.isIn(v)) {
-                    bef_vertices.push_back(v);
-                }
-            }
-        } else if (buf->current() < it) {
-            for (const vertex& v : evt.vertices) {
-                if (m_method_sel.isIn(v)) {
-                    aft_vertices.push_back(v);
-                }
-            }
-        } else {
-            for (const vertex& v : evt.vertices) {
-                if (m_method_sel.isIn(v)) {
-                    cur_vertices.push_back(v);
-                }
-            }
-        }
-    }
 }
