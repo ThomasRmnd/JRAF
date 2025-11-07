@@ -33,6 +33,6 @@ EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& m
         m_tracks.insert(m_tracks.end(), evt->tracks.begin(), evt->tracks.end());
     }
     for (const std::string& method : methods) {
-        m_vertices.emplace(method, buf, method);
+        m_vertices.emplace(method, EventContextVertexRange{buf, method});
     }
 }
