@@ -37,8 +37,8 @@
 
 struct ContextFileTracker {
 
-    std::string previous;
-    std::string next;
+    std::string prevctx;
+    std::string nextctx;
 
     std::string current;
     std::string next;
@@ -59,9 +59,9 @@ struct ContextFileTracker {
             change = true;
         }
         LogInfo << "Current filename: " << current << '\n';
-        LogInfo << "Previous filename: " << previous << '\n';
-        LogInfo << "Next filename: " << next << '\n';
-        return (current != previous) && (current != next);
+        LogInfo << "Previous filename: " << prevctx << '\n';
+        LogInfo << "Next filename: " << nextctx << '\n';
+        return (current != prevctx) && (current != nextctx);
     }
 
 };
