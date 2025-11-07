@@ -234,13 +234,13 @@ main() {
     output_file="$output_path/$(basename "${local_output_file}")"
 
     if (( prev_idx >= 0 )); then
-        prev_file_local="${TMPDIR}/$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$prev_idx]}")")"
+        prev_file_local="$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$prev_idx]}")")"
     else
         prev_file_local=""
     fi
 
     if (( next_idx < ${#RTRAW_LIST[@]} )); then
-        next_file_local="${TMPDIR}/$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$next_idx]}")")"
+        next_file_local="$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$next_idx]}")")"
     else
         next_file_local=""
     fi
