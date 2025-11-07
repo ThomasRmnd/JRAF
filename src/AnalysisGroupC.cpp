@@ -439,10 +439,23 @@ bool AnalysisGroupC::execute() {
     }
     TimeStamp ts_diff = m_tsEvt - m_vetoTs;
     if (ts_diff <= TimeStamp{0, 5000000}) return true;
-
+    
     EventContext events(m_buf, m_methods);
+
+    // --------------------
+    // Per-analysis timing
+    // --------------------
+    std::vector<long long> per_analysis_ms;
+    per_analysis_ms.reserve(m_analyses.size());
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
+        auto t_before = clock::now();
+
         analysis->process(events.view(analysis->method()));
+
+        auto t_after = clock::now();
+        per_analysis_ms.push_back(
+            std::chrono::duration_cast<std::chrono::milliseconds>(t_after - t_before).count()
+        );
     }
 
     if (m_buf->begin() <= m_buf->current() - 1l) {
@@ -471,6 +484,13 @@ bool AnalysisGroupC::execute() {
     std::cout << "\n=== Timing report ===\n";
     std::cout << "1. Loading:  " << t_load_ms << " ms\n";
     std::cout << "2. Analysis: " << t_loop_ms << " ms\n";
+    std::cout << "=====================\n\n";
+
+    std::cout << "-- Per-analysis breakdown --\n";
+    for (size_t i = 0; i < m_analyses.size(); ++i) {
+        std::cout << "   [" << m_analyses[i]->method() << "] "
+                  << per_analysis_ms[i] << " ms\n";
+    }
     std::cout << "=====================\n\n";
 
     return true;
