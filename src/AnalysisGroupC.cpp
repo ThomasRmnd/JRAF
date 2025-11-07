@@ -439,6 +439,10 @@ bool AnalysisGroupC::execute() {
     }
     TimeStamp ts_diff = m_tsEvt - m_vetoTs;
     if (ts_diff <= TimeStamp{0, 5000000}) return true;
+
+    // DEBUG --- Timing
+    auto t_before_context = clock::now();
+    // DEBUG --- Timing
     
     EventContext events(m_buf, m_methods);
 
@@ -482,20 +486,14 @@ bool AnalysisGroupC::execute() {
         m_muveto_nsec = muveto_ts.GetNanoSec();
     }
 
-    // DEBUG --- Timing
-    auto t_after_daq = clock::now();
-    // DEBUG --- Timing
-
     auto t_load_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_load - t_start).count();
-    auto t_context_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_context - t_after_load).count();
+    auto t_context_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_context - t_before_context).count();
     auto t_analysis_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_analysis - t_after_context).count();
-    auto t_daq_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_daq - t_after_analysis).count();
 
     std::cout << "\n=== Timing report ===\n";
     std::cout << "1. Loading:  " << t_load_ms << " ms\n";
     std::cout << "2. Context: " << t_context_ms << " ms\n";
     std::cout << "3. Analysis: " << t_analysis_ms << " ms\n";
-    std::cout << "2. DAQ: " << t_daq_ms << " ms\n";
     std::cout << "=====================\n\n";
 
     std::cout << "-- Per-analysis breakdown --\n";
