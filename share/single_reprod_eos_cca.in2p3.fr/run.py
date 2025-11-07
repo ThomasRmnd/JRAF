@@ -5,7 +5,8 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, nargs="+", help="Input filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
-parser.add_argument("--target-input-filename", type=str, default="", help="Target input filename")
+parser.add_argument("--context-previous-filename", type=str, default="", help="Context previous filename")
+parser.add_argument("--context-next-filename", type=str, default="", help="Context next filename")
 parser.add_argument("--tt-reco-filepath", type=str, default="", help="TT reco filepath")
 parser.add_argument("--property-file", type=str, help="Filepath of the property file")
 parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
@@ -52,6 +53,11 @@ import AnalysisGroupC
 alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(loglevel)
 
+alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
+alg.property("OutputFilename").set(ofilepath)
+alg.property("ContextPreviousFilename").set(args.context_previous_filename)
+alg.property("ContextNextFilename").set(args.context_next_filename)
+
 alg.useLoader("JointLoader")
 alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
 
@@ -87,10 +93,6 @@ alg.classifytool.property("WpMuonClassifyRecToolMaxChargeThreshold").set(200.0)
 alg.classifytool.property("WpMuonClassifyRecToolDistanceThreshold").set(6500.0)
 alg.classifytool.property("UseAdditionalGainCorrection").set(True)
 alg.classifytool.property("AdditionalGainCorrectionPath").set("/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
-
-alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
-alg.property("OutputFilename").set(ofilepath)
-alg.property("TargetInputFilename").set(args.target_input_filename)
 
 task.setEvtMax(-1)
 if not task.run():

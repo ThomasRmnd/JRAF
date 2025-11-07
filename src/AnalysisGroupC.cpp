@@ -41,7 +41,8 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
 
     declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("OutputFilename", m_ofilename = "output.root");
-    declProp("TargetInputFilename", m_contextTracker.target);
+    declProp("ContextPreviousFilename", m_contextTracker.previous);
+    declProp("ContextNextFilename", m_contextTracker.next);
 }
 
 bool AnalysisGroupC::initialize() {

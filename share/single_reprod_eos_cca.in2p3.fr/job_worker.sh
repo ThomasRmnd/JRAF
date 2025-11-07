@@ -188,24 +188,25 @@ main() {
     load_file_lists
 
     input_rtraw_file="${RTRAW_LIST[$PROC_ID]}"
-    input_rtraw_filename=$(basename "$input_rtraw_file")
+    input_rtraw_filename=$(basename "${input_rtraw_file}")
 
-    target_num=$(get_file_number "$input_rtraw_filename")
+    target_num=$(get_file_number "${input_rtraw_filename}")
     if [[ -z $target_num ]]; then
-        log ERROR "Cannot extract file number from $input_rtraw_filename"
+        log ERROR "Cannot extract file number from ${input_rtraw_filename}"
         exit 1
     fi
     target_num=$((10#$target_num))
 
-    indices_to_process=("$PROC_ID")
-    include_neighbor "$PROC_ID" "prev"
-    include_neighbor "$PROC_ID" "next"
+    prev_idx=$((PROC_ID - 1))
+    next_idx=$((PROC_ID + 1))
+
+    indices_to_process=("${PROC_ID}")
+    include_neighbor "${PROC_ID}" "prev"
+    include_neighbor "${PROC_ID}" "next"
 
     indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
 
-    input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
-    
     source /pbs/home/t/traymond/J25.6.1_Modified/git_junosw_J25_load.sh
     log INFO "Environment loaded (TUTORIALROOT=${TUTORIALROOT})"
     log INFO "Temporary directory: ${TMPDIR}"
@@ -214,37 +215,50 @@ main() {
 
     for idx in "${indices_to_process[@]}"; do
         input_rtraw_file="${RTRAW_LIST[$idx]}"
-        input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
+        input_reprod_file=$(rtraw_to_reprod_filename "${input_rtraw_file}")
         local_reprod_file="${TMPDIR}/$(basename "${input_reprod_file}")"
 
-        log INFO "Copying input files for index $idx"
-        xrdcp "${input_reprod_file}" "$local_reprod_file"
+        log INFO "Copying input file index ${idx}: $(basename "${input_reprod_file}")"
+        xrdcp "${input_reprod_file}" "${local_reprod_file}"
 
-        reprod_files+=("$local_reprod_file")
+        reprod_files+=("${local_reprod_file}")
     done
 
     input_rtraw_file="${RTRAW_LIST[$PROC_ID]}"
-    input_rtraw_filename=$(basename "$input_rtraw_file")
-    input_reprod_file=$(rtraw_to_reprod_filename "$input_rtraw_file")
-    input_reprod_filename=$(basename "$input_reprod_file")
+    input_reprod_file=$(rtraw_to_reprod_filename "${input_rtraw_file}")
+    input_reprod_filename=$(basename "${input_reprod_file}")
 
-    log INFO "Input file: $input_reprod_file"
-
-    resolve_output_paths "$input_reprod_file"
+    resolve_output_paths "${input_reprod_file}"
 
     local_output_file="${TMPDIR}/${input_reprod_filename/.esd/.output.root}"
-    output_file="$output_path/$(basename "$local_output_file")"
+    output_file="$output_path/$(basename "${local_output_file}")"
 
-    log INFO "Running reconstruction with run.py..."
+    if (( prev_idx >= 0 )); then
+        prev_file_local="${TMPDIR}/$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$prev_idx]}")")"
+    else
+        prev_file_local=""
+    fi
+
+    if (( next_idx < ${#RTRAW_LIST[@]} )); then
+        next_file_local="${TMPDIR}/$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$next_idx]}")")"
+    else
+        next_file_local=""
+    fi
+
+    log INFO "Context previous file: ${prev_file_local:-<none>}"
+    log INFO "Context next file: ${next_file_local:-<none>}"
+
+    log INFO "Running run.py..."
     python run.py \
         --input "${reprod_files[@]}" \
-        --output "$local_output_file" \
-        --target-input-filename "$input_reprod_filename" \
-        --tt-reco-filepath "$tt_reco_filepath" \
+        --output "${local_output_file}" \
+        --context-previous-filename "${prev_file_local}" \
+        --context-next-filename "${next_file_local}" \
+        --tt-reco-filepath "${tt_reco_filepath}" \
         "${EXTRA_ARGS[@]}"
 
-    if cp "$local_output_file" "$output_file"; then
-        log INFO "Output copied to $output_file"
+    if cp "${local_output_file}" "${output_file}"; then
+        log INFO "Output copied to ${output_file}"
     else
         log ERROR "Failed to copy output file to destination"
         exit 1

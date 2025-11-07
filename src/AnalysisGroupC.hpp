@@ -37,13 +37,14 @@
 
 struct ContextFileTracker {
 
-    std::string target;
+    std::string previous;
+    std::string next;
+
     std::string current;
     std::string next;
     bool change = false;
 
     bool isTarget(RootInputSvc* iptSvc) {
-        if (target.empty()) return true;
         if (current.empty()) {
             current = std::filesystem::path(iptSvc->getInputStream("EvtNavigator")->streamname()).filename().string();
             next = current;
@@ -58,8 +59,9 @@ struct ContextFileTracker {
             change = true;
         }
         LogInfo << "Current filename: " << current << '\n';
-        LogInfo << "Target filename: " << target << '\n';
-        return current == target;
+        LogInfo << "Previous filename: " << previous << '\n';
+        LogInfo << "Next filename: " << next << '\n';
+        return (current != previous) && (current != next);
     }
 
 };
