@@ -28,6 +28,8 @@ protected:
     std::string m_method;
     MethodSelection m_method_sel;
 
+    int run_id;
+
     double posx_p;
     double posy_p;
     double posz_p;

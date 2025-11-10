@@ -25,6 +25,7 @@ EventContextVertexRange::EventContextVertexRange(JM::NavBuffer* buf, const std::
 }
 
 EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& methods) {
+    if (buf->curEvt()) m_run_id = buf->curEvt()->RunID();
     m_tracks.reserve(buf->size());
     for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
         JM::EvtNavigator* nav = it->get();

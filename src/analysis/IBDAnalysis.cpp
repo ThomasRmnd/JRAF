@@ -1,4 +1,4 @@
-#include "analysis/FirstCrossCheckAnalysis.hpp"
+#include "analysis/IBDAnalysis.hpp"
 
 #include <algorithm>
 
@@ -10,25 +10,53 @@
 #include "selection/Vertex.hpp"
 #include "selection/Volume.hpp"
 
-FirstCrossCheckAnalysis::FirstCrossCheckAnalysis(const std::string& name, const std::string& method) : 
+IBDAnalysis::IBDAnalysis(const std::string& name, const std::string& method) : 
     Analysis{name, method} 
 {}
 
-void FirstCrossCheckAnalysis::process(const EventContext::View& events) {
+bool IBDAnalysis::initialize() {
+    if (!Analysis::initialize()) return false;
+    m_tree->Branch("posx_n", &posx_n);
+    m_tree->Branch("posy_n", &posy_n);
+    m_tree->Branch("posz_n", &posz_n);
+    m_tree->Branch("e_n", &e_n);
+    m_tree->Branch("sec_n", &sec_n);
+    m_tree->Branch("nsec_n", &nsec_n);
+    m_tree->Branch("totq_n", &totq_n);
+    return true;
+}
+
+void IBDAnalysis::process(const EventContext::View& events) {
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
+    std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;
     for (const track& trk : events.tracks()) {
         mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 5000000});
+        mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
     }
 
-    FiducialVolumeSelection fiducial_vol_cut{16500.0};
-    ChimneySelection chimney_cut{15500.0, 3000.0};
+    FiducialVolumeSelection fiducial_vol_cut{17700.0 /* 16500.0 */};
+    // ChimneySelection chimney_cut{15500.0, 3000.0};
     // ChargeRangeSelection prompt_charge_cut{1500.0, 20000.0};
     // ChargeRangeSelection delayed_charge_cut{4000.0, 6000.0};
-    EnergyRangeSelection prompt_energy_cut{0.7, 12.0};
-    EnergyRangeSelection delayed_energy_cut{2.0, 2.5};
-    EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
+    EnergyRangeSelection prompt_energy_cut {0.6, 20.0 /* 0.7, 12.0 */};
+    EnergyRangeSelection delayed_energy_cut{0.6, 3.0 /* 2.0, 2.5 */};
+    // EnergyRangeSelection spa_neu_energy_cut{1.5, 20.0};
+    // EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
-    std::vector<ibd> ibds;
+    std::vector<VertexCorrelationSelection> spa_neu_cut;
+    for (const vertex& neu : events.vertices()) {
+        bool is_in_veto = false;
+        for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
+            if (!cut.isIn(neu)) continue;
+            is_in_veto = true;
+            break;
+        }
+        if (!is_in_veto) continue;
+        if (!prompt_energy_cut.isIn(neu)) continue;
+        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{0, 0}, TimeStamp{1500000000});
+    }
+
+    std::vector<ibd_info> ibds;
 
     for (const vertex& prompt : events.current()) {
         LogInfo << prompt << '\n';
@@ -36,10 +64,10 @@ void FirstCrossCheckAnalysis::process(const EventContext::View& events) {
             LogInfo << "Prompt not in fiducial volume\n";
             continue;
         }
-        if (chimney_cut.isIn(prompt)) {
-            LogInfo << "Prompt is a chimney\n";
-            continue;
-        }
+        // if (chimney_cut.isIn(prompt)) {
+        //     LogInfo << "Prompt is a chimney\n";
+        //     continue;
+        // }
 
         if (!prompt_energy_cut.isIn(prompt)) {
             LogInfo << "Prompt not in energy range\n";
@@ -63,7 +91,7 @@ void FirstCrossCheckAnalysis::process(const EventContext::View& events) {
             if (!multi_prompt_time.isIn(cand)) continue;
             // if (!fiducial_vol_cut.isIn(cand)) continue;
             // if (chimney_cut.isIn(cand)) continue;
-            if (!multiplicity_energy_cut.isIn(cand)) continue;
+            if (!prompt_energy_cut.isIn(cand)) continue;
             is_vetoed = false;
             for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                 if (!cut.isIn(cand)) continue;
@@ -119,7 +147,7 @@ void FirstCrossCheckAnalysis::process(const EventContext::View& events) {
                 if (cand.ts == delayed.ts) continue; // same event
                 // if (!fiducial_vol_cut.isIn(cand)) continue;
                 // if (chimney_cut.isIn(cand)) continue;
-                if (!multiplicity_energy_cut.isIn(cand)) continue;
+                if (!prompt_energy_cut.isIn(cand)) continue;
                 is_vetoed = false;
                 for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                     if (!cut.isIn(cand)) continue;
@@ -142,26 +170,51 @@ void FirstCrossCheckAnalysis::process(const EventContext::View& events) {
                 continue;
             }
 
-            ibds.emplace_back(prompt, delayed);
+            ibd_info cand(prompt, delayed);
             LogInfo << "IBD event detected!\n";
+
+            for (const VertexCorrelationSelection& cut : spa_neu_cut) {
+                if (!cut.isIn(cand.pair.prompt) || !cut.isIn(cand.pair.delayed)) continue;
+                cand.neus.push_back(cut.c_vtx);
+            }
+            ibds.push_back(std::move(cand));
         }
     }
 
-    for (const ibd& ibd_ : ibds) {
-        posx_p = ibd_.prompt.pos.x;
-        posy_p = ibd_.prompt.pos.y;
-        posz_p = ibd_.prompt.pos.z;
-        e_p = ibd_.prompt.energy;
-        totq_p = ibd_.prompt.totq;
-        sec_p = ibd_.prompt.ts.GetSec();
-        nsec_p = ibd_.prompt.ts.GetNanoSec();
-        posx_d = ibd_.delayed.pos.x;
-        posy_d = ibd_.delayed.pos.y;
-        posz_d = ibd_.delayed.pos.z;
-        e_d = ibd_.delayed.energy;
-        totq_d = ibd_.delayed.totq;
-        sec_d = ibd_.delayed.ts.GetSec();
-        nsec_d = ibd_.delayed.ts.GetNanoSec();
+    for (const ibd_info& ibd : ibds) {
+        posx_p = ibd.pair.prompt.pos.x;
+        posy_p = ibd.pair.prompt.pos.y;
+        posz_p = ibd.pair.prompt.pos.z;
+        e_p = ibd.pair.prompt.energy;
+        totq_p = ibd.pair.prompt.totq;
+        sec_p = ibd.pair.prompt.ts.GetSec();
+        nsec_p = ibd.pair.prompt.ts.GetNanoSec();
+        posx_d = ibd.pair.delayed.pos.x;
+        posy_d = ibd.pair.delayed.pos.y;
+        posz_d = ibd.pair.delayed.pos.z;
+        e_d = ibd.pair.delayed.energy;
+        totq_d = ibd.pair.delayed.totq;
+        sec_d = ibd.pair.delayed.ts.GetSec();
+        nsec_d = ibd.pair.delayed.ts.GetNanoSec();
+
+        posx_n.clear();
+        posy_n.clear();
+        posz_n.clear();
+        e_n.clear();
+        totq_n.clear();
+        sec_n.clear();
+        nsec_n.clear();
+
+        for (const vertex& neu : ibd.neus) {
+            posx_n.push_back(neu.pos.x);
+            posy_n.push_back(neu.pos.y);
+            posz_n.push_back(neu.pos.z);
+            e_n.push_back(neu.energy);
+            totq_n.push_back(neu.totq);
+            sec_n.push_back(neu.ts.GetSec());
+            nsec_n.push_back(neu.ts.GetNanoSec());
+        }
+
         m_tree->Fill();
     }
 }

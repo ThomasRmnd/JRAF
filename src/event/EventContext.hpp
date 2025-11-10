@@ -76,11 +76,13 @@ public:
 
     public:
 
-        View(const std::vector<track>& tracks, const EventContextVertexRange& vertices) :
+        View(int run_id, const std::vector<track>& tracks, const EventContextVertexRange& vertices) :
+            c_run_id{run_id},
             c_tracks{tracks},
             c_vertices{vertices}
         {}
 
+        int runid() const { return c_run_id; }
         EventContextVertexView before() const { return c_vertices.before(); }
         EventContextVertexView current() const { return c_vertices.current(); }
         EventContextVertexView after() const { return c_vertices.after(); }
@@ -89,6 +91,7 @@ public:
 
     private:
 
+        const int c_run_id;
         const std::vector<track>& c_tracks;
         const EventContextVertexRange& c_vertices;
 
@@ -96,10 +99,11 @@ public:
 
     EventContext(JM::NavBuffer* buf, const std::vector<std::string>& methods);
 
-    View view(const std::string& method) const { return View{m_tracks, m_vertices.at(method)}; }
+    View view(const std::string& method) const { return View{m_run_id, m_tracks, m_vertices.at(method)}; }
 
 private:
 
+    int m_run_id;
     std::vector<track> m_tracks;
     std::unordered_map<std::string, EventContextVertexRange> m_vertices;
 
