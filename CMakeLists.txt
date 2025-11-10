@@ -9,7 +9,6 @@ FILES
     src/analysis/CosmoRateWithNeutronAnalysis.cpp
     src/analysis/IBDAnalysis.cpp
     src/analysis/IBDWithCylindricalCut.cpp
-    src/analysis/IBDWithNeutronVetoStudy.cpp
     src/analysis/MultiplicityWindowCut.cpp
     src/analysis/NeutronVetoStudy.cpp
     src/analysis/TtCosmoStudy.cpp
