@@ -174,7 +174,7 @@ rtraw_to_reprod_filename() {
     local selected_group
     selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
 
-    local reprod_path="${EOS_BASE_DCI}/eos/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    local reprod_path="${EOS_BASE_DCI}/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
 
     echo "$reprod_path"
 }
