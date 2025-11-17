@@ -41,7 +41,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
     EnergyRangeSelection prompt_energy_cut {0.6, 20.0 /* 0.7, 12.0 */};
     EnergyRangeSelection delayed_energy_cut{0.6, 3.0 /* 2.0, 2.5 */};
     // EnergyRangeSelection spa_neu_energy_cut{1.5, 20.0};
-    // EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
+    EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
     std::vector<VertexCorrelationSelection> spa_neu_cut;
     for (const vertex& neu : events.vertices()) {
@@ -91,7 +91,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
             if (!multi_prompt_time.isIn(cand)) continue;
             // if (!fiducial_vol_cut.isIn(cand)) continue;
             // if (chimney_cut.isIn(cand)) continue;
-            if (!prompt_energy_cut.isIn(cand)) continue;
+            if (!multiplicity_energy_cut.isIn(cand)) continue;
             is_vetoed = false;
             for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                 if (!cut.isIn(cand)) continue;
@@ -147,7 +147,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
                 if (cand.ts == delayed.ts) continue; // same event
                 // if (!fiducial_vol_cut.isIn(cand)) continue;
                 // if (chimney_cut.isIn(cand)) continue;
-                if (!prompt_energy_cut.isIn(cand)) continue;
+                if (!multiplicity_energy_cut.isIn(cand)) continue;
                 is_vetoed = false;
                 for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
                     if (!cut.isIn(cand)) continue;
