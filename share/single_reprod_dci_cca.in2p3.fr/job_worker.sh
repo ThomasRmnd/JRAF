@@ -161,13 +161,13 @@ rtraw_to_reprod_filename() {
     local output_reprod_filename="${fname/.rtraw/.esd}"
 
     # ReProd25B
-    local base_dir="/eos/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}"
+    local base_dir="/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}"
 
     local candidate_groups
-    candidate_groups=$(xrdfs "$EOS_BASE" ls "$base_dir" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
+    candidate_groups=$(xrdfs "${EOS_BASE_DCI}" ls "$base_dir" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
 
     if [[ -z "$candidate_groups" ]]; then
-        echo "ERROR: no run_group directory found under $base_dir" >&2
+        log ERROR "No run_group directory found under $base_dir" >&2
         exit 1
     fi
 
