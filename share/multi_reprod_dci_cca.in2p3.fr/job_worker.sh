@@ -104,7 +104,7 @@ include_neighbor() {
 
     (( num_neighbor == num_this + step )) || return 0
 
-    log INFO "Including $direction neighbor: $fname_neighbor (num=$num)"
+    log INFO "Including $direction neighbor: $fname_neighbor (num=$num_neighbor)"
     indices_to_process+=("$neighbor")
 }
 
