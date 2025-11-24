@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Submission Helper
-#  Purpose: Automate hep_sub job submissions for single ReProd processing
+#  Purpose: Automate hep_sub job submissions for multi ReProd processing
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -20,6 +20,7 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
+FILE_RANGE=100
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
 
@@ -36,8 +37,7 @@ Required:
 
 Optional:
   --list-base <path>           Path to list base (default: $LIST_BASE)
-  --file-offset <num>          Starting index in the file list (default: 0)
-  --file-range <num>           Number of files to process (default: all)
+  --file-range <num>             Max number of consecutive files per job (default: $FILE_RANGE)
   --property-file <path>       Path to property file
   --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
   --log-level <num>            Logging level (default: $LOG_LEVEL)
@@ -55,7 +55,6 @@ parse_args() {
         case "$1" in
             --run-number)    RUN_NUMBER="$2"; shift 2 ;;
             --list-base)     LIST_BASE="$2"; shift 2 ;;
-            --file-offset)   FILE_OFFSET="$2"; shift 2 ;;
             --file-range)    FILE_RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
@@ -91,25 +90,49 @@ load_file_lists() {
 #==============================
 
 prepare_job_arrays() {
-    FILE_OFFSET="${FILE_OFFSET:-0}"
-    FILE_RANGE="${FILE_RANGE:-$(( ${#RTRAW_LIST[@]} - FILE_OFFSET ))}"
+    log INFO "Building grouped file ranges (max ${FILE_RANGE} per group)..."
 
-    if ! [[ "$FILE_OFFSET" =~ ^[0-9]+$ && "$FILE_RANGE" =~ ^[0-9]+$ ]]; then
-        log ERROR "file-offset and file-range must be non-negative integers"
-        exit 1
-    fi
+    RANGES=()
+    local range_start=""
+    local prev_num=""
+    local count=0
 
-    log INFO "Processing range: offset=$FILE_OFFSET, count=$FILE_RANGE"
+    for f in "${RTRAW_LIST[@]}"; do
+        fname=${f##*/}
 
-    RTRAW_LIST=("${RTRAW_LIST[@]:$FILE_OFFSET:$FILE_RANGE}")
+        if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
+            num="${BASH_REMATCH[1]}"
+            num=$((10#$num))  # strip leading zeros
+        else
+            log WARN "Could not extract file number from: $fname"
+            continue
+        fi
 
-    JOB_COUNT=${#RTRAW_LIST[@]}
+        if [[ -z "$range_start" ]]; then
+            range_start=$num
+            count=1
+        else
+            if (( num == prev_num + 1 && count < FILE_RANGE )); then
+                ((count++))
+            else
+                RANGES+=("$range_start-$prev_num")
+                range_start=$num
+                count=1
+            fi
+        fi
+        prev_num=$num
+    done
 
-    if (( JOB_COUNT == 0 )); then
-        log ERROR "No ROOT files found for run ${RUN_NUMBER}"
-        exit 1
-    fi
+    RANGES+=("$range_start-$prev_num")
 
+    log INFO "Generated ${#RANGES[@]} job ranges"
+}
+
+#==============================
+# Build extra args list
+#==============================
+
+prepare_extra_args() {
     PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/esd/properties/RUN.${RUN_NUMBER}.Properties.json}"
 
     EXTRA_ARGS=(
@@ -124,23 +147,27 @@ prepare_job_arrays() {
 #==============================
 
 submit_jobs() {
-    log INFO "Submitting ${JOB_COUNT} jobs via hep_sub..."
+    for r in "${RANGES[@]}"; do
+        start=${r%-*}
+        end=${r#*-}
 
-    sbatch \
-        --job-name="agrpc_${RUN_NUMBER}_batch" \
-        --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_%a.log" \
-        --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/err/agrpc_${RUN_NUMBER}_%a.err" \
-        --array="0-$((JOB_COUNT - 1))" \
-        --partition="htc" \
-        --ntasks=1 \
-        --cpus-per-task=1 \
-        --mem="3G" \
-        --time="0-00:15:00" \
-        --mail-user="thomas.raymond@iphc.cnrs.fr" \
-        --mail-type="FAIL" \
-        job_worker.sh \
-        "$RUN_NUMBER" "$LIST_BASE" "${EXTRA_ARGS[@]}"
-    # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_%a.log"
+        log INFO "Submitting job for run ${RUN_NUMBER} range ${start}-${end}"
+
+        sbatch \
+            --job-name="agrpc_${RUN_NUMBER}_${start}_${end}_batch" \
+            --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log" \
+            --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/err/agrpc_${RUN_NUMBER}_${start}_${end}.err" \
+            --partition="htc" \
+            --ntasks=1 \
+            --cpus-per-task=1 \
+            --mem="8G" \
+            --time="0-05:00:00" \
+            --mail-user="thomas.raymond@iphc.cnrs.fr" \
+            --mail-type="FAIL" \
+            job_worker.sh \
+            "$RUN_NUMBER" "$start" "$end" "${EXTRA_ARGS[@]}"
+        # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}__${start}_${end}.log"
+    done
 
     log INFO "All jobs submitted successfully"
 }
@@ -153,6 +180,7 @@ main() {
     parse_args "$@"
     load_file_lists
     prepare_job_arrays
+    prepare_extra_args
     submit_jobs
 }
 

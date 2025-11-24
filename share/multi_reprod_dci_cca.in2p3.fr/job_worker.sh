@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Worker
-#  Purpose: Process a single ReProd, with optional neighboring files
+#  Purpose: Process multi ReProd, with optional neighboring files
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -21,6 +21,7 @@ export X509_USER_PROXY=/sps/juno/jdeandre/rtraw_ThomasRaymond/.cert_traymond_jun
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
 EOS_BASE_DCI="root://xrootd-archive.cr.cnaf.infn.it:1095/"
+LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 
 #==============================
 # Parse command-line arguments
@@ -46,9 +47,9 @@ parse_args() {
         exit 1
     fi
 
-    PROC_ID=${SLURM_ARRAY_TASK_ID}
     RUN_NUMBER="$1"; shift
-    LIST_BASE="$1"; shift
+    RANGE_START="$1"; shift
+    RANGE_END="$1"; shift
     EXTRA_ARGS=("$@")
 }
 
@@ -60,7 +61,7 @@ load_file_lists() {
     local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST   < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file")
+    mapfile -t RTRAW_LIST   < <(xrdfs "${EOS_BASE}" cat "$rtraw_list_file")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
 }
@@ -85,17 +86,28 @@ include_neighbor() {
 
     (( neighbor < 0 || neighbor >= ${#RTRAW_LIST[@]} )) && return 0
 
-    local fname
-    fname=$(basename "${RTRAW_LIST[$neighbor]}")
-    local num
-    num=$(get_file_number "$fname")
-    num=$((10#$num))
+    local fname_this fname_neighbor num_this num_neighbor
 
-    (( num == target_num + step )) || return 0
+    fname_this=$(basename "${RTRAW_LIST[$index]}")
+    fname_neighbor=$(basename "${RTRAW_LIST[$neighbor]}")
 
-    log INFO "Including $direction neighbor: $fname (num=$num)"
+    num_this=$(get_file_number "$fname_this")
+    num_neighbor=$(get_file_number "$fname_neighbor")
+
+    if [[ -z "$num_this" || -z "$num_neighbor" ]]; then
+        log ERROR "Neighbor check: couldn't parse numbers for index $index or $neighbor: '$fname_this' / '$fname_neighbor'"
+        return 1
+    fi
+
+    num_this=$((10#$num_this))
+    num_neighbor=$((10#$num_neighbor))
+
+    (( num_neighbor == num_this + step )) || return 0
+
+    log INFO "Including $direction neighbor: $fname_neighbor (num=$num)"
     indices_to_process+=("$neighbor")
 }
+
 
 #==============================
 # Path Handling
@@ -188,22 +200,32 @@ main() {
     parse_args "$@"
     load_file_lists
 
-    input_rtraw_file="${RTRAW_LIST[$PROC_ID]}"
-    input_rtraw_filename=$(basename "${input_rtraw_file}")
+    input_first_rtraw_file="${RTRAW_LIST[$RANGE_START]}"
+    input_first_rtraw_filename=$(basename "${input_first_rtraw_file}")
+    input_last_rtraw_file="${RTRAW_LIST[$RANGE_END]}"
+    input_last_rtraw_filename=$(basename "${input_last_rtraw_file}")
 
-    target_num=$(get_file_number "${input_rtraw_filename}")
-    if [[ -z $target_num ]]; then
-        log ERROR "Cannot extract file number from ${input_rtraw_filename}"
-        exit 1
+    indices_to_process=()
+
+    include_neighbor "${RANGE_START}" "prev"
+    prev_idx=$((RANGE_START - 1))
+    if (( prev_idx >= 0 )); then
+        prev_file_local="$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$prev_idx]}")")"
+    else
+        prev_file_local=""
     fi
-    target_num=$((10#$target_num))
 
-    prev_idx=$((PROC_ID - 1))
-    next_idx=$((PROC_ID + 1))
+    for ((k = RANGE_START; k <= RANGE_END; k++)); do
+        indices_to_process+=("$k")
+    done
 
-    indices_to_process=("${PROC_ID}")
-    include_neighbor "${PROC_ID}" "prev"
-    include_neighbor "${PROC_ID}" "next"
+    include_neighbor "${RANGE_END}" "next"
+    next_idx=$((RANGE_END + 1))
+    if (( next_idx < ${#RTRAW_LIST[@]} )); then
+        next_file_local="$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$next_idx]}")")"
+    else
+        next_file_local=""
+    fi
 
     indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
@@ -225,26 +247,13 @@ main() {
         reprod_files+=("${local_reprod_file}")
     done
 
-    input_rtraw_file="${RTRAW_LIST[$PROC_ID]}"
+    input_rtraw_file="${RTRAW_LIST[$RANGE_START]}"
     input_reprod_file=$(rtraw_to_reprod_filename "${input_rtraw_file}")
-    input_reprod_filename=$(basename "${input_reprod_file}")
 
     resolve_output_paths "${input_reprod_file}"
 
-    local_output_file="${TMPDIR}/${input_reprod_filename/.esd/.output.root}"
+    local_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.reprod25c.cca.root"
     output_file="$output_path/$(basename "${local_output_file}")"
-
-    if (( prev_idx >= 0 )); then
-        prev_file_local="$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$prev_idx]}")")"
-    else
-        prev_file_local=""
-    fi
-
-    if (( next_idx < ${#RTRAW_LIST[@]} )); then
-        next_file_local="$(basename "$(rtraw_to_reprod_filename "${RTRAW_LIST[$next_idx]}")")"
-    else
-        next_file_local=""
-    fi
 
     log INFO "Context previous file: ${prev_file_local:-<none>}"
     log INFO "Context next file: ${next_file_local:-<none>}"
@@ -265,7 +274,7 @@ main() {
         exit 1
     fi
 
-    log INFO "Completed run ${RUN_NUMBER} (PROC_ID=${PROC_ID})"
+    log INFO "Completed run ${RUN_NUMBER} (RANGE=[${RANGE_START}, ${RANGE_END}])"
 }
 
 main "$@"
