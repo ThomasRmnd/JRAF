@@ -94,10 +94,10 @@ prepare_job_arrays() {
 
     RANGES=()
     local range_start=""
-    local prev_num=""
-    local count=0
+    local prev_idx=""
 
-    for f in "${RTRAW_LIST[@]}"; do
+    for i in "${!RTRAW_LIST[@]}"; do
+        f="${RTRAW_LIST[$i]}"
         fname=${f##*/}
 
         if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
@@ -109,22 +109,22 @@ prepare_job_arrays() {
         fi
 
         if [[ -z "$range_start" ]]; then
-            range_start=$num
+            range_start=$i
             count=1
         else
             if (( num == prev_num + 1 && count < FILE_RANGE )); then
                 ((count++))
             else
-                RANGES+=("$range_start-$prev_num")
-                range_start=$num
+                RANGES+=("$range_start-$prev_idx")
+                range_start=$i
                 count=1
             fi
         fi
         prev_num=$num
+        prev_idx=$i
     done
 
-    RANGES+=("$range_start-$prev_num")
-
+    RANGES+=("$range_start-$prev_idx")
     log INFO "Generated ${#RANGES[@]} job ranges"
 }
 
