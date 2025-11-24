@@ -16,6 +16,7 @@ IBDAnalysis::IBDAnalysis(const std::string& name, const std::string& method) :
 
 bool IBDAnalysis::initialize() {
     if (!Analysis::initialize()) return false;
+    
     m_tree->Branch("posx_n", &posx_n);
     m_tree->Branch("posy_n", &posy_n);
     m_tree->Branch("posz_n", &posz_n);
@@ -23,6 +24,20 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("sec_n", &sec_n);
     m_tree->Branch("nsec_n", &nsec_n);
     m_tree->Branch("totq_n", &totq_n);
+
+    m_tree->Branch("method_mu", &method_mu);
+    m_tree->Branch("loc_mu", &loc_mu);
+    m_tree->Branch("posx_mu", &posx_mu);
+    m_tree->Branch("posy_mu", &posy_mu);
+    m_tree->Branch("posz_mu", &posz_mu);
+    m_tree->Branch("dirx_mu", &dirx_mu);
+    m_tree->Branch("diry_mu", &diry_mu);
+    m_tree->Branch("dirz_mu", &dirz_mu);
+    m_tree->Branch("totq_mu", &totq_mu);
+    m_tree->Branch("sec_mu", &sec_mu);
+    m_tree->Branch("nsec_mu", &nsec_mu);
+    m_tree->Branch("quality_mu", &quality_mu);
+
     return true;
 }
 
@@ -53,7 +68,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
         }
         if (!is_in_veto) continue;
         if (!prompt_energy_cut.isIn(neu)) continue;
-        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{0, 0}, TimeStamp{1500000000});
+        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{-2000000000} /* TimeStamp{0, 0} */, TimeStamp{2000000000});
     }
 
     std::vector<ibd_info> ibds;
@@ -179,6 +194,35 @@ void IBDAnalysis::process(const EventContext::View& events) {
             }
             ibds.push_back(std::move(cand));
         }
+    }
+
+    method_mu.clear();
+    loc_mu.clear();
+    posx_mu.clear();
+    posy_mu.clear();
+    posz_mu.clear();
+    dirx_mu.clear();
+    diry_mu.clear();
+    dirz_mu.clear();
+    totq_mu.clear();
+    sec_mu.clear();
+    nsec_mu.clear();
+    quality_mu.clear();
+
+    for (const track& trk : events.tracks()) {
+        vec3 dir = unit(trk.fpos - trk.ipos);
+        method_mu.push_back(trk.method);
+        loc_mu.push_back(trk.det);
+        posx_mu.push_back(trk.ipos.x);
+        posy_mu.push_back(trk.ipos.y);
+        posz_mu.push_back(trk.ipos.z);
+        dirx_mu.push_back(dir.x);
+        diry_mu.push_back(dir.y);
+        dirz_mu.push_back(dir.z);
+        totq_mu.push_back(trk.totpe);
+        sec_mu.push_back(trk.ts.GetSec());
+        nsec_mu.push_back(trk.ts.GetNanoSec());
+        quality_mu.push_back(trk.quality);
     }
 
     for (const ibd_info& ibd : ibds) {

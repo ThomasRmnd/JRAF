@@ -38,6 +38,20 @@ private:
     std::vector<time_t> sec_n;
     std::vector<int> nsec_n;
 
+    std::vector<std::string> method_mu;
+    std::vector<int> loc_mu;
+    std::vector<double> posx_mu;
+    std::vector<double> posy_mu;
+    std::vector<double> posz_mu;
+    std::vector<double> dirx_mu;
+    std::vector<double> diry_mu;
+    std::vector<double> dirz_mu;
+    std::vector<double> totq_mu;
+    std::vector<time_t> sec_mu;
+    std::vector<int> nsec_mu;
+    std::vector<double> quality_mu;
+
+
 };
 
 #endif // ANALYSISGROUPC_ANALYSIS_IBDANALYSIS_HPP_
