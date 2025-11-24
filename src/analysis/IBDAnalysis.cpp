@@ -25,6 +25,15 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("nsec_n", &nsec_n);
     m_tree->Branch("totq_n", &totq_n);
 
+    m_tree->Branch("posx_mult", &posx_mult);
+    m_tree->Branch("posy_mult", &posy_mult);
+    m_tree->Branch("posz_mult", &posz_mult);
+    m_tree->Branch("e_mult", &e_mult);
+    m_tree->Branch("totq_mult", &totq_mult);
+    m_tree->Branch("sec_mult", &sec_mult);
+    m_tree->Branch("nsec_mult", &nsec_mult);
+    m_tree->Branch("mult_type", &mult_type);
+
     m_tree->Branch("method_mu", &method_mu);
     m_tree->Branch("loc_mu", &loc_mu);
     m_tree->Branch("posx_mu", &posx_mu);
@@ -100,28 +109,6 @@ void IBDAnalysis::process(const EventContext::View& events) {
             continue;
         }
 
-        TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
-        bool prompt_has_multi = false;
-        for (const vertex& cand : events.before()) {
-            if (!multi_prompt_time.isIn(cand)) continue;
-            // if (!fiducial_vol_cut.isIn(cand)) continue;
-            // if (chimney_cut.isIn(cand)) continue;
-            if (!multiplicity_energy_cut.isIn(cand)) continue;
-            is_vetoed = false;
-            for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
-                if (!cut.isIn(cand)) continue;
-                is_vetoed = true;
-                break;
-            }
-            if (is_vetoed) continue;
-            prompt_has_multi = true;
-            break;
-        }
-        if (prompt_has_multi) {
-            LogInfo << "Prompt has multiplicity\n";
-            continue;
-        }
-
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
         for (const vertex& delayed : events.after()) {
@@ -156,35 +143,6 @@ void IBDAnalysis::process(const EventContext::View& events) {
                 continue;
             }
 
-            TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
-            bool delayed_has_multi = false;
-            for (const vertex& cand : events.after()) {
-                if (cand.ts == delayed.ts) continue; // same event
-                // if (!fiducial_vol_cut.isIn(cand)) continue;
-                // if (chimney_cut.isIn(cand)) continue;
-                if (!multiplicity_energy_cut.isIn(cand)) continue;
-                is_vetoed = false;
-                for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
-                    if (!cut.isIn(cand)) continue;
-                    is_vetoed = true;
-                    break;
-                }
-                if (is_vetoed) continue;
-                if (cand.ts < delayed.ts) {
-                    delayed_has_multi = true;
-                    LogInfo << "Delayed is in the in-between multiplicity cut by " << cand.ts << '\n';
-                    break; // in-between p-d multiplicity
-                }
-                if (!multi_delayed_time.isIn(cand)) continue;
-                delayed_has_multi = true;
-                LogInfo << "Delayed is in the after multiplicity cut by " << cand.ts << '\n';
-                break; // after p-d multiplicity
-            }
-            if (delayed_has_multi) {
-                LogInfo << "Delayed has multiplicity\n";
-                continue;
-            }
-
             ibd_info cand(prompt, delayed);
             LogInfo << "IBD event detected!\n";
 
@@ -192,6 +150,41 @@ void IBDAnalysis::process(const EventContext::View& events) {
                 if (!cut.isIn(cand.pair.prompt) || !cut.isIn(cand.pair.delayed)) continue;
                 cand.neus.push_back(cut.c_vtx);
             }
+
+            TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
+            TimeRangeSelection multi_between_time{prompt.ts, TimeStamp{0, 0}, delayed.ts - prompt.ts};
+            TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
+            for (const vertex& mult : events.vertices()) {
+                if (mult.ts == cand.pair.prompt.ts) continue;
+                if (mult.ts == cand.pair.delayed.ts) continue;
+
+                // if (!fiducial_vol_cut.isIn(mult)) continue;
+                // if (chimney_cut.isIn(mult)) continue;
+
+                if (!multiplicity_energy_cut.isIn(mult)) continue;
+
+                is_vetoed = false;
+                for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
+                    if (!cut.isIn(mult)) continue;
+                    is_vetoed = true;
+                    break;
+                }
+                if (is_vetoed) continue;
+
+                if (multi_prompt_time.isIn(mult)) {
+                    cand.mults.push_back({mult, 0});
+                }
+                else if (multi_between_time.isIn(mult)) {
+                    cand.mults.push_back({mult, 1});
+                }
+                else if (multi_delayed_time.isIn(mult)) {
+                    cand.mults.push_back({mult, 2});
+                }
+                else {
+
+                }
+            }
+
             ibds.push_back(std::move(cand));
         }
     }
@@ -257,6 +250,26 @@ void IBDAnalysis::process(const EventContext::View& events) {
             totq_n.push_back(neu.totq);
             sec_n.push_back(neu.ts.GetSec());
             nsec_n.push_back(neu.ts.GetNanoSec());
+        }
+
+        posx_mult.clear();
+        posy_mult.clear();
+        posz_mult.clear();
+        e_mult.clear();
+        totq_mult.clear();
+        sec_mult.clear();
+        nsec_mult.clear();
+        mult_type.clear();
+
+        for (const mult_info& mult : ibd.mults) {
+            posx_mult.push_back(mult.vtx.pos.x);
+            posy_mult.push_back(mult.vtx.pos.y);
+            posz_mult.push_back(mult.vtx.pos.z);
+            e_mult.push_back(mult.vtx.energy);
+            totq_mult.push_back(mult.vtx.totq);
+            sec_mult.push_back(mult.vtx.ts.GetSec());
+            nsec_mult.push_back(mult.vtx.ts.GetNanoSec());
+            mult_type.push_back(mult.type);
         }
 
         m_tree->Fill();

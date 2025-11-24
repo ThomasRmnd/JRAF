@@ -6,10 +6,16 @@
 #include "analysis/Analysis.hpp"
 #include "event/IBD.hpp"
 
+struct mult_info {
+    vertex vtx;
+    int type;
+};
+
 struct ibd_info {
 
     ibd pair;
     std::vector<vertex> neus;
+    std::vector<mult_info> mults;
 
     ibd_info(const vertex& prompt, const vertex& delayed) :
         pair{prompt, delayed}
@@ -37,6 +43,15 @@ private:
     std::vector<double> totq_n;
     std::vector<time_t> sec_n;
     std::vector<int> nsec_n;
+
+    std::vector<double> posx_mult;
+    std::vector<double> posy_mult;
+    std::vector<double> posz_mult;
+    std::vector<double> e_mult;
+    std::vector<double> totq_mult;
+    std::vector<time_t> sec_mult;
+    std::vector<int> nsec_mult;
+    std::vector<int> mult_type; // 0 = before prompt, 1 = between, 2 = after delayed
 
     std::vector<std::string> method_mu;
     std::vector<int> loc_mu;

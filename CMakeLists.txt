@@ -5,12 +5,7 @@ MODULE
 FILES
 
     src/analysis/Analysis.cpp
-    src/analysis/CdWpCosmoStudy.cpp
-    src/analysis/CosmoRateWithNeutronAnalysis.cpp
     src/analysis/IBDAnalysis.cpp
-    src/analysis/IBDWithCylindricalCut.cpp
-    src/analysis/MultiplicityWindowCut.cpp
-    src/analysis/TtCosmoStudy.cpp
 
     src/event/Event.cpp
     src/event/EventCache.cpp
