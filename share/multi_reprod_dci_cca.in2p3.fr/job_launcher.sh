@@ -155,18 +155,18 @@ submit_jobs() {
 
         sbatch \
             --job-name="agrpc_${RUN_NUMBER}_${start}_${end}_batch" \
-            --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log" \
+            --output="/dev/null" \
             --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/err/agrpc_${RUN_NUMBER}_${start}_${end}.err" \
             --partition="htc" \
             --ntasks=1 \
             --cpus-per-task=1 \
-            --mem="8G" \
-            --time="0-05:00:00" \
+            --mem="4G" \
+            --time="0-06:00:00" \
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
             job_worker.sh \
             "$RUN_NUMBER" "$start" "$end" "${EXTRA_ARGS[@]}"
-        # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}__${start}_${end}.log"
+        # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log"
     done
 
     log INFO "All jobs submitted successfully"
