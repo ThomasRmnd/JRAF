@@ -50,7 +50,20 @@ parse_args() {
     RUN_NUMBER="$1"; shift
     RANGE_START="$1"; shift
     RANGE_END="$1"; shift
-    EXTRA_ARGS=("$@")
+
+    DIRECT_IO=0  # default = copy to TMPDIR
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --no-local-copy|--direct-io)
+                DIRECT_IO=1
+                ;;
+            *)
+                EXTRA_ARGS+=("$1")
+                ;;
+        esac
+        shift
+    done
 }
 
 #==============================
@@ -239,12 +252,18 @@ main() {
     for idx in "${indices_to_process[@]}"; do
         input_rtraw_file="${RTRAW_LIST[$idx]}"
         input_reprod_file=$(rtraw_to_reprod_filename "${input_rtraw_file}")
-        local_reprod_file="${TMPDIR}/$(basename "${input_reprod_file}")"
+        filename="$(basename "${input_reprod_file}")"
+        local_reprod_file="${TMPDIR}/${filename}"
 
-        log INFO "Copying input file index ${idx}: $(basename "${input_reprod_file}")"
-        xrdcp "${input_reprod_file}" "${local_reprod_file}"
+        if (( DIRECT_IO == 1 )); then
+            log INFO "[DIRECT-IO] Using remote file: $filename"
+            reprod_files+=("${input_reprod_file}")
 
-        reprod_files+=("${local_reprod_file}")
+        else
+            log INFO "Copying input file index ${idx}: $filename"
+            xrdcp "${input_reprod_file}" "${local_reprod_file}"
+            reprod_files+=("${local_reprod_file}")
+        fi
     done
 
     input_rtraw_file="${RTRAW_LIST[$RANGE_START]}"
