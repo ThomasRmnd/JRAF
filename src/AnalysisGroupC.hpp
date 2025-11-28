@@ -165,7 +165,7 @@ struct TrackSaver {
         return true;
     }
 
-    bool reset() {
+    void reset() {
         run_id = 0;
         sec = 0l;
         nsec = 0;
@@ -178,10 +178,9 @@ struct TrackSaver {
         fposx.clear();
         fposy.clear();
         fposz.clear();
-        return true;
     }
 
-    bool add(RecTrks& trks_, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+    void add(RecTrks& trks_, const std::string& method_, int run_id_, const TimeStamp& ts_) {
         run_id = run_id_;
         sec = ts_.GetSec();
         nsec = ts_.GetNanoSec();
@@ -198,7 +197,7 @@ struct TrackSaver {
         }
     }
     
-    bool add(JM::CdTrackRecHeader* cdt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+    void add(JM::CdTrackRecHeader* cdt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
         if (!cdt_hdr || !cdt_hdr->event()) return;
         const std::vector<JM::RecTrack*>& rec_tracks = cdt_hdr->event()->tracks();
         run_id = run_id_;
@@ -217,7 +216,7 @@ struct TrackSaver {
         }
     }
 
-    bool add(JM::WpRecHeader* wpt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+    void add(JM::WpRecHeader* wpt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
         if (!wpt_hdr || !wpt_hdr->event()) return;
         const std::vector<JM::RecTrack*>& rec_tracks = wpt_hdr->event()->tracks();
         run_id = run_id_;
@@ -236,7 +235,7 @@ struct TrackSaver {
         }
     }
 
-    bool add(JM::TtRecHeader* ttt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+    void add(JM::TtRecHeader* ttt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
         if (!ttt_hdr || !ttt_hdr->event()) return;
         JM::TtRecEvt* ttt_evt = ttt_hdr->event();
         for (int k = 0; k < ttt_evt->nTracks(); ++k) {
@@ -255,11 +254,8 @@ struct TrackSaver {
         }
     }
 
-    bool fill() {
-        if (!tree) return true;
-        if (method.empty()) return true;
-        tree->Fill();
-        return true;
+    void fill() {
+        if (tree && !method.empty()) tree->Fill();
     }
 
     bool save() {

@@ -15,5 +15,5 @@ ChargeRangeSelection::ChargeRangeSelection(double qmin, double qmax) :
 {}
 
 bool ChargeRangeSelection::isIn(const vertex& vtx) const {
-    return m_qmin <= vtx.totq && vtx.totq <= m_qmax;
+    return m_qmin <= vtx.calib.totq && vtx.calib.totq <= m_qmax;
 }

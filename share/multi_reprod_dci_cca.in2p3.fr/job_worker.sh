@@ -126,6 +126,42 @@ include_neighbor() {
 # Path Handling
 #==============================
 
+resolve_input_paths() {
+    local input_reprod_file="$1"
+
+    if [[ "$input_reprod_file" =~ /juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\..*([0-9]{8}).* ]]; then
+        campaign="${BASH_REMATCH[1]}"
+        stream="${BASH_REMATCH[2]}"
+        run_bucket="${BASH_REMATCH[3]}"
+        run_group="${BASH_REMATCH[4]}"
+        run_number="${BASH_REMATCH[5]}"
+        timestamp="${BASH_REMATCH[7]}"
+    else
+        log ERROR "Unrecognized ReProd path format: $input_reprod_file"
+        exit 1
+    fi
+
+    if (( RUN_NUMBER >= 9591 && RUN_NUMBER <= 10169 )); then
+        year="${timestamp:0:4}"
+        month="${timestamp:4:2}"
+        day="${timestamp:6:2}"
+        tt_reco_filepath="${EOS_BASE_DCI}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${month}${day}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+
+    elif (( RUN_NUMBER >= 10176 && RUN_NUMBER <= 10479 )); then
+        tt_reco_filepath="${EOS_BASE_DCI}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+
+    elif (( RUN_NUMBER >= 10480 )); then
+        tt_reco_filepath="${EOS_BASE_DCI}/production/storm/dirac/juno/juno-reprod/TT25A/J25.4.3-patched/user_rec/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+
+    else
+        log ERROR "No TT reco path rule defined for run ${RUN_NUMBER}"
+        exit 1
+    fi
+
+    log INFO "TT-Reco filepath resolved: ${tt_reco_filepath}"
+}
+
+
 resolve_output_paths() {
     local input_reprod_file="$1"
 
@@ -136,14 +172,14 @@ resolve_output_paths() {
         run_group="${BASH_REMATCH[4]}"
         run_number="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
-        # tt_reco_filepath="${EOS_BASE}/eos/juno/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
-        tt_reco_filepath=""
+        reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
     else
         log ERROR "Unrecognized ReProd path format: $input_reprod_file"
         exit 1
     fi
 
     mkdir -p "$output_path"
+    mkdir -p "$reco_output_path"
     log INFO "Output path: $output_path"
 }
 
@@ -269,10 +305,14 @@ main() {
     input_rtraw_file="${RTRAW_LIST[$RANGE_START]}"
     input_reprod_file=$(rtraw_to_reprod_filename "${input_rtraw_file}")
 
+    resolve_input_paths "${input_reprod_file}"
     resolve_output_paths "${input_reprod_file}"
 
     local_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.reprod25c.cca.root"
     output_file="$output_path/$(basename "${local_output_file}")"
+
+    local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.reco.output.reprod25c.cca.root"
+    reco_output_file="$reco_output_path//$(basename "${local_reco_output_file}")"
 
     log INFO "Context previous file: ${prev_file_local:-<none>}"
     log INFO "Context next file: ${next_file_local:-<none>}"
@@ -288,6 +328,13 @@ main() {
 
     if cp "${local_output_file}" "${output_file}"; then
         log INFO "Output copied to ${output_file}"
+    else
+        log ERROR "Failed to copy output file to destination"
+        exit 1
+    fi
+
+    if cp "${local_reco_output_file}" "${reco_output_file}"; then
+        log INFO "Output copied to ${reco_output_file}"
     else
         log ERROR "Failed to copy output file to destination"
         exit 1
