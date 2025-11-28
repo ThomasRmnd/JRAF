@@ -34,6 +34,7 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
 
     declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("OutputFilename", m_ofilename = "output.root");
+    declProp("RecoTrackOutputFilename", m_trkSaver.filename = "");
     declProp("ContextPreviousFilename", m_contextTracker.prevctx);
     declProp("ContextNextFilename", m_contextTracker.nextctx);
 }
@@ -49,6 +50,7 @@ bool AnalysisGroupC::initialize() {
     m_iptSvc = iptSvc.data();
 
     if (!m_ttRecoFile.init()) return false;
+    if (!m_trkSaver.init()) return false;
     if (!initLoader()) return false;
     if (!initRecTool()) return false;
     if (!initAnalyses()) return false;
@@ -310,6 +312,7 @@ bool AnalysisGroupC::execute() {
         LogInfo << "Is possibly CD muon: " << is_possibly_cd_muon << ", is possibly WP muon: " << is_possibly_wp_muon << '\n';
 
         std::vector<track> tracks;
+        m_trkSaver.reset();
         if (is_possibly_cd_muon) {
             JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt());
             addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
@@ -321,10 +324,12 @@ bool AnalysisGroupC::execute() {
                 LogWarn << "Could not reconstruct the event with reconstruction tool\n";
             }
             addTrack(rtrks, "CdWpTtChi2", curts, track::loc::cd, tracks);
+            m_trkSaver.add(rtrks, "CdWpTtChi2", bufwrap.curEvt()->RunID(), curts);
         }
         else if (is_possibly_wp_muon) {
             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
+            m_trkSaver.add(basic_wpt_hdr, "WpBasic", bufwrap.curEvt()->RunID(), curts);
             // JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
             // addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
             
@@ -336,13 +341,14 @@ bool AnalysisGroupC::execute() {
             //     addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
             // }
         }
+        m_trkSaver.fill();
         if ( (is_possibly_cd_muon || is_possibly_wp_muon) && tracks.empty() ) {
             tracks.push_back(track{"CdBasic", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, 0.0, curts, track::loc::cd, -1.0});
         }
 
         if (m_ttRecoFile.find(curts)) {
-            if (m_ttRecoFile.ntracks > 100) {
-                LogWarn << "More than 100 tracks reconstructed by the TT!\n";
+            if (m_ttRecoFile.ntracks > 20) {
+                LogWarn << "More than 20 tracks reconstructed by the TT!\n";
             }
 
             bool is_good_tt_reco = false;
@@ -356,7 +362,7 @@ bool AnalysisGroupC::execute() {
             }
 
             if (is_good_tt_reco) {
-                for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 100); ++k) {
+                for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 20); ++k) {
                     if (m_ttRecoFile.npts[k] < 3) continue;
                     vec3 ipos{m_ttRecoFile.coeff0[k], m_ttRecoFile.coeff1[k], m_ttRecoFile.coeff2[k]};
                     vec3 dir = unit(vec3{m_ttRecoFile.coeff3[k], m_ttRecoFile.coeff4[k], m_ttRecoFile.coeff5[k]});
@@ -475,6 +481,7 @@ bool AnalysisGroupC::finalize() {
     if (m_classifyLoader && !m_classifyLoader->finalize()) return false;
     if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
     
+    if (!m_trkSaver.save()) return false;
     if (!m_file) return false;
     m_daq_tree->Fill();
     m_file->cd();

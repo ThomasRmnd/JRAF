@@ -74,9 +74,9 @@ struct TtRecoFile {
     int cur_idx = 0;
     Int_t ntracks;
     TTimeStamp* ts = nullptr;
-    Int_t npts[100];
-    Double_t coeff0[100], coeff1[100], coeff2[100], coeff3[100], coeff4[100], coeff5[100];
-    Double_t chi2[100];
+    Int_t npts[20];
+    Double_t coeff0[20], coeff1[20], coeff2[20], coeff3[20], coeff4[20], coeff5[20];
+    Double_t chi2[20];
 
     bool init() {
         chain = new TChain(treename.c_str());
@@ -123,8 +123,9 @@ struct TtRecoFile {
 
 struct TrackSaver {
 
-    TFile* file;
-    TTree* tree;
+    std::string filename;
+    TFile* file = nullptr;
+    TTree* tree = nullptr;
 
     int run_id = 0;
     time_t sec = 0l;
@@ -134,19 +135,140 @@ struct TrackSaver {
     std::vector<unsigned char> det;
     std::vector<double> quality;
 
-    std::vector<double> m_riposx;
-    std::vector<double> m_riposy;
-    std::vector<double> m_riposz;
-    std::vector<double> m_rfposx;
-    std::vector<double> m_rfposy;
-    std::vector<double> m_rfposz;
+    std::vector<double> iposx;
+    std::vector<double> iposy;
+    std::vector<double> iposz;
+    std::vector<double> fposx;
+    std::vector<double> fposy;
+    std::vector<double> fposz;
 
 
     bool init() {
+        file = TFile::Open(filename.c_str(), "RECREATE");
+        if (!file) {
+            LogWarn << "Cannot open ROOT file " << filename << ". Skipping track saving\n";
+            return true;
+        }
+        tree = new TTree("muons", "muons");
+        tree->Branch("run_id", &run_id);
+        tree->Branch("sec", &sec);
+        tree->Branch("nsec", &nsec);
+        tree->Branch("method", &method);
+        tree->Branch("det", &det);
+        tree->Branch("quality", &quality);
+        tree->Branch("iposx", &iposx);
+        tree->Branch("iposy", &iposy);
+        tree->Branch("iposz", &iposz);
+        tree->Branch("fposx", &fposx);
+        tree->Branch("fposy", &fposy);
+        tree->Branch("fposz", &fposz);
         return true;
     }
 
-    bool save(const RecTrks& trks, 
+    bool reset() {
+        run_id = 0;
+        sec = 0l;
+        nsec = 0;
+        method.clear();
+        det.clear();
+        quality.clear();
+        iposx.clear();
+        iposy.clear();
+        iposz.clear();
+        fposx.clear();
+        fposy.clear();
+        fposz.clear();
+        return true;
+    }
+
+    bool add(RecTrks& trks_, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+        run_id = run_id_;
+        sec = ts_.GetSec();
+        nsec = ts_.GetNanoSec();
+        for (int k = 0; k < trks_.size(); ++k) {
+            method.push_back(method_);
+            det.push_back((trks_.isCdUsed(k) << 0) | (trks_.isWpUsed(k) << 1) | (trks_.isTtUsed(k) << 2));
+            quality.push_back(trks_.getQuality(k));
+            iposx.push_back(trks_.getStart(k).X());
+            iposy.push_back(trks_.getStart(k).Y());
+            iposz.push_back(trks_.getStart(k).Z());
+            fposx.push_back(trks_.getEnd(k).X());
+            fposy.push_back(trks_.getEnd(k).Y());
+            fposz.push_back(trks_.getEnd(k).Z());
+        }
+    }
+    
+    bool add(JM::CdTrackRecHeader* cdt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+        if (!cdt_hdr || !cdt_hdr->event()) return;
+        const std::vector<JM::RecTrack*>& rec_tracks = cdt_hdr->event()->tracks();
+        run_id = run_id_;
+        sec = ts_.GetSec();
+        nsec = ts_.GetNanoSec();
+        for (JM::RecTrack* t : rec_tracks) {
+            method.push_back(method_);
+            det.push_back(0b001);
+            quality.push_back(t->quality());
+            iposx.push_back(t->start().x());
+            iposy.push_back(t->start().y());
+            iposz.push_back(t->start().z());
+            fposx.push_back(t->end().x());
+            fposy.push_back(t->end().y());
+            fposz.push_back(t->end().z());
+        }
+    }
+
+    bool add(JM::WpRecHeader* wpt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+        if (!wpt_hdr || !wpt_hdr->event()) return;
+        const std::vector<JM::RecTrack*>& rec_tracks = wpt_hdr->event()->tracks();
+        run_id = run_id_;
+        sec = ts_.GetSec();
+        nsec = ts_.GetNanoSec();
+        for (JM::RecTrack* t : rec_tracks) {
+            method.push_back(method_);
+            det.push_back(0b010);
+            quality.push_back(t->quality());
+            iposx.push_back(t->start().x());
+            iposy.push_back(t->start().y());
+            iposz.push_back(t->start().z());
+            fposx.push_back(t->end().x());
+            fposy.push_back(t->end().y());
+            fposz.push_back(t->end().z());
+        }
+    }
+
+    bool add(JM::TtRecHeader* ttt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+        if (!ttt_hdr || !ttt_hdr->event()) return;
+        JM::TtRecEvt* ttt_evt = ttt_hdr->event();
+        for (int k = 0; k < ttt_evt->nTracks(); ++k) {
+            vec3 ipos{ttt_evt->Coeff0()[k], ttt_evt->Coeff1()[k], ttt_evt->Coeff2()[k]};
+            vec3 dir = unit(vec3{ttt_evt->Coeff3()[k], ttt_evt->Coeff4()[k], ttt_evt->Coeff5()[k]});
+            vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
+            method.push_back(method_);
+            det.push_back(0b100);
+            quality.push_back(ttt_evt->Chi2()[k]);
+            iposx.push_back(ipos.x);
+            iposy.push_back(ipos.y);
+            iposz.push_back(ipos.z);
+            fposx.push_back(fpos.x);
+            fposy.push_back(fpos.y);
+            fposz.push_back(fpos.z);
+        }
+    }
+
+    bool fill() {
+        if (!tree) return true;
+        if (method.empty()) return true;
+        tree->Fill();
+        return true;
+    }
+
+    bool save() {
+        if (!file || !tree) return true;
+        file->cd();
+        tree->Write();
+        file->Close();
+        return true;
+    }
 
 };
 
