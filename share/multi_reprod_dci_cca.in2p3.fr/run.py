@@ -61,9 +61,11 @@ alg.property("ContextNextFilename").set(args.context_next_filename)
 alg.useLoader("JointLoader")
 alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
 
-alg.useCdFiller("CdRangeFiller")
-alg.cdfiller.property("Pmt3inchTimeReso").set(15.0)
-alg.cdfiller.property("Pmt20inchTimeReso").set(8.0)
+# alg.useCdFiller("CdRangeFiller")
+# alg.cdfiller.property("Pmt3inchTimeReso").set(15.0)
+# alg.cdfiller.property("Pmt20inchTimeReso").set(8.0)
+alg.useCdFiller("CdLRangeFiller")
+alg.cdfiller.property("PmtTimeReso").set(8.0)
 
 alg.useWpFiller("WpRangeFiller")
 alg.wpfiller.property("PmtTimeReso").set(8.0)

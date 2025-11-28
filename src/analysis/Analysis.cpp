@@ -19,17 +19,34 @@ bool Analysis::initialize() {
     m_tree->Branch("posy_p", &posy_p);
     m_tree->Branch("posz_p", &posz_p);
     m_tree->Branch("e_p", &e_p);
-    m_tree->Branch("totq_p", &totq_p);
     m_tree->Branch("sec_p", &sec_p);
     m_tree->Branch("nsec_p", &nsec_p);
+
+    m_tree->Branch("totq_p", &totq_p);
+    m_tree->Branch("meanq_p", &meanq_p);
+    m_tree->Branch("stdq_p", &stdq_p);
+    m_tree->Branch("minq_p", &minq_p);
+    m_tree->Branch("maxq_p", &maxq_p);
+    m_tree->Branch("nhit_p", &nhit_p);
+    m_tree->Branch("meant_p", &meant_p);
+    m_tree->Branch("stdt_p", &stdt_p);
 
     m_tree->Branch("posx_d", &posx_d);
     m_tree->Branch("posy_d", &posy_d);
     m_tree->Branch("posz_d", &posz_d);
     m_tree->Branch("e_d", &e_d);
-    m_tree->Branch("totq_d", &totq_d);
     m_tree->Branch("sec_d", &sec_d);
     m_tree->Branch("nsec_d", &nsec_d);
+
+    m_tree->Branch("totq_d", &totq_d);
+    m_tree->Branch("meanq_d", &meanq_d);
+    m_tree->Branch("stdq_d", &stdq_d);
+    m_tree->Branch("minq_d", &minq_d);
+    m_tree->Branch("maxq_d", &maxq_d);
+    m_tree->Branch("nhit_d", &nhit_d);
+    m_tree->Branch("meant_d", &meant_d);
+    m_tree->Branch("stdt_d", &stdt_d);
+
     return true;
 }
 

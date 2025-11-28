@@ -7,22 +7,32 @@
 #include "Event/RecVertex.h"
 #include "UtilsThomas/math/vec3.hpp"
 
+#include "event/CalibrationContext.hpp"
+
 struct vertex {
+
+
 
     std::string method;
     vec3 pos;
     double energy;
-    double totq;
     TimeStamp ts;
+
+    calibration_context calib;
+
     std::string type;
 
-    vertex(const std::string& method_, const vec3& pos_, double energy_, double totq_, const TimeStamp& ts_, const std::string& type_);
+    vertex(
+        const std::string& method_, const vec3& pos_, double energy_, const TimeStamp& ts_, 
+        const calibration_context& calib_, 
+        const std::string& type_
+    );
 
 };
 
 template<class _Char, class _Traits>
 std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& os, const vertex& vtx) {
-    return os << "method: " << vtx.method << ", pos: " << vtx.pos << ", energy: " << vtx.energy << ", totq: " << vtx.totq << ", ts: " << vtx.ts;
+    return os << "method: " << vtx.method << ", pos: " << vtx.pos << ", energy: " << vtx.energy << ", ts: " << vtx.ts;
 }
 
 #endif // ANALYSISGROUPC_EVENT_VERTEX_HPP_

@@ -121,6 +121,35 @@ struct TtRecoFile {
 
 };
 
+struct TrackSaver {
+
+    TFile* file;
+    TTree* tree;
+
+    int run_id = 0;
+    time_t sec = 0l;
+    int nsec = 0;
+
+    std::vector<std::string> method;
+    std::vector<unsigned char> det;
+    std::vector<double> quality;
+
+    std::vector<double> m_riposx;
+    std::vector<double> m_riposy;
+    std::vector<double> m_riposz;
+    std::vector<double> m_rfposx;
+    std::vector<double> m_rfposy;
+    std::vector<double> m_rfposz;
+
+
+    bool init() {
+        return true;
+    }
+
+    bool save(const RecTrks& trks, 
+
+};
+
 class NavBufferWrapper : public JM::NavBuffer {
 
 public:
@@ -186,8 +215,8 @@ private:
     double m_wp_muon_totq_thold = 400.0;
     TimeStamp m_cd_afterpulse_thold{0, 50000};
     TimeStamp m_wp_afterpulse_thold{0, 4000};
-    TimeStamp m_cd_last_muon;
-    TimeStamp m_wp_last_muon;
+    TimeStamp m_cd_last_muon{0, 0};
+    TimeStamp m_wp_last_muon{0, 0};
     
     TtRecoFile m_ttRecoFile;
     ContextFileTracker m_contextTracker;
@@ -195,6 +224,7 @@ private:
     TimeStamp m_targetFirstTs{0, 0};
     TimeStamp m_previousTs{0, 0};
     TimeStamp m_vetoTs{0, 0};
+    TrackSaver m_trkSaver;
     
     std::vector<std::string> m_methods;
     std::vector<std::shared_ptr<Analysis>> m_analyses;
@@ -219,8 +249,8 @@ private:
     void addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
     void addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
     void addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
-    void addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices);
-    void addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices);
+    void addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices);
+    void addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices);
 
 };
 

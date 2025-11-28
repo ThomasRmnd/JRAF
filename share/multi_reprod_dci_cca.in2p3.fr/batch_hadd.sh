@@ -32,7 +32,6 @@ Usage: $(basename "$0") [options]
 Options:
   --lower <num>      Starting run number (inclusive)
   --upper <num>      Ending run number (inclusive)
-  --list  <path>     Path to custom run list (default: $RUN_LIST_PATH)
   --help             Show this help message and exit
 
 Examples:
@@ -46,7 +45,6 @@ parse_args() {
         case "$1" in
             --lower) LOWER_BOUND="$2"; shift 2 ;;
             --upper) UPPER_BOUND="$2"; shift 2 ;;
-            --list)  RUN_LIST_PATH="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
@@ -119,24 +117,6 @@ do_hadd() {
     if (( n_files == 0 )); then
         log WARN "No ROOT files to merge for run $run"
         return
-    fi
-
-    local list_file="${LIST_BASE}/rtraw_list/run_${run}.txt"
-
-    if xrdfs "$EOS_BASE" stat "$list_file" &>/dev/null; then
-        local n_expected
-        n_expected=$(xrdfs "$EOS_BASE" cat "$list_file" | grep -v '^[[:space:]]*$' | wc -l | tr -d '[:space:]')
-
-        if (( n_expected != n_files )); then
-            log WARN "File count mismatch for run $run: expected ${n_expected}, found ${n_files}"
-            # log WARN "Skipping hadd to avoid merging incomplete data."
-            # return 
-            # Caused by std::vector::at(n), Akira muon reconstruction method?
-        else
-            log INFO "File count verified: ${n_files} files (expected ${n_expected})"
-        fi
-    else
-        log WARN "No run list found for run $run on EOS (expected ${list_file}) — skipping count check."
     fi
 
 

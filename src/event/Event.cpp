@@ -18,14 +18,40 @@ bool Event::load(JM::EvtNavigator* nav) {
         LogError << "Event navigator is nullptr\n";
         return false;
     }
+    run_id = nav->RunID();
+    event_id = nav->EventID();
     ts = TimeStamp{nav->TimeStamp().GetTimeSpec()};
 
     JM::CdLpmtCalibHeader* calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
-    totq = 0.0;
+    calibration_context calib;
     if (calib_hdr && calib_hdr->event()) {
         const std::list<JM::CalibPmtChannel*>& chlist = calib_hdr->event()->calibPMTCol();
+        double q = 0.0;
+        double t = 0.0;
         for (const JM::CalibPmtChannel* ch : chlist) {
-            totq += ch->nPE();
+            q = static_cast<double>(ch->nPE());
+            t = static_cast<double>(ch->firstHitTime());
+            calib.totq += q;
+            calib.meant += t;
+            ++calib.nhit;
+            if (q < calib.minq) calib.minq = q;
+            if (q > calib.maxq) calib.maxq = q;
+        }
+        if (calib.nhit > 0) {
+            calib.meanq = calib.totq = calib.nhit;
+            calib.meant = calib.meant / calib.nhit;
+        }
+        double sqq = 0.0;
+        double sqt = 0.0;
+        for (const JM::CalibPmtChannel* ch : chlist) {
+            q = static_cast<double>(ch->nPE());
+            t = static_cast<double>(ch->firstHitTime());
+            sqq += (q - calib.meanq) * (q - calib.meanq);
+            sqt += (t - calib.meant) * (t - calib.meant);
+        }
+        if (calib.nhit > 1) {
+            calib.stdq = std::sqrt(sqq / (calib.nhit - 1));
+            calib.stdt = std::sqrt(sqt / (calib.nhit - 1));
         }
     }
     
@@ -36,7 +62,7 @@ bool Event::load(JM::EvtNavigator* nav) {
     // loadCdTrack(nav);
     // loadWpTrack(nav);
     // loadTtTrack(nav);
-    loadCdVertex(nav);
+    loadCdVertex(nav, calib);
     return true;
 }
 
@@ -84,7 +110,7 @@ void Event::loadTtTrack(JM::EvtNavigator* nav) {
     }
 }
 
-void Event::loadCdVertex(JM::EvtNavigator* nav) {
+void Event::loadCdVertex(JM::EvtNavigator* nav, const calibration_context& calib) {
     // JM::CdVertexRecHeader* hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(nav);
     // if (!hdr || !hdr->event()) return;
     // const std::vector<JM::RecVertex*>& vtxs = hdr->event()->vertices();
@@ -97,10 +123,7 @@ void Event::loadCdVertex(JM::EvtNavigator* nav) {
     vertices.emplace_back(
         "Oec",
         vec3{evt->getVertexX(), evt->getVertexY(), evt->getVertexZ()},
-        evt->getEnergy(),
-        totq,
-        ts,
-        type
+        evt->getEnergy(), ts, calib, type
     );
 }
 

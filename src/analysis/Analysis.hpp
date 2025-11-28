@@ -34,17 +34,33 @@ protected:
     double posy_p;
     double posz_p;
     double e_p;
-    double totq_p;
     time_t sec_p;
     int nsec_p;
+
+    double totq_p;
+    double meanq_p;
+    double stdq_p;
+    double minq_p;
+    double maxq_p;
+    std::size_t nhit_p;
+    double meant_p;
+    double stdt_p;
 
     double posx_d;
     double posy_d;
     double posz_d;
     double e_d;
-    double totq_d;
     time_t sec_d;
     int nsec_d;
+    
+    double totq_d;
+    double meanq_d;
+    double stdq_d;
+    double minq_d;
+    double maxq_d;
+    std::size_t nhit_d;
+    double meant_d;
+    double stdt_d;
 
 };
 

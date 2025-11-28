@@ -17,10 +17,13 @@ public:
 
     bool load(JM::EvtNavigator* nav);
 
+    int run_id;
+    int event_id;
+    TimeStamp ts;
+
     std::vector<track> tracks;
     std::vector<vertex> vertices;
-    double totq;
-    TimeStamp ts;
+
     std::string type;
 
 private:
@@ -28,7 +31,7 @@ private:
     void loadCdTrack(JM::EvtNavigator* nav);
     void loadWpTrack(JM::EvtNavigator* nav);
     void loadTtTrack(JM::EvtNavigator* nav);
-    void loadCdVertex(JM::EvtNavigator* nav);
+    void loadCdVertex(JM::EvtNavigator* nav, const calibration_context& calib);
     void loadTrack(const std::string& method, const JM::RecTrack* trk, const track::loc& det);
 
 };

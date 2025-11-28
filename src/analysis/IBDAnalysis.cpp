@@ -23,16 +23,32 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("e_n", &e_n);
     m_tree->Branch("sec_n", &sec_n);
     m_tree->Branch("nsec_n", &nsec_n);
+
     m_tree->Branch("totq_n", &totq_n);
+    m_tree->Branch("meanq_n", &meanq_n);
+    m_tree->Branch("stdq_n", &stdq_n);
+    m_tree->Branch("minq_n", &minq_n);
+    m_tree->Branch("maxq_n", &maxq_n);
+    m_tree->Branch("nhit_n", &nhit_n);
+    m_tree->Branch("meant_n", &meant_n);
+    m_tree->Branch("stdt_n", &stdt_n);
 
     m_tree->Branch("posx_mult", &posx_mult);
     m_tree->Branch("posy_mult", &posy_mult);
     m_tree->Branch("posz_mult", &posz_mult);
     m_tree->Branch("e_mult", &e_mult);
-    m_tree->Branch("totq_mult", &totq_mult);
     m_tree->Branch("sec_mult", &sec_mult);
     m_tree->Branch("nsec_mult", &nsec_mult);
     m_tree->Branch("mult_type", &mult_type);
+
+    m_tree->Branch("totq_mult", &totq_mult);
+    m_tree->Branch("meanq_mult", &meanq_mult);
+    m_tree->Branch("stdq_mult", &stdq_mult);
+    m_tree->Branch("minq_mult", &minq_mult);
+    m_tree->Branch("maxq_mult", &maxq_mult);
+    m_tree->Branch("nhit_mult", &nhit_mult);
+    m_tree->Branch("meant_mult", &meant_mult);
+    m_tree->Branch("stdt_mult", &stdt_mult);
 
     m_tree->Branch("method_mu", &method_mu);
     m_tree->Branch("loc_mu", &loc_mu);
@@ -51,6 +67,7 @@ bool IBDAnalysis::initialize() {
 }
 
 void IBDAnalysis::process(const EventContext::View& events) {
+    run_id = events.runid();
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
     std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;
     for (const track& trk : events.tracks()) {
@@ -223,16 +240,33 @@ void IBDAnalysis::process(const EventContext::View& events) {
         posy_p = ibd.pair.prompt.pos.y;
         posz_p = ibd.pair.prompt.pos.z;
         e_p = ibd.pair.prompt.energy;
-        totq_p = ibd.pair.prompt.totq;
         sec_p = ibd.pair.prompt.ts.GetSec();
         nsec_p = ibd.pair.prompt.ts.GetNanoSec();
+
+        totq_p = ibd.pair.prompt.calib.totq;
+        meanq_p = ibd.pair.prompt.calib.meanq;
+        stdq_p = ibd.pair.prompt.calib.stdq;
+        minq_p = ibd.pair.prompt.calib.minq;
+        maxq_p = ibd.pair.prompt.calib.maxq;
+        nhit_p = ibd.pair.prompt.calib.nhit;
+        meant_p = ibd.pair.prompt.calib.meant;
+        stdt_p = ibd.pair.prompt.calib.stdt;
+
         posx_d = ibd.pair.delayed.pos.x;
         posy_d = ibd.pair.delayed.pos.y;
         posz_d = ibd.pair.delayed.pos.z;
         e_d = ibd.pair.delayed.energy;
-        totq_d = ibd.pair.delayed.totq;
         sec_d = ibd.pair.delayed.ts.GetSec();
         nsec_d = ibd.pair.delayed.ts.GetNanoSec();
+
+        totq_d = ibd.pair.delayed.calib.totq;
+        meanq_d = ibd.pair.delayed.calib.meanq;
+        stdq_d = ibd.pair.delayed.calib.stdq;
+        minq_d = ibd.pair.delayed.calib.minq;
+        maxq_d = ibd.pair.delayed.calib.maxq;
+        nhit_d = ibd.pair.delayed.calib.nhit;
+        meant_d = ibd.pair.delayed.calib.meant;
+        stdt_d = ibd.pair.delayed.calib.stdt;
 
         posx_n.clear();
         posy_n.clear();
@@ -247,9 +281,17 @@ void IBDAnalysis::process(const EventContext::View& events) {
             posy_n.push_back(neu.pos.y);
             posz_n.push_back(neu.pos.z);
             e_n.push_back(neu.energy);
-            totq_n.push_back(neu.totq);
             sec_n.push_back(neu.ts.GetSec());
             nsec_n.push_back(neu.ts.GetNanoSec());
+
+            totq_n.push_back(neu.calib.totq);
+            meanq_n.push_back(neu.calib.meanq);
+            stdq_n.push_back(neu.calib.stdq);
+            minq_n.push_back(neu.calib.minq);
+            maxq_n.push_back(neu.calib.maxq);
+            nhit_n.push_back(neu.calib.nhit);
+            meant_n.push_back(neu.calib.meant);
+            stdt_n.push_back(neu.calib.stdt);
         }
 
         posx_mult.clear();
@@ -266,10 +308,18 @@ void IBDAnalysis::process(const EventContext::View& events) {
             posy_mult.push_back(mult.vtx.pos.y);
             posz_mult.push_back(mult.vtx.pos.z);
             e_mult.push_back(mult.vtx.energy);
-            totq_mult.push_back(mult.vtx.totq);
             sec_mult.push_back(mult.vtx.ts.GetSec());
             nsec_mult.push_back(mult.vtx.ts.GetNanoSec());
             mult_type.push_back(mult.type);
+
+            totq_mult.push_back(mult.vtx.calib.totq);
+            meanq_mult.push_back(mult.vtx.calib.meanq);
+            stdq_mult.push_back(mult.vtx.calib.stdq);
+            minq_mult.push_back(mult.vtx.calib.minq);
+            maxq_mult.push_back(mult.vtx.calib.maxq);
+            nhit_mult.push_back(mult.vtx.calib.nhit);
+            meant_mult.push_back(mult.vtx.calib.meant);
+            stdt_mult.push_back(mult.vtx.calib.stdt);
         }
 
         m_tree->Fill();

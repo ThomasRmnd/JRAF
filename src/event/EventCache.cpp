@@ -23,13 +23,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
         LogError << "EventCache::load: failed to load event for nav=" << nav << '\n';
         return nullptr;
     }
-
-    s_cache[ts] = evt;
-    ++s_insert_counter;
-
-    if (s_insert_counter % s_clean_interval == 0 && !s_cache.empty()) {
-        clean(ts, TimeStamp{10, 0});
-    }
+    insert(ts, evt);
 
     LogInfo << "EventCache: loaded and cached event for nav=" << nav << '\n';
     return evt;
@@ -37,6 +31,11 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
 
 void EventCache::insert(const TimeStamp& ts, const std::shared_ptr<Event>& evt) {
     s_cache[ts] = evt;
+    ++s_insert_counter;
+
+    if (s_insert_counter % s_clean_interval == 0 && !s_cache.empty()) {
+        clean(ts, TimeStamp{5, 0});
+    }
 }
 
 bool EventCache::contains(JM::EvtNavigator* nav) {

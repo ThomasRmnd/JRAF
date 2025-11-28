@@ -48,8 +48,6 @@ bool AnalysisGroupC::initialize() {
     }
     m_iptSvc = iptSvc.data();
 
-    m_cd_last_muon = TimeStamp{0, 0};
-    m_wp_last_muon = TimeStamp{0, 0};
     if (!m_ttRecoFile.init()) return false;
     if (!initLoader()) return false;
     if (!initRecTool()) return false;
@@ -187,20 +185,20 @@ void AnalysisGroupC::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& metho
     }
 }
 
-void AnalysisGroupC::addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices) {
+void AnalysisGroupC::addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
     if (!oec_hdr || !oec_hdr->event("JM::OecEvt")) return;
     JM::OecEvt* oec_evt = dynamic_cast<JM::OecEvt*>(oec_hdr->event("JM::OecEvt"));
     vertices.push_back(vertex{
-        method, vec3{oec_evt->getVertexX(), oec_evt->getVertexY(), oec_evt->getVertexZ()}, oec_evt->getEnergy(), totq, ts, "Unknown"
+        method, vec3{oec_evt->getVertexX(), oec_evt->getVertexY(), oec_evt->getVertexZ()}, oec_evt->getEnergy(), ts, calib, "Unknown"
     });
 }
 
-void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, double totq, std::vector<vertex>& vertices) {
+void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
     if (!cdv_hdr || !cdv_hdr->event()) return;
     const std::vector<JM::RecVertex*>& rec_vertices = cdv_hdr->event()->vertices();
     for (JM::RecVertex* v : rec_vertices) {
         vertices.push_back(vertex{
-            method, vec3{v->x(), v->y(), v->z()}, v->energy(), totq, ts, "Unknown"
+            method, vec3{v->x(), v->y(), v->z()}, v->energy(), ts, calib, "Unknown"
         });
     }
 }
@@ -244,20 +242,45 @@ bool AnalysisGroupC::execute() {
 
         TimeStamp curts{bufwrap.curEvt()->TimeStamp().GetTimeSpec()};
 
-        double totq_cd = std::accumulate(m_pmtTable.begin(), m_pmtTable.end(), 0.0, 
-            [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_20INCH) == pmt.type) ? pmt.q : 0.0 ); } 
-        );
-        double totq_wp = std::accumulate(m_pmtTable.begin(), m_pmtTable.end(), 0.0, 
-            [](double sum, const PmtProp& pmt) { return sum + ( (pmt.used && (pmt.type & PmtType::PMT_WP) == pmt.type) ? pmt.q : 0.0 ); } 
-        );
+        calibration_context calib;
+        double totq_wp = 0.0;
+        for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
+            if (!it->used) continue;
+            if ( (it->type & PmtType::PMT_20INCH) == it->type ) {
+                calib.totq += it->q;
+                calib.meant += it->fht;
+                ++calib.nhit;
+                if (it->q < calib.minq) calib.minq = it->q;
+                if (it->q > calib.maxq) calib.maxq = it->q;
+            }
+            else if ( (it->type & PmtType::PMT_WP) == it->type ) {
+                totq_wp += it->q;
+            }
+        }
+        if (calib.nhit > 0) {
+            calib.meanq = calib.totq = calib.nhit;
+            calib.meant = calib.meant / calib.nhit;
+        }
+        double sqq = 0.0;
+        double sqt = 0.0;
+        for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
+            if (!it->used) continue;
+            if ( (it->type & PmtType::PMT_20INCH) != it->type ) continue;
+            sqq += (it->q - calib.meanq) * (it->q - calib.meanq);
+            sqt += (it->fht - calib.meant) * (it->fht - calib.meant);
+        }
+        if (calib.nhit > 1) {
+            calib.stdq = std::sqrt(sqq / (calib.nhit - 1));
+            calib.stdt = std::sqrt(sqt / (calib.nhit - 1));
+        }
 
-        LogInfo << "TotQ: CD = " << totq_cd << ", WP = " << totq_wp << '\n';
+        LogInfo << "TotQ: CD = " << calib.totq << ", WP = " << totq_wp << '\n';
 
         bool is_possibly_cd_muon = false;
         bool is_possibly_wp_muon = false;
 
         if (
-            totq_cd >= m_cd_muon_totq_thold && 
+            calib.totq >= m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold && 
             curts - m_cd_last_muon > m_cd_afterpulse_thold &&
             curts - m_wp_last_muon > m_wp_afterpulse_thold
@@ -268,7 +291,7 @@ bool AnalysisGroupC::execute() {
             is_possibly_wp_muon = true;
         }
         else if (
-            totq_cd < m_cd_muon_totq_thold && 
+            calib.totq < m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold &&
             curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
@@ -276,7 +299,7 @@ bool AnalysisGroupC::execute() {
             is_possibly_wp_muon = true;
         }
         else if (
-            totq_cd >= m_cd_muon_totq_thold && 
+            calib.totq >= m_cd_muon_totq_thold && 
             totq_wp < m_wp_muon_totq_thold &&
             (curts - m_cd_last_muon > TimeStamp{0, 2000000} || curts - m_wp_last_muon > TimeStamp{0, 2000000})
         ) {
@@ -302,16 +325,16 @@ bool AnalysisGroupC::execute() {
         else if (is_possibly_wp_muon) {
             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
-            JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
-            addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
+            // JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
+            // addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
             
-            if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
-                RecTrks rtrks;
-                if (!m_classifyTool->reconstruct(&rtrks)) {
-                    LogWarn << "Could not classify the event with classification tool\n";
-                }
-                addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
-            }
+            // if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
+            //     RecTrks rtrks;
+            //     if (!m_classifyTool->reconstruct(&rtrks)) {
+            //         LogWarn << "Could not classify the event with classification tool\n";
+            //     }
+            //     addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
+            // }
         }
         if ( (is_possibly_cd_muon || is_possibly_wp_muon) && tracks.empty() ) {
             tracks.push_back(track{"CdBasic", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, 0.0, curts, track::loc::cd, -1.0});
@@ -353,13 +376,11 @@ bool AnalysisGroupC::execute() {
         // JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecJVertex");
         // addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
         JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecMixedPhase");
-        addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, totq_cd, vertices);
+        addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, calib, vertices);
         JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC");
-        addVertex(omilrec_cdv_hdr, "OMILREC", curts, totq_cd, vertices);
+        addVertex(omilrec_cdv_hdr, "OMILREC", curts, calib, vertices);
         JM::CdVertexRecHeader* omilrec_jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_JVtx");
-        addVertex(omilrec_jvertex_cdv_hdr, "OMILREC_JVtx", curts, totq_cd, vertices);
-        // JM::CdVertexRecHeader* omilrec_mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_MPV");
-        // addVertex(omilrec_mixedphase_cdv_hdr, "OMILREC_MPV", curts, totq_cd, vertices);
+        addVertex(omilrec_jvertex_cdv_hdr, "OMILREC_JVtx", curts, calib, vertices);
 
         evt->tracks = tracks;
         evt->vertices = vertices;
