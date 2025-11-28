@@ -129,7 +129,7 @@ include_neighbor() {
 resolve_input_paths() {
     local input_reprod_file="$1"
 
-    if [[ "$input_reprod_file" =~ /juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\.[^/]*([0-9]{8})[^/]* ]]; then
+    if [[ "$input_reprod_file" =~ /juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\.[^/]*([0-9]{14})[^/]* ]]; then
         campaign="${BASH_REMATCH[1]}"
         stream="${BASH_REMATCH[2]}"
         run_bucket="${BASH_REMATCH[3]}"
