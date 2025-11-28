@@ -161,7 +161,7 @@ submit_jobs() {
             --ntasks=1 \
             --cpus-per-task=1 \
             --mem="4G" \
-            --time="0-12:00:00" \
+            --time="0-08:00:00" \
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
             job_worker.sh \
