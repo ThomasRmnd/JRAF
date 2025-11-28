@@ -312,7 +312,7 @@ main() {
     output_file="$output_path/$(basename "${local_output_file}")"
 
     local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.reco.output.reprod25c.cca.root"
-    reco_output_file="$reco_output_path//$(basename "${local_reco_output_file}")"
+    reco_output_file="$reco_output_path/$(basename "${local_reco_output_file}")"
 
     log INFO "Context previous file: ${prev_file_local:-<none>}"
     log INFO "Context next file: ${next_file_local:-<none>}"
