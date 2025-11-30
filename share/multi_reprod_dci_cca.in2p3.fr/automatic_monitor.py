@@ -229,7 +229,7 @@ class AdaptiveThrottling:
 
 class ProgressBar:
     """Thread-safe progress bar for terminal output"""
-    
+
     def __init__(self, total: int, width: int = 50, prefix: str = "Progress"):
         self.total = total
         self.current = 0
@@ -237,34 +237,36 @@ class ProgressBar:
         self.prefix = prefix
         self.lock = threading.RLock()
         self.start_time = time.time()
-    
+
     def update(self, increment: int = 1):
         """Update progress"""
         with self.lock:
             self.current += increment
+            if self.current > self.total:
+                self.current = self.total
             self._render()
-    
+
     def _render(self):
-        """Render progress bar"""
+        """Render progress bar in-place (like pip install)"""
         if self.total == 0:
             return
-        
-        percent = min(self.current / self.total, 1.0)
+
+        percent = self.current / self.total
         filled = int(self.width * percent)
         bar = '█' * filled + '░' * (self.width - filled)
-        
+
         elapsed = time.time() - self.start_time
-        if self.current > 0 and self.current < self.total:
-            eta = elapsed / self.current * (self.total - self.current)
+        if 0 < self.current < self.total:
+            eta = elapsed * (self.total - self.current) / self.current
             eta_str = f"{int(eta)}s"
         else:
-            eta_str = "done" if self.current >= self.total else "N/A"
-        
-        print(f"\r{self.prefix}: |{bar}| {self.current}/{self.total} ({percent*100:.1f}%) ETA: {eta_str}   ", 
-              end='', flush=True)
-        
+            eta_str = "done" if self.current >= self.total else "--"
+
+        print(f"\r{self.prefix}: |{bar}| {self.current}/{self.total} ({percent*100:5.1f}%) ETA: {eta_str}",
+            end='', flush=True)
+
         if self.current >= self.total:
-            print()
+            print()  
 
 
 # ===========================================================
