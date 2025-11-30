@@ -427,6 +427,7 @@ class JobRegistry(Module):
                 self.save()
 
     def get_stats(self) -> Dict[str, Any]:
+        logger.debug(f"{len(self.jobs)}")
         with self.lock:
             logger.debug(f"{len(self.jobs)}")
             all_jobs = [job for jobs in self.jobs.values() for job in jobs.values()]
