@@ -733,8 +733,9 @@ class CommandInterpreter:
                 cmd = parts[0]
                 args = parts[1:]
 
-                fn = self.commands.get(cmd)
-                if fn:
+                fn_entry = self.commands.get(cmd)
+                if fn_entry:
+                    fn = fn_entry[0]
                     fn(*args)
                 else:
                     print(f"Unknown command: {cmd}")
