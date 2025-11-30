@@ -214,7 +214,7 @@ class ProgressBar:
         self.current = 0
         self.width = width
         self.prefix = prefix
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.start_time = time.time()
     
     def update(self, increment: int = 1):
@@ -352,7 +352,7 @@ class JobRegistry(Module):
     def init(self, args : argparse.Namespace) -> bool:
         self.path = Path(args.registry)
         self.save_interval = max(0, args.save_interval)
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.jobs: Dict[int, Dict[int, SLURMJob]] = {}
         self.unsaved_changes = 0
         if not self._load():
@@ -427,9 +427,7 @@ class JobRegistry(Module):
                 self.save()
 
     def get_stats(self) -> Dict[str, Any]:
-        logger.debug(f"{len(self.jobs)}")
         with self.lock:
-            logger.debug(f"{len(self.jobs)}")
             all_jobs = [job for jobs in self.jobs.values() for job in jobs.values()]
             status_counts = {s.value: sum(1 for j in all_jobs if j.status == s) 
                            for s in JobStatus}
