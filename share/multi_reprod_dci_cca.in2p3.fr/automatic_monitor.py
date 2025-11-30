@@ -428,6 +428,7 @@ class JobRegistry(Module):
 
     def get_stats(self) -> Dict[str, Any]:
         with self.lock:
+            logger.debug(f"{len(self.jobs)}")
             all_jobs = [job for jobs in self.jobs.values() for job in jobs.values()]
             status_counts = {s.value: sum(1 for j in all_jobs if j.status == s) 
                            for s in JobStatus}
