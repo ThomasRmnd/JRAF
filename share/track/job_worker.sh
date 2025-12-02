@@ -121,7 +121,7 @@ resolve_input_paths() {
         local run_bucket="${BASH_REMATCH[4]}"
         local run_group="${BASH_REMATCH[5]}"
 
-        elif (( RUN_NUMBER >= 10176 && RUN_NUMBER <= 10479 )); then
+        if (( RUN_NUMBER >= 10176 && RUN_NUMBER <= 10479 )); then
             tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
         elif (( RUN_NUMBER >= 10480 )); then
             tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/TT25A/J25.4.3-patched/user_rec/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
