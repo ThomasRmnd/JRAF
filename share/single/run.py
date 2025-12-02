@@ -4,18 +4,19 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, nargs="+", help="Input filepath")
-parser.add_argument("--input-rtraw", type=str, nargs="+", help="Input RTRAW filepath")
+parser.add_argument("--input-correlation", type=str, nargs="+", default=[], help="Input correlation filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
-parser.add_argument("--target-input-filename", type=str, default="", help="Target input filename")
+parser.add_argument("--context-previous-filename", type=str, default="", help="Context previous filename")
+parser.add_argument("--context-next-filename", type=str, default="", help="Context next filename")
 parser.add_argument("--tt-reco-filepath", type=str, default="", help="TT reco filepath")
 parser.add_argument("--property-file", type=str, help="Filepath of the property file")
-parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
-parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
+parser.add_argument("--time-window", nargs=2, type=float, default=(-2.0, 2.0), help="Buffer time window (default=[-2.0, 2.0])")
+parser.add_argument("--log-level", type=int, default=3, help="Log level (default: 3)")
+parser.add_argument("--cluster", type=str, choices=["CC-IN2P3", "IHEP"], help="Cluster name currently running on")
 args = parser.parse_args()
 
 ifilepath = args.input
 ofilepath = args.output
-rtraw_ifilepath = args.input_rtraw
 lower_tw, upper_tw = args.time_window
 loglevel = args.log_level
 
@@ -48,12 +49,18 @@ tt_geom_svc = task.createSvc("TTGeomSvc")
 import RootIOSvc
 ri_svc = task.createSvc("RootInputSvc/InputSvc")
 ri_svc.property("InputFile").set(ifilepath)
-ri_svc.property("InputCorrelationFile").set(rtraw_ifilepath)
+if args.input_correlation:
+    ri_svc.property("InputCorrelationFile").set(args.input_correlation)
 
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
 alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(loglevel)
+
+alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
+alg.property("OutputFilename").set(ofilepath)
+alg.property("ContextPreviousFilename").set(args.context_previous_filename)
+alg.property("ContextNextFilename").set(args.context_next_filename)
 
 alg.useLoader("JointLoader")
 alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
@@ -89,11 +96,11 @@ alg.classifytool.property("WpMuonClassifyRecToolInitialChargeCut").set(28.0)
 alg.classifytool.property("WpMuonClassifyRecToolMaxChargeThreshold").set(200.0)
 alg.classifytool.property("WpMuonClassifyRecToolDistanceThreshold").set(6500.0)
 alg.classifytool.property("UseAdditionalGainCorrection").set(True)
-alg.classifytool.property("AdditionalGainCorrectionPath").set("/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
-
-alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
-alg.property("OutputFilename").set(ofilepath)
-alg.property("TargetInputFilename").set(args.target_input_filename)
+cluster_to_ratio_copyno = {
+    "CC-IN2P3": "/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt",
+    "IHEP": "/junofs/users/traymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt"
+}
+alg.classifytool.property("AdditionalGainCorrectionPath").set(cluster_to_ratio_copyno[args.cluster])
 
 task.setEvtMax(-1)
 if not task.run():

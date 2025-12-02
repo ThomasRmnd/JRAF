@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Multi-Submission Helper
-#  Purpose: Automate hep_sub job multi-submissions for ReProd processing
+#  Purpose: Automate job multi-submissions for single processing
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -12,13 +12,28 @@ IFS=$'\n\t'
 # Utility functions
 #==============================
 
-source /pbs/home/t/traymond/share/bash/logging.sh
+HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+if [[ "${HOSTNAME}" =~ ^cca[0-9]+$ ]]; then
+    # Detect CC-IN2P3 cluster
+    CLUSTER="CC-IN2P3"
+    source /pbs/home/t/traymond/share/bash/logging.sh
+elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
+    # Detect IHEP cluster
+    CLUSTER="IHEP"
+    source /junofs/users/traymond/bash/logging.sh
+else
+    echo "ERROR: Unknown cluster. Hostname: ${HOSTNAME}" >&2
+    echo "Expected CC-IN2P3 (cca###) or IHEP (lxlogin###.ihep.ac.cn)" >&2
+    exit 1
+fi
+
+log INFO "Cluster detected: ${CLUSTER}"
 
 #==============================
 # Configuration defaults
 #==============================
 
-EOS_BASE="root://junoeos01.ihep.ac.cn/"
+XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
 
 LOWER_BOUND=""
@@ -26,26 +41,26 @@ UPPER_BOUND=""
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [options]
+Usage: $(basename "$0") --site <str> --campaign <str> [options]
 
-Options:
-  -r <num>         Starting run number (inclusive)
-  -R <num>         Ending run number (inclusive)
-  -l <path>        Path to custom run list (default: $RUN_LIST_PATH)
-  --help           Show this help message and exit
+Required:
+  --site <str>          Storage site selection {EOS|CNAF}
+  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C}
 
-Examples:
-  $(basename "$0") --r 9000 --R 9050
-  $(basename "$0") --list /path/to/custom_run_list.txt
+Optional:
+  --lower <num>         Starting run number (inclusive)
+  --upper <num>         Ending run number (inclusive)
+  --help                Show this help message and exit
 EOF
 }
 
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --site)    SITE="$2"; shift ;;
+            --campaign) CAMPAIGN="$2"; shift ;;
             --lower)   LOWER_BOUND="$2"; shift 2 ;;
             --upper)   UPPER_BOUND="$2"; shift 2 ;;
-            --list)    RUN_LIST_PATH="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
@@ -58,7 +73,7 @@ parse_args() {
 
 load_run_list() {
     log INFO "Fetching run list from EOS..."
-    mapfile -t RUN_LIST < <(xrdfs "$EOS_BASE" cat "$RUN_LIST_PATH" | tr -d '\r' | sed '/^$/d')
+    mapfile -t RUN_LIST < <(xrdfs "${XRD_URL_EOS}" cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
 }
 
 #==============================
@@ -70,13 +85,13 @@ filter_runs() {
 
     for run in "${RUN_LIST[@]}"; do
         (( run < 0 )) && continue
-        if [[ -n "$LOWER_BOUND" && "$run" -lt "$LOWER_BOUND" ]]; then
+        if [[ -n "${LOWER_BOUND}" && "${run}" -lt "${LOWER_BOUND}" ]]; then
             continue
         fi
-        if [[ -n "$UPPER_BOUND" && "$run" -gt "$UPPER_BOUND" ]]; then
+        if [[ -n "${UPPER_BOUND}" && "${run}" -gt "${UPPER_BOUND}" ]]; then
             continue
         fi
-        filtered+=("$run")
+        filtered+=("${run}")
     done
 
     RUN_LIST=("${filtered[@]}")
@@ -96,12 +111,12 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(bash job_launcher.sh --run-number "$run")
+        local cmd=(sh job_launcher.sh --run-number "${run}" --site ${SITE} --campaign ${CAMPAIGN})
 
         if "${cmd[@]}"; then
-            log INFO "Run $run submitted successfully"
+            log INFO "Run ${run} submitted successfully"
         else
-            log ERROR "Submission failed for run $run"
+            log ERROR "Submission failed for run ${run}"
         fi
     done
 }

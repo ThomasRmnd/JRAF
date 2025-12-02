@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Multi-Submission Helper
-#  Purpose: Automate hep_sub job multi-submissions for single ESD–RTRAW processing
+#  Purpose: Automate hep_sub job multi-submissions for ReProd processing
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -29,14 +29,12 @@ usage() {
 Usage: $(basename "$0") [options]
 
 Options:
-  -r <num>         Starting run number (inclusive)
-  -R <num>         Ending run number (inclusive)
-  -l <path>        Path to custom run list (default: $RUN_LIST_PATH)
+  --lower <num>         Starting run number (inclusive)
+  --upper <num>         Ending run number (inclusive)
   --help           Show this help message and exit
 
 Examples:
-  $(basename "$0") --r 9000 --R 9050
-  $(basename "$0") --list /path/to/custom_run_list.txt
+  $(basename "$0") --lower 10500 --upper 10550
 EOF
 }
 
@@ -45,7 +43,6 @@ parse_args() {
         case "$1" in
             --lower)   LOWER_BOUND="$2"; shift 2 ;;
             --upper)   UPPER_BOUND="$2"; shift 2 ;;
-            --list)    RUN_LIST_PATH="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
@@ -58,7 +55,7 @@ parse_args() {
 
 load_run_list() {
     log INFO "Fetching run list from EOS..."
-    mapfile -t RUN_LIST < <(xrdfs "$EOS_BASE" cat "$RUN_LIST_PATH" | tr -d '\r' | sed '/^$/d')
+    mapfile -t RUN_LIST < <(xrdfs "${EOS_BASE}" cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
 }
 
 #==============================
@@ -70,10 +67,10 @@ filter_runs() {
 
     for run in "${RUN_LIST[@]}"; do
         (( run < 0 )) && continue
-        if [[ -n "$LOWER_BOUND" && "$run" -lt "$LOWER_BOUND" ]]; then
+        if [[ -n "${LOWER_BOUND}" && "$run" -lt "${LOWER_BOUND}" ]]; then
             continue
         fi
-        if [[ -n "$UPPER_BOUND" && "$run" -gt "$UPPER_BOUND" ]]; then
+        if [[ -n "${UPPER_BOUND}" && "$run" -gt "${UPPER_BOUND}" ]]; then
             continue
         fi
         filtered+=("$run")
@@ -96,13 +93,20 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(bash job_launcher.sh --run-number "$run")
-
-        if "${cmd[@]}"; then
-            log INFO "Run $run submitted successfully"
-        else
-            log ERROR "Submission failed for run $run"
-        fi
+        sbatch \
+            --job-name="comp_${run}_batch" \
+            --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/log/comp_${run}.log" \
+            --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/err/comp_${run}.err" \
+            --partition="htc" \
+            --ntasks=1 \
+            --cpus-per-task=1 \
+            --mem="8G" \
+            --time="0-01:00:00" \
+            --mail-user="thomas.raymond@iphc.cnrs.fr" \
+            --mail-type="FAIL" \
+            job_worker.sh \
+            "${run}"
+        # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/comp_${run}_%a.log"
     done
 }
 
