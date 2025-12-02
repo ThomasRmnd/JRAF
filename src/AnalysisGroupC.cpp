@@ -326,7 +326,7 @@ bool AnalysisGroupC::execute() {
             addTrack(rtrks, "CdWpTtChi2", curts, track::loc::cd, tracks);
             m_trkSaver.add(rtrks, "CdWpTtChi2", bufwrap.curEvt()->RunID(), curts);
         }
-        else if (is_possibly_wp_muon) {
+        if (is_possibly_wp_muon) {
             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
             m_trkSaver.add(basic_wpt_hdr, "WpBasic", bufwrap.curEvt()->RunID(), curts);
