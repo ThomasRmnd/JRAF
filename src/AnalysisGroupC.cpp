@@ -260,7 +260,7 @@ bool AnalysisGroupC::execute() {
             }
         }
         if (calib.nhit > 0) {
-            calib.meanq = calib.totq = calib.nhit;
+            calib.meanq = calib.totq / calib.nhit;
             calib.meant = calib.meant / calib.nhit;
         }
         double sqq = 0.0;
