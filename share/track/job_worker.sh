@@ -108,10 +108,9 @@ resolve_input_paths() {
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
     input_file="${RTRAW_LIST[0]}"
 
-    if [[ "${input_file}" =~ /juno/rtraw/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.${RUN_NUMBER}\. ]]; then
-        local esd_version="${BASH_REMATCH[1]}"
-        local year="${BASH_REMATCH[2]}"
-        local monthday="${BASH_REMATCH[3]}"
+    if [[ "${input_file}" =~ /juno/rtraw/([0-9]{4})/([0-9]{4})/RUN\.${RUN_NUMBER}\. ]]; then
+        local year="${BASH_REMATCH[1]}"
+        local monthday="${BASH_REMATCH[2]}"
 
         tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     elif [[ "${input_file}" =~ /juno/juno-([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/${RUN_NUMBER}/RUN\.${RUN_NUMBER}\. ]]; then
