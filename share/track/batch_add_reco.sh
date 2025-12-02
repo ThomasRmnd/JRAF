@@ -18,7 +18,7 @@ source /pbs/home/t/traymond/share/bash/logging.sh
 #==============================
 
 EOS_BASE="root://junoeos01.ihep.ac.cn/"
-BASE_OUTPUT_DIR="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstrucion/reprod"
+BASE_OUTPUT_DIR="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 RUN_LIST_PATH="${LIST_BASE}/Physics_good_run_list.txt"
 
