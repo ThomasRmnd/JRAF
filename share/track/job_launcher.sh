@@ -56,13 +56,25 @@ EOF
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --site)    SITE="$2"; shift ;;
+            --site)    SITE="$2"; shift 2 ;;
             --lower)   LOWER_BOUND="$2"; shift 2 ;;
             --upper)   UPPER_BOUND="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
     done
+
+    if [[ -z "${SITE:-}" ]]; then
+        log ERROR "--site is required {EOS|CNAF}"
+        usage
+        exit 1
+    fi
+
+    case "${SITE}" in
+        EOS|CNAF) ;;
+        *) log ERROR "Invalid --site: ${SITE} (expected {EOS|CNAF})"
+           exit 1 ;;
+    esac
 }
 
 #==============================
