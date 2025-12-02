@@ -108,7 +108,7 @@ resolve_input_paths() {
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
     input_file="${RTRAW_LIST[0]}"
 
-    if [[ "${input_file}" =~ /juno/esd/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.${RUN_NUMBER}\. ]]; then
+    if [[ "${input_file}" =~ /juno/rtraw/([^/]+)/([0-9]{4})/([0-9]{4})/RUN\.${RUN_NUMBER}\. ]]; then
         local esd_version="${BASH_REMATCH[1]}"
         local year="${BASH_REMATCH[2]}"
         local monthday="${BASH_REMATCH[3]}"
