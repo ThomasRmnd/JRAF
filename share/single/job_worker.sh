@@ -196,6 +196,7 @@ resolve_output_paths() {
         local run_bucket=$(printf "%08d" "$bucket_val")
         local run_group=$(printf "%08d" "$group_val")
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
         tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     elif [[ "${input_file}" =~ /juno/juno-([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/${RUN_NUMBER}/RUN\.${RUN_NUMBER}\. ]]; then
         local type="${BASH_REMATCH[1]}"
@@ -204,6 +205,7 @@ resolve_output_paths() {
         local run_bucket="${BASH_REMATCH[4]}"
         local run_group="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
         tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     else
         log ERROR "Unrecognized path format: ${input_file}"
