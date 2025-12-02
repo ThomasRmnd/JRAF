@@ -13,7 +13,7 @@ IFS=$'\n\t'
 #==============================
 
 HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-if [[ "${HOSTNAME}" =~ ^cca[0-9]+$ ]]; then
+if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
     # Detect CC-IN2P3 cluster
     CLUSTER="CC-IN2P3"
     source /pbs/home/t/traymond/share/bash/logging.sh
