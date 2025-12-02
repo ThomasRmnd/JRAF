@@ -316,10 +316,10 @@ main() {
     resolve_output_paths "${input_file}"
 
     local_output_file="${TEMPDIR}/${input_filename/.rtraw/.output.root}"
-    output_file="$output_path/$(basename "${local_output_file}")"
+    output_file="${output_path}/$(basename "${local_output_file}")"
 
     local_reco_output_file="${TEMPDIR}/${input_filename/.rtraw/.reco.output.root}"
-    reco_output_file="$output_path/$(basename "${local_reco_output_file}")"
+    reco_output_file="${reco_output_path}/$(basename "${local_reco_output_file}")"
 
     if (( prev_idx >= 0 )); then
         if [[ "${USE_CORRELATION}" == "true" ]]; then
