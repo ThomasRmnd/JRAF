@@ -316,7 +316,6 @@ bool AnalysisGroupC::execute() {
         for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
             TimeStamp otherts = it->get()->TimeStamp().GetTimeSpec();
             if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
-            if (it->get()->getDetectorType() == bufwrap.curEvt()->getDetectorType()) continue;
             if (is_possibly_cd_muon) {
                 JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt());
                 addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
