@@ -193,7 +193,7 @@ select_slurm_time_limit() {
             SBATCH_TIME="0-00:30:00"
             ;;
         CNAF)
-            SBATCH_TIME="0-00:15:00"
+            SBATCH_TIME="0-00:30:00"
             ;;
         *)
             log ERROR "Unknown site for SLURM time selection: ${SITE}"
