@@ -286,8 +286,8 @@ bool AnalysisGroupC::execute() {
             det_type == JM::EvtNavigator::DetectorType::CD && 
             calib.totq >= m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold && 
-            curts - m_cd_last_muon > m_cd_afterpulse_thold &&
-            curts - m_wp_last_muon > m_wp_afterpulse_thold
+            curts - m_cd_last_muon > m_cd_afterpulse_thold // &&
+            // curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
             m_cd_last_muon = curts;
             // m_wp_last_muon = curts;
@@ -298,8 +298,8 @@ bool AnalysisGroupC::execute() {
             det_type == JM::EvtNavigator::DetectorType::WP && 
             calib.totq >= m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold && 
-            curts - m_cd_last_muon > m_cd_afterpulse_thold &&
-            curts - m_wp_last_muon > m_wp_afterpulse_thold
+            curts - m_cd_last_muon > m_cd_afterpulse_thold // &&
+            // curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
             // m_cd_last_muon = curts;
             m_wp_last_muon = curts;
