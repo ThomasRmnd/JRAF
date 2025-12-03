@@ -316,22 +316,27 @@ bool AnalysisGroupC::execute() {
         for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
             TimeStamp otherts = it->get()->TimeStamp().GetTimeSpec();
             if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
+            LogInfo << "Current detector: " << bufwrap.curEvt()->getDetectorType() << ", other detector: " << it->get()->getDetectorType() << '\n';
             if (is_possibly_cd_muon) {
                 JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt());
                 addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
+                LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
                 JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt(), "/Event/CdTrackRecClassify");
                 addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
+                LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
 
                 RecTrks rtrks;
                 if (!m_recTool->reconstruct(&rtrks)) {
                     LogWarn << "Could not reconstruct the event with reconstruction tool\n";
                 }
                 addTrack(rtrks, "CdWpTtChi2", curts, track::loc::cd, tracks);
+                LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
                 m_trkSaver.add(rtrks, "CdWpTtChi2", bufwrap.curEvt()->RunID(), curts);
             }
             if (is_possibly_wp_muon) {
                 JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
                 addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
+                LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
                 m_trkSaver.add(basic_wpt_hdr, "WpBasic", bufwrap.curEvt()->RunID(), curts);
                 // JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
                 // addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
