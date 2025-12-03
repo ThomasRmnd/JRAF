@@ -169,7 +169,7 @@ void AnalysisGroupC::addTrack(JM::WpRecHeader* wpt_hdr, const std::string& metho
     const std::vector<JM::RecTrack*>& rec_tracks = wpt_hdr->event()->tracks();
     for (JM::RecTrack* t : rec_tracks) {
         tracks.push_back(track{
-            method, *t, ts, track::loc::cd
+            method, *t, ts, track::loc::wp
         });
     }
 }
@@ -338,16 +338,16 @@ bool AnalysisGroupC::execute() {
                     addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
                     LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
                     m_trkSaver.add(basic_wpt_hdr, "WpBasic", bufwrap.curEvt()->RunID(), curts);
-                    // JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
-                    // addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
+                    JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
+                    addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
                 
-                    // if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
-                    //     RecTrks rtrks;
-                    //     if (!m_classifyTool->reconstruct(&rtrks)) {
-                    //         LogWarn << "Could not classify the event with classification tool\n";
-                    //     }
-                    //     addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
-                    // }
+                    if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
+                        RecTrks rtrks;
+                        if (!m_classifyTool->reconstruct(&rtrks)) {
+                            LogWarn << "Could not classify the event with classification tool\n";
+                        }
+                        addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
+                    }
                 }
             }
             if (tracks.empty()) {
