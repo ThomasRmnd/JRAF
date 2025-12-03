@@ -280,16 +280,30 @@ bool AnalysisGroupC::execute() {
 
         bool is_possibly_cd_muon = false;
         bool is_possibly_wp_muon = false;
+        JM::EvtNavigator::DetectorType det_type = bufwrap.curEvt()->getDetectorType();
 
         if (
+            det_type == JM::EvtNavigator::DetectorType::CD && 
             calib.totq >= m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold && 
             curts - m_cd_last_muon > m_cd_afterpulse_thold &&
             curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
             m_cd_last_muon = curts;
-            m_wp_last_muon = curts;
+            // m_wp_last_muon = curts;
             is_possibly_cd_muon = true;
+            // is_possibly_wp_muon = true;
+        }
+        else if (
+            det_type == JM::EvtNavigator::DetectorType::WP && 
+            calib.totq >= m_cd_muon_totq_thold && 
+            totq_wp >= m_wp_muon_totq_thold && 
+            curts - m_cd_last_muon > m_cd_afterpulse_thold &&
+            curts - m_wp_last_muon > m_wp_afterpulse_thold
+        ) {
+            // m_cd_last_muon = curts;
+            m_wp_last_muon = curts;
+            // is_possibly_cd_muon = true;
             is_possibly_wp_muon = true;
         }
         else if (
