@@ -337,7 +337,6 @@ bool AnalysisGroupC::execute() {
                     JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
                     addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
                     LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
-                    m_trkSaver.add(basic_wpt_hdr, "WpBasic", bufwrap.curEvt()->RunID(), curts);
                     JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
                     addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
                 
@@ -347,6 +346,7 @@ bool AnalysisGroupC::execute() {
                             LogWarn << "Could not classify the event with classification tool\n";
                         }
                         addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
+                        m_trkSaver.add(rtrks, "WpClassify", bufwrap.curEvt()->RunID(), curts, track::loc::wp);
                     }
                 }
             }

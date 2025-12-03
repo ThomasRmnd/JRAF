@@ -180,13 +180,18 @@ struct TrackSaver {
         fposz.clear();
     }
 
-    void add(RecTrks& trks_, const std::string& method_, int run_id_, const TimeStamp& ts_) {
+    void add(RecTrks& trks_, const std::string& method_, int run_id_, const TimeStamp& ts_, const track::loc& force_loc = track::loc::none) {
         run_id = run_id_;
         sec = ts_.GetSec();
         nsec = ts_.GetNanoSec();
         for (int k = 0; k < trks_.size(); ++k) {
             method.push_back(method_);
-            det.push_back((trks_.isCdUsed(k) << 0) | (trks_.isWpUsed(k) << 1) | (trks_.isTtUsed(k) << 2));
+            if (force_loc != track::loc::none) {
+                det.push_back(static_cast<unsigned char>(force_loc));
+            }
+            else {
+                det.push_back((trks_.isCdUsed(k) << 0) | (trks_.isWpUsed(k) << 1) | (trks_.isTtUsed(k) << 2));
+            }
             quality.push_back(trks_.getQuality(k));
             iposx.push_back(trks_.getStart(k).X());
             iposy.push_back(trks_.getStart(k).Y());
