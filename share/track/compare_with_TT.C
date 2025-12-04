@@ -148,6 +148,7 @@ void compare_with_TT(const char* cdwp_filename, const char* tt_filename, const c
         sec_out = sec;
         nsec_out = nsec;
         method_out = *method;
+        det_out = *det;
         quality_out = *quality;
         iposx_out = *iposx;
         iposy_out = *iposy;
