@@ -81,46 +81,52 @@ void no_good_tt_maches(const char* filename) {
         return;
     }
 
-    double cdwp_x, cdwp_y, cdwp_z, cdwp_dx, cdwp_dy, cdwp_dz;
-    double chi2_cdwp;
-    unsigned char det_cdwp;
-    time_t cdwp_sec_out;
-    int cdwp_nsec_out;
+    Int_t run_id;
+    Long_t sec;
+    Int_t nsec;
+    std::vector<std::string>* method = nullptr;
+    std::vector<unsigned char>* det = nullptr;
+    std::vector<double>* quality = nullptr;
+    std::vector<double> *iposx = nullptr, *iposy = nullptr, *iposz = nullptr, *fposx = nullptr, *fposy = nullptr, *fposz = nullptr;
 
-    tree->SetBranchAddress("cdwp_x", &cdwp_x);
-    tree->SetBranchAddress("cdwp_y", &cdwp_y);
-    tree->SetBranchAddress("cdwp_z", &cdwp_z);
-    tree->SetBranchAddress("cdwp_dx", &cdwp_dx);
-    tree->SetBranchAddress("cdwp_dy", &cdwp_dy);
-    tree->SetBranchAddress("cdwp_dz", &cdwp_dz);
-    tree->SetBranchAddress("cdwp_chi2", &chi2_cdwp);
-    tree->SetBranchAddress("cdwp_det", &det_cdwp);
-    tree->SetBranchAddress("cdwp_sec", &cdwp_sec_out);
-    tree->SetBranchAddress("cdwp_nsec", &cdwp_nsec_out);
+    tree->SetBranchAddress("run_id", &run_id);
+    tree->SetBranchAddress("sec", &sec);
+    tree->SetBranchAddress("nsec", &nsec);
+    tree->SetBranchAddress("method", &method);
+    tree->SetBranchAddress("det", &det);
+    tree->SetBranchAddress("quality", &quality);
+    tree->SetBranchAddress("iposx", &iposx);
+    tree->SetBranchAddress("iposy", &iposy);
+    tree->SetBranchAddress("iposz", &iposz);
+    tree->SetBranchAddress("fposx", &fposx);
+    tree->SetBranchAddress("fposy", &fposy);
+    tree->SetBranchAddress("fposz", &fposz);
 
-    Int_t n_tot_pts, ntracks;
-    Float_t pointx[20], pointy[20], pointz[20];
-    Int_t npts[20];
-    TTimeStamp* ptr_tt_ts = nullptr;
-    Double_t coeff0[20], coeff1[20], coeff2[20], coeff3[20], coeff4[20], coeff5[20];
-    Double_t chi2_tt[20];
+    Int_t evtID, NTotPoints, NTracks;
+    Int_t NPoints[20];
+    TTimeStamp* start_TS = nullptr;
+    Float_t PointX[20], PointY[20], PointZ[20];
+    Double_t Coeff0[20], Coeff1[20], Coeff2[20], Coeff3[20], Coeff4[20], Coeff5[20];
+    Double_t Chi2[20];
 
-    tree->SetBranchAddress("NTotPoints", &n_tot_pts);
-    tree->SetBranchAddress("PointX", &pointx);
-    tree->SetBranchAddress("PointY", &pointy);
-    tree->SetBranchAddress("PointZ", &pointz);
-    tree->SetBranchAddress("NTracks", &ntracks);
-    tree->SetBranchAddress("NPoints", npts);
-    tree->SetBranchAddress("start_TS", &ptr_tt_ts);
-    tree->SetBranchAddress("Coeff0", &coeff0);
-    tree->SetBranchAddress("Coeff1", &coeff1);
-    tree->SetBranchAddress("Coeff2", &coeff2);
-    tree->SetBranchAddress("Coeff3", &coeff3);
-    tree->SetBranchAddress("Coeff4", &coeff4);
-    tree->SetBranchAddress("Coeff5", &coeff5);
-    tree->SetBranchAddress("Chi2", &chi2_tt);
+    tree->SetBranchAddress("evtID", &evtID);
+    tree->SetBranchAddress("NTotPoints", &NTotPoints);
+    tree->SetBranchAddress("PointX", &PointX);
+    tree->SetBranchAddress("PointY", &PointY);
+    tree->SetBranchAddress("PointZ", &PointZ);
+    tree->SetBranchAddress("NTracks", &NTracks);
+    tree->SetBranchAddress("NPoints", NPoints);
+    tree->SetBranchAddress("start_TS", &start_TS);
+    tree->SetBranchAddress("Coeff0", &Coeff0);
+    tree->SetBranchAddress("Coeff1", &Coeff1);
+    tree->SetBranchAddress("Coeff2", &Coeff2);
+    tree->SetBranchAddress("Coeff3", &Coeff3);
+    tree->SetBranchAddress("Coeff4", &Coeff4);
+    tree->SetBranchAddress("Coeff5", &Coeff5);
+    tree->SetBranchAddress("Chi2", &Chi2);
 
-    TVector3 pos_cdwp, pos_tt, dir_cdwp, dir_tt;
+    TVector3 ipos, fpos;
+    TVector3 pos_cdwp, dir_cdwp, pos_tt, dir_tt;
 
     std::cout << "[INFO] Number of entries: " << tree->GetEntries() << '\n';
     std::size_t nb_cdwp_reco = 0ul;
@@ -138,15 +144,29 @@ void no_good_tt_maches(const char* filename) {
     TH1D* h_cdwp_no_tt_rate = new TH1D("h_cdwp_no_tt_rate", "h_cdwp_no_tt_rate", 50, 0.0, 15.0);
     for (int k = 0; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
-        TTimeStamp ts{cdwp_sec_out, cdwp_nsec_out};
+        TTimeStamp ts{sec, nsec};
 
-        pos_cdwp.SetXYZ(cdwp_x, cdwp_y, cdwp_z);
-        dir_cdwp.SetXYZ(cdwp_dx, cdwp_dy, cdwp_dz);
-        pos_tt.SetXYZ(coeff0[0], coeff1[0], coeff2[0] + 26452.0);
-        dir_tt.SetXYZ(coeff3[0], coeff4[0], coeff5[0]);
+        std::unordered_map<std::string, std::size_t> method_count = {
+            {"CdWpTtChi2", 0ul},
+            {"WpClassify", 0ul}
+        };
+        std::size_t j = 0ul;
+        for (std::size_t i = 0ul; i < method->size(); ++i) {
+            ++(method_count[(*method)[i]]);
+            if ((*method)[i] == "CdWpTtChi2") j = i;
+        }
+        if (/* method_count["WpClassify"] != 1ul || */ method_count["CdWpTtChi2"] != 1ul) continue;
+
+        ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
+        fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
+
+        pos_cdwp = ipos;
+        dir_cdwp = (fpos - ipos).Unit();
+
+        pos_tt.SetXYZ(Coeff0[0], Coeff1[0], Coeff2[0] + 26452.0);
+        dir_tt.SetXYZ(Coeff3[0], Coeff4[0], Coeff5[0]);
         dir_tt = dir_tt.Unit();
 
-        if (det_cdwp == 2) continue;
         if (!set_cdwp_previous_muon) {
             set_cdwp_previous_muon = true;
             cdwp_previous_muon = ts;
@@ -156,7 +176,7 @@ void no_good_tt_maches(const char* filename) {
             cdwp_previous_muon = ts;
         }
         ++nb_cdwp_reco;
-        if (n_tot_pts < 2 /* == 0 */) {
+        if (NTotPoints < 2 /* == 0 */) {
             double layer_tmp[3] = {24500.0, 26000.0, 27500.0};
             double cdwp_reco_x_at_layer[3];
             double cdwp_reco_y_at_layer[3];
@@ -184,8 +204,8 @@ void no_good_tt_maches(const char* filename) {
                 }
             }
         }
-        if (ntracks != 1) continue;
-        if (npts[0] >= 3) {
+        if (NTracks != 1) continue;
+        if (NPoints[0] >= 3) {
             if (!set_cdwp_tt_3pts_previous_muon) {
                 set_cdwp_tt_3pts_previous_muon = true;
                 cdwp_tt_3pts_previous_muon = ts;
@@ -332,15 +352,15 @@ void no_good_tt_maches(const char* filename) {
     c_cdwp_tt_2pts_muon_rate->Update();
 
     // ============================================================================================
-    // dt previous muon - no TT
+    // dt previous muon with no TT
     // ============================================================================================
 
     TCanvas* c_cdwp_no_tt_rate = new TCanvas("c_cdwp_no_tt_rate", "c_cdwp_no_tt_rate", 1000, 1000);
     c_cdwp_no_tt_rate->cd();
 
-    TF1* f_cdwp_no_tt_exp = new TF1("f_cdwp_no_tt_exp", "[0] * exp(- [1] * x)", 0.0, 15.0);
-    f_cdwp_no_tt_exp->SetParameter(0, h_cdwp_muon_rate->GetMaximum());
-    f_cdwp_no_tt_exp->SetParameter(1, 5.0);
+    TF1* f_cdwp_no_tt_exp = new TF1("f_cdwp_no_tt_exp", "[0] * exp(-x / [1]) + [2] * exp(-x / [3])", 0.0, 15.0);
+    double maxv = h_cdwp_no_tt_rate->GetMaximum();
+    f_cdwp_no_tt_exp->SetParameters(maxv, 1.0, maxv * 0.1, 5.0);
 
     f_cdwp_no_tt_exp->SetLineColor(kRed);
     f_cdwp_no_tt_exp->SetLineWidth(3);
@@ -381,18 +401,25 @@ void no_good_tt_maches(const char* filename) {
     TH1D* h_ts_diff_1trk_2pts = new TH1D("h_ts_diff_1trk_2pts", "h_ts_diff_1trk_2pts", 200, -1000.0, 1000.0);
     TH1D* h_ts_diff_1trk_3pts = new TH1D("h_ts_diff_1trk_3pts", "h_ts_diff_1trk_3pts", 200, -1000.0, 1000.0);
     TH1D* h_ts_diff_1trk_3pts_dlay = new TH1D("h_ts_diff_1trk_3pts_dlay", "h_ts_diff_1trk_3pts_dlay", 200, -1000.0, 1000.0);
-    
-    TH1D* h_x_pt = new TH1D("h_x_pt", "h_x_pt", 1000, -25.0, 25.0);
-    TH1D* h_x_pt_1trk = new TH1D("h_x_pt_1trk", "h_x_pt_1trk", 1000, -25.0, 25.0);
-    TH1D* h_x_pt_1trk_3pts = new TH1D("h_x_pt_1trk_3pts", "h_x_pt_1trk_3pts", 1000, -25.0, 25.0);
-    TH1D* h_x_pt_1trk_2pts = new TH1D("h_x_pt_1trk_2pts", "h_x_pt_1trk_2pts", 1000, -25.0, 25.0);
-    TH1D* h_x_pt_1trk_3pts_dlay = new TH1D("h_x_pt_1trk_3pts_dlay", "h_x_pt_1trk_3pts_dlay", 1000, -25.0, 25.0);
 
-    TH1D* h_y_pt = new TH1D("h_y_pt", "h_y_pt", 1000, -12.0, 12.0);
-    TH1D* h_y_pt_1trk = new TH1D("h_y_pt_1trk", "h_y_pt_1trk", 1000, -12.0, 12.0);
-    TH1D* h_y_pt_1trk_3pts = new TH1D("h_y_pt_1trk_3pts", "h_y_pt_1trk_3pts", 1000, -12.0, 12.0);
-    TH1D* h_y_pt_1trk_2pts = new TH1D("h_y_pt_1trk_2pts", "h_y_pt_1trk_2pts", 1000, -12.0, 12.0);
-    TH1D* h_y_pt_1trk_3pts_dlay = new TH1D("h_y_pt_1trk_3pts_dlay", "h_y_pt_1trk_3pts_dlay", 1000, -12.0, 12.0);
+    int nb_bins_x_tt = 926; // 1850; // 100;
+    double xmin_tt = -25.0;
+    double xmax_tt = 25.0;
+    int nb_bins_y_tt = 444; // 890; // 100
+    double ymin_tt = -12.0;
+    double ymax_tt = 12.0;
+    
+    TH1D* h_x_pt = new TH1D("h_x_pt", "h_x_pt", nb_bins_x_tt, xmin_tt, xmax_tt);
+    TH1D* h_x_pt_1trk = new TH1D("h_x_pt_1trk", "h_x_pt_1trk", nb_bins_x_tt, xmin_tt, xmax_tt);
+    TH1D* h_x_pt_1trk_3pts = new TH1D("h_x_pt_1trk_3pts", "h_x_pt_1trk_3pts", nb_bins_x_tt, xmin_tt, xmax_tt);
+    TH1D* h_x_pt_1trk_2pts = new TH1D("h_x_pt_1trk_2pts", "h_x_pt_1trk_2pts", nb_bins_x_tt, xmin_tt, xmax_tt);
+    TH1D* h_x_pt_1trk_3pts_dlay = new TH1D("h_x_pt_1trk_3pts_dlay", "h_x_pt_1trk_3pts_dlay", nb_bins_x_tt, xmin_tt, xmax_tt);
+
+    TH1D* h_y_pt = new TH1D("h_y_pt", "h_y_pt", nb_bins_y_tt, ymin_tt, ymax_tt);
+    TH1D* h_y_pt_1trk = new TH1D("h_y_pt_1trk", "h_y_pt_1trk", nb_bins_y_tt, ymin_tt, ymax_tt);
+    TH1D* h_y_pt_1trk_3pts = new TH1D("h_y_pt_1trk_3pts", "h_y_pt_1trk_3pts", nb_bins_y_tt, ymin_tt, ymax_tt);
+    TH1D* h_y_pt_1trk_2pts = new TH1D("h_y_pt_1trk_2pts", "h_y_pt_1trk_2pts", nb_bins_y_tt, ymin_tt, ymax_tt);
+    TH1D* h_y_pt_1trk_3pts_dlay = new TH1D("h_y_pt_1trk_3pts_dlay", "h_y_pt_1trk_3pts_dlay", nb_bins_y_tt, ymin_tt, ymax_tt);
 
     TH1D* h_z_pt = new TH1D("h_z_pt", "h_z_pt", 100, 24.0, 31.0);
     TH1D* h_z_pt_1trk = new TH1D("h_z_pt_1trk", "h_z_pt_1trk", 100, 24.0, 31.0);
@@ -402,31 +429,31 @@ void no_good_tt_maches(const char* filename) {
 
     std::vector<TH2D*> xy_pts_per_layer(6, nullptr);
     for (std::size_t k = 0ul; k < 6ul; ++k) {
-        xy_pts_per_layer[k] = new TH2D(Form("xy_pts_per_layer_%zu", k), Form("xy_pts_per_layer_%zu", k), 100, -25.0, 25.0, 100, -12.0, 12.0);
+        xy_pts_per_layer[k] = new TH2D(Form("xy_pts_per_layer_%zu", k), Form("xy_pts_per_layer_%zu", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
     std::vector<TH2D*> xy_pts_per_layer_3pts(6, nullptr);
     for (std::size_t k = 0ul; k < 6ul; ++k) {
-        xy_pts_per_layer_3pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_3pts", k), Form("xy_pts_per_layer_%zu_3pts", k), 100, -25.0, 25.0, 100, -12.0, 12.0);
+        xy_pts_per_layer_3pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_3pts", k), Form("xy_pts_per_layer_%zu_3pts", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
     std::vector<TH2D*> xy_pts_per_layer_2pts(6, nullptr);
     for (std::size_t k = 0ul; k < 6ul; ++k) {
-        xy_pts_per_layer_2pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_2pts", k), Form("xy_pts_per_layer_%zu_2pts", k), 100, -25.0, 25.0, 100, -12.0, 12.0);
+        xy_pts_per_layer_2pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_2pts", k), Form("xy_pts_per_layer_%zu_2pts", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
     std::vector<TH2D*> xy_pts_per_layer_cdwp_3pts(6, nullptr);
     for (std::size_t k = 0ul; k < 6ul; ++k) {
-        xy_pts_per_layer_cdwp_3pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_3pts", k), Form("xy_pts_per_layer_%zu_cdwp_3pts", k), 100, -25.0, 25.0, 100, -12.0, 12.0);
+        xy_pts_per_layer_cdwp_3pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_3pts", k), Form("xy_pts_per_layer_%zu_cdwp_3pts", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
     std::vector<TH2D*> xy_pts_per_layer_cdwp_2pts(6, nullptr);
     for (std::size_t k = 0ul; k < 6ul; ++k) {
-        xy_pts_per_layer_cdwp_2pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_2pts", k), Form("xy_pts_per_layer_%zu_cdwp_2pts", k), 100, -25.0, 25.0, 100, -12.0, 12.0);
+        xy_pts_per_layer_cdwp_2pts[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_2pts", k), Form("xy_pts_per_layer_%zu_cdwp_2pts", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
     std::vector<TH2D*> xy_pts_per_layer_cdwp_no_tt(3, nullptr);
     for (std::size_t k = 0ul; k < 3ul; ++k) {
-        xy_pts_per_layer_cdwp_no_tt[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_no_tt", k), Form("xy_pts_per_layer_%zu_cdwp_no_tt", k), 100, -50.0, 50.0, 100, -24.0, 24.0);
+        xy_pts_per_layer_cdwp_no_tt[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_no_tt", k), Form("xy_pts_per_layer_%zu_cdwp_no_tt", k), 2 * nb_bins_x_tt, 2 * xmin_tt, 2 * xmax_tt, 2 * nb_bins_y_tt, 2 * ymin_tt, 2 * ymax_tt);
     }
     std::vector<TH2D*> xy_pts_per_layer_cdwp_no_tt_zoom(3, nullptr);
     for (std::size_t k = 0ul; k < 3ul; ++k) {
-        xy_pts_per_layer_cdwp_no_tt_zoom[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_no_tt_zoom", k), Form("xy_pts_per_layer_%zu_cdwp_no_tt_zoom", k), 100, -25.0, 25.0, 100, -12.0, 12.0);
+        xy_pts_per_layer_cdwp_no_tt_zoom[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_no_tt_zoom", k), Form("xy_pts_per_layer_%zu_cdwp_no_tt_zoom", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
 
     TH1I* h_missing_layer = new TH1I("h_missing_layer", "Missing layer;Layer;Counts", 6, -0.5, 5.5);
@@ -442,10 +469,10 @@ void no_good_tt_maches(const char* filename) {
         cdwp_tt_2pts_distance_per_layer[k] = new TH1D(Form("cdwp_tt_2pts_distance_per_layer_%zu", k), Form("cdwp_tt_2pts_distance_per_layer_%zu", k), 100, 0.0, 15.0);
     }
 
-    TH2D* h_cdwp_tt_3pts_x_vs = new TH2D("h_cdwp_tt_3pts_x_vs", "h_cdwp_tt_3pts_x_vs", 100, -25.0, 25.0, 100, -25.0, 25.0);
-    TH2D* h_cdwp_tt_3pts_y_vs = new TH2D("h_cdwp_tt_3pts_y_vs", "h_cdwp_tt_3pts_y_vs", 100, -12.0, 12.0, 100, -12.0, 12.0);
-    TH2D* h_cdwp_tt_2pts_x_vs = new TH2D("h_cdwp_tt_2pts_x_vs", "h_cdwp_tt_2pts_x_vs", 100, -25.0, 25.0, 100, -25.0, 25.0);
-    TH2D* h_cdwp_tt_2pts_y_vs = new TH2D("h_cdwp_tt_2pts_y_vs", "h_cdwp_tt_2pts_y_vs", 100, -12.0, 12.0, 100, -12.0, 12.0);
+    TH2D* h_cdwp_tt_3pts_x_vs = new TH2D("h_cdwp_tt_3pts_x_vs", "h_cdwp_tt_3pts_x_vs", nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_x_tt, xmin_tt, xmax_tt);
+    TH2D* h_cdwp_tt_3pts_y_vs = new TH2D("h_cdwp_tt_3pts_y_vs", "h_cdwp_tt_3pts_y_vs", nb_bins_y_tt, ymin_tt, ymax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
+    TH2D* h_cdwp_tt_2pts_x_vs = new TH2D("h_cdwp_tt_2pts_x_vs", "h_cdwp_tt_2pts_x_vs", nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_x_tt, xmin_tt, xmax_tt);
+    TH2D* h_cdwp_tt_2pts_y_vs = new TH2D("h_cdwp_tt_2pts_y_vs", "h_cdwp_tt_2pts_y_vs", nb_bins_y_tt, ymin_tt, ymax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
 
     TH1D* h_cdwp_tt_3pts_x_diff = new TH1D("h_cdwp_tt_3pts_x_diff", "h_cdwp_tt_3pts_x_diff", 100, -5.0, 5.0);
     std::vector<TH1D*> cdwp_tt_3pts_x_diff_per_layer(6, nullptr);
@@ -482,19 +509,32 @@ void no_good_tt_maches(const char* filename) {
 
     for (int k = 0; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
-        TTimeStamp ts{cdwp_sec_out, cdwp_nsec_out};
+        TTimeStamp ts{sec, nsec};
 
-        pos_cdwp.SetXYZ(cdwp_x, cdwp_y, cdwp_z);
-        dir_cdwp.SetXYZ(cdwp_dx, cdwp_dy, cdwp_dz);
-        pos_tt.SetXYZ(coeff0[0], coeff1[0], coeff2[0] + 26452.0);
-        dir_tt.SetXYZ(coeff3[0], coeff4[0], coeff5[0]);
+        std::unordered_map<std::string, std::size_t> method_count = {
+            {"CdWpTtChi2", 0ul},
+            {"WpClassify", 0ul}
+        };
+        std::size_t j = 0ul;
+        for (std::size_t i = 0ul; i < method->size(); ++i) {
+            ++(method_count[(*method)[i]]);
+            if ((*method)[i] == "CdWpTtChi2") j = i;
+        }
+        if (/* method_count["WpClassify"] != 1ul || */ method_count["CdWpTtChi2"] != 1ul) continue;
+
+        ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
+        fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
+
+        pos_cdwp = ipos;
+        dir_cdwp = (fpos - ipos).Unit();
+
+        pos_tt.SetXYZ(Coeff0[0], Coeff1[0], Coeff2[0] + 26452.0);
+        dir_tt.SetXYZ(Coeff3[0], Coeff4[0], Coeff5[0]);
         dir_tt = dir_tt.Unit();
 
         // if (dir_tt.Cross(pos_tt).Mag() / 1000.0 > 17.7) continue;
-
-        if (det_cdwp == 2) continue;
         
-        if (n_tot_pts == 0) {
+        if (NTotPoints == 0) {
             double layer_tmp[3] = {24500.0, 26000.0, 27500.0};
             for (int i = 0; i < 3; ++i) {
                 double t_cdwp = (layer_tmp[i] - pos_cdwp.Z()) / dir_cdwp.Z();
@@ -505,58 +545,58 @@ void no_good_tt_maches(const char* filename) {
             continue;
         }
 
-        double ts_diff = 1.0e9 * (TTimeStamp{cdwp_sec_out, cdwp_nsec_out} - *ptr_tt_ts);
+        double ts_diff = 1.0e9 * (ts - *start_TS);
 
         h_ts_diff->Fill(ts_diff);
-        for (int i = 0; i < n_tot_pts; ++i) {
-            h_x_pt->Fill(pointx[i] / 1000.0);
-            h_y_pt->Fill(pointy[i] / 1000.0);
-            h_z_pt->Fill((pointz[i] + 26452.0) / 1000.0);
-            int lid = layer_id(pointz[i] + 26452.0);
+        for (int i = 0; i < NTotPoints; ++i) {
+            h_x_pt->Fill(PointX[i] / 1000.0);
+            h_y_pt->Fill(PointY[i] / 1000.0);
+            h_z_pt->Fill((PointZ[i] + 26452.0) / 1000.0);
+            int lid = layer_id(PointZ[i] + 26452.0);
             if (lid < 0) continue; 
-            xy_pts_per_layer[lid]->Fill(pointx[i] / 1000.0, pointy[i] / 1000.0);
+            xy_pts_per_layer[lid]->Fill(PointX[i] / 1000.0, PointY[i] / 1000.0);
         }
         
-        if (ntracks == 1) {
+        if (NTracks == 1) {
 
             h_ts_diff_1trk->Fill(ts_diff);
-            for (int i = 0; i < n_tot_pts; ++i) {
-                h_x_pt_1trk->Fill(pointx[i] / 1000.0);
-                h_y_pt_1trk->Fill(pointy[i] / 1000.0);
-                h_z_pt_1trk->Fill((pointz[i] + 26452.0) / 1000.0);
+            for (int i = 0; i < NTotPoints; ++i) {
+                h_x_pt_1trk->Fill(PointX[i] / 1000.0);
+                h_y_pt_1trk->Fill(PointY[i] / 1000.0);
+                h_z_pt_1trk->Fill((PointZ[i] + 26452.0) / 1000.0);
             }
 
-            if (npts[0] >= 3) {
+            if (NPoints[0] >= 3) {
 
                 h_ts_diff_1trk_3pts->Fill(ts_diff);
-                for (int i = 0; i < n_tot_pts; ++i) {
-                    h_x_pt_1trk_3pts->Fill(pointx[i] / 1000.0);
-                    h_y_pt_1trk_3pts->Fill(pointy[i] / 1000.0);
-                    h_z_pt_1trk_3pts->Fill((pointz[i] + 26452.0) / 1000.0);
-                    int lid = layer_id(pointz[i] + 26452.0);
+                for (int i = 0; i < NTotPoints; ++i) {
+                    h_x_pt_1trk_3pts->Fill(PointX[i] / 1000.0);
+                    h_y_pt_1trk_3pts->Fill(PointY[i] / 1000.0);
+                    h_z_pt_1trk_3pts->Fill((PointZ[i] + 26452.0) / 1000.0);
+                    int lid = layer_id(PointZ[i] + 26452.0);
                     if (lid < 0) continue;
-                    xy_pts_per_layer_3pts[lid]->Fill(pointx[i] / 1000.0, pointy[i] / 1000.0);
-                    double t_cdwp = (pointz[i] + 26452.0 - pos_cdwp.Z()) / dir_cdwp.Z();
+                    xy_pts_per_layer_3pts[lid]->Fill(PointX[i] / 1000.0, PointY[i] / 1000.0);
+                    double t_cdwp = (PointZ[i] + 26452.0 - pos_cdwp.Z()) / dir_cdwp.Z();
                     TVector3 p_cdwp_at_z = pos_cdwp + t_cdwp * dir_cdwp;
-                    double t_tt = (pointz[i] + 26452.0 - pos_tt.Z()) / dir_tt.Z();
+                    double t_tt = (PointZ[i] + 26452.0 - pos_tt.Z()) / dir_tt.Z();
                     TVector3 p_tt_at_z = pos_tt + t_tt * dir_tt;
                     xy_pts_per_layer_cdwp_3pts[lid]->Fill(p_cdwp_at_z.X() / 1000.0, p_cdwp_at_z.Y() / 1000.0);
                     double dist_m = (p_cdwp_at_z - p_tt_at_z).Mag() / 1000.0;
                     h_cdwp_tt_3pts_distance->Fill(dist_m);
                     cdwp_tt_3pts_distance_per_layer[lid]->Fill(dist_m);
-                    h_cdwp_tt_3pts_x_vs->Fill(p_cdwp_at_z.X() / 1000.0, pointx[i] / 1000.0);
-                    h_cdwp_tt_3pts_y_vs->Fill(p_cdwp_at_z.Y() / 1000.0, pointy[i] / 1000.0);
-                    h_cdwp_tt_3pts_x_diff->Fill((p_cdwp_at_z.X() - pointx[i]) / 1000.0);
-                    cdwp_tt_3pts_x_diff_per_layer[lid]->Fill((p_cdwp_at_z.X() - pointx[i]) / 1000.0);
-                    h_cdwp_tt_3pts_y_diff->Fill((p_cdwp_at_z.Y() - pointy[i]) / 1000.0);
-                    cdwp_tt_3pts_y_diff_per_layer[lid]->Fill((p_cdwp_at_z.Y() - pointy[i]) / 1000.0);
+                    h_cdwp_tt_3pts_x_vs->Fill(p_cdwp_at_z.X() / 1000.0, PointX[i] / 1000.0);
+                    h_cdwp_tt_3pts_y_vs->Fill(p_cdwp_at_z.Y() / 1000.0, PointY[i] / 1000.0);
+                    h_cdwp_tt_3pts_x_diff->Fill((p_cdwp_at_z.X() - PointX[i]) / 1000.0);
+                    cdwp_tt_3pts_x_diff_per_layer[lid]->Fill((p_cdwp_at_z.X() - PointX[i]) / 1000.0);
+                    h_cdwp_tt_3pts_y_diff->Fill((p_cdwp_at_z.Y() - PointY[i]) / 1000.0);
+                    cdwp_tt_3pts_y_diff_per_layer[lid]->Fill((p_cdwp_at_z.Y() - PointY[i]) / 1000.0);
                 }
 
                 std::unordered_set<int> layers_hit;
                 layers_hit.reserve(6);
-                for (int i = 0; i < n_tot_pts; ++i) {
-                    h_z_pt->Fill((pointz[i] + 26452.0) / 1000.0);
-                    int lid = layer_id(pointz[i] + 26452.0);
+                for (int i = 0; i < NTotPoints; ++i) {
+                    h_z_pt->Fill((PointZ[i] + 26452.0) / 1000.0);
+                    int lid = layer_id(PointZ[i] + 26452.0);
                     if (lid < 0) continue;
                     layers_hit.insert(lid);
                 }
@@ -564,10 +604,10 @@ void no_good_tt_maches(const char* filename) {
                 if (layers_hit.size() >= 3) { // at least 3 different layers
                     
                     h_ts_diff_1trk_3pts_dlay->Fill(ts_diff);
-                    for (int i = 0; i < n_tot_pts; ++i) {
-                        h_x_pt_1trk_3pts_dlay->Fill(pointx[i] / 1000.0);
-                        h_y_pt_1trk_3pts_dlay->Fill(pointy[i] / 1000.0);
-                        h_z_pt_1trk_3pts_dlay->Fill((pointz[i] + 26452.0) / 1000.0);
+                    for (int i = 0; i < NTotPoints; ++i) {
+                        h_x_pt_1trk_3pts_dlay->Fill(PointX[i] / 1000.0);
+                        h_y_pt_1trk_3pts_dlay->Fill(PointY[i] / 1000.0);
+                        h_z_pt_1trk_3pts_dlay->Fill((PointZ[i] + 26452.0) / 1000.0);
                     }
                 
                 }
@@ -577,34 +617,34 @@ void no_good_tt_maches(const char* filename) {
             else {
 
                 h_ts_diff_1trk_2pts->Fill(ts_diff);
-                for (int i = 0; i < n_tot_pts; ++i) {
-                    h_x_pt_1trk_2pts->Fill(pointx[i] / 1000.0);
-                    h_y_pt_1trk_2pts->Fill(pointy[i] / 1000.0);
-                    h_z_pt_1trk_2pts->Fill((pointz[i] + 26452.0) / 1000.0);
-                    int lid = layer_id(pointz[i] + 26452.0);
+                for (int i = 0; i < NTotPoints; ++i) {
+                    h_x_pt_1trk_2pts->Fill(PointX[i] / 1000.0);
+                    h_y_pt_1trk_2pts->Fill(PointY[i] / 1000.0);
+                    h_z_pt_1trk_2pts->Fill((PointZ[i] + 26452.0) / 1000.0);
+                    int lid = layer_id(PointZ[i] + 26452.0);
                     if (lid < 0) continue;
-                    xy_pts_per_layer_2pts[lid]->Fill(pointx[i] / 1000.0, pointy[i] / 1000.0);
-                    double t_cdwp = (pointz[i] + 26452.0 - pos_cdwp.Z()) / dir_cdwp.Z();
+                    xy_pts_per_layer_2pts[lid]->Fill(PointX[i] / 1000.0, PointY[i] / 1000.0);
+                    double t_cdwp = (PointZ[i] + 26452.0 - pos_cdwp.Z()) / dir_cdwp.Z();
                     TVector3 p_cdwp_at_z = pos_cdwp + t_cdwp * dir_cdwp;
-                    double t_tt = (pointz[i] + 26452.0 - pos_tt.Z()) / dir_tt.Z();
+                    double t_tt = (PointZ[i] + 26452.0 - pos_tt.Z()) / dir_tt.Z();
                     TVector3 p_tt_at_z = pos_tt + t_tt * dir_tt;
                     xy_pts_per_layer_cdwp_2pts[lid]->Fill(p_cdwp_at_z.X() / 1000.0, p_cdwp_at_z.Y() / 1000.0);
                     double dist_m = (p_cdwp_at_z - p_tt_at_z).Mag() / 1000.0;
                     h_cdwp_tt_2pts_distance->Fill(dist_m);
                     cdwp_tt_2pts_distance_per_layer[lid]->Fill(dist_m);
-                    h_cdwp_tt_2pts_x_vs->Fill(p_cdwp_at_z.X() / 1000.0, pointx[i] / 1000.0);
-                    h_cdwp_tt_2pts_y_vs->Fill(p_cdwp_at_z.Y() / 1000.0, pointy[i] / 1000.0);
-                    h_cdwp_tt_2pts_x_diff->Fill((p_cdwp_at_z.X() - pointx[i]) / 1000.0);
-                    cdwp_tt_2pts_x_diff_per_layer[lid]->Fill((p_cdwp_at_z.X() - pointx[i]) / 1000.0);
-                    h_cdwp_tt_2pts_y_diff->Fill((p_cdwp_at_z.Y() - pointy[i]) / 1000.0);
-                    cdwp_tt_2pts_y_diff_per_layer[lid]->Fill((p_cdwp_at_z.Y() - pointy[i]) / 1000.0);
+                    h_cdwp_tt_2pts_x_vs->Fill(p_cdwp_at_z.X() / 1000.0, PointX[i] / 1000.0);
+                    h_cdwp_tt_2pts_y_vs->Fill(p_cdwp_at_z.Y() / 1000.0, PointY[i] / 1000.0);
+                    h_cdwp_tt_2pts_x_diff->Fill((p_cdwp_at_z.X() - PointX[i]) / 1000.0);
+                    cdwp_tt_2pts_x_diff_per_layer[lid]->Fill((p_cdwp_at_z.X() - PointX[i]) / 1000.0);
+                    h_cdwp_tt_2pts_y_diff->Fill((p_cdwp_at_z.Y() - PointY[i]) / 1000.0);
+                    cdwp_tt_2pts_y_diff_per_layer[lid]->Fill((p_cdwp_at_z.Y() - PointY[i]) / 1000.0);
                 }
 
                 std::unordered_set<int> layers_hit;
                 layers_hit.reserve(6);
-                for (int i = 0; i < n_tot_pts; ++i) {
-                    h_z_pt->Fill((pointz[i] + 26452.0) / 1000.0);
-                    int lid = layer_id(pointz[i] + 26452.0);
+                for (int i = 0; i < NTotPoints; ++i) {
+                    h_z_pt->Fill((PointZ[i] + 26452.0) / 1000.0);
+                    int lid = layer_id(PointZ[i] + 26452.0);
                     if (lid < 0) continue;
                     layers_hit.insert(lid);
                 }
@@ -1424,8 +1464,13 @@ void no_good_tt_maches(const char* filename) {
     style(cdwp_tt_3pts_x_diff_per_layer[1], kRed+1, kDashed, 3);
     style(cdwp_tt_3pts_x_diff_per_layer[2], kGreen-2, kDashed, 3);
 
-    TF1* laplace_cdwp_tt_3pts_x_diff = new TF1("laplace_cdwp_tt_3pts_x_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
-    laplace_cdwp_tt_3pts_x_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    // TF1* laplace_cdwp_tt_3pts_x_diff = new TF1("laplace_cdwp_tt_3pts_x_diff","[0] * exp(-abs(x - [1]) / [2]) + [3]", -5.0, 5.0);
+    // laplace_cdwp_tt_3pts_x_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    TF1* laplace_cdwp_tt_3pts_x_diff = new TF1("laplace_cdwp_tt_3pts_x_diff","[0]*exp(-abs(x-[1])/[2]) + [3]*exp(-abs(x-[4])/[5])", -5.0, 5.0);
+    laplace_cdwp_tt_3pts_x_diff->SetParameters(
+        h_cdwp_tt_3pts_x_diff->GetMaximum(), 0.0, 0.5, 
+        0.25 * h_cdwp_tt_3pts_x_diff->GetMaximum(), 0.0, 0.25
+    );
     
     h_cdwp_tt_3pts_x_diff->Fit(laplace_cdwp_tt_3pts_x_diff, "R");
     h_cdwp_tt_3pts_x_diff->GetXaxis()->SetTitle("#Delta x (m) [CD/WP - TT]");
@@ -1479,8 +1524,13 @@ void no_good_tt_maches(const char* filename) {
     style(cdwp_tt_3pts_y_diff_per_layer[1], kRed+1, kDashed, 3);
     style(cdwp_tt_3pts_y_diff_per_layer[2], kGreen-2, kDashed, 3);
 
-    TF1* laplace_cdwp_tt_3pts_y_diff = new TF1("laplace_cdwp_tt_3pts_y_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
-    laplace_cdwp_tt_3pts_y_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    // TF1* laplace_cdwp_tt_3pts_y_diff = new TF1("laplace_cdwp_tt_3pts_y_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
+    // laplace_cdwp_tt_3pts_y_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    TF1* laplace_cdwp_tt_3pts_y_diff = new TF1("laplace_cdwp_tt_3pts_y_diff","[0]*exp(-abs(x-[1])/[2]) + [3]*exp(-abs(x-[4])/[5])", -5.0, 5.0);
+    laplace_cdwp_tt_3pts_y_diff->SetParameters(
+        h_cdwp_tt_3pts_y_diff->GetMaximum(), 0.0, 0.5, 
+        0.25 * h_cdwp_tt_3pts_y_diff->GetMaximum(), 0.0, 0.25
+    );
 
     h_cdwp_tt_3pts_y_diff->Fit(laplace_cdwp_tt_3pts_y_diff, "R");
     h_cdwp_tt_3pts_y_diff->GetXaxis()->SetTitle("#Delta y (m) [CD/WP - TT]");
@@ -1534,8 +1584,13 @@ void no_good_tt_maches(const char* filename) {
     style(cdwp_tt_2pts_x_diff_per_layer[1], kRed+1, kDashed, 3);
     style(cdwp_tt_2pts_x_diff_per_layer[2], kGreen-2, kDashed, 3);
 
-    TF1* laplace_cdwp_tt_2pts_x_diff = new TF1("laplace_cdwp_tt_2pts_x_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
-    laplace_cdwp_tt_2pts_x_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    // TF1* laplace_cdwp_tt_2pts_x_diff = new TF1("laplace_cdwp_tt_2pts_x_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
+    // laplace_cdwp_tt_2pts_x_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    TF1* laplace_cdwp_tt_2pts_x_diff = new TF1("laplace_cdwp_tt_2pts_x_diff","[0]*exp(-abs(x-[1])/[2]) + [3]*exp(-abs(x-[4])/[5])", -5.0, 5.0);
+    laplace_cdwp_tt_2pts_x_diff->SetParameters(
+        h_cdwp_tt_2pts_x_diff->GetMaximum(), 0.0, 0.5, 
+        0.25 * h_cdwp_tt_2pts_x_diff->GetMaximum(), 0.0, 0.25
+    );
 
     h_cdwp_tt_2pts_x_diff->Fit(laplace_cdwp_tt_2pts_x_diff, "R");
     h_cdwp_tt_2pts_x_diff->GetXaxis()->SetTitle("#Delta x (m) [CD/WP - TT]");
@@ -1589,8 +1644,13 @@ void no_good_tt_maches(const char* filename) {
     style(cdwp_tt_2pts_y_diff_per_layer[1], kRed+1, kDashed, 3);
     style(cdwp_tt_2pts_y_diff_per_layer[2], kGreen-2, kDashed, 3);
 
-    TF1* laplace_cdwp_tt_2pts_y_diff = new TF1("laplace_cdwp_tt_2pts_y_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
-    laplace_cdwp_tt_2pts_y_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    // TF1* laplace_cdwp_tt_2pts_y_diff = new TF1("laplace_cdwp_tt_2pts_y_diff","[0]*exp(-abs(x-[1])/[2]) + [3]", -5.0, 5.0);
+    // laplace_cdwp_tt_2pts_y_diff->SetParameters(100.0, 0.0, 0.1, 1.0); // [0]=A, [1]=mu, [2]=tau, [3]=C
+    TF1* laplace_cdwp_tt_2pts_y_diff = new TF1("laplace_cdwp_tt_2pts_y_diff","[0]*exp(-abs(x-[1])/[2]) + [3]*exp(-abs(x-[4])/[5])", -5.0, 5.0);
+    laplace_cdwp_tt_2pts_y_diff->SetParameters(
+        h_cdwp_tt_2pts_y_diff->GetMaximum(), 0.0, 0.5, 
+        0.25 * h_cdwp_tt_2pts_y_diff->GetMaximum(), 0.0, 0.25
+    );
 
     h_cdwp_tt_2pts_y_diff->Fit(laplace_cdwp_tt_2pts_y_diff, "R");
     h_cdwp_tt_2pts_y_diff->GetXaxis()->SetTitle("#Delta y (m) [CD/WP - TT]");

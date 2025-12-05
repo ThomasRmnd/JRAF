@@ -9,6 +9,7 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TLatex.h>
 #include <TLegend.h>
 #include <TStyle.h>
 #include <TTimeStamp.h>
@@ -118,6 +119,8 @@ void extract_plot_from_reco_matches(const char* filename) {
     };
 
 
+    int min_run = std::numeric_limits<int>::max();
+    int max_run = 0;
     for (int k = 0; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
 
@@ -137,6 +140,12 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         if (layers_hit.size() < 3) continue; // at least 3 different layers
 
+        pos_tt.SetXYZ(Coeff0[0], Coeff1[0], Coeff2[0] + cdwp_tt_coordinate_offset);
+        dir_tt.SetXYZ(Coeff3[0], Coeff4[0], Coeff5[0]);
+        dir_tt = dir_tt.Unit();
+
+        if (dir_tt.Cross(pos_tt).Mag() / 1000.0 > 17.7) continue;
+
         std::unordered_map<std::string, std::size_t> method_count = {
             {"CdWpTtChi2", 0ul},
             {"WpClassify", 0ul}
@@ -152,11 +161,9 @@ void extract_plot_from_reco_matches(const char* filename) {
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
         pos_cdwp = ipos;
         dir_cdwp = (fpos - ipos).Unit();
-        pos_tt.SetXYZ(Coeff0[0], Coeff1[0], Coeff2[0] + cdwp_tt_coordinate_offset);
-        dir_tt.SetXYZ(Coeff3[0], Coeff4[0], Coeff5[0]);
-        dir_tt = dir_tt.Unit();
 
-        if (dir_tt.Cross(pos_tt).Mag() / 1000.0 > 17.7) continue;
+        min_run = std::min(min_run, run_id);
+        max_run = std::max(max_run, run_id);
 
         angles.push_back(dir_tt.Angle(dir_cdwp) * 180.0 / M_PI);
         distances.push_back(
@@ -174,14 +181,14 @@ void extract_plot_from_reco_matches(const char* filename) {
         zenith_tt_v.push_back(-dir_tt.CosTheta());
         azimuth_tt_v.push_back( 180.0 / M_PI * (dir_tt.Phi() > 0.0 ? dir_tt.Phi() : dir_tt.Phi() + 2.0 * M_PI) );
 
-        if (angles.back() > 3.0 || distances.back() > 1.0) {
-            std::cout << TTimeStamp{sec, nsec} << ", angle: " << angles.back() << ", distance: " << distances.back() 
-                      << ", cdwp_dir: (" << dir_cdwp.Theta() << ", " << dir_cdwp.Phi() << "), tt_dir: (" << dir_tt.Theta() << ", "<< dir_tt.Phi() << ")\n";
+        // if (angles.back() > 3.0 || distances.back() > 1.0) {
+        //     std::cout << TTimeStamp{sec, nsec} << ", angle: " << angles.back() << ", distance: " << distances.back() 
+        //               << ", cdwp_dir: (" << dir_cdwp.Theta() << ", " << dir_cdwp.Phi() << "), tt_dir: (" << dir_tt.Theta() << ", "<< dir_tt.Phi() << ")\n";
             // std::cout << cdwp_sec_out << ' ' << cdwp_nsec_out << ' ' 
             //           << tt_x << ' ' << tt_y << ' ' << tt_z << ' ' << tt_dx << ' ' << tt_dy << ' ' << tt_dz << ' '
             //           << cdwp_x << ' ' << cdwp_y << ' ' << cdwp_z << ' ' << cdwp_dx << ' ' << cdwp_dy << ' ' << cdwp_dz << '\n';
             // std::cout << cdwp_sec_out << ' ' << cdwp_nsec_out << ' ' << tt_x << ' ' << tt_y << ' ' << tt_z << ' ' << tt_dx << ' ' << tt_dy << ' ' << tt_dz << '\n';
-        }
+        // }
     }
 
     TCanvas* c_ts_diff = new TCanvas("c_ts_diff", "c_ts_diff", 1000, 1000);
@@ -306,6 +313,23 @@ void extract_plot_from_reco_matches(const char* filename) {
     leg_angle->AddEntry(h_cdcluster_angle, "CD cluster", "l");
     leg_angle->Draw();
 
+    double x_text = 0.55;
+    double y_text = 0.63;   // Slightly below the legend's lower Y (0.65)
+
+    TLatex* tex1_angle = new TLatex();
+    tex1_angle->SetNDC();
+    tex1_angle->SetTextFont(72);
+    tex1_angle->SetTextSize(0.035);
+    tex1_angle->SetTextAlign(13); // left-bottom alignment
+    tex1_angle->DrawLatex(x_text, y_text, Form("RUN %d-%d", min_run, max_run));
+
+    TLatex* tex2_angle = new TLatex();
+    tex2_angle->SetNDC();
+    tex2_angle->SetTextFont(42);
+    tex2_angle->SetTextSize(0.025);
+    tex2_angle->SetTextAlign(13); // left-bottom alignment
+    tex2_angle->DrawLatex(x_text, y_text - 0.04, Form("Entries %lld", static_cast<long long>(h_angle->GetEntries())));
+
     c_angle->SetTickx();
     c_angle->SetTicky();
     c_angle->Update();
@@ -340,6 +364,20 @@ void extract_plot_from_reco_matches(const char* filename) {
     leg_distance->AddEntry(h_wpcluster_distance, "WP cluster", "l");
     leg_distance->AddEntry(h_cdcluster_distance, "CD cluster", "l");
     leg_distance->Draw();
+
+    TLatex* tex1_distance = new TLatex();
+    tex1_distance->SetNDC();
+    tex1_distance->SetTextFont(72);
+    tex1_distance->SetTextSize(0.035);
+    tex1_distance->SetTextAlign(13); // left-bottom alignment
+    tex1_distance->DrawLatex(x_text, y_text, Form("RUN %d-%d", min_run, max_run));
+
+    TLatex* tex2_distance = new TLatex();
+    tex2_distance->SetNDC();
+    tex2_distance->SetTextFont(42);
+    tex2_distance->SetTextSize(0.025);
+    tex2_distance->SetTextAlign(13); // left-bottom alignment
+    tex2_distance->DrawLatex(x_text, y_text - 0.04, Form("Entries %lld", static_cast<long long>(h_angle->GetEntries())));
 
     c_distance->SetTickx();
     c_distance->SetTicky();
@@ -378,15 +416,15 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle_distance->Draw("COLZ");
     c_angle_distance->Update();
 
-    // TCanvas* c_angle_chi2cdwp = new TCanvas("c_angle_chi2cdwp", "c_angle_chi2cdwp", 1000, 1000);
-    // c_angle_chi2cdwp->cd();
-    // h_angle_chi2cdwp->Draw("COLZ");
-    // c_angle_chi2cdwp->Update();
+    TCanvas* c_angle_chi2cdwp = new TCanvas("c_angle_chi2cdwp", "c_angle_chi2cdwp", 1000, 1000);
+    c_angle_chi2cdwp->cd();
+    h_angle_chi2cdwp->Draw("COLZ");
+    c_angle_chi2cdwp->Update();
 
-    // TCanvas* c_distance_chi2cdwp = new TCanvas("c_distance_chi2cdwp", "c_distance_chi2cdwp", 1000, 1000);
-    // c_distance_chi2cdwp->cd();
-    // h_distance_chi2cdwp->Draw("COLZ");
-    // c_distance_chi2cdwp->Update();
+    TCanvas* c_distance_chi2cdwp = new TCanvas("c_distance_chi2cdwp", "c_distance_chi2cdwp", 1000, 1000);
+    c_distance_chi2cdwp->cd();
+    h_distance_chi2cdwp->Draw("COLZ");
+    c_distance_chi2cdwp->Update();
 
     std::nth_element(angles.begin(), angles.begin() + angles.size() * 682 / 1000, angles.end());
     std::nth_element(distances.begin(), distances.begin() + distances.size() * 682 / 1000, distances.end());
@@ -510,19 +548,31 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TH1D* h_cdwp_zenith = new TH1D("h_cdwp_zenith", "h_cdwp_zenith", 100, 0.0, 1.0);
     TH1D* h_cdwp_azimuth = new TH1D("h_cdwp_azimuth", "h_cdwp_azimuth", 100, 0.0, 360.0);
+    TH1D* h_cdwp_zenith_good = new TH1D("h_cdwp_zenith_good", "h_cdwp_zenith_good", 100, 0.0, 1.0);
+    TH1D* h_cdwp_azimuth_good = new TH1D("h_cdwp_azimuth_good", "h_cdwp_azimuth_good", 100, 0.0, 360.0);
     TH1D* h_tt_zenith = new TH1D("h_tt_zenith", "h_tt_zenith", 100, 0.0, 1.0);
     TH1D* h_tt_azimuth = new TH1D("h_tt_azimuth", "h_tt_azimuth", 100, 0.0, 360.0);
 
     for (std::size_t k = 0ul; k < zenith_cdwp_v.size(); ++k) {
         h_cdwp_zenith->Fill(zenith_cdwp_v[k]);
         h_cdwp_azimuth->Fill(azimuth_cdwp_v[k]);
+        if (angles[k] < 5.0 && distances[k] < 2.0) {
+            h_cdwp_zenith_good->Fill(zenith_cdwp_v[k]);
+            h_cdwp_azimuth_good->Fill(azimuth_cdwp_v[k]);
+        }
         h_tt_zenith->Fill(zenith_tt_v[k]);
         h_tt_azimuth->Fill(azimuth_tt_v[k]);
     }
     h_cdwp_zenith->Scale(1.0 / h_cdwp_zenith->Integral());
     h_cdwp_azimuth->Scale(1.0 / h_cdwp_azimuth->Integral());
+    h_cdwp_zenith_good->Scale(1.0 / h_cdwp_zenith_good->Integral());
+    h_cdwp_azimuth_good->Scale(1.0 / h_cdwp_azimuth_good->Integral());
     h_tt_zenith->Scale(1.0 / h_tt_zenith->Integral());
     h_tt_azimuth->Scale(1.0 / h_tt_azimuth->Integral());
+
+    // ============================================================================================
+    // Zenith and Azimuth - All correlated "single" muon reconstruction
+    // ============================================================================================
 
     TCanvas* c_sim_tt_zenith = new TCanvas("c_sim_tt_zenith", "c_sim_tt_zenith", 1000, 1000);
     c_sim_tt_zenith->cd();
@@ -599,4 +649,84 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_sim_tt_azimuth->SetTickx();
     c_sim_tt_azimuth->SetTicky();
     c_sim_tt_azimuth->Update();
+
+    // ============================================================================================
+    // Zenith and Azimuth - Only "good" correlated "single" muon reconstruction
+    // ============================================================================================
+
+    TCanvas* c_sim_tt_zenith_good = new TCanvas("c_sim_tt_zenith_good", "c_sim_tt_zenith_good", 1000, 1000);
+    c_sim_tt_zenith_good->cd();
+
+    h_sim_tt_zenith->SetStats(0);
+    h_sim_tt_zenith->SetMinimum(0.0001);
+    h_sim_tt_zenith->SetMaximum(std::max({h_sim_tt_zenith->GetMaximum(), h_cdwp_zenith_good->GetMaximum(), h_tt_zenith->GetMaximum()}));
+    h_sim_tt_zenith->GetXaxis()->SetTitle("cos(#theta_{d})");
+    h_sim_tt_zenith->GetXaxis()->CenterTitle(kTRUE);
+    h_sim_tt_zenith->GetYaxis()->SetTitle("Entries");
+    h_sim_tt_zenith->GetYaxis()->CenterTitle(kTRUE);
+    h_sim_tt_zenith->GetYaxis()->SetTitleOffset(1.5);
+    h_sim_tt_zenith->SetLineWidth(3);
+    h_sim_tt_zenith->SetLineColor(kBlack);
+    h_sim_tt_zenith->SetLineStyle(kSolid);
+    h_sim_tt_zenith->Draw("HIST");
+    h_cdwp_zenith_good->SetLineColor(kRed+1);
+    h_cdwp_zenith_good->SetLineWidth(1);
+    h_cdwp_zenith_good->SetMarkerColor(kRed+1);
+    h_cdwp_zenith_good->SetMarkerSize(1.25);
+    h_cdwp_zenith_good->SetMarkerStyle(kFullCircle);
+    h_cdwp_zenith_good->Draw("SAME");
+    h_tt_zenith->SetLineColor(kBlue+1);
+    h_tt_zenith->SetLineWidth(1);
+    h_tt_zenith->SetMarkerColor(kBlue+1);
+    h_tt_zenith->SetMarkerSize(1.25);
+    h_tt_zenith->SetMarkerStyle(kFullCircle);
+    h_tt_zenith->Draw("SAME");
+
+    TLegend* leg_sim_tt_zenith_good = new TLegend(0.15, 0.65, 0.45, 0.85);
+    leg_sim_tt_zenith_good->AddEntry(h_sim_tt_zenith, "TT simu reco", "l");
+    leg_sim_tt_zenith_good->AddEntry(h_cdwp_zenith_good, "CD/WP data reco", "l");
+    leg_sim_tt_zenith_good->AddEntry(h_tt_zenith, "TT data reco", "l");
+    leg_sim_tt_zenith_good->Draw();
+
+    c_sim_tt_zenith_good->SetTickx();
+    c_sim_tt_zenith_good->SetTicky();
+    c_sim_tt_zenith_good->Update();
+
+    TCanvas* c_sim_tt_azimuth_good = new TCanvas("c_sim_tt_azimuth_good", "c_sim_tt_azimuth_good", 1000, 1000);
+    c_sim_tt_azimuth_good->cd();
+
+    h_sim_tt_azimuth->SetStats(0);
+    h_sim_tt_azimuth->SetMinimum(0.0001);
+    h_sim_tt_azimuth->SetMaximum(std::max({h_sim_tt_azimuth->GetMaximum(), h_cdwp_azimuth_good->GetMaximum(), h_tt_azimuth->GetMaximum()}));
+    h_sim_tt_azimuth->GetXaxis()->SetTitle("#phi_{d}");
+    h_sim_tt_azimuth->GetXaxis()->CenterTitle(kTRUE);
+    h_sim_tt_azimuth->GetYaxis()->SetTitle("Entries");
+    h_sim_tt_azimuth->GetYaxis()->CenterTitle(kTRUE);
+    h_sim_tt_azimuth->GetYaxis()->SetTitleOffset(1.5);
+    h_sim_tt_azimuth->SetLineWidth(3);
+    h_sim_tt_azimuth->SetLineColor(kBlack);
+    h_sim_tt_azimuth->SetLineStyle(kSolid);
+    h_sim_tt_azimuth->Draw("HIST");
+    h_cdwp_azimuth_good->SetLineColor(kRed+1);
+    h_cdwp_azimuth_good->SetLineWidth(1);
+    h_cdwp_azimuth_good->SetMarkerColor(kRed+1);
+    h_cdwp_azimuth_good->SetMarkerSize(1.25);
+    h_cdwp_azimuth_good->SetMarkerStyle(kFullCircle);
+    h_cdwp_azimuth_good->Draw("SAME");
+    h_tt_azimuth->SetLineColor(kBlue+1);
+    h_tt_azimuth->SetLineWidth(1);
+    h_tt_azimuth->SetMarkerColor(kBlue+1);
+    h_tt_azimuth->SetMarkerSize(1.25);
+    h_tt_azimuth->SetMarkerStyle(kFullCircle);
+    h_tt_azimuth->Draw("SAME");
+
+    TLegend* leg_sim_tt_azimuth_good = new TLegend(0.35, 0.15, 0.65, 0.35);
+    leg_sim_tt_azimuth_good->AddEntry(h_sim_tt_azimuth, "TT simu reco", "l");
+    leg_sim_tt_azimuth_good->AddEntry(h_cdwp_azimuth_good, "CD/WP data reco", "l");
+    leg_sim_tt_azimuth_good->AddEntry(h_tt_azimuth, "TT data reco", "l");
+    leg_sim_tt_azimuth_good->Draw();
+
+    c_sim_tt_azimuth_good->SetTickx();
+    c_sim_tt_azimuth_good->SetTicky();
+    c_sim_tt_azimuth_good->Update();
 }
