@@ -28,6 +28,8 @@ public:
 
     std::string name;
 
+    int run_id;
+
     double posx_p;
     double posy_p;
     double posz_p;
@@ -54,6 +56,8 @@ public:
             std::cerr << "Tree " << name << " not found in file\n";
             return false;
         }
+        // (*tree)->SetBranchAddress("run_id", &run_id);
+
         (*tree)->SetBranchAddress("posx_p", &posx_p);
         (*tree)->SetBranchAddress("posy_p", &posy_p);
         (*tree)->SetBranchAddress("posz_p", &posz_p);
@@ -72,6 +76,8 @@ public:
 
         return true;
     }
+
+    virtual bool selection() = 0;
 
     virtual void print() {
         std::cout << "Prompt: " /* (" << posx_p << ", " << posy_p << ", " << posz_p << "), */ "E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp(sec_p, nsec_p) << '\n';
@@ -154,15 +160,46 @@ public:
         return true;
     }
 
+    bool selection() override {
+        TTimeStamp ts_p{sec_p, nsec_p};
+        TTimeStamp ts_d{sec_d, nsec_d};
+        TVector3 pos_p{posx_p, posy_p, posz_p};
+        TVector3 pos_d{posx_d, posy_d, posz_d};
+        if (pos_p.Mag() > 16500.0) return false;
+        if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
+        if (e_p < 0.7 || 12.0 < e_p) return false;
+        if (e_d < 2.0 || 2.5 < e_d) return false;
+
+        std::size_t nb_neutron_veto = 0ul;
+        for (std::size_t k = 0ul; k < e_n->size(); ++k) {
+            if (e_n->operator[](k) < 1.5 || 20.0 < e_n->operator[](k)) continue;
+            TTimeStamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
+            TVector3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
+            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
+            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
+            ++nb_neutron_veto;
+        }
+
+        std::size_t nb_multu_veto = 0ul;
+        for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
+            if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
+            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_p - ts_mult < TTimeStamp{0, 1000000} || TTimeStamp{0, 0} < ts_p - ts_mult) continue;
+            if (ts_d - ts_mult < TTimeStamp{0, 0} || TTimeStamp{0, 1000000} < ts_d - ts_mult) continue;
+            ++nb_multu_veto;
+        }
+
+        return (nb_neutron_veto == 0ul && nb_multu_veto == 0ul);
+    }
+
     void print() override {
         TTimeStamp ts_p{sec_p, nsec_p};
         TTimeStamp ts_d{sec_d, nsec_d};
         TVector3 pos_p{posx_p, posy_p, posz_p};
         TVector3 pos_d{posx_d, posy_d, posz_d};
-        if (pos_p.Mag() > 16500.0) return;
-        if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return;
-        if (e_p < 0.7 || 12.0 < e_p) return;
-        if (e_d < 2.0 || 2.5 < e_d) return;
 
         std::string method = "";
         double d_mu2p = std::numeric_limits<double>::infinity();
@@ -186,46 +223,69 @@ public:
             }
         }
 
-        std::size_t nb_neutron_veto = 0ul;
-        std::size_t index = 0l;
-        for (std::size_t k = 0ul; k < e_n->size(); ++k) {
-            if (e_n->operator[](k) < 1.5 || 20.0 < e_n->operator[](k)) continue;
-            TTimeStamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
-            TVector3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
-            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
-            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
-            index = k;
-            ++nb_neutron_veto;
+        if (ts_p < TTimeStamp(2025, 8, 30, 0, 0, 0) || TTimeStamp(2025, 8, 31, 0, 0, 0) < ts_p) return; 
+
+        // std::cout << "Prompt: (" << posx_p << ", " << posy_p << ", " << posz_p << "), E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp(sec_p, nsec_p) << '\n';
+        // std::cout << "Delayed: (" << posx_d << ", " << posy_d << ", " << posz_d << "), E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp(sec_d, nsec_d) << '\n';
+        // std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
+        // std::cout << "Number of Multiplicity Veto associated: " << nb_multu_veto << '\n';
+        // std::cout << "Muon (" << method << "): d_mu2p = " << d_mu2p << ", t_mu2p = " << t_mu2p << ", d_mu2d = " << d_mu2d << ", t_mu2d = " << t_mu2d << '\n';
+
+        if (selection()) {
+            std::cout << "Prompt: E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp{sec_p, nsec_p} << '\n';
+            std::cout << "Delayed: E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp{sec_d, nsec_d} << '\n';
         }
-
-        std::cout << "Prompt: (" << posx_p << ", " << posy_p << ", " << posz_p << "), E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp(sec_p, nsec_p) << '\n';
-        std::cout << "Delayed: (" << posx_d << ", " << posy_d << ", " << posz_d << "), E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp(sec_d, nsec_d) << '\n';
-        std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
-        std::cout << "Number of Multiplicity Veto associated: " << mult_type->size() << ", " << (mult_type->size() ? (*e_mult)[0] : 0.0) << '\n';
-        std::cout << "Muon (" << method << "): d_mu2p = " << d_mu2p << ", t_mu2p = " << t_mu2p << ", d_mu2d = " << d_mu2d << ", t_mu2d = " << t_mu2d << '\n';
-
-        // if (nb_neutron_veto == 0ul && mult_type->empty()) {
-        //     std::cout << "Prompt: E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp{sec_p, nsec_p} << '\n';
-        //     std::cout << "Delayed: E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp{sec_d, nsec_d} << '\n';
-        // }
     }
 
 };
 
+struct ThomasIBD {
+
+    int run_id;
+
+    TTimeStamp ts_p;
+    double e_p;
+    double totq_p;
+
+    TTimeStamp ts_d;
+    double e_d;
+    double totq_d;
+
+};
+
+bool operator<(const ThomasIBD& lhs, const ThomasIBD& rhs) {
+    return lhs.ts_p < rhs.ts_p;
+}
+
 void print_all_entries(TFile* file, TTree** tree, AnalysisBase* analysis) {
     if (!analysis->bind(file, tree)) return;
+    std::set<ThomasIBD> ibds;
     std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << (*tree)->GetEntries() << ") ===\n";
     for (long k = 0; k < (*tree)->GetEntries(); ++k) {
         (*tree)->GetEntry(k);
-        analysis->print();
+        // analysis->print();
+        if (!analysis->selection()) continue;
+        ThomasIBD ibd;
+        ibd.run_id = 0;
+        ibd.ts_p = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.e_p = analysis->e_p;
+        ibd.totq_p = analysis->totq_p;
+        ibd.ts_d = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.e_d = analysis->e_d;
+        ibd.totq_d = analysis->totq_d;
+        ibds.insert(ibd);
+    }
+
+    for (std::set<ThomasIBD>::const_iterator it = ibds.begin(); it != ibds.end(); ++it) {
+        std::cout << "Prompt: " << "E = " << it->e_p << ", Q = " << it->totq_p << ", Time = " << it->ts_p << '\n';
+        std::cout << "Delayed: " << "E = " << it->e_d << ", Q = " << it->totq_d << ", Time = " << it->ts_d << '\n';
     }
 }
 
 
 struct VanessaIBD {
 
-    int run_number;
+    int run_id;
 
     TTimeStamp ts_p;
     double e_p;
@@ -244,11 +304,11 @@ bool operator<(const VanessaIBD& lhs, const VanessaIBD& rhs) {
 void analyze_vanessa_result(TFile* file, TTree* tree) {
     tree = file->Get<TTree>("events");
     std::set<VanessaIBD> ibds;
-    double run_number;
+    double run_id;
     double t_p, t_d;
     double e_p, e_d;
     double totq_p, totq_d;
-    tree->SetBranchAddress("run_number", &run_number);
+    tree->SetBranchAddress("run_number", &run_id);
     tree->SetBranchAddress("time_p_ns", &t_p);
     tree->SetBranchAddress("time_d_ns", &t_d);
     tree->SetBranchAddress("energy_p_omilrec", &e_p);
@@ -262,7 +322,7 @@ void analyze_vanessa_result(TFile* file, TTree* tree) {
         time_t sec_d = static_cast<time_t>(t_d / 1.0e9);
         int nsec_d = static_cast<int>(t_d - static_cast<double>(sec_d) * 1.0e9);
         VanessaIBD ibd;
-        ibd.run_number = run_number;
+        ibd.run_id = run_id;
         ibd.ts_p = TTimeStamp{sec_p, nsec_p};
         ibd.e_p = e_p;
         ibd.totq_p = totq_p;
@@ -272,8 +332,8 @@ void analyze_vanessa_result(TFile* file, TTree* tree) {
         ibds.insert(ibd);
     }
     for (std::set<VanessaIBD>::const_iterator it = ibds.begin(); it != ibds.end(); ++it) {
-        std::cout << "(RUN = " << it->run_number << ") Prompt: " << "E = " << it->e_p << ", Q = " << it->totq_p << ", Time = " << it->ts_p << '\n';
-        std::cout << "(RUN = " << it->run_number << ") Delayed: " << "E = " << it->e_d << ", Q = " << it->totq_d << ", Time = " << it->ts_d << '\n';
+        std::cout << "(RUN = " << it->run_id << ") Prompt: " << "E = " << it->e_p << ", Q = " << it->totq_p << ", Time = " << it->ts_p << '\n';
+        std::cout << "(RUN = " << it->run_id << ") Delayed: " << "E = " << it->e_d << ", Q = " << it->totq_d << ", Time = " << it->ts_d << '\n';
     }
 }
 

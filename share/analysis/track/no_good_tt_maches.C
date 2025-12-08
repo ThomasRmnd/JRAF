@@ -128,22 +128,34 @@ void no_good_tt_maches(const char* filename) {
     TVector3 ipos, fpos;
     TVector3 pos_cdwp, dir_cdwp, pos_tt, dir_tt;
 
+    std::unordered_set<int> run_with_tt;
+    for (int k = 0; k < tree->GetEntries(); ++k) {
+        if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
+        tree->GetEntry(k);
+        if (NTotPoints == 0) continue;
+        run_with_tt.insert(run_id);
+    }
+
     std::cout << "[INFO] Number of entries: " << tree->GetEntries() << '\n';
     std::size_t nb_cdwp_reco = 0ul;
     bool set_cdwp_previous_muon = false;
     TTimeStamp cdwp_previous_muon{0, 0};
-    TH1D* h_cdwp_muon_rate = new TH1D("h_cdwp_muon_rate", "h_cdwp_muon_rate", 50, 0.0, 3.0);
+    TH1D* h_cdwp_muon_rate = new TH1D("h_cdwp_muon_rate", "h_cdwp_muon_rate", 50, 0.0, 5.0);
     bool set_cdwp_tt_3pts_previous_muon = false;
     bool set_cdwp_tt_2pts_previous_muon = false;
     TTimeStamp cdwp_tt_3pts_previous_muon{0, 0};
     TTimeStamp cdwp_tt_2pts_previous_muon{0, 0};
-    TH1D* h_cdwp_tt_3pts_muon_rate = new TH1D("h_cdwp_tt_3pts_muon_rate", "h_cdwp_tt_3pts_muon_rate", 50, 0.0, 15.0);
-    TH1D* h_cdwp_tt_2pts_muon_rate = new TH1D("h_cdwp_tt_2pts_muon_rate", "h_cdwp_tt_2pts_muon_rate", 50, 0.0, 15.0);
+    TH1D* h_cdwp_tt_3pts_muon_rate = new TH1D("h_cdwp_tt_3pts_muon_rate", "h_cdwp_tt_3pts_muon_rate", 50, 0.0, 20.0);
+    TH1D* h_cdwp_tt_2pts_muon_rate = new TH1D("h_cdwp_tt_2pts_muon_rate", "h_cdwp_tt_2pts_muon_rate", 50, 0.0, 20.0);
     bool set_cdwp_no_tt_rate_previous_muon = false;
     TTimeStamp cdwp_no_tt_rate_previous_muon{0, 0};
-    TH1D* h_cdwp_no_tt_rate = new TH1D("h_cdwp_no_tt_rate", "h_cdwp_no_tt_rate", 50, 0.0, 15.0);
+    TH1D* h_cdwp_no_tt_rate = new TH1D("h_cdwp_no_tt_rate", "h_cdwp_no_tt_rate", 50, 0.0, 20.0);
     for (int k = 0; k < tree->GetEntries(); ++k) {
+        if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
         tree->GetEntry(k);
+
+        if (run_with_tt.find(run_id) == run_with_tt.end()) continue;
+
         TTimeStamp ts{sec, nsec};
 
         std::unordered_map<std::string, std::size_t> method_count = {
@@ -235,7 +247,7 @@ void no_good_tt_maches(const char* filename) {
     TCanvas* c_cdwp_muon_rate = new TCanvas("c_cdwp_muon_rate", "c_cdwp_muon_rate", 1000, 1000);
     c_cdwp_muon_rate->cd();
 
-    TF1* f_cdwp_exp = new TF1("f_cdwp_exp", "[0] * exp(- [1] * x)", 0.0, 3.0);
+    TF1* f_cdwp_exp = new TF1("f_cdwp_exp", "[0] * exp(- [1] * x)", 0.0, 5.0);
     f_cdwp_exp->SetParameter(0, h_cdwp_muon_rate->GetMaximum());
     f_cdwp_exp->SetParameter(1, 5.0);
 
@@ -276,7 +288,7 @@ void no_good_tt_maches(const char* filename) {
     TCanvas* c_cdwp_tt_3pts_muon_rate = new TCanvas("c_cdwp_tt_3pts_muon_rate", "c_cdwp_tt_3pts_muon_rate", 1000, 1000);
     c_cdwp_tt_3pts_muon_rate->cd();
 
-    TF1* f_cdwp_tt_3pts_exp = new TF1("f_cdwp_tt_3pts_exp", "[0] * exp(- [1] * x)", 0.0, 15.0);
+    TF1* f_cdwp_tt_3pts_exp = new TF1("f_cdwp_tt_3pts_exp", "[0] * exp(- [1] * x)", 0.0, 20.0);
     f_cdwp_tt_3pts_exp->SetParameter(0, h_cdwp_tt_3pts_muon_rate->GetMaximum());
     f_cdwp_tt_3pts_exp->SetParameter(1, 5.0);
 
@@ -317,7 +329,7 @@ void no_good_tt_maches(const char* filename) {
     TCanvas* c_cdwp_tt_2pts_muon_rate = new TCanvas("c_cdwp_tt_2pts_muon_rate", "c_cdwp_tt_2pts_muon_rate", 1000, 1000);
     c_cdwp_tt_2pts_muon_rate->cd();
 
-    TF1* f_cdwp_tt_2pts_exp = new TF1("f_cdwp_tt_2pts_exp", "[0] * exp(- [1] * x)", 0.0, 15.0);
+    TF1* f_cdwp_tt_2pts_exp = new TF1("f_cdwp_tt_2pts_exp", "[0] * exp(- [1] * x)", 0.0, 20.0);
     f_cdwp_tt_2pts_exp->SetParameter(0, h_cdwp_tt_2pts_muon_rate->GetMaximum());
     f_cdwp_tt_2pts_exp->SetParameter(1, 5.0);
 
@@ -358,7 +370,7 @@ void no_good_tt_maches(const char* filename) {
     TCanvas* c_cdwp_no_tt_rate = new TCanvas("c_cdwp_no_tt_rate", "c_cdwp_no_tt_rate", 1000, 1000);
     c_cdwp_no_tt_rate->cd();
 
-    TF1* f_cdwp_no_tt_exp = new TF1("f_cdwp_no_tt_exp", "[0] * exp(-x / [1]) + [2] * exp(-x / [3])", 0.0, 15.0);
+    TF1* f_cdwp_no_tt_exp = new TF1("f_cdwp_no_tt_exp", "[0] * exp(-x / [1]) + [2] * exp(-x / [3])", 0.0, 20.0);
     double maxv = h_cdwp_no_tt_rate->GetMaximum();
     f_cdwp_no_tt_exp->SetParameters(maxv, 1.0, maxv * 0.1, 5.0);
 
@@ -455,6 +467,10 @@ void no_good_tt_maches(const char* filename) {
     for (std::size_t k = 0ul; k < 3ul; ++k) {
         xy_pts_per_layer_cdwp_no_tt_zoom[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_no_tt_zoom", k), Form("xy_pts_per_layer_%zu_cdwp_no_tt_zoom", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
     }
+    std::vector<TH2D*> xy_pts_per_layer_cdwp_2pts_extrapolation(3, nullptr);
+    for (std::size_t k = 0ul; k < 3ul; ++k) {
+        xy_pts_per_layer_cdwp_2pts_extrapolation[k] = new TH2D(Form("xy_pts_per_layer_%zu_cdwp_2pts_extrapolation", k), Form("xy_pts_per_layer_%zu_cdwp_2pts_extrapolation", k), nb_bins_x_tt, xmin_tt, xmax_tt, nb_bins_y_tt, ymin_tt, ymax_tt);
+    }
 
     TH1I* h_missing_layer = new TH1I("h_missing_layer", "Missing layer;Layer;Counts", 6, -0.5, 5.5);
 
@@ -508,7 +524,11 @@ void no_good_tt_maches(const char* filename) {
     };
 
     for (int k = 0; k < tree->GetEntries(); ++k) {
+        if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
         tree->GetEntry(k);
+
+        if (run_with_tt.find(run_id) == run_with_tt.end()) continue;
+
         TTimeStamp ts{sec, nsec};
 
         std::unordered_map<std::string, std::size_t> method_count = {
@@ -638,6 +658,13 @@ void no_good_tt_maches(const char* filename) {
                     cdwp_tt_2pts_x_diff_per_layer[lid]->Fill((p_cdwp_at_z.X() - PointX[i]) / 1000.0);
                     h_cdwp_tt_2pts_y_diff->Fill((p_cdwp_at_z.Y() - PointY[i]) / 1000.0);
                     cdwp_tt_2pts_y_diff_per_layer[lid]->Fill((p_cdwp_at_z.Y() - PointY[i]) / 1000.0);
+                }
+
+                double layer_tmp[3] = {24500.0, 26000.0, 27500.0};
+                for (int i = 0; i < 3; ++i) {
+                    double t_cdwp = (layer_tmp[i] - pos_cdwp.Z()) / dir_cdwp.Z();
+                    TVector3 p_cdwp_at_z = pos_cdwp + t_cdwp * dir_cdwp;
+                    xy_pts_per_layer_cdwp_2pts_extrapolation[i]->Fill(p_cdwp_at_z.X() / 1000.0, p_cdwp_at_z.Y() / 1000.0);
                 }
 
                 std::unordered_set<int> layers_hit;
@@ -1726,11 +1753,13 @@ void no_good_tt_maches(const char* filename) {
     TCanvas* c_xy_cdwp_no_tt_stack = new TCanvas("c_xy_cdwp_no_tt_stack", "XY Points per Layer - No TT", 800, 1000);
     c_xy_cdwp_no_tt_stack->Divide(1, 3);
 
+    int layers_no_tt[3] = {2, 1, 0};
+
     for (int p = 0; p < 3; p++) {
         TVirtualPad* pad = c_xy_cdwp_no_tt_stack->cd(p + 1);
         pad->SetBottomMargin(0.20);
 
-        TH2D* h = xy_pts_per_layer_cdwp_no_tt[p];
+        TH2D* h = xy_pts_per_layer_cdwp_no_tt[layers_no_tt[p]];
         h->SetStats(0);
         h->SetTitle("");
         h->GetXaxis()->SetLabelSize(0.07);
@@ -1778,7 +1807,42 @@ void no_good_tt_maches(const char* filename) {
         TVirtualPad* pad = c_xy_cdwp_no_tt_zoom_stack->cd(p + 1);
         pad->SetBottomMargin(0.20);
 
-        TH2D* h = xy_pts_per_layer_cdwp_no_tt_zoom[p];
+        TH2D* h = xy_pts_per_layer_cdwp_no_tt_zoom[layers_no_tt[p]];
+        h->SetStats(0);
+        h->SetTitle("");
+        h->GetXaxis()->SetLabelSize(0.07);
+        h->GetYaxis()->SetLabelSize(0.07);
+        h->GetZaxis()->SetLabelSize(0.07);
+        h->GetXaxis()->SetTitleSize(0.07);
+        h->GetYaxis()->SetTitleSize(0.07);
+        h->GetZaxis()->SetTitleSize(0.07);
+        h->GetXaxis()->SetTitleOffset(1.0);
+        h->GetYaxis()->SetTitleOffset(0.5);
+        h->GetZaxis()->SetTitleOffset(0.25);
+        h->GetXaxis()->CenterTitle(kTRUE);
+        h->GetYaxis()->CenterTitle(kTRUE);
+        h->GetXaxis()->SetTitle("x (m)");
+        h->GetYaxis()->SetTitle("y (m)");
+        h->GetZaxis()->SetTitle("Entries");
+        h->Draw("COLZ");
+
+        pad->SetTickx();
+        pad->SetTicky();
+    }
+
+    // ============================================================================================
+    // X-Y map for each main layer - No TT
+    // ============================================================================================
+
+    TCanvas* c_xy_cdwp_2pts_extrapolation = new TCanvas("c_xy_cdwp_2pts_extrapolation", "Zoomed XY Points per Layer - 2 points TT", 800, 1000);
+    c_xy_cdwp_2pts_extrapolation->Divide(1, 3);
+
+    for (int p = 0; p < 3; p++) {
+        TVirtualPad* pad = c_xy_cdwp_2pts_extrapolation->cd(p + 1);
+        pad->SetBottomMargin(0.20);
+
+        TH2D* h = xy_pts_per_layer_cdwp_2pts_extrapolation[layers_no_tt[p]];
+
         h->SetStats(0);
         h->SetTitle("");
         h->GetXaxis()->SetLabelSize(0.07);
