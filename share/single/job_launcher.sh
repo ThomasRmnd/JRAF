@@ -52,7 +52,6 @@ Required:
   --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C}
 
 Optional:
-  --file-offset <num>          Starting index in the file list (default: 0)
   --file-range <num>           Number of files to process (default: all)
   --property-file <path>       Path to property file
   --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
@@ -73,7 +72,6 @@ parse_args() {
             --run-number)    RUN_NUMBER="$2"; shift 2 ;;
             --site)          SITE="$2"; shift 2 ;;
             --campaign)      CAMPAIGN="$2"; shift 2 ;;
-            --file-offset)   FILE_OFFSET="$2"; shift 2 ;;
             --file-range)    FILE_RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
@@ -139,18 +137,17 @@ load_file_lists() {
 #==============================
 
 prepare_job_arrays() {
-    FILE_OFFSET="${FILE_OFFSET:-0}"
-    FILE_RANGE="${FILE_RANGE:-$(( ${#RTRAW_LIST[@]} - FILE_OFFSET ))}"
+    FILE_RANGE="${FILE_RANGE:-${#RTRAW_LIST[@]}}"
 
-    if ! [[ "${FILE_OFFSET}" =~ ^[0-9]+$ && "${FILE_RANGE}" =~ ^[0-9]+$ ]]; then
+    if ! [[ "${FILE_RANGE}" =~ ^[0-9]+$ ]]; then
         log ERROR "file-offset and file-range must be non-negative integers"
         exit 1
     fi
 
-    log INFO "Processing range: offset=${FILE_OFFSET}, count=${FILE_RANGE}"
+    log INFO "Processing range: count=${FILE_RANGE}"
 
-    RTRAW_LIST=("${RTRAW_LIST[@]:$FILE_OFFSET:$FILE_RANGE}")
-    ESD_LIST=("${ESD_LIST[@]:$FILE_OFFSET:$FILE_RANGE}")
+    RTRAW_LIST=("${RTRAW_LIST[@]:0:$FILE_RANGE}")
+    ESD_LIST=("${ESD_LIST[@]:0:$FILE_RANGE}")
 
     JOB_COUNT_RTRAW=${#RTRAW_LIST[@]}
     JOB_COUNT_ESD=${#ESD_LIST[@]}
@@ -168,7 +165,7 @@ prepare_job_arrays() {
     fi
 
     if [[ "${CLUSTER}" == "CC-IN2P3" ]]; then
-        PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/esd/properties/RUN.${RUN_NUMBER}.Properties.json}"
+        PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.Properties.json}"
     elif [[ "${CLUSTER}" == "IHEP" ]]; then
         PROPERTY_FILE="${PROPERTY_FILE:-/junofs/users/traymond/reconstruction/esd/properties/RUN.${RUN_NUMBER}.Properties.json}"
     else
