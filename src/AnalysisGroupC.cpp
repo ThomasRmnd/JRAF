@@ -342,7 +342,20 @@ bool AnalysisGroupC::execute() {
                 
                     if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
                         RecTrks rtrks;
-                        if (!m_classifyTool->reconstruct(&rtrks)) {
+                        bool ok = false;
+                        try {
+                            ok = m_classifyTool->reconstruct(&rtrks);
+                        }
+                        catch (const SniperException& e) {
+                            LogError << "Sniper exception during WP classification: " << e.what() << '\n';
+                        }
+                        catch (const std::exception& e) {
+                            LogError << "std exception during WP classification: " << e.what() << '\n';
+                        }
+                        catch (...) {
+                            LogError << "Unknown exception during WP classification\n";
+                        }
+                        if (!ok) {
                             LogWarn << "Could not classify the event with classification tool\n";
                         }
                         addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
