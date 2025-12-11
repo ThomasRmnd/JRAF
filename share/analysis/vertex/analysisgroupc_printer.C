@@ -315,7 +315,7 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
         ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
         ibd.prompt.e = analysis->e_p;
         ibd.prompt.q = analysis->totq_p;
-        ibd.prompt.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
         ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
         ibd.delayed.e = analysis->e_d;
         ibd.delayed.q = analysis->totq_d;
