@@ -3,8 +3,11 @@
 #include <set>
 #include <string>
 
+#include <TCanvas.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TH1D.h>
+#include <TH2D.h>
 #include <TTimeStamp.h>
 #include <TTree.h>
 #include <TVector3.h>
@@ -21,6 +24,30 @@ TTimeStamp operator+(const TTimeStamp& lhs, const TTimeStamp& rhs) {
         lhs.GetSec() + rhs.GetSec(), 
         lhs.GetNanoSec() + rhs.GetNanoSec()
     };
+}
+
+struct Vertex {
+
+    TVector3 pos;
+    TTimeStamp ts;
+    double e;
+    double q;
+
+};
+
+inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
+    return lhs.ts < rhs.ts;
+}
+
+struct IBD {
+
+    Vertex prompt;
+    Vertex delayed;
+
+};
+
+inline bool operator<(const IBD& lhs, const IBD& rhs) {
+    return lhs.prompt.ts < rhs.prompt.ts;
 }
 
 class AnalysisBase {
@@ -274,47 +301,59 @@ public:
 
 };
 
-struct ThomasIBD {
-
-    int run_id;
-
-    TTimeStamp ts_p;
-    double e_p;
-    double totq_p;
-
-    TTimeStamp ts_d;
-    double e_d;
-    double totq_d;
-
-};
-
-bool operator<(const ThomasIBD& lhs, const ThomasIBD& rhs) {
-    return lhs.ts_p < rhs.ts_p;
-}
-
-void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
+std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
-    std::set<ThomasIBD> ibds;
+    std::set<IBD> ibds_ordered;
     std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         // analysis->print();
         if (!analysis->selection()) continue;
-        ThomasIBD ibd;
-        ibd.run_id = 0;
-        ibd.ts_p = TTimeStamp{analysis->sec_p, analysis->nsec_p};
-        ibd.e_p = analysis->e_p;
-        ibd.totq_p = analysis->totq_p;
-        ibd.ts_d = TTimeStamp{analysis->sec_d, analysis->nsec_d};
-        ibd.e_d = analysis->e_d;
-        ibd.totq_d = analysis->totq_d;
+        IBD ibd;
+        ibd.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.prompt.e = analysis->e_p;
+        ibd.prompt.q = analysis->totq_p;
+        ibd.prompt.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.delayed.e = analysis->e_d;
+        ibd.delayed.q = analysis->totq_d;
+        ibds_ordered.insert(ibd);
+    }
+
+    std::vector<IBD> ibds;
+    ibds.reserve(ibds_ordered.size());
+    for (std::set<IBD>::const_iterator it = ibds_ordered.begin(); it != ibds_ordered.end(); ++it) {
+        ibds.push_back(*it);
+    }
+    return ibds;
+}
+
+void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
+    TChain* chain = analysis->retrieve(filename);
+    if (!chain) return;
+    std::set<IBD> ibds;
+    std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
+    for (long k = 0; k < chain->GetEntries(); ++k) {
+        chain->GetEntry(k);
+        // analysis->print();
+        if (!analysis->selection()) continue;
+        IBD ibd;
+        ibd.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.prompt.e = analysis->e_p;
+        ibd.prompt.q = analysis->totq_p;
+        ibd.prompt.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.delayed.e = analysis->e_d;
+        ibd.delayed.q = analysis->totq_d;
         ibds.insert(ibd);
     }
 
-    for (std::set<ThomasIBD>::const_iterator it = ibds.begin(); it != ibds.end(); ++it) {
-        std::cout << "Prompt: " << "E = " << it->e_p << ", Q = " << it->totq_p << ", Time = " << it->ts_p << '\n';
-        std::cout << "Delayed: " << "E = " << it->e_d << ", Q = " << it->totq_d << ", Time = " << it->ts_d << '\n';
+    for (std::set<IBD>::const_iterator it = ibds.begin(); it != ibds.end(); ++it) {
+        std::cout << "Prompt: " << "E = " << it->prompt.e << ", Q = " << it->prompt.q << ", Time = " << it->prompt.ts << '\n';
+        std::cout << "Delayed: " << "E = " << it->delayed.e << ", Q = " << it->delayed.q << ", Time = " << it->delayed.ts << '\n';
     }
 }
 
@@ -373,10 +412,110 @@ void analyze_vanessa_result(TFile* file, TTree* tree) {
     }
 }
 
+std::vector<double> linspace_cpp(double start, double stop, int num) {
+    if (num <= 1) {
+        if (num == 1) return {start};
+        std::cerr << "Warning: linspace_cpp requires num >= 1. Returning empty vector\n";
+        return {};
+    }
+    double step = (stop - start) / (num - 1);
+    std::vector<double> result;
+    for (int i = 0; i < num; ++i) {
+        double value = start + static_cast<double>(i) * step;
+        if (i == num - 1) {
+            result.push_back(stop);
+        } 
+        else {
+            result.push_back(value);
+        }
+    }
+    
+    return result;
+}
 
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
     // analyze_vanessa_result(file, tree);
 
     IBDAnalysis ibd_analysis(suffix);
-    print_all_entries(filename, &ibd_analysis);
+    // print_all_entries(filename, &ibd_analysis);
+    std::vector<IBD> ibds = get_all_ibd(filename, &ibd_analysis);
+
+
+    double e_p_min = 0.7;
+    double e_p_max = 12.0;
+    double e_p_width = 0.20;
+    double e_p_nbin = (e_p_max - e_p_min) / e_p_width;
+    std::vector<double> e_p_bins = linspace_cpp(e_p_min, e_p_max, int(e_p_nbin) + 1);
+    TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy", e_p_bins.size(), e_p_bins.data());
+
+    double e_d_min = 2.0;
+    double e_d_max = 2.5;
+    double e_d_width = 0.02;
+    double e_d_nbin = (e_d_max - e_d_min) / e_d_width;
+    std::vector<double> e_d_bins = linspace_cpp(e_d_min, e_d_max, int(e_d_nbin) + 1);
+    TH1D* h_e_d = new TH1D("h_e_d", "Delayed energy", e_d_bins.size(), e_d_bins.data());
+
+    double e_dt_min = 0.0;
+    double e_dt_max = 1.0;
+    double e_dt_width = 0.025;
+    double e_dt_nbin = (e_dt_max - e_dt_min) / e_dt_width;
+    std::vector<double> e_dt_bins = linspace_cpp(e_dt_min, e_dt_max, int(e_dt_nbin) + 1);
+    TH1D* h_dt = new TH1D("h_dt", "Prompt-Delayed time difference", e_dt_bins.size(), e_dt_bins.data());
+
+    double e_dr_min = 0.0;
+    double e_dr_max = 1.5;
+    double e_dr_width = 0.05;
+    double e_dr_nbin = (e_dr_max - e_dr_min) / e_dr_width;
+    std::vector<double> e_dr_bins = linspace_cpp(e_dr_min, e_dr_max, int(e_dr_nbin) + 1);
+    TH1D* h_dr = new TH1D("h_dr", "Prompt-Delayed distance", e_dr_bins.size(), e_dr_bins.data());
+
+    double rho_min = 0.0;
+    double rho_max = 17.7 * 17.7;
+    int rho_nbin = 51;
+    double z_min = -20.0;
+    double z_max = 20.0;
+    int z_nbin = 51;
+    std::vector<double> rho_bins = linspace_cpp(rho_min, rho_max, rho_nbin);
+    std::vector<double> z_bins = linspace_cpp(z_min, z_max, z_nbin);
+    TH2D* h_rho_z_p = new TH2D("h_rho_z_p", "Prompt vertex distribution", rho_bins.size(), rho_bins.data(), z_bins.size(), z_bins.data());
+    TH2D* h_rho_z_d = new TH2D("h_rho_z_d", "Delayed vertex distribution", rho_bins.size(), rho_bins.data(), z_bins.size(), z_bins.data());
+
+    for (const IBD& ibd : ibds) {
+        h_e_p->Fill(ibd.prompt.e);
+        h_e_d->Fill(ibd.delayed.e);
+        h_dt->Fill(ibd.delayed.ts - ibd.prompt.ts);
+        h_dr->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
+        h_rho_z_p->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
+        h_rho_z_d->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
+    }
+
+    TCanvas* c_e_p = new TCanvas("c_e_p", "Prompt energy", 1000, 1000);
+    c_e_p->cd();
+    h_e_p->Draw();
+    c_e_p->Update();
+
+    TCanvas* c_e_d = new TCanvas("c_e_d", "Delayed energy", 1000, 1000);
+    c_e_d->cd();
+    h_e_d->Draw();
+    c_e_d->Update();
+
+    TCanvas* c_dt = new TCanvas("c_dt", "Prompt-Delayed time difference", 1000, 1000);
+    c_dt->cd();
+    h_dt->Draw();
+    c_dt->Update();
+
+    TCanvas* c_dr = new TCanvas("c_dr", "Prompt-Delayed distance", 1000, 1000);
+    c_dr->cd();
+    h_dr->Draw();
+    c_dr->Update();
+
+    TCanvas* c_rho_z_p = new TCanvas("c_rho_z_p", "Prompt vertex distribution", 1000, 1000);
+    c_rho_z_p->cd();
+    h_rho_z_p->Draw();
+    c_rho_z_p->Update();
+
+    TCanvas* c_rho_z_d = new TCanvas("c_rho_z_d", "Delayed vertex distribution", 1000, 1000);
+    c_rho_z_d->cd();
+    h_rho_z_d->Draw();
+    c_rho_z_d->Update();
 }
