@@ -35,17 +35,33 @@ public:
     double posy_p;
     double posz_p;
     double e_p;
-    double totq_p;
     time_t sec_p;
     int nsec_p;
+
+    double totq_p;
+    double meanq_p;
+    double stdq_p;
+    double minq_p;
+    double maxq_p;
+    std::size_t nhit_p;
+    double meant_p;
+    double stdt_p;
 
     double posx_d;
     double posy_d;
     double posz_d;
     double e_d;
-    double totq_d;
     time_t sec_d;
     int nsec_d;
+    
+    double totq_d;
+    double meanq_d;
+    double stdq_d;
+    double minq_d;
+    double maxq_d;
+    std::size_t nhit_d;
+    double meant_d;
+    double stdt_d;
 
     AnalysisBase(const std::string& name_) : name{name_} {}
 
@@ -63,17 +79,33 @@ public:
         chain->SetBranchAddress("posy_p", &posy_p);
         chain->SetBranchAddress("posz_p", &posz_p);
         chain->SetBranchAddress("e_p", &e_p);
-        chain->SetBranchAddress("totq_p", &totq_p);
         chain->SetBranchAddress("sec_p", &sec_p);
         chain->SetBranchAddress("nsec_p", &nsec_p);
+
+        chain->SetBranchAddress("totq_p", &totq_p);
+        chain->SetBranchAddress("meanq_p", &meanq_p);
+        chain->SetBranchAddress("stdq_p", &stdq_p);
+        chain->SetBranchAddress("minq_p", &minq_p);
+        chain->SetBranchAddress("maxq_p", &maxq_p);
+        chain->SetBranchAddress("nhit_p", &nhit_p);
+        chain->SetBranchAddress("meant_p", &meant_p);
+        chain->SetBranchAddress("stdt_p", &stdt_p);
 
         chain->SetBranchAddress("posx_d", &posx_d);
         chain->SetBranchAddress("posy_d", &posy_d);
         chain->SetBranchAddress("posz_d", &posz_d);
         chain->SetBranchAddress("e_d", &e_d);
-        chain->SetBranchAddress("totq_d", &totq_d);
         chain->SetBranchAddress("sec_d", &sec_d);
         chain->SetBranchAddress("nsec_d", &nsec_d);
+
+        chain->SetBranchAddress("totq_d", &totq_d);
+        chain->SetBranchAddress("meanq_d", &meanq_d);
+        chain->SetBranchAddress("stdq_d", &stdq_d);
+        chain->SetBranchAddress("minq_d", &minq_d);
+        chain->SetBranchAddress("maxq_d", &maxq_d);
+        chain->SetBranchAddress("nhit_d", &nhit_d);
+        chain->SetBranchAddress("meant_d", &meant_d);
+        chain->SetBranchAddress("stdt_d", &stdt_d);
 
         return chain;
     }
@@ -163,6 +195,7 @@ public:
     }
 
     bool selection() override {
+        if (stdt_p > 200.0 || stdt_d > 200.0) return false;
         TTimeStamp ts_p{sec_p, nsec_p};
         TTimeStamp ts_d{sec_d, nsec_d};
         TVector3 pos_p{posx_p, posy_p, posz_p};
