@@ -101,7 +101,7 @@ cluster_to_ratio_copyno = {
     "CC-IN2P3": "/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt",
     "IHEP": "/junofs/users/traymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt"
 }
-alg.classifytool.property("AdditionalGainCorrectionPath").set(cluster_to_ratio_copyno[args.cluster])
+alg.classifytool.property("AdditionalGainCorrectionPath").set("/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
 
 task.setEvtMax(-1)
 if not task.run():
