@@ -19,9 +19,20 @@ export X509_USER_PROXY=/sps/juno/jdeandre/rtraw_ThomasRaymond/.cert_traymond_jun
 # Configuration defaults
 #==============================
 
-EOS_BASE="root://junoeos01.ihep.ac.cn/"
-EOS_BASE_DCI="root://xrootd-archive.cr.cnaf.infn.it:1095/"
+XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
+XRD_URL_CNAF="root://xrootd-archive.cr.cnaf.infn.it:1095/"
+
+XRD_BASEPATH_EOS="/eos"
+XRD_BASEPATH_CNAF="/production/storm/dirac"
+
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
+
+#==============================
+# Global Flags
+#==============================
+
+DIRECT_IO=0 # default = copy to TMPDIR
+SKIP_IF_EXIST=0 # default = 
 
 #==============================
 # Parse command-line arguments
@@ -29,14 +40,18 @@ LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") <run_number> <list_base> [extra_args...]
+Usage: $(basename "$0") <run_number> <range_start> <range_end> [options...]
 
-Process a single ReProd identified by run and process ID.
+Process a single range of files identified by run and file indices.
 
 Arguments:
-  <run_number>    Run number to process
-  <list_base>     Path to the list base directory (contains rtraw_list)
-  [extra_args...] Optional additional arguments passed to run.py
+  <run_number>                   Run number to process
+  <range_start>                  Start index of the file range in the run list
+  <range_end>                    End index of the file range in the run list
+
+Options:
+  --no-local-copy | --direct-io  Use direct I/O (no copy to TMPDIR)
+  --skip-if-exist                Skip the job if the final output file already exists.
 EOF
 }
 
@@ -51,12 +66,13 @@ parse_args() {
     RANGE_START="$1"; shift
     RANGE_END="$1"; shift
 
-    DIRECT_IO=0  # default = copy to TMPDIR
-
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --no-local-copy|--direct-io)
                 DIRECT_IO=1
+                ;;
+            --skip-if-exist)
+                SKIP_IF_EXIST=1
                 ;;
             *)
                 EXTRA_ARGS+=("$1")
@@ -74,7 +90,7 @@ load_file_lists() {
     local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST   < <(xrdfs "${EOS_BASE}" cat "$rtraw_list_file")
+    mapfile -t RTRAW_LIST   < <(xrdfs "${XRD_URL_EOS}" cat "${rtraw_list_file}")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
 }
@@ -145,13 +161,13 @@ resolve_input_paths() {
         year="${timestamp:0:4}"
         month="${timestamp:4:2}"
         day="${timestamp:6:2}"
-        tt_reco_filepath="${EOS_BASE_DCI}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${month}${day}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath="${XRD_URL_CNAF}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${month}${day}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 
     elif (( RUN_NUMBER >= 10176 && RUN_NUMBER <= 10479 )); then
-        tt_reco_filepath="${EOS_BASE_DCI}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath="${XRD_URL_CNAF}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 
     elif (( RUN_NUMBER >= 10480 )); then
-        tt_reco_filepath="${EOS_BASE_DCI}/production/storm/dirac/juno/juno-reprod/TT25A/J25.4.3-patched/user_rec/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath="${XRD_URL_CNAF}/production/storm/dirac/juno/juno-reprod/TT25A/J25.4.3-patched/user_rec/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 
     else
         log ERROR "No TT reco path rule defined for run ${RUN_NUMBER}"
@@ -160,7 +176,6 @@ resolve_input_paths() {
 
     log INFO "TT-Reco filepath resolved: ${tt_reco_filepath}"
 }
-
 
 resolve_output_paths() {
     local input_reprod_file="$1"
@@ -181,6 +196,26 @@ resolve_output_paths() {
     mkdir -p "$output_path"
     mkdir -p "$reco_output_path"
     log INFO "Output path: $output_path"
+}
+
+check_output_existence() {
+    local input_rtraw_file="${RTRAW_LIST[$RANGE_START]}"
+    local input_reprod_file=$(rtraw_to_reprod_filename "${input_rtraw_file}")
+
+    local input_reprod_filename=$(basename "${input_reprod_file}")
+
+    if ! resolve_output_paths "${input_reprod_file}"; then
+        log ERROR "Failed to resolve output paths for existence check"
+        exit 1
+    fi
+    
+    local output_filename="RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.reprod25c.cca.root"
+    local output_file="${output_path}/${output_filename}"
+    
+    if [[ -f "${output_file}" ]]; then
+        log INFO "Output file already exists, skipping job: ${output_file}"
+        exit 0
+    fi
 }
 
 #==============================
@@ -225,7 +260,7 @@ rtraw_to_reprod_filename() {
     local base_dir="/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}"
 
     local candidate_groups
-    candidate_groups=$(xrdfs "${EOS_BASE_DCI}" ls "$base_dir" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
+    candidate_groups=$(xrdfs "${XRD_URL_CNAF}" ls "$base_dir" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
 
     if [[ -z "$candidate_groups" ]]; then
         log ERROR "No run_group directory found under $base_dir" >&2
@@ -235,7 +270,7 @@ rtraw_to_reprod_filename() {
     local selected_group
     selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
 
-    local reprod_path="${EOS_BASE_DCI}/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    local reprod_path="${XRD_URL_CNAF}/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
 
     echo "$reprod_path"
 }
@@ -248,6 +283,10 @@ rtraw_to_reprod_filename() {
 main() {
     parse_args "$@"
     load_file_lists
+
+    if (( SKIP_IF_EXIST == 1 )); then
+        check_output_existence
+    fi
 
     input_first_rtraw_file="${RTRAW_LIST[$RANGE_START]}"
     input_first_rtraw_filename=$(basename "${input_first_rtraw_file}")

@@ -97,7 +97,11 @@ alg.classifytool.property("WpMuonClassifyRecToolInitialChargeCut").set(28.0)
 alg.classifytool.property("WpMuonClassifyRecToolMaxChargeThreshold").set(200.0)
 alg.classifytool.property("WpMuonClassifyRecToolDistanceThreshold").set(6500.0)
 alg.classifytool.property("UseAdditionalGainCorrection").set(True)
-alg.classifytool.property("AdditionalGainCorrectionPath").set("/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt")
+cluster_to_ratio_copyno = {
+    "CC-IN2P3": "/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt",
+    "IHEP": "/junofs/users/traymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt"
+}
+alg.classifytool.property("AdditionalGainCorrectionPath").set(cluster_to_ratio_copyno[args.cluster])
 
 task.setEvtMax(-1)
 if not task.run():

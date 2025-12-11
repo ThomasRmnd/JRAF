@@ -30,7 +30,7 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("TtFiller", m_ttFillerName = "TtRangeFiller");
 
     declProp("RecTool", m_recToolName);
-    declProp("ClassifyTool", m_classifyToolName);;
+    declProp("ClassifyTool", m_classifyToolName);
 
     declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("OutputFilename", m_ofilename = "output.root");
