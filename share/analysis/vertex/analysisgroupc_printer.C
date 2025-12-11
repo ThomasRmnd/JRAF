@@ -483,7 +483,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     for (const IBD& ibd : ibds) {
         h_e_p->Fill(ibd.prompt.e);
         h_e_d->Fill(ibd.delayed.e);
-        h_dt->Fill(ibd.delayed.ts - ibd.prompt.ts);
+        h_dt->Fill((ibd.delayed.ts - ibd.prompt.ts) * 1000.0);
         h_dr->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
         h_rho_z_p->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
         h_rho_z_d->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
