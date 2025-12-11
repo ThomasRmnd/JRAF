@@ -303,7 +303,7 @@ public:
 
 std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis) {
     TChain* chain = analysis->retrieve(filename);
-    if (!chain) return;
+    if (!chain) return {};
     std::set<IBD> ibds_ordered;
     std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
