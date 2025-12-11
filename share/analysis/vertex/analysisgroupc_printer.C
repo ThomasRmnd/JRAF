@@ -444,29 +444,29 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     double e_p_min = 0.7;
     double e_p_max = 12.0;
     double e_p_width = 0.20;
-    double e_p_nbin = (e_p_max - e_p_min) / e_p_width;
-    std::vector<double> e_p_bins = linspace_cpp(e_p_min, e_p_max, int(e_p_nbin) + 1);
+    int e_p_nbin = std::round((e_p_max - e_p_min) / e_p_width) + 1;
+    std::vector<double> e_p_bins = linspace_cpp(e_p_min, e_p_max, e_p_nbin);
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy", e_p_bins.size(), e_p_bins.data());
 
     double e_d_min = 2.0;
     double e_d_max = 2.5;
     double e_d_width = 0.02;
-    double e_d_nbin = (e_d_max - e_d_min) / e_d_width;
-    std::vector<double> e_d_bins = linspace_cpp(e_d_min, e_d_max, int(e_d_nbin) + 1);
+    int e_d_nbin = std::round((e_d_max - e_d_min) / e_d_width) + 1;
+    std::vector<double> e_d_bins = linspace_cpp(e_d_min, e_d_max, e_d_nbin);
     TH1D* h_e_d = new TH1D("h_e_d", "Delayed energy", e_d_bins.size(), e_d_bins.data());
 
     double e_dt_min = 0.0;
     double e_dt_max = 1.0;
     double e_dt_width = 0.025;
-    double e_dt_nbin = (e_dt_max - e_dt_min) / e_dt_width;
-    std::vector<double> e_dt_bins = linspace_cpp(e_dt_min, e_dt_max, int(e_dt_nbin) + 1);
+    int e_dt_nbin = std::round((e_dt_max - e_dt_min) / e_dt_width) + 1;
+    std::vector<double> e_dt_bins = linspace_cpp(e_dt_min, e_dt_max, e_dt_nbin);
     TH1D* h_dt = new TH1D("h_dt", "Prompt-Delayed time difference", e_dt_bins.size(), e_dt_bins.data());
 
     double e_dr_min = 0.0;
     double e_dr_max = 1.5;
     double e_dr_width = 0.05;
-    double e_dr_nbin = (e_dr_max - e_dr_min) / e_dr_width;
-    std::vector<double> e_dr_bins = linspace_cpp(e_dr_min, e_dr_max, int(e_dr_nbin) + 1);
+    int e_dr_nbin = std::round((e_dr_max - e_dr_min) / e_dr_width) + 1;
+    std::vector<double> e_dr_bins = linspace_cpp(e_dr_min, e_dr_max, e_dr_nbin);
     TH1D* h_dr = new TH1D("h_dr", "Prompt-Delayed distance", e_dr_bins.size(), e_dr_bins.data());
 
     double rho_min = 0.0;
