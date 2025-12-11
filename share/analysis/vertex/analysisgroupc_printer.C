@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 
+#include <TChain.h>
 #include <TFile.h>
 #include <TTimeStamp.h>
 #include <TTree.h>
@@ -50,31 +51,31 @@ public:
 
     virtual ~AnalysisBase() = default;
 
-    virtual bool bind(TFile* file, TTree** tree) {
-        *tree = file->Get<TTree>(name.c_str());
-        if (!*tree) {
-            std::cerr << "Tree " << name << " not found in file\n";
-            return false;
+    virtual TChain* retrieve(const std::string& filename) {
+        TChain* chain = new TChain(name.c_str());
+        if (!chain) {
+            std::cerr << "Cannot create TChain " << name << '\n';
+            return nullptr;
         }
-        // (*tree)->SetBranchAddress("run_id", &run_id);
+        chain->Add(filename.c_str());
 
-        (*tree)->SetBranchAddress("posx_p", &posx_p);
-        (*tree)->SetBranchAddress("posy_p", &posy_p);
-        (*tree)->SetBranchAddress("posz_p", &posz_p);
-        (*tree)->SetBranchAddress("e_p", &e_p);
-        (*tree)->SetBranchAddress("totq_p", &totq_p);
-        (*tree)->SetBranchAddress("sec_p", &sec_p);
-        (*tree)->SetBranchAddress("nsec_p", &nsec_p);
+        chain->SetBranchAddress("posx_p", &posx_p);
+        chain->SetBranchAddress("posy_p", &posy_p);
+        chain->SetBranchAddress("posz_p", &posz_p);
+        chain->SetBranchAddress("e_p", &e_p);
+        chain->SetBranchAddress("totq_p", &totq_p);
+        chain->SetBranchAddress("sec_p", &sec_p);
+        chain->SetBranchAddress("nsec_p", &nsec_p);
 
-        (*tree)->SetBranchAddress("posx_d", &posx_d);
-        (*tree)->SetBranchAddress("posy_d", &posy_d);
-        (*tree)->SetBranchAddress("posz_d", &posz_d);
-        (*tree)->SetBranchAddress("e_d", &e_d);
-        (*tree)->SetBranchAddress("totq_d", &totq_d);
-        (*tree)->SetBranchAddress("sec_d", &sec_d);
-        (*tree)->SetBranchAddress("nsec_d", &nsec_d);
+        chain->SetBranchAddress("posx_d", &posx_d);
+        chain->SetBranchAddress("posy_d", &posy_d);
+        chain->SetBranchAddress("posz_d", &posz_d);
+        chain->SetBranchAddress("e_d", &e_d);
+        chain->SetBranchAddress("totq_d", &totq_d);
+        chain->SetBranchAddress("sec_d", &sec_d);
+        chain->SetBranchAddress("nsec_d", &nsec_d);
 
-        return true;
+        return chain;
     }
 
     virtual bool selection() = 0;
@@ -124,40 +125,41 @@ public:
     std::vector<int>* nsec_mu = nullptr;
     std::vector<double>* quality_mu = nullptr;
 
-    bool bind(TFile* file, TTree** tree) override {
-        if (!AnalysisBase::bind(file, tree)) return false;
+    TChain* retrieve(const std::string& filename) override {
+        TChain* chain = AnalysisBase::retrieve(filename);
+        if (!chain) return nullptr;
         
-        (*tree)->SetBranchAddress("posx_n", &posx_n);
-        (*tree)->SetBranchAddress("posy_n", &posy_n);
-        (*tree)->SetBranchAddress("posz_n", &posz_n);
-        (*tree)->SetBranchAddress("e_n", &e_n);
-        (*tree)->SetBranchAddress("totq_n", &totq_n);
-        (*tree)->SetBranchAddress("sec_n", &sec_n);
-        (*tree)->SetBranchAddress("nsec_n", &nsec_n);
+        chain->SetBranchAddress("posx_n", &posx_n);
+        chain->SetBranchAddress("posy_n", &posy_n);
+        chain->SetBranchAddress("posz_n", &posz_n);
+        chain->SetBranchAddress("e_n", &e_n);
+        chain->SetBranchAddress("totq_n", &totq_n);
+        chain->SetBranchAddress("sec_n", &sec_n);
+        chain->SetBranchAddress("nsec_n", &nsec_n);
 
-        (*tree)->SetBranchAddress("posx_mult", &posx_mult);
-        (*tree)->SetBranchAddress("posy_mult", &posy_mult);
-        (*tree)->SetBranchAddress("posz_mult", &posz_mult);
-        (*tree)->SetBranchAddress("e_mult", &e_mult);
-        (*tree)->SetBranchAddress("totq_mult", &totq_mult);
-        (*tree)->SetBranchAddress("sec_mult", &sec_mult);
-        (*tree)->SetBranchAddress("nsec_mult", &nsec_mult);
-        (*tree)->SetBranchAddress("mult_type", &mult_type);
+        chain->SetBranchAddress("posx_mult", &posx_mult);
+        chain->SetBranchAddress("posy_mult", &posy_mult);
+        chain->SetBranchAddress("posz_mult", &posz_mult);
+        chain->SetBranchAddress("e_mult", &e_mult);
+        chain->SetBranchAddress("totq_mult", &totq_mult);
+        chain->SetBranchAddress("sec_mult", &sec_mult);
+        chain->SetBranchAddress("nsec_mult", &nsec_mult);
+        chain->SetBranchAddress("mult_type", &mult_type);
 
-        (*tree)->SetBranchAddress("method_mu", &method_mu);
-        (*tree)->SetBranchAddress("loc_mu", &loc_mu);
-        (*tree)->SetBranchAddress("posx_mu", &posx_mu);
-        (*tree)->SetBranchAddress("posy_mu", &posy_mu);
-        (*tree)->SetBranchAddress("posz_mu", &posz_mu);
-        (*tree)->SetBranchAddress("dirx_mu", &dirx_mu);
-        (*tree)->SetBranchAddress("diry_mu", &diry_mu);
-        (*tree)->SetBranchAddress("dirz_mu", &dirz_mu);
-        (*tree)->SetBranchAddress("totq_mu", &totq_mu);
-        (*tree)->SetBranchAddress("sec_mu", &sec_mu);
-        (*tree)->SetBranchAddress("nsec_mu", &nsec_mu);
-        (*tree)->SetBranchAddress("quality_mu", &quality_mu);
+        chain->SetBranchAddress("method_mu", &method_mu);
+        chain->SetBranchAddress("loc_mu", &loc_mu);
+        chain->SetBranchAddress("posx_mu", &posx_mu);
+        chain->SetBranchAddress("posy_mu", &posy_mu);
+        chain->SetBranchAddress("posz_mu", &posz_mu);
+        chain->SetBranchAddress("dirx_mu", &dirx_mu);
+        chain->SetBranchAddress("diry_mu", &diry_mu);
+        chain->SetBranchAddress("dirz_mu", &dirz_mu);
+        chain->SetBranchAddress("totq_mu", &totq_mu);
+        chain->SetBranchAddress("sec_mu", &sec_mu);
+        chain->SetBranchAddress("nsec_mu", &nsec_mu);
+        chain->SetBranchAddress("quality_mu", &quality_mu);
 
-        return true;
+        return chain;
     }
 
     bool selection() override {
@@ -257,12 +259,13 @@ bool operator<(const ThomasIBD& lhs, const ThomasIBD& rhs) {
     return lhs.ts_p < rhs.ts_p;
 }
 
-void print_all_entries(TFile* file, TTree** tree, AnalysisBase* analysis) {
-    if (!analysis->bind(file, tree)) return;
+void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
+    TChain* chain = analysis->retrieve(filename);
+    if (!chain) return;
     std::set<ThomasIBD> ibds;
-    std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << (*tree)->GetEntries() << ") ===\n";
-    for (long k = 0; k < (*tree)->GetEntries(); ++k) {
-        (*tree)->GetEntry(k);
+    std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
+    for (long k = 0; k < chain->GetEntries(); ++k) {
+        chain->GetEntry(k);
         // analysis->print();
         if (!analysis->selection()) continue;
         ThomasIBD ibd;
@@ -339,53 +342,8 @@ void analyze_vanessa_result(TFile* file, TTree* tree) {
 
 
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
-    TFile* file = TFile::Open(filename.c_str(), "READ");
-    if (!file || file->IsZombie()) {
-        std::cerr << "Failed to open file: " << filename << '\n';
-        return;
-    }
-    TTree* tree = nullptr;
-
     // analyze_vanessa_result(file, tree);
 
-    /*
-
-    IBDWithCylindricalCut ibd_with_cylindrical_cut_3m{"_3m" + suffix};
-    print_all_entries(file, &tree, &ibd_with_cylindrical_cut_3m);
-
-    IBDWithCylindricalCut ibd_with_cylindrical_cut_5m{"_5m" + suffix};
-    print_all_entries(file, &tree, &ibd_with_cylindrical_cut_5m);
-
-    */
-
     IBDAnalysis ibd_analysis(suffix);
-    print_all_entries(file, &tree, &ibd_analysis);
-
-    /*
-
-    MultiplicityWindowCut multiplicity_window_cut(suffix);
-    print_all_entries(file, &tree, &multiplicity_window_cut);
-
-    CosmoRateWithNeutronAnalysis cosmo_rate_with_neutron_study(suffix);
-    print_all_entries(file, &tree, &cosmo_rate_with_neutron_study);
-
-    TtCosmoStudy tt_cosmo_study_sig{"_sig" + suffix};
-    print_all_entries(file, &tree, &tt_cosmo_study_sig);
-
-    TtCosmoStudy tt_cosmo_study_bkg{"_bkg" + suffix};
-    print_all_entries(file, &tree, &tt_cosmo_study_bkg);
-
-    CdWpCosmoStudy cdwp_cosmo_study_sig{"_sig" + suffix};
-    print_all_entries(file, &tree, &cdwp_cosmo_study_sig);
-
-    CdWpCosmoStudy cdwp_cosmo_study_bkg{"_bkg" + suffix};
-    print_all_entries(file, &tree, &cdwp_cosmo_study_bkg);
-
-    CdWpCosmoStudy cdwp_all_cosmo_study{"_All" + suffix};
-    print_all_entries(file, &tree, &cdwp_all_cosmo_study);
-
-    */
-
-    file->Close();
-    delete file;
+    print_all_entries(filename, &ibd_analysis);
 }
