@@ -189,13 +189,13 @@ void compare_with_TT(const char* cdwp_filename, const char* tt_filename, const c
                 Chi2Out[i] = Chi2[i];
             }
 
-            std::cout << "Matching! TimeStamp: " << TTimeStamp{sec, nsec} << '\n';
-            for (std::size_t k = 0ul; k < method->size(); ++k) {
-                std::cout << "Method: " << (*method)[k] << ", Det: " << (*det)[k] << ", Quality: " << (*quality)[k] << ", ix: " << (*iposx)[k] << ", iy: " << (*iposy)[k] << ", iz: " << (*iposz)[k] << ", fx: " << (*fposx)[k] << ", fy: " << (*fposy)[k] << ", fz: " << (*fposz)[k] << '\n';
-            }
-            for (int k = 0; k < NTracks; ++k) {
-                std::cout << "Chi2: " << Chi2[k] << ", x: " << Coeff0[k] << ", y: " << Coeff1[k] << ", z: " << Coeff2[k] << ", dx: " << Coeff3[k] << ", dy: " << Coeff4[k] << ", " << Coeff5[k] << '\n';
-            }
+            // std::cout << "Matching! TimeStamp: " << TTimeStamp{sec, nsec} << '\n';
+            // for (std::size_t k = 0ul; k < method->size(); ++k) {
+            //     std::cout << "Method: " << (*method)[k] << ", Det: " << (*det)[k] << ", Quality: " << (*quality)[k] << ", ix: " << (*iposx)[k] << ", iy: " << (*iposy)[k] << ", iz: " << (*iposz)[k] << ", fx: " << (*fposx)[k] << ", fy: " << (*fposy)[k] << ", fz: " << (*fposz)[k] << '\n';
+            // }
+            // for (int k = 0; k < NTracks; ++k) {
+            //     std::cout << "Chi2: " << Chi2[k] << ", x: " << Coeff0[k] << ", y: " << Coeff1[k] << ", z: " << Coeff2[k] << ", dx: " << Coeff3[k] << ", dy: " << Coeff4[k] << ", " << Coeff5[k] << '\n';
+            // }
         }
 
         tree_out->Fill();   
