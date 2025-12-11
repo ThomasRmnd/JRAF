@@ -165,8 +165,8 @@ submit_jobs() {
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
             job_worker.sh \
-            "$RUN_NUMBER" "$start" "$end" "${EXTRA_ARGS[@]}"
-        # --no-local-copy
+            "$RUN_NUMBER" "$start" "$end" --skip-if-exist "${EXTRA_ARGS[@]}"
+        # --no-local-copy --skip-if-exist
         # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log"
     done
 
