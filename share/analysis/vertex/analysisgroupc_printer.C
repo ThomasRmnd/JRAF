@@ -603,36 +603,36 @@ std::vector<double> generate_segment_boundaries(double start, double stop, int n
 
 std::vector<double> create_custom_e_p_bins() {
 
-    double s1_start = 0.8;
-    double s2_start = 0.94;
-    double s3_start = 7.44;
-    double s4_start = 7.8;
-    double s5_start = 8.2;
-    double stop = 12.0;
+    // double s1_start = 0.8;
+    // double s2_start = 0.94;
+    // double s3_start = 7.44;
+    // double s4_start = 7.8;
+    // double s5_start = 8.2;
+    // double stop = 12.0;
 
-    int s1_bins = 1;
-    int s2_bins = 325;
-    int s3_bins = 9;
-    int s4_bins = 4;
-    int s5_bins = 1;
+    // int s1_bins = 1;
+    // int s2_bins = 325;
+    // int s3_bins = 9;
+    // int s4_bins = 4;
+    // int s5_bins = 1;
+    // int tot_bins = s1_bins + s2_bins + s3_bins + s4_bins + s5_bins;
+
+    double edges[] = {0.8, 1.0, 6.6, 7.4, 7.7, 8.1, 8.6, 9.4, 12.0};
+    int    bins[]  = {  1,  56,   4,   1,   2,   1,   1,   1};
     
     std::vector<double> e_p_bins;
-    e_p_bins.reserve(1 + 325 + 9 + 4 + 1 + 1);
-    
-    std::vector<double> seg1 = generate_segment_boundaries(s1_start, s2_start, s1_bins);
-    e_p_bins.insert(e_p_bins.end(), seg1.begin(), seg1.end());
-    
-    std::vector<double> seg2 = generate_segment_boundaries(s2_start, s3_start, s2_bins);
-    e_p_bins.insert(e_p_bins.end(), seg2.begin() + 1, seg2.end());
 
-    std::vector<double> seg3 = generate_segment_boundaries(s3_start, s4_start, s3_bins);
-    e_p_bins.insert(e_p_bins.end(), seg3.begin() + 1, seg3.end());
-
-    std::vector<double> seg4 = generate_segment_boundaries(s4_start, s5_start, s4_bins);
-    e_p_bins.insert(e_p_bins.end(), seg4.begin() + 1, seg4.end());
-
-    std::vector<double> seg5 = generate_segment_boundaries(s5_start, stop, s5_bins);
-    e_p_bins.insert(e_p_bins.end(), seg5.begin() + 1, seg5.end());
+    for (std::size_t k = 0ul; k < 8ul; ++k) {
+        double start = edges[k];
+        double stop = edges[k + 1];
+        int nbins = bins[k];
+        std::vector<double> segment = generate_segment_boundaries(start, stop, nbins);
+        if (k == 0ul) {
+            e_p_bins.insert(e_p_bins.end(), segment.begin(), segment.end());
+        } else {
+            e_p_bins.insert(e_p_bins.end(), segment.begin() + 1, segment.end());
+        }
+    }
     
     return e_p_bins;
 }
