@@ -239,8 +239,8 @@ public:
             TTimeStamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
             TVector3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
             if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_n < ts_p + TTimeStamp{0, 20000} || ts_p + TTimeStamp{0, 1200000000} < ts_n) continue;
-            if (ts_n < ts_d + TTimeStamp{0, 20000} || ts_d + TTimeStamp{0, 1200000000} < ts_n) continue;
+            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
+            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
             ++nb_neutron_veto;
         }
 
@@ -475,8 +475,8 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
             TTimeStamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
             TVector3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
             if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_n < ts_p + TTimeStamp{0, 20000} || ts_p + TTimeStamp{0, 1200000000} < ts_n) continue;
-            if (ts_n < ts_d + TTimeStamp{0, 20000} || ts_d + TTimeStamp{0, 1200000000} < ts_n) continue;
+            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
+            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
             ++nb_neutron_veto;
         }
 
