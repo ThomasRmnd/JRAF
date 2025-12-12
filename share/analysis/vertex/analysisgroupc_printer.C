@@ -461,7 +461,7 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
                 );
             }
         );
-        if (it != vanessa_ibds.end() && analysis->selection()) continue;
+        if (it != vanessa_ibds.end() && (it == vanessa_ibds.end() || analysis->selection())) continue;
 
         TTimeStamp ts_p{analysis->sec_p, analysis->nsec_p};
         TTimeStamp ts_d{analysis->sec_d, analysis->nsec_d};
