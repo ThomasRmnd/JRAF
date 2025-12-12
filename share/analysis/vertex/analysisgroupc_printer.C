@@ -658,33 +658,87 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
         // h_rho_z_d_vanessa->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
     }
 
+    // ============================================================================================
+    // Prompt energy
+    // ============================================================================================
+
     TCanvas* c_e_p = new TCanvas("c_e_p", "Prompt energy", 1000, 1000);
     c_e_p->cd();
+
+    h_e_p->SetLineWidth(3);
+    h_e_p->SetLineStyle(kSolid);
+    h_e_p->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_p_vanessa->SetLineWidth(3);
+    h_e_p_vanessa->SetLineStyle(kSolid);
+    h_e_p_vanessa->SetLineColorAlpha(kRed, 1.0);
+
     h_e_p->Draw();
     h_e_p_vanessa->Draw("SAME");
+
     c_e_p->Update();
+
+    // ============================================================================================
+    // Delayed energy
+    // ============================================================================================
 
     TCanvas* c_e_d = new TCanvas("c_e_d", "Delayed energy", 1000, 1000);
     c_e_d->cd();
+
+    h_e_d->SetLineWidth(3);
+    h_e_d->SetLineStyle(kSolid);
+    h_e_d->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_d_vanessa->SetLineWidth(3);
+    h_e_d_vanessa->SetLineStyle(kSolid);
+    h_e_d_vanessa->SetLineColorAlpha(kRed, 1.0);
+
     h_e_d->Draw();
     h_e_d_vanessa->Draw("SAME");
+
     c_e_d->Update();
+
+    // ============================================================================================
+    // Prompt-Delayed time difference
+    // ============================================================================================
 
     TCanvas* c_dt = new TCanvas("c_dt", "Prompt-Delayed time difference", 1000, 1000);
     c_dt->cd();
+
+    h_dt->SetLineWidth(3);
+    h_dt->SetLineStyle(kSolid);
+    h_dt->SetLineColorAlpha(kBlue, 1.0);
+
+    h_dt_vanessa->SetLineWidth(3);
+    h_dt_vanessa->SetLineStyle(kSolid);
+    h_dt_vanessa->SetLineColorAlpha(kRed, 1.0);
+
     h_dt->Draw();
     h_dt_vanessa->Draw("SAME");
+    
     c_dt->Update();
+
+    // ============================================================================================
+    // Prompt-Delayed distance
+    // ============================================================================================
 
     TCanvas* c_dr = new TCanvas("c_dr", "Prompt-Delayed distance", 1000, 1000);
     c_dr->cd();
     h_dr->Draw();
     c_dr->Update();
 
+    // ============================================================================================
+    // Prompt vertex position
+    // ============================================================================================
+
     TCanvas* c_rho_z_p = new TCanvas("c_rho_z_p", "Prompt vertex distribution", 1000, 1000);
     c_rho_z_p->cd();
     h_rho_z_p->Draw();
     c_rho_z_p->Update();
+
+    // ============================================================================================
+    // Delayed vertex position
+    // ============================================================================================
 
     TCanvas* c_rho_z_d = new TCanvas("c_rho_z_d", "Delayed vertex distribution", 1000, 1000);
     c_rho_z_d->cd();
