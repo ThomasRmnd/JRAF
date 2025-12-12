@@ -431,10 +431,24 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     TCanvas* c_cosmo_rate_with_neutron = new TCanvas("c_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 1000, 1000);
     c_cosmo_rate_with_neutron->cd();
 
-    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
-    f_cosmo_rate_with_neutron->SetParameter(0, 2000.0);
-    f_cosmo_rate_with_neutron->SetParameter(1, h_cosmo_rate_with_neutron->GetMaximum() - 2000.0);
-    f_cosmo_rate_with_neutron->SetParameter(2, 250.0e-3);
+    double constant_term = 0.0;
+    for (int bin = h_cosmo_rate_with_neutron->GetXaxis()->FindBin(0.8); bin <= h_cosmo_rate_with_neutron->GetXaxis()->GetNbins(); ++bin) {
+        constant_term += h_cosmo_rate_with_neutron->GetBinContent(bin);
+    }
+    constant_term /= (h_cosmo_rate_with_neutron->GetXaxis()->GetNbins() - h_cosmo_rate_with_neutron->GetXaxis()->FindBin(0.8) + 1);
+    double exponential_term = h_cosmo_rate_with_neutron->GetMaximum() - constant_term;
+
+    // TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
+    // f_cosmo_rate_with_neutron->SetParameter(0, 2000.0);
+    // f_cosmo_rate_with_neutron->SetParameter(1, h_cosmo_rate_with_neutron->GetMaximum() - 2000.0);
+    // f_cosmo_rate_with_neutron->SetParameter(2, 250.0e-3);
+
+    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2]) + [3] * exp(-x / [4])", 0.05, 1.2);
+    f_cosmo_rate_with_neutron->SetParameter(0, constant_term);
+    f_cosmo_rate_with_neutron->SetParameter(1, exponential_term * 0.7);
+    f_cosmo_rate_with_neutron->SetParameter(2, 178.3e-3);
+    f_cosmo_rate_with_neutron->SetParameter(3, exponential_term * 0.3);
+    f_cosmo_rate_with_neutron->SetParameter(4, 119.0e-3);
 
     f_cosmo_rate_with_neutron->SetLineColor(kRed);
     f_cosmo_rate_with_neutron->SetLineWidth(3);
@@ -457,12 +471,8 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     double time_window = 1.2;
     double binning = time_window / 120.0;
     std::cout << "nIBD = " << f_cosmo_rate_with_neutron->GetParameter(0) * time_window / binning << " +/- " << f_cosmo_rate_with_neutron->GetParError(0) * time_window / binning << '\n';
-    std::cout << "nLiHe = " << f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning << " +/- " << 
-        std::sqrt(
-            std::pow(f_cosmo_rate_with_neutron->GetParError(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning, 2) +
-            std::pow(f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParError(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning, 2) +
-            std::pow(f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2)) * (time_window / (f_cosmo_rate_with_neutron->GetParameter(2) * f_cosmo_rate_with_neutron->GetParameter(2))) / binning, 2)
-        ) << '\n';
+    std::cout << "nLi = " << f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning << '\n';
+    std::cout << "nHe = " << f_cosmo_rate_with_neutron->GetParameter(3) * f_cosmo_rate_with_neutron->GetParameter(4) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(4))) / binning << '\n';
 }
 
 void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
