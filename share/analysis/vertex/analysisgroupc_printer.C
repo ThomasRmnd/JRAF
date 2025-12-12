@@ -6,6 +6,7 @@
 
 #include <TCanvas.h>
 #include <TChain.h>
+#include <TF1.h>
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
@@ -420,7 +421,27 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     TCanvas* c_cosmo_rate_with_neutron = new TCanvas("c_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 1000, 1000);
     c_cosmo_rate_with_neutron->cd();
 
+    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] +  [1] * exp(- [2] * x)", 0.05, 1.2);
+    f_cosmo_rate_with_neutron->SetParameter(0, 5000.0);
+    f_cosmo_rate_with_neutron->SetParameter(1, h_cosmo_rate_with_neutron->GetMaximum() - 5000.0);
+    f_cosmo_rate_with_neutron->SetParameter(2, 0.25);
+
+    f_cosmo_rate_with_neutron->SetLineColor(kRed);
+    f_cosmo_rate_with_neutron->SetLineWidth(3);
+
+    h_cosmo_rate_with_neutron->Fit(f_cosmo_rate_with_neutron, "R");
+    h_cosmo_rate_with_neutron->SetLineWidth(3);
+    h_cosmo_rate_with_neutron->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
+    h_cosmo_rate_with_neutron->GetXaxis()->CenterTitle(kTRUE);
+    h_cosmo_rate_with_neutron->GetYaxis()->SetTitle("Entries");
+    h_cosmo_rate_with_neutron->GetYaxis()->CenterTitle(kTRUE);
+    h_cosmo_rate_with_neutron->GetYaxis()->SetTitleOffset(1.5);
     h_cosmo_rate_with_neutron->Draw();
+    f_cosmo_rate_with_neutron->Draw("SAME");
+    
+    c_cosmo_rate_with_neutron->SetTickx();
+    c_cosmo_rate_with_neutron->SetTicky();
+    c_cosmo_rate_with_neutron->SetLogy();
 
     c_cosmo_rate_with_neutron->Update();
 }
