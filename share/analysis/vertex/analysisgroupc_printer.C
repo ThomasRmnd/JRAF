@@ -571,9 +571,9 @@ std::vector<double> linspace_cpp(double start, double stop, int num) {
     return result;
 }
 
-#define PRINT_ALL_ENTRIES
+#undef PRINT_ALL_ENTRIES
 #undef COMPARE_WITH_VANESSA
-#undef GET_ALL_IBD
+#define GET_ALL_IBD
 
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
     // analyze_vanessa_result(file, tree);
