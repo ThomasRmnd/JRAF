@@ -378,8 +378,9 @@ bool operator<(const VanessaIBD& lhs, const VanessaIBD& rhs) {
     return lhs.ts_p < rhs.ts_p;
 }
 
-void analyze_vanessa_result(TFile* file, TTree* tree) {
-    tree = file->Get<TTree>("events");
+std::vector<VanessaIBD> analyze_vanessa_result() {
+    TFile* file = TFile::Open("/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/summary/ReProd25C/IBD_all_reprodC.root", "READ");
+    TTree* tree = file->Get<TTree>("events");
     std::set<VanessaIBD> ibds;
     double run_id;
     double t_p, t_d;
@@ -408,10 +409,12 @@ void analyze_vanessa_result(TFile* file, TTree* tree) {
         ibd.totq_d = totq_d;
         ibds.insert(ibd);
     }
+    std::vector<VanessaIBD> ibds_vector;
+    ibds_vector.reserve(ibds.size());
     for (std::set<VanessaIBD>::const_iterator it = ibds.begin(); it != ibds.end(); ++it) {
-        std::cout << "(RUN = " << it->run_id << ") Prompt: " << "E = " << it->e_p << ", Q = " << it->totq_p << ", Time = " << it->ts_p << '\n';
-        std::cout << "(RUN = " << it->run_id << ") Delayed: " << "E = " << it->e_d << ", Q = " << it->totq_d << ", Time = " << it->ts_d << '\n';
+        ibds_vector.push_back(*it);
     }
+    return ibds_vector;
 }
 
 void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
@@ -578,11 +581,10 @@ std::vector<double> linspace_cpp(double start, double stop, int num) {
 }
 
 #undef PRINT_ALL_ENTRIES
-#define COMPARE_WITH_VANESSA
-#undef GET_ALL_IBD
+#undef COMPARE_WITH_VANESSA
+#define GET_ALL_IBD
 
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
-    // analyze_vanessa_result(file, tree);
 
     IBDAnalysis ibd_analysis(suffix);
 #ifdef PRINT_ALL_ENTRIES
@@ -593,6 +595,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
 #endif
 #ifdef GET_ALL_IBD
     std::vector<IBD> ibds = get_all_ibd(filename, &ibd_analysis);
+    std::vector<VanessaIBD> vanessa_ibds = analyze_vanessa_result();
 
 
     double e_p_min = 0.7;
@@ -601,6 +604,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     int e_p_nbin = std::round((e_p_max - e_p_min) / e_p_width) + 1;
     std::vector<double> e_p_bins = linspace_cpp(e_p_min, e_p_max, e_p_nbin);
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy", e_p_bins.size() - 1, e_p_bins.data());
+    TH1D* h_e_p_vanessa = new TH1D("h_e_p_vanessa", "Prompt energy (Vanessa)", e_p_bins.size() - 1, e_p_bins.data());
 
     double e_d_min = 2.0;
     double e_d_max = 2.5;
@@ -608,6 +612,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     int e_d_nbin = std::round((e_d_max - e_d_min) / e_d_width) + 1;
     std::vector<double> e_d_bins = linspace_cpp(e_d_min, e_d_max, e_d_nbin);
     TH1D* h_e_d = new TH1D("h_e_d", "Delayed energy", e_d_bins.size() - 1, e_d_bins.data());
+    TH1D* h_e_d_vanessa = new TH1D("h_e_d_vanessa", "Delayed energy (Vanessa)", e_d_bins.size() - 1, e_d_bins.data());
 
     double e_dt_min = 0.0;
     double e_dt_max = 1.0;
@@ -615,6 +620,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     int e_dt_nbin = std::round((e_dt_max - e_dt_min) / e_dt_width) + 1;
     std::vector<double> e_dt_bins = linspace_cpp(e_dt_min, e_dt_max, e_dt_nbin);
     TH1D* h_dt = new TH1D("h_dt", "Prompt-Delayed time difference", e_dt_bins.size() - 1, e_dt_bins.data());
+    TH1D* h_dt_vanessa = new TH1D("h_dt_vanessa", "Prompt-Delayed time difference (Vanessa)", e_dt_bins.size() - 1, e_dt_bins.data());
 
     double e_dr_min = 0.0;
     double e_dr_max = 1.5;
@@ -643,19 +649,31 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
         h_rho_z_d->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
     }
 
+    for (const VanessaIBD& ibd : vanessa_ibds) {
+        h_e_p_vanessa->Fill(ibd.e_p);
+        h_e_d_vanessa->Fill(ibd.e_d);
+        h_dt_vanessa->Fill((ibd.ts_d - ibd.ts_p) * 1000.0);
+        // h_dr_vanessa->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
+        // h_rho_z_p_vanessa->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
+        // h_rho_z_d_vanessa->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
+    }
+
     TCanvas* c_e_p = new TCanvas("c_e_p", "Prompt energy", 1000, 1000);
     c_e_p->cd();
     h_e_p->Draw();
+    h_e_p_vanessa->Draw("SAME");
     c_e_p->Update();
 
     TCanvas* c_e_d = new TCanvas("c_e_d", "Delayed energy", 1000, 1000);
     c_e_d->cd();
     h_e_d->Draw();
+    h_e_d_vanessa->Draw("SAME");
     c_e_d->Update();
 
     TCanvas* c_dt = new TCanvas("c_dt", "Prompt-Delayed time difference", 1000, 1000);
     c_dt->cd();
     h_dt->Draw();
+    h_dt_vanessa->Draw("SAME");
     c_dt->Update();
 
     TCanvas* c_dr = new TCanvas("c_dr", "Prompt-Delayed distance", 1000, 1000);
