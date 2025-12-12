@@ -384,6 +384,8 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
     std::map<IBD, std::vector<double>> ibds_dt_mu2p;
+    std::map<IBD, std::vector<double>> ibds_d_mu2p_cdwp;
+    std::map<IBD, std::vector<double>> ibds_d_mu2p_tt;
     std::cout << "=== Analysis: CosmoRateWithNeutron (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
@@ -401,6 +403,8 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
 
         std::string method = "";
         std::vector<double> dt_mu2p_times;
+        std::vector<double> d_mu2p_cdwp_values;
+        std::vector<double> d_mu2p_tt_values;
         std::vector<TTimeStamp> used_muon_times;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
@@ -413,12 +417,33 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             );
             if (it != used_muon_times.end()) continue;
             used_muon_times.push_back(ts_mu);
-            TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
-            TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
             if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
+            double d_mu2p_cdwp = std::numeric_limits<double>::infinity();
+            double d_mu2p_tt = std::numeric_limits<double>::infinity();
+            for (std::size_t i = 0ul; i < analysis->method_mu->size(); ++i) {
+                TTimeStamp ts_mu2{analysis->sec_mu->operator[](i), analysis->nsec_mu->operator[](i)};
+                if (ts_mu != ts_mu2) continue;
+                TVector3 pos_mu{analysis->posx_mu->operator[](i), analysis->posy_mu->operator[](i), analysis->posz_mu->operator[](i)};
+                TVector3 dir_mu{analysis->dirx_mu->operator[](i), analysis->diry_mu->operator[](i), analysis->dirz_mu->operator[](i)};
+                double tmp_d_mu2p = dir_mu.Cross(ibd.prompt.pos - pos_mu).Mag();
+                if (analysis->method_mu->operator[](i) == "CdWpTtChi2") {
+                    if (tmp_d_mu2p < d_mu2p_cdwp) {
+                        d_mu2p_cdwp = tmp_d_mu2p;
+                    }
+                }
+                if (analysis->method_mu->operator[](i) == "Tt") {
+                    if (tmp_d_mu2p < d_mu2p_tt) {
+                        d_mu2p_tt = tmp_d_mu2p;
+                    }
+                }
+            }
             dt_mu2p_times.push_back(static_cast<double>(ibd.prompt.ts - ts_mu));
+            d_mu2p_cdwp_values.push_back(d_mu2p_cdwp);
+            d_mu2p_tt_values.push_back(d_mu2p_tt);
         }
         ibds_dt_mu2p[ibd] = dt_mu2p_times;
+        ibds_d_mu2p_cdwp[ibd] = d_mu2p_cdwp_values;
+        ibds_d_mu2p_tt[ibd] = d_mu2p_tt_values;
     }
 
     TH1D* h_cosmo_rate_with_neutron = new TH1D("h_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 120, 0.0, 1.2);
@@ -438,17 +463,10 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     constant_term /= (h_cosmo_rate_with_neutron->GetXaxis()->GetNbins() - h_cosmo_rate_with_neutron->GetXaxis()->FindBin(0.8) + 1);
     double exponential_term = h_cosmo_rate_with_neutron->GetMaximum() - constant_term;
 
-    // TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
-    // f_cosmo_rate_with_neutron->SetParameter(0, 2000.0);
-    // f_cosmo_rate_with_neutron->SetParameter(1, h_cosmo_rate_with_neutron->GetMaximum() - 2000.0);
-    // f_cosmo_rate_with_neutron->SetParameter(2, 250.0e-3);
-
-    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2]) + [3] * exp(-x / [4])", 0.05, 1.2);
+    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
     f_cosmo_rate_with_neutron->SetParameter(0, constant_term);
-    f_cosmo_rate_with_neutron->SetParameter(1, exponential_term * 0.7);
-    f_cosmo_rate_with_neutron->SetParameter(2, 178.3e-3);
-    f_cosmo_rate_with_neutron->SetParameter(3, exponential_term * 0.3);
-    f_cosmo_rate_with_neutron->SetParameter(4, 119.0e-3);
+    f_cosmo_rate_with_neutron->SetParameter(1, exponential_term);
+    f_cosmo_rate_with_neutron->SetParameter(2, 180.0e-3);
 
     f_cosmo_rate_with_neutron->SetLineColor(kRed);
     f_cosmo_rate_with_neutron->SetLineWidth(3);
@@ -471,8 +489,44 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     double time_window = 1.2;
     double binning = time_window / 120.0;
     std::cout << "nIBD = " << f_cosmo_rate_with_neutron->GetParameter(0) * time_window / binning << " +/- " << f_cosmo_rate_with_neutron->GetParError(0) * time_window / binning << '\n';
-    std::cout << "nLi = " << f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning << '\n';
-    std::cout << "nHe = " << f_cosmo_rate_with_neutron->GetParameter(3) * f_cosmo_rate_with_neutron->GetParameter(4) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(4))) / binning << '\n';
+    std::cout << "nLiHe = " << f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning << '\n';
+
+    TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 20000.0);
+    TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 20000.0);
+    for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
+        const IBD& ibd = ibd_dt_mu2p.first;
+        const std::vector<double>& dt_mu2p_times = ibd_dt_mu2p.second;
+        const std::vector<double>& d_mu2p_cdwp_values = ibds_d_mu2p_cdwp[ibd];
+        const std::vector<double>& d_mu2p_tt_values = ibds_d_mu2p_tt[ibd];
+        for (std::size_t k = 0ul; k < dt_mu2p_times.size(); ++k) {
+            h_d_mu2p_cdwp_vs_dt_mu2p->Fill(dt_mu2p_times[k], d_mu2p_cdwp_values[k]);
+            h_d_mu2p_tt_vs_dt_mu2p->Fill(dt_mu2p_times[k], d_mu2p_tt_values[k]);
+        }
+    }
+
+    TCanvas* c_d_mu2p_cdwp_vs_dt_mu2p = new TCanvas("c_d_mu2p_cdwp_vs_dt_mu2p", "d_mu2p_cdwp vs dt_mu2p", 1000, 1000);
+    c_d_mu2p_cdwp_vs_dt_mu2p->cd();
+    h_d_mu2p_cdwp_vs_dt_mu2p->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
+    h_d_mu2p_cdwp_vs_dt_mu2p->GetXaxis()->CenterTitle(kTRUE);
+    h_d_mu2p_cdwp_vs_dt_mu2p->GetYaxis()->SetTitle("d_{#mu2p} (cm)");
+    h_d_mu2p_cdwp_vs_dt_mu2p->GetYaxis()->CenterTitle(kTRUE);
+    h_d_mu2p_cdwp_vs_dt_mu2p->GetYaxis()->SetTitleOffset(1.5);
+    h_d_mu2p_cdwp_vs_dt_mu2p->Draw("COLZ");
+    c_d_mu2p_cdwp_vs_dt_mu2p->SetTickx();
+    c_d_mu2p_cdwp_vs_dt_mu2p->SetTicky();
+    c_d_mu2p_cdwp_vs_dt_mu2p->Update();
+
+    TCanvas* c_d_mu2p_tt_vs_dt_mu2p = new TCanvas("c_d_mu2p_tt_vs_dt_mu2p", "d_mu2p_tt vs dt_mu2p", 1000, 1000);
+    c_d_mu2p_tt_vs_dt_mu2p->cd();
+    h_d_mu2p_tt_vs_dt_mu2p->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
+    h_d_mu2p_tt_vs_dt_mu2p->GetXaxis()->CenterTitle(kTRUE);
+    h_d_mu2p_tt_vs_dt_mu2p->GetYaxis()->SetTitle("d_{#mu2p} (cm)");
+    h_d_mu2p_tt_vs_dt_mu2p->GetYaxis()->CenterTitle(kTRUE);
+    h_d_mu2p_tt_vs_dt_mu2p->GetYaxis()->SetTitleOffset(1.5);
+    h_d_mu2p_tt_vs_dt_mu2p->Draw("COLZ");
+    c_d_mu2p_tt_vs_dt_mu2p->SetTickx();
+    c_d_mu2p_tt_vs_dt_mu2p->SetTicky();
+    c_d_mu2p_tt_vs_dt_mu2p->Update();
 }
 
 void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
