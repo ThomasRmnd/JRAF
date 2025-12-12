@@ -514,13 +514,41 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
             }
         }
         
-        std::cout << (is_only_in_vanessa ? "[Only in Vanessa] " : "");
-        std::cout << (is_only_in_analysis ? "[Only in Analysis] " : "");
+        std::cout << (is_only_in_vanessa ? "[Only in Vanessa] ======================================" : "");
+        std::cout << (is_only_in_analysis ? "[Only in Analysis] ======================================" : "");
+        std::cout << '\n';
         std::cout << "Prompt: (" << analysis->posx_p << ", " << analysis->posy_p << ", " << analysis->posz_p << "), E = " << analysis->e_p << ", Q = " << analysis->totq_p << ", Time = " << TTimeStamp(analysis->sec_p, analysis->nsec_p) << '\n';
         std::cout << "Delayed: (" << analysis->posx_d << ", " << analysis->posy_d << ", " << analysis->posz_d << "), E = " << analysis->e_d << ", Q = " << analysis->totq_d << ", Time = " << TTimeStamp(analysis->sec_d, analysis->nsec_d) << '\n';
         std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
         std::cout << "Number of Multiplicity Veto associated: " << nb_multu_veto << '\n';
-        std::cout << "Muon (" << method << "): d_mu2p = " << d_mu2p << ", t_mu2p = " << t_mu2p << ", d_mu2d = " << d_mu2d << ", t_mu2d = " << t_mu2d << '\n';
+
+        // print neutrons
+        for (std::size_t k = 0ul; k < analysis->e_n->size(); ++k) {
+            TTimeStamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
+            TVector3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
+            double e_n = analysis->e_n->operator[](k);
+            double totq_n = analysis->totq_n->operator[](k);
+            std::cout << "  Neutron: (" << pos_n.X() << ", " << pos_n.Y() << ", " << pos_n.Z() << "), E = " << e_n << ", Q = " << totq_n << ", Time = " << ts_n << '\n';
+        }
+
+        // print mults
+        for (std::size_t k = 0ul; k < analysis->e_mult->size(); ++k) {
+            TTimeStamp ts_mult{analysis->sec_mult->operator[](k), analysis->nsec_mult->operator[](k)};
+            TVector3 pos_mult{analysis->posx_mult->operator[](k), analysis->posy_mult->operator[](k), analysis->posz_mult->operator[](k)};
+            double e_mult = analysis->e_mult->operator[](k);
+            double totq_mult = analysis->totq_mult->operator[](k);
+            std::cout << "  Mult: (" << pos_mult.X() << ", " << pos_mult.Y() << ", " << pos_mult.Z() << "), E = " << e_mult << ", Q = " << totq_mult << ", Time = " << ts_mult << '\n';
+        }
+
+        // print muons
+        for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
+            TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+            TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+            double totq_mu = analysis->totq_mu->operator[](k);
+            double quality_mu = analysis->quality_mu->operator[](k);
+            std::cout << "  Muon (" << analysis->method_mu->operator[](k) << "): (" << pos_mu.X() << ", " << pos_mu.Y() << ", " << pos_mu.Z() << "), Dir = (" << dir_mu.X() << ", " << dir_mu.Y() << ", " << dir_mu.Z() << "), Q = " << totq_mu << ", Quality = " << quality_mu << ", Time = " << ts_mu << '\n';
+        }
     }
 }
 
