@@ -401,11 +401,18 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
 
         std::string method = "";
         std::vector<double> dt_mu2p_times;
-        std::set<TTimeStamp> used_muon_times;
+        std::vector<TTimeStamp> used_muon_times;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
-            if (used_muon_times.find(ts_mu) != used_muon_times.end()) continue;
-            used_muon_times.insert(ts_mu);
+            std::vector<TTimeStamp>::const_iterator it = std::find_if(
+                used_muon_times.begin(), used_muon_times.end(),
+                [ts_mu](const TTimeStamp& used_ts_mu) {
+                    TTimeStamp diff = ts_mu - used_ts_mu;
+                    return (TTimeStamp{0, -1000} < diff && diff < TTimeStamp{0, 1000});
+                }
+            );
+            if (it != used_muon_times.end()) continue;
+            used_muon_times.push_back(ts_mu);
             TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
             TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
             if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
