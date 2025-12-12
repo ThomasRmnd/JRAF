@@ -421,7 +421,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     TCanvas* c_cosmo_rate_with_neutron = new TCanvas("c_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 1000, 1000);
     c_cosmo_rate_with_neutron->cd();
 
-    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] +  [1] * exp(- [2] * x)", 0.05, 1.2);
+    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(- [2] * x)", 0.05, 1.2);
     f_cosmo_rate_with_neutron->SetParameter(0, 2000.0);
     f_cosmo_rate_with_neutron->SetParameter(1, h_cosmo_rate_with_neutron->GetMaximum() - 2000.0);
     f_cosmo_rate_with_neutron->SetParameter(2, 0.25);
@@ -441,7 +441,6 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     
     c_cosmo_rate_with_neutron->SetTickx();
     c_cosmo_rate_with_neutron->SetTicky();
-    c_cosmo_rate_with_neutron->SetLogy();
 
     c_cosmo_rate_with_neutron->Update();
 }
