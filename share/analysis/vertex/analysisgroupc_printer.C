@@ -458,7 +458,9 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
             [&](const VanessaIBD& vanessa_ibd) {
                 return (
                     vanessa_ibd.ts_p.GetSec() == analysis->sec_p &&
-                    vanessa_ibd.ts_d.GetSec() == analysis->sec_d
+                    vanessa_ibd.ts_d.GetSec() == analysis->sec_d &&
+                    vanessa_ibd.e_p == analysis->e_p &&
+                    vanessa_ibd.e_d == analysis->e_d
                 );
             }
         );
