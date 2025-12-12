@@ -617,8 +617,8 @@ std::vector<double> create_custom_e_p_bins() {
     // int s5_bins = 1;
     // int tot_bins = s1_bins + s2_bins + s3_bins + s4_bins + s5_bins;
 
-    double edges[] = {0.8, 1.0, 6.6, 7.4, 7.7, 8.1, 8.6, 9.4, 12.0};
-    int    bins[]  = {  1,  56,   4,   1,   2,   1,   1,   1};
+    double edges[] = {0.7, 1.0, 6.6, 7.4, 7.7, 8.1, 8.6, 9.4, 12.0};
+    int    bins[]  = {  1,  56,   4,   1,   1,   1,   1,   1};
     
     std::vector<double> e_p_bins;
 
