@@ -580,6 +580,63 @@ std::vector<double> linspace_cpp(double start, double stop, int num) {
     return result;
 }
 
+std::vector<double> generate_segment_boundaries(double start, double stop, int num_bins) {
+    if (num_bins <= 0) return {};
+    int num_points = num_bins + 1;
+    double expected_width = (stop - start) / num_bins;
+    
+    std::vector<double> segment;
+    segment.reserve(num_points);
+    segment.push_back(start); 
+
+    for (int i = 1; i < num_points; ++i) {
+        double boundary = start + i * expected_width;
+        
+        if (i == num_points - 1) {
+             segment.push_back(stop);
+        } else {
+             segment.push_back(boundary);
+        }
+    }
+    return segment;
+}
+
+std::vector<double> create_custom_e_p_bins() {
+
+    double s1_start = 0.8;
+    double s2_start = 0.94;
+    double s3_start = 7.44;
+    double s4_start = 7.8;
+    double s5_start = 8.2;
+    double stop = 12.0;
+
+    int s1_bins = 1;
+    int s2_bins = 325;
+    int s3_bins = 9;
+    int s4_bins = 4;
+    int s5_bins = 1;
+    
+    std::vector<double> e_p_bins;
+    e_p_bins.reserve(1 + 325 + 9 + 4 + 1 + 1);
+    
+    std::vector<double> seg1 = generate_segment_boundaries(s1_start, s2_start, s1_bins);
+    e_p_bins.insert(e_p_bins.end(), seg1.begin(), seg1.end());
+    
+    std::vector<double> seg2 = generate_segment_boundaries(s2_start, s3_start, s2_bins);
+    e_p_bins.insert(e_p_bins.end(), seg2.begin() + 1, seg2.end());
+
+    std::vector<double> seg3 = generate_segment_boundaries(s3_start, s4_start, s3_bins);
+    e_p_bins.insert(e_p_bins.end(), seg3.begin() + 1, seg3.end());
+
+    std::vector<double> seg4 = generate_segment_boundaries(s4_start, s5_start, s4_bins);
+    e_p_bins.insert(e_p_bins.end(), seg4.begin() + 1, seg4.end());
+
+    std::vector<double> seg5 = generate_segment_boundaries(s5_start, stop, s5_bins);
+    e_p_bins.insert(e_p_bins.end(), seg5.begin() + 1, seg5.end());
+    
+    return e_p_bins;
+}
+
 #undef PRINT_ALL_ENTRIES
 #undef COMPARE_WITH_VANESSA
 #define GET_ALL_IBD
@@ -598,11 +655,12 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     std::vector<VanessaIBD> vanessa_ibds = analyze_vanessa_result();
 
 
-    double e_p_min = 0.7;
-    double e_p_max = 12.0;
-    double e_p_width = 0.20;
-    int e_p_nbin = std::round((e_p_max - e_p_min) / e_p_width) + 1;
-    std::vector<double> e_p_bins = linspace_cpp(e_p_min, e_p_max, e_p_nbin);
+    // double e_p_min = 0.7;
+    // double e_p_max = 12.0;
+    // double e_p_width = 0.20;
+    // int e_p_nbin = std::round((e_p_max - e_p_min) / e_p_width) + 1;
+    // std::vector<double> e_p_bins = linspace_cpp(e_p_min, e_p_max, e_p_nbin);
+    std::vector<double> e_p_bins = create_custom_e_p_bins();
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy", e_p_bins.size() - 1, e_p_bins.data());
     TH1D* h_e_p_vanessa = new TH1D("h_e_p_vanessa", "Prompt energy (Vanessa)", e_p_bins.size() - 1, e_p_bins.data());
 
