@@ -443,6 +443,16 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     c_cosmo_rate_with_neutron->SetTicky();
 
     c_cosmo_rate_with_neutron->Update();
+
+    double time_window = 1.2;
+    double binning = time_window / 120.0;
+    std::cout << "nIBD = " << f_cosmo_rate_with_neutron->GetParameter(0) * time_window / binning << " +/- " << f_cosmo_rate_with_neutron->GetParError(0) * time_window / binning << '\n';
+    std::cout << "nLiHe = " << f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning << " +/- " << 
+        std::sqrt(
+            std::pow(f_cosmo_rate_with_neutron->GetParError(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning, 2) +
+            std::pow(f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParError(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning, 2) +
+            std::pow(f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2)) * (time_window / (f_cosmo_rate_with_neutron->GetParameter(2) * f_cosmo_rate_with_neutron->GetParameter(2))) / binning, 2)
+        ) << '\n';
 }
 
 void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
