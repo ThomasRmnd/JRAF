@@ -461,7 +461,9 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
                 );
             }
         );
-        if ((it != vanessa_ibds.end() || !analysis->selection()) && (it == vanessa_ibds.end() || analysis->selection())) continue;
+        bool is_only_in_vanessa = (it != vanessa_ibds.end() && !analysis->selection());
+        bool is_only_in_analysis = (it == vanessa_ibds.end() && analysis->selection());
+        if (!is_only_in_vanessa && !is_only_in_analysis) continue;
 
         TTimeStamp ts_p{analysis->sec_p, analysis->nsec_p};
         TTimeStamp ts_d{analysis->sec_d, analysis->nsec_d};
@@ -512,6 +514,8 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
             }
         }
         
+        std::cout << (is_only_in_vanessa ? "[Only in Vanessa] " : "");
+        std::cout << (is_only_in_analysis ? "[Only in Analysis] " : "");
         std::cout << "Prompt: (" << analysis->posx_p << ", " << analysis->posy_p << ", " << analysis->posz_p << "), E = " << analysis->e_p << ", Q = " << analysis->totq_p << ", Time = " << TTimeStamp(analysis->sec_p, analysis->nsec_p) << '\n';
         std::cout << "Delayed: (" << analysis->posx_d << ", " << analysis->posy_d << ", " << analysis->posz_d << "), E = " << analysis->e_d << ", Q = " << analysis->totq_d << ", Time = " << TTimeStamp(analysis->sec_d, analysis->nsec_d) << '\n';
         std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
