@@ -272,9 +272,17 @@ void IBDAnalysis::process(const EventContext::View& events) {
         posy_n.clear();
         posz_n.clear();
         e_n.clear();
-        totq_n.clear();
         sec_n.clear();
         nsec_n.clear();
+
+        totq_n.clear();
+        meanq_n.clear();
+        stdq_n.clear();
+        minq_n.clear();
+        maxq_n.clear();
+        nhit_n.clear();
+        meant_n.clear();
+        stdt_n.clear();
 
         for (const vertex& neu : ibd.neus) {
             posx_n.push_back(neu.pos.x);
@@ -298,10 +306,18 @@ void IBDAnalysis::process(const EventContext::View& events) {
         posy_mult.clear();
         posz_mult.clear();
         e_mult.clear();
-        totq_mult.clear();
         sec_mult.clear();
         nsec_mult.clear();
         mult_type.clear();
+
+        totq_mult.clear();
+        meanq_mult.clear();
+        stdq_mult.clear();
+        minq_mult.clear();
+        maxq_mult.clear();
+        nhit_mult.clear();
+        meant_mult.clear();
+        stdt_mult.clear();
 
         for (const mult_info& mult : ibd.mults) {
             posx_mult.push_back(mult.vtx.pos.x);
