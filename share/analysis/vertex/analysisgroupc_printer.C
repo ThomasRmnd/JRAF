@@ -222,7 +222,7 @@ public:
         return chain;
     }
 
-    virtual bool selection() = 0;
+    virtual bool selection() override = 0;
 
     void print() override {
         TTimeStamp ts_p{sec_p, nsec_p};
