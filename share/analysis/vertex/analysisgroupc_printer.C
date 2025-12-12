@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <set>
@@ -412,6 +413,113 @@ void analyze_vanessa_result(TFile* file, TTree* tree) {
     }
 }
 
+void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
+    TFile* vanessa_file = TFile::Open("/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/summary/ReProd25C/IBD_all_reprodC.root", "READ");
+    TTree* vanessa_tree = vanessa_file->Get<TTree>("events");
+    std::set<VanessaIBD> vanessa_ibds;
+    double run_id;
+    double t_p, t_d;
+    double e_p, e_d;
+    double totq_p, totq_d;
+    vanessa_tree->SetBranchAddress("run_number", &run_id);
+    vanessa_tree->SetBranchAddress("time_p_ns", &t_p);
+    vanessa_tree->SetBranchAddress("time_d_ns", &t_d);
+    vanessa_tree->SetBranchAddress("energy_p_omilrec", &e_p);
+    vanessa_tree->SetBranchAddress("energy_d_omilrec", &e_d);
+    vanessa_tree->SetBranchAddress("NPE_p", &totq_p);
+    vanessa_tree->SetBranchAddress("NPE_d", &totq_d);
+    for (long k = 0l; k < vanessa_tree->GetEntries(); ++k) {
+        vanessa_tree->GetEntry(k);
+        time_t sec_p = static_cast<time_t>(t_p / 1.0e9);
+        int nsec_p = static_cast<int>(t_p - static_cast<double>(sec_p) * 1.0e9);
+        time_t sec_d = static_cast<time_t>(t_d / 1.0e9);
+        int nsec_d = static_cast<int>(t_d - static_cast<double>(sec_d) * 1.0e9);
+        VanessaIBD ibd;
+        ibd.run_id = run_id;
+        ibd.ts_p = TTimeStamp{sec_p, nsec_p};
+        ibd.e_p = e_p;
+        ibd.totq_p = totq_p;
+        ibd.ts_d = TTimeStamp{sec_d, nsec_d};
+        ibd.e_d = e_d;
+        ibd.totq_d = totq_d;
+        vanessa_ibds.insert(ibd);
+    }
+
+    TChain* chain = analysis->retrieve(filename);
+    if (!chain) return;
+    std::set<IBD> ibds;
+    std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
+    for (long k = 0; k < chain->GetEntries(); ++k) {
+        chain->GetEntry(k);
+        std::set<VanessaIBD>::const_iterator it = std::find_if(
+            vanessa_ibds.begin(),
+            vanessa_ibds.end(),
+            [&](const VanessaIBD& vanessa_ibd) {
+                return (
+                    vanessa_ibd.ts_p.GetSec() == analysis->sec_p &&
+                    vanessa_ibd.ts_d.GetSec() == analysis->sec_d
+                );
+            }
+        );
+        if (it != vanessa_ibds.end() && analysis->selection()) continue;
+
+        TTimeStamp ts_p{analysis->sec_p, analysis->nsec_p};
+        TTimeStamp ts_d{analysis->sec_d, analysis->nsec_d};
+        TVector3 pos_p{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        TVector3 pos_d{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+
+        std::size_t nb_neutron_veto = 0ul;
+        for (std::size_t k = 0ul; k < analysis->e_n->size(); ++k) {
+            if (analysis->e_n->operator[](k) < 1.5 || 20.0 < analysis->e_n->operator[](k)) continue;
+            TTimeStamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
+            TVector3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
+            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
+            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
+            ++nb_neutron_veto;
+        }
+
+        std::size_t nb_multu_veto = 0ul;
+        for (std::size_t k = 0ul; k < analysis->e_mult->size(); ++k) {
+            if (analysis->e_mult->operator[](k) < 2.0 || 12.0 < analysis->e_mult->operator[](k)) continue;
+            TTimeStamp ts_mult{analysis->sec_mult->operator[](k), analysis->nsec_mult->operator[](k)};
+            TVector3 pos_mult{analysis->posx_mult->operator[](k), analysis->posy_mult->operator[](k), analysis->posz_mult->operator[](k)};
+            // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_p - ts_mult < TTimeStamp{0, 1000000} || TTimeStamp{0, 0} < ts_p - ts_mult) continue;
+            if (ts_d - ts_mult < TTimeStamp{0, 0} || TTimeStamp{0, 1000000} < ts_d - ts_mult) continue;
+            ++nb_multu_veto;
+        }
+
+        std::string method = "";
+        double d_mu2p = std::numeric_limits<double>::infinity();
+        double t_mu2p = std::numeric_limits<double>::infinity();
+        double d_mu2d = std::numeric_limits<double>::infinity();
+        double t_mu2d = std::numeric_limits<double>::infinity();
+        for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
+            TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+            TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+            double tmp_d_mu2p = dir_mu.Cross(pos_p - pos_mu).Mag();
+            double tmp_t_mu2p = static_cast<double>(ts_p - ts_mu);
+            double tmp_d_mu2d = dir_mu.Cross(pos_d - pos_mu).Mag();
+            double tmp_t_mu2d = static_cast<double>(ts_d - ts_mu);
+            if (tmp_d_mu2p < d_mu2p && 0.0 < tmp_t_mu2p && tmp_t_mu2p < 1.2) {
+                method = analysis->method_mu->operator[](k);
+                d_mu2p = tmp_d_mu2p;
+                t_mu2p = tmp_t_mu2p;
+                d_mu2d = tmp_d_mu2d;
+                t_mu2d = tmp_t_mu2d;
+            }
+        }
+        
+        std::cout << "Prompt: (" << analysis->posx_p << ", " << analysis->posy_p << ", " << analysis->posz_p << "), E = " << analysis->e_p << ", Q = " << analysis->totq_p << ", Time = " << TTimeStamp(analysis->sec_p, analysis->nsec_p) << '\n';
+        std::cout << "Delayed: (" << analysis->posx_d << ", " << analysis->posy_d << ", " << analysis->posz_d << "), E = " << analysis->e_d << ", Q = " << analysis->totq_d << ", Time = " << TTimeStamp(analysis->sec_d, analysis->nsec_d) << '\n';
+        std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
+        std::cout << "Number of Multiplicity Veto associated: " << nb_multu_veto << '\n';
+        std::cout << "Muon (" << method << "): d_mu2p = " << d_mu2p << ", t_mu2p = " << t_mu2p << ", d_mu2d = " << d_mu2d << ", t_mu2d = " << t_mu2d << '\n';
+    }
+}
+
 std::vector<double> linspace_cpp(double start, double stop, int num) {
     if (num <= 1) {
         if (num == 1) return {start};
@@ -433,11 +541,18 @@ std::vector<double> linspace_cpp(double start, double stop, int num) {
     return result;
 }
 
+#define COMPARE_WITH_VANESSA
+#undef GET_ALL_IBD
+
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
     // analyze_vanessa_result(file, tree);
 
     IBDAnalysis ibd_analysis(suffix);
     // print_all_entries(filename, &ibd_analysis);
+#ifdef COMPARE_WITH_VANESSA
+    compare_with_vanessa(filename, &ibd_analysis);
+#endif
+#ifdef GET_ALL_IBD
     std::vector<IBD> ibds = get_all_ibd(filename, &ibd_analysis);
 
 
@@ -518,4 +633,5 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     c_rho_z_d->cd();
     h_rho_z_d->Draw();
     c_rho_z_d->Update();
+#endif
 }
