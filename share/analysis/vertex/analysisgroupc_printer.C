@@ -147,13 +147,13 @@ public:
 
 };
 
-class IBDAnalysis : public AnalysisBase {
+class MainAnalysis : public AnalysisBase {
 
 public:
 
-    IBDAnalysis(const std::string& suffix) : AnalysisBase{"IBDAnalysis" + suffix} {}
+    MainAnalysis(const std::string& suffix) : AnalysisBase{"IBDAnalysis" + suffix} {}
 
-    ~IBDAnalysis() override = default;
+    ~MainAnalysis() override = default;
 
     std::vector<double>* posx_n = nullptr;
     std::vector<double>* posy_n = nullptr;
@@ -222,42 +222,7 @@ public:
         return chain;
     }
 
-    bool selection() override {
-        if (stdt_p > 200.0 || stdt_d > 200.0) return false;
-        TTimeStamp ts_p{sec_p, nsec_p};
-        TTimeStamp ts_d{sec_d, nsec_d};
-        TVector3 pos_p{posx_p, posy_p, posz_p};
-        TVector3 pos_d{posx_d, posy_d, posz_d};
-        if (pos_p.Mag() > 16500.0) return false;
-        if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
-        if (e_p < 0.7 || 12.0 < e_p) return false;
-        if (e_d < 2.0 || 2.5 < e_d) return false;
-
-        std::size_t nb_neutron_veto = 0ul;
-        for (std::size_t k = 0ul; k < e_n->size(); ++k) {
-            if (e_n->operator[](k) < 1.5 || 20.0 < e_n->operator[](k)) continue;
-            TTimeStamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
-            TVector3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
-            // if (pos_n.Mag() > 17700.0) continue;
-            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
-            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
-            ++nb_neutron_veto;
-        }
-
-        std::size_t nb_multu_veto = 0ul;
-        for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
-            if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
-            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
-            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
-            // if (pos_mult.Mag() > 17700.0) continue;
-            // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
-            ++nb_multu_veto;
-        }
-
-        return (nb_neutron_veto == 0ul && nb_multu_veto == 0ul);
-    }
+    virtual bool selection() = 0;
 
     void print() override {
         TTimeStamp ts_p{sec_p, nsec_p};
@@ -303,6 +268,88 @@ public:
 
 };
 
+class IBDAnalysis : public MainAnalysis {
+
+public:
+
+    IBDAnalysis(const std::string& suffix) : MainAnalysis{suffix} {}
+
+    ~IBDAnalysis() override = default;
+
+    bool selection() override {
+        if (stdt_p > 200.0 || stdt_d > 200.0) return false;
+        TTimeStamp ts_p{sec_p, nsec_p};
+        TTimeStamp ts_d{sec_d, nsec_d};
+        TVector3 pos_p{posx_p, posy_p, posz_p};
+        TVector3 pos_d{posx_d, posy_d, posz_d};
+        if (pos_p.Mag() > 16500.0) return false;
+        if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
+        if (e_p < 0.7 || 12.0 < e_p) return false;
+        if (e_d < 2.0 || 2.5 < e_d) return false;
+
+        std::size_t nb_neutron_veto = 0ul;
+        for (std::size_t k = 0ul; k < e_n->size(); ++k) {
+            if (e_n->operator[](k) < 1.5 || 20.0 < e_n->operator[](k)) continue;
+            TTimeStamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
+            TVector3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
+            // if (pos_n.Mag() > 17700.0) continue;
+            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_p < ts_n + TTimeStamp{0, 20000} || ts_n + TTimeStamp{0, 1200000000} < ts_p) continue;
+            if (ts_d < ts_n + TTimeStamp{0, 20000} || ts_n + TTimeStamp{0, 1200000000} < ts_d) continue;
+            ++nb_neutron_veto;
+        }
+
+        std::size_t nb_multu_veto = 0ul;
+        for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
+            if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
+            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            // if (pos_mult.Mag() > 17700.0) continue;
+            // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            ++nb_multu_veto;
+        }
+
+        return (nb_neutron_veto == 0ul && nb_multu_veto == 0ul);
+    }
+
+};
+
+class CosmoRateWithNeutronAnalysis : public MainAnalysis {
+
+public:
+
+    CosmoRateWithNeutronAnalysis(const std::string& suffix) : MainAnalysis{suffix} {}
+
+    ~CosmoRateWithNeutronAnalysis() override = default;
+
+    bool selection() override {
+        if (stdt_p > 200.0 || stdt_d > 200.0) return false;
+        TTimeStamp ts_p{sec_p, nsec_p};
+        TTimeStamp ts_d{sec_d, nsec_d};
+        TVector3 pos_p{posx_p, posy_p, posz_p};
+        TVector3 pos_d{posx_d, posy_d, posz_d};
+        if (pos_p.Mag() > 16500.0) return false;
+        if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
+        if (e_p < 0.7 || 12.0 < e_p) return false;
+        if (e_d < 2.0 || 2.5 < e_d) return false;
+
+        std::size_t nb_multu_veto = 0ul;
+        for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
+            if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
+            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            // if (pos_mult.Mag() > 17700.0) continue;
+            // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            ++nb_multu_veto;
+        }
+
+        return (nb_multu_veto == 0ul);
+    }
+
+};
+
 std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return {};
@@ -332,6 +379,52 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
     return ibds;
 }
 
+void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithNeutronAnalysis* analysis) {
+    TChain* chain = analysis->retrieve(filename);
+    if (!chain) return;
+    std::map<IBD, std::vector<double>> ibds_dt_mu2p;
+    std::cout << "=== Analysis: CosmoRateWithNeutron (Total Entries: " << chain->GetEntries() << ") ===\n";
+    for (long k = 0; k < chain->GetEntries(); ++k) {
+        chain->GetEntry(k);
+        // analysis->print();
+        if (!analysis->selection()) continue;
+        IBD ibd;
+        ibd.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.prompt.e = analysis->e_p;
+        ibd.prompt.q = analysis->totq_p;
+        ibd.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.delayed.e = analysis->e_d;
+        ibd.delayed.q = analysis->totq_d;
+
+        std::string method = "";
+        std::vector<double> dt_mu2p_times;
+        for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
+            TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+            TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+            if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
+            dt_mu2p_times.push_back(static_cast<double>(ibd.prompt.ts - ts_mu));
+        }
+        ibds_dt_mu2p[ibd] = dt_mu2p_times;
+    }
+
+    TH1D* h_cosmo_rate_with_neutron = new TH1D("h_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 120, 0.0, 1.2);
+    for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
+        for (double dt_mu2p : ibd_dt_mu2p.second) {
+            h_cosmo_rate_with_neutron->Fill(dt_mu2p);
+        }
+    }
+
+    TCanvas* c_cosmo_rate_with_neutron = new TCanvas("c_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 1000, 1000);
+    c_cosmo_rate_with_neutron->cd();
+
+    h_cosmo_rate_with_neutron->Draw();
+
+    c_cosmo_rate_with_neutron->Update();
+}
+
 void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
@@ -358,7 +451,6 @@ void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
         std::cout << "Delayed: " << "E = " << it->delayed.e << ", Q = " << it->delayed.q << ", Time = " << it->delayed.ts << '\n';
     }
 }
-
 
 struct VanessaIBD {
 
@@ -642,6 +734,9 @@ std::vector<double> create_custom_e_p_bins() {
 #define GET_ALL_IBD
 
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
+
+    CosmoRateWithNeutronAnalysis cosmo_rate_with_neutron_analysis(suffix);
+    analyze_cosmo_rate_with_neutron(filename, &cosmo_rate_with_neutron_analysis);
 
     IBDAnalysis ibd_analysis(suffix);
 #ifdef PRINT_ALL_ENTRIES
