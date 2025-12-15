@@ -376,7 +376,7 @@ public:
         }
 
         bool found = false;
-        for (std::size_t k = 0ul; k < method_mu->size(); ++k) {
+        for (std::size_t k = 0ul; k < method_mu->size() && !found; ++k) {
             if (method_mu->operator[](k) != "CdWpTtChi2") continue;
             TTimeStamp ts_mu{sec_mu->operator[](k), nsec_mu->operator[](k)};
             if (ts_p < ts_mu + m_ts_low || m_ts_high + ts_mu < ts_p) continue;
@@ -391,7 +391,6 @@ public:
                 m_dlat_mu2d = d_mu2d;
                 m_dt_mu2p = static_cast<double>(ts_p - ts_mu);
                 m_dt_mu2d = static_cast<double>(ts_d - ts_mu);
-                break;
             }
         }
 
@@ -677,8 +676,8 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_2_neutron);
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_3_neutron);
 
-    TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 20000.0);
-    TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 20000.0);
+    TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 40000.0);
+    TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 40000.0);
     for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
         const IBD& ibd = ibd_dt_mu2p.first;
         const std::vector<double>& dt_mu2p_times = ibd_dt_mu2p.second;
@@ -1113,6 +1112,24 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
         h_dr->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
         h_rho_z_p->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
         h_rho_z_d->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
+    }
+
+    for (const Cosmo& cosmo : cosmos_before) {
+        h_e_p_cosmo_before->Fill(cosmo.prompt.e);
+        h_e_d_cosmo_before->Fill(cosmo.delayed.e);
+        h_dt_cosmo_before->Fill((cosmo.delayed.ts - cosmo.prompt.ts) * 1000.0);
+        h_dr_cosmo_before->Fill((cosmo.delayed.pos - cosmo.prompt.pos).Mag() / 1000.0);
+        h_rho_z_p_cosmo_before->Fill((cosmo.prompt.pos.X() * cosmo.prompt.pos.X() + cosmo.prompt.pos.Y() * cosmo.prompt.pos.Y()) / 1.0e6, cosmo.prompt.pos.Z() / 1000.0);
+        h_rho_z_d_cosmo_before->Fill((cosmo.delayed.pos.X() * cosmo.delayed.pos.X() + cosmo.delayed.pos.Y() * cosmo.delayed.pos.Y()) / 1.0e6, cosmo.delayed.pos.Z() / 1000.0);
+    }
+
+    for (const Cosmo& cosmo : cosmos_after) {
+        h_e_p_cosmo_after->Fill(cosmo.prompt.e);
+        h_e_d_cosmo_after->Fill(cosmo.delayed.e);
+        h_dt_cosmo_after->Fill((cosmo.delayed.ts - cosmo.prompt.ts) * 1000.0);
+        h_dr_cosmo_after->Fill((cosmo.delayed.pos - cosmo.prompt.pos).Mag() / 1000.0);
+        h_rho_z_p_cosmo_after->Fill((cosmo.prompt.pos.X() * cosmo.prompt.pos.X() + cosmo.prompt.pos.Y() * cosmo.prompt.pos.Y()) / 1.0e6, cosmo.prompt.pos.Z() / 1000.0);
+        h_rho_z_d_cosmo_after->Fill((cosmo.delayed.pos.X() * cosmo.delayed.pos.X() + cosmo.delayed.pos.Y() * cosmo.delayed.pos.Y()) / 1.0e6, cosmo.delayed.pos.Z() / 1000.0);
     }
 
     for (const VanessaIBD& ibd : vanessa_ibds) {
