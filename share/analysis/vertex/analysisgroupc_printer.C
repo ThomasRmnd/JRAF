@@ -592,10 +592,10 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             }
 
             for (std::size_t idx : mu.indices) {
-                const std::string& method = analysis->method_mu->operator[](k);
+                const std::string& method = analysis->method_mu->operator[](idx);
                 if (method != "CdWpTtChi2" && method != "Tt") continue;
-                vec3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
-                vec3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+                vec3 pos_mu{analysis->posx_mu->operator[](idx), analysis->posy_mu->operator[](idx), analysis->posz_mu->operator[](idx)};
+                vec3 dir_mu{analysis->dirx_mu->operator[](idx), analysis->diry_mu->operator[](idx), analysis->dirz_mu->operator[](idx)};
                 double d = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
 
                 if (method == "CdWpTtChi2") d_mu2p_cdwp_values.push_back(d);
