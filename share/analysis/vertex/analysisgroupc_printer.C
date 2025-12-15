@@ -524,13 +524,20 @@ void fit_and_plot_cosmo_rate_with_neutron(TH1D* h) {
     std::cout << "nLiHe = " << f->GetParameter(1) * f->GetParameter(2) * (1 - std::exp(-time_window / f->GetParameter(2))) / binning << '\n';    
 }
 
+struct PhysicalMuon {
+
+    timestamp ts;
+    std::vector<std::size_t> indices;
+
+};
+
 void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithNeutronAnalysis* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
     std::map<IBD, std::vector<double>> ibds_dt_mu2p;
     std::map<IBD, std::vector<double>> ibds_d_mu2p_cdwp;
     std::map<IBD, std::vector<double>> ibds_d_mu2p_tt;
-    std::map<IBD, int> ibds_neutron_count;
+    std::map<IBD, std::vector<int>> ibds_neutron_count;
     std::cout << "=== Analysis: CosmoRateWithNeutron (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
@@ -549,55 +556,59 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         ibd.delayed.e = analysis->e_d;
         ibd.delayed.q = analysis->totq_d;
 
-        std::vector<double> dt_mu2p_times;
+        std::vector<PhysicalMuon> physical_muon;
+        std::vector<double> dt_mu2p_values;
         std::vector<double> d_mu2p_cdwp_values;
         std::vector<double> d_mu2p_tt_values;
-        std::vector<std::pair<timestamp, std::vector<std::string>>> used_muon_times;
-        int neutron_count = 0;
+        std::vector<int> neutron_count_values;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             timestamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
-            if (ibd.prompt.ts < ts_mu + timestamp{0, 5000000} || ts_mu + timestamp{0, 1200000000} < ibd.prompt.ts) continue;
-            std::vector<std::pair<timestamp, std::vector<std::string>>>::iterator it = std::find_if(
-                used_muon_times.begin(), used_muon_times.end(),
-                [ts_mu](const std::pair<timestamp, std::vector<std::string>>& used_ts_mu) {
-                    timestamp diff = ts_mu - used_ts_mu.first;
-                    return (timestamp{0, -1000} < diff && diff < timestamp{0, 1000});
+            std::vector<PhysicalMuon>::iterator it = std::find_if(
+                physical_muon.begin(), physical_muon.end(),
+                [ts_mu](const PhysicalMuon& mu) {
+                    timestamp diff = ts_mu - mu.ts;
+                    return timestamp{0, -1000} < diff && diff < timestamp{0, 1000};
                 }
             );
-            if (it != used_muon_times.end()) {
-                std::vector<std::string>::iterator method_it = std::find(
-                    it->second.begin(), it->second.end(),
-                    analysis->method_mu->operator[](k)
-                );
-                if (method_it != it->second.end()) continue;
-                else {
-                    it->second.push_back(analysis->method_mu->operator[](k));
-                }
+            if (it == physical_muon.end()) {
+                physical_muon.push_back({ts_mu, {k}});
             }
             else {
-                used_muon_times.push_back(std::make_pair(ts_mu, std::vector<std::string>{analysis->method_mu->operator[](k)}));
-            }
-            dt_mu2p_times.push_back(timestamp_to_double(ibd.prompt.ts - ts_mu));
-            for (std::size_t i = 0ul; i < analysis->sec_n->size(); ++i) {
-                if (analysis->e_n->operator[](i) < 2.0 || 2.5 < analysis->e_n->operator[](i)) continue;
-                timestamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
-                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
-                ++neutron_count;
-            }
-            vec3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
-            vec3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
-            double d_mu2p = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
-            if (analysis->method_mu->operator[](k) == "CdWpTtChi2") {
-                d_mu2p_cdwp_values.push_back(d_mu2p);
-            }
-            if (analysis->method_mu->operator[](k) == "Tt") {
-                d_mu2p_tt_values.push_back(d_mu2p);
+                it->indices.push_back(k);
             }
         }
-        ibds_dt_mu2p[ibd] = dt_mu2p_times;
+
+        for (const PhysicalMuon& mu : physical_muon) {
+            timestamp diff = ibd.prompt.ts - mu.ts;
+            if (diff < timestamp{0, 5000000} || timestamp{0, 1200000000} < diff) continue;
+
+            int neutron_count = 0;
+            for (std::size_t k = 0ul; k < analysis->sec_n->size(); ++k) {
+                double e_n = analysis->e_n->operator[](k);
+                if (e_n < 2.0 || 2.5 < e_n) continue;
+                timestamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
+                if (ts_n < mu.ts + timestamp{0, 20000} || mu.ts + timestamp{0, 2000000} < ts_n) continue;
+                ++neutron_count;
+            }
+
+            for (std::size_t idx : mu.indices) {
+                const std::string& method = analysis->method_mu->operator[](k);
+                if (method != "CdWpTtChi2" && method != "Tt") continue;
+                vec3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+                vec3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+                double d = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
+
+                if (method == "CdWpTtChi2") d_mu2p_cdwp_values.push_back(d);
+                else d_mu2p_tt_values.push_back(d);
+            }
+
+            dt_mu2p_values.push_back(timestamp_to_double(diff));
+            neutron_count_values.push_back(neutron_count);
+        }
+        ibds_dt_mu2p[ibd] = dt_mu2p_values;
         ibds_d_mu2p_cdwp[ibd] = d_mu2p_cdwp_values;
         ibds_d_mu2p_tt[ibd] = d_mu2p_tt_values;
-        ibds_neutron_count[ibd] = neutron_count;
+        ibds_neutron_count[ibd] = neutron_count_values;
     }
 
     TH1D* h_cosmo_rate_with_neutron = new TH1D("h_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 120, 0.0, 1.2);
@@ -606,28 +617,21 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     TH1D* h_cosmo_rate_with_at_least_2_neutron = new TH1D("h_cosmo_rate_with_at_least_2_neutron", "Cosmo Rate With At Least 2 Neutron", 120, 0.0, 1.2);
     TH1D* h_cosmo_rate_with_at_least_3_neutron = new TH1D("h_cosmo_rate_with_at_least_3_neutron", "Cosmo Rate With At Least 3 Neutron", 120, 0.0, 1.2);
     for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
-        for (double dt_mu2p : ibd_dt_mu2p.second) {
-            h_cosmo_rate_with_neutron->Fill(dt_mu2p);
-        }
-        int neutron_count = ibds_neutron_count[ibd_dt_mu2p.first];
-        if (neutron_count == 0) {
-            for (double dt_mu2p : ibd_dt_mu2p.second) {
-                h_cosmo_rate_with_no_neutron->Fill(dt_mu2p);
+        const std::vector<double>& dt_mu2p_values = ibd_dt_mu2p.second;
+        const std::vector<int>& neutron_count_values = ibds_neutron_count[ibd_dt_mu2p.first];
+        for (std::size_t k = 0ul; k < dt_mu2p_values.size(); ++k) {
+            h_cosmo_rate_with_neutron->Fill(dt_mu2p_values[k]);
+            if (neutron_count_values[k] == 0) {
+                h_cosmo_rate_with_no_neutron->Fill(dt_mu2p_values[k]);
             }
-        }
-        if (neutron_count >= 1) {
-            for (double dt_mu2p : ibd_dt_mu2p.second) {
-                h_cosmo_rate_with_at_least_1_neutron->Fill(dt_mu2p);
+            if (neutron_count_values[k] >= 1) {
+                h_cosmo_rate_with_at_least_1_neutron->Fill(dt_mu2p_values[k]);
             }
-        }
-        if (neutron_count >= 2) {
-            for (double dt_mu2p : ibd_dt_mu2p.second) {
-                h_cosmo_rate_with_at_least_2_neutron->Fill(dt_mu2p);
+            if (neutron_count_values[k] >= 2) {
+                h_cosmo_rate_with_at_least_2_neutron->Fill(dt_mu2p_values[k]);
             }
-        }
-        if (neutron_count >= 3) {
-            for (double dt_mu2p : ibd_dt_mu2p.second) {
-                h_cosmo_rate_with_at_least_3_neutron->Fill(dt_mu2p);
+            if (neutron_count_values[k] >= 3) {
+                h_cosmo_rate_with_at_least_3_neutron->Fill(dt_mu2p_values[k]);
             }
         }
     }
