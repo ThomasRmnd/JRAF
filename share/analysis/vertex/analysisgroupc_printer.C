@@ -592,6 +592,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         int neutron_count = 0;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            if (ibd.prompt.ts < ts_mu || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
             std::vector<TTimeStamp>::const_iterator it = std::find_if(
                 used_muon_times.begin(), used_muon_times.end(),
                 [ts_mu](const TTimeStamp& used_ts_mu) {
@@ -1060,6 +1061,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     TH1D* h_e_p_vanessa = new TH1D("h_e_p_vanessa", "Prompt energy (Vanessa)", e_p_bins.size() - 1, e_p_bins.data());
     TH1D* h_e_p_cosmo_before = new TH1D("h_e_p_cosmo_before", "Prompt energy (Cosmo Before)", e_p_bins.size() - 1, e_p_bins.data());
     TH1D* h_e_p_cosmo_after = new TH1D("h_e_p_cosmo_after", "Prompt energy (Cosmo After)", e_p_bins.size() - 1, e_p_bins.data());
+    TH1D* h_e_p_cosmo_diff = new TH1D("h_e_p_cosmo_diff", "Prompt energy (Cosmo After - Cosmo Before)", e_p_bins.size() - 1, e_p_bins.data());
 
     double e_d_min = 2.0;
     double e_d_max = 2.5;
@@ -1131,6 +1133,8 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
         h_rho_z_p_cosmo_after->Fill((cosmo.prompt.pos.X() * cosmo.prompt.pos.X() + cosmo.prompt.pos.Y() * cosmo.prompt.pos.Y()) / 1.0e6, cosmo.prompt.pos.Z() / 1000.0);
         h_rho_z_d_cosmo_after->Fill((cosmo.delayed.pos.X() * cosmo.delayed.pos.X() + cosmo.delayed.pos.Y() * cosmo.delayed.pos.Y()) / 1.0e6, cosmo.delayed.pos.Z() / 1000.0);
     }
+
+    h_e_p_cosmo_diff->Add(h_e_p_cosmo_after, h_e_p_cosmo_before, 1.0, -1.0);
 
     for (const VanessaIBD& ibd : vanessa_ibds) {
         h_e_p_vanessa->Fill(ibd.e_p);
@@ -1384,5 +1388,20 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     h_rho_z_d_cosmo_after->Draw();
 
     c_rho_z_d_cosmo_after->Update();
+
+    // ============================================================================================
+    // Cosmo diff - Prompt energy
+    // ============================================================================================
+
+    TCanvas* c_e_p_cosmo_diff = new TCanvas("c_e_p_cosmo_diff", "Prompt energy (Cosmo diff)", 1000, 1000);
+    c_e_p_cosmo_diff->cd();
+
+    h_e_p_cosmo_diff->SetLineWidth(3);
+    h_e_p_cosmo_diff->SetLineStyle(kSolid);
+    h_e_p_cosmo_diff->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_p_cosmo_diff->Draw();
+
+    c_e_p_cosmo_diff->Update();
 
 }
