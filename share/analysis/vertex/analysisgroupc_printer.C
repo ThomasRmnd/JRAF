@@ -531,13 +531,19 @@ struct PhysicalMuon {
 
 };
 
+struct MuonDataAssociation {
+
+    double dt;
+    int neutron_count;
+    std::vector<double> dlat_cdwp;
+    std::vector<double> dlat_tt;
+
+};
+
 void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithNeutronAnalysis* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
-    std::map<IBD, std::vector<double>> ibds_dt_mu2p;
-    std::map<IBD, std::vector<double>> ibds_d_mu2p_cdwp;
-    std::map<IBD, std::vector<double>> ibds_d_mu2p_tt;
-    std::map<IBD, std::vector<int>> ibds_neutron_count;
+    std::map<IBD, std::vector<MuonDataAssociation>> ibds_to_mu;
     std::cout << "=== Analysis: CosmoRateWithNeutron (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
@@ -557,10 +563,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         ibd.delayed.q = analysis->totq_d;
 
         std::vector<PhysicalMuon> physical_muon;
-        std::vector<double> dt_mu2p_values;
-        std::vector<double> d_mu2p_cdwp_values;
-        std::vector<double> d_mu2p_tt_values;
-        std::vector<int> neutron_count_values;
+        std::vector<MuonDataAssociation> muon_data;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             timestamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
             std::vector<PhysicalMuon>::iterator it = std::find_if(
@@ -582,6 +585,9 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             timestamp diff = ibd.prompt.ts - mu.ts;
             if (diff < timestamp{0, 5000000} || timestamp{0, 1200000000} < diff) continue;
 
+            MuonDataAssociation assoc;
+            assoc.dt = timestamp_to_double(diff);
+
             int neutron_count = 0;
             for (std::size_t k = 0ul; k < analysis->sec_n->size(); ++k) {
                 double e_n = analysis->e_n->operator[](k);
@@ -590,6 +596,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
                 if (ts_n < mu.ts + timestamp{0, 20000} || mu.ts + timestamp{0, 2000000} < ts_n) continue;
                 ++neutron_count;
             }
+            assoc.neutron_count = neutron_count;
 
             for (std::size_t idx : mu.indices) {
                 const std::string& method = analysis->method_mu->operator[](idx);
@@ -598,17 +605,12 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
                 vec3 dir_mu{analysis->dirx_mu->operator[](idx), analysis->diry_mu->operator[](idx), analysis->dirz_mu->operator[](idx)};
                 double d = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
 
-                if (method == "CdWpTtChi2") d_mu2p_cdwp_values.push_back(d);
-                else d_mu2p_tt_values.push_back(d);
+                if (method == "CdWpTtChi2") assoc.dlat_cdwp.push_back(d);
+                else assoc.dlat_tt.push_back(d);
             }
-
-            dt_mu2p_values.push_back(timestamp_to_double(diff));
-            neutron_count_values.push_back(neutron_count);
+            muon_data.push_back(std::move(assoc));
         }
-        ibds_dt_mu2p[ibd] = dt_mu2p_values;
-        ibds_d_mu2p_cdwp[ibd] = d_mu2p_cdwp_values;
-        ibds_d_mu2p_tt[ibd] = d_mu2p_tt_values;
-        ibds_neutron_count[ibd] = neutron_count_values;
+        ibds_to_mu[ibd] = muon_data;
     }
 
     TH1D* h_cosmo_rate_with_neutron = new TH1D("h_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 120, 0.0, 1.2);
@@ -616,22 +618,21 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     TH1D* h_cosmo_rate_with_at_least_1_neutron = new TH1D("h_cosmo_rate_with_at_least_1_neutron", "Cosmo Rate With At Least 1 Neutron", 120, 0.0, 1.2);
     TH1D* h_cosmo_rate_with_at_least_2_neutron = new TH1D("h_cosmo_rate_with_at_least_2_neutron", "Cosmo Rate With At Least 2 Neutron", 120, 0.0, 1.2);
     TH1D* h_cosmo_rate_with_at_least_3_neutron = new TH1D("h_cosmo_rate_with_at_least_3_neutron", "Cosmo Rate With At Least 3 Neutron", 120, 0.0, 1.2);
-    for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
-        const std::vector<double>& dt_mu2p_values = ibd_dt_mu2p.second;
-        const std::vector<int>& neutron_count_values = ibds_neutron_count[ibd_dt_mu2p.first];
-        for (std::size_t k = 0ul; k < dt_mu2p_values.size(); ++k) {
-            h_cosmo_rate_with_neutron->Fill(dt_mu2p_values[k]);
-            if (neutron_count_values[k] == 0) {
-                h_cosmo_rate_with_no_neutron->Fill(dt_mu2p_values[k]);
+    for (const std::pair<IBD, std::vector<MuonDataAssociation>>& val : ibds_to_mu) {
+        const std::vector<MuonDataAssociation>& muon_data = val.second;
+        for (const MuonDataAssociation& assoc : muon_data) {
+            h_cosmo_rate_with_neutron->Fill(assoc.dt);
+            if (assoc.neutron_count == 0) {
+                h_cosmo_rate_with_no_neutron->Fill(assoc.dt);
             }
-            if (neutron_count_values[k] >= 1) {
-                h_cosmo_rate_with_at_least_1_neutron->Fill(dt_mu2p_values[k]);
+            if (assoc.neutron_count >= 1) {
+                h_cosmo_rate_with_at_least_1_neutron->Fill(assoc.dt);
             }
-            if (neutron_count_values[k] >= 2) {
-                h_cosmo_rate_with_at_least_2_neutron->Fill(dt_mu2p_values[k]);
+            if (assoc.neutron_count >= 2) {
+                h_cosmo_rate_with_at_least_2_neutron->Fill(assoc.dt);
             }
-            if (neutron_count_values[k] >= 3) {
-                h_cosmo_rate_with_at_least_3_neutron->Fill(dt_mu2p_values[k]);
+            if (assoc.neutron_count >= 3) {
+                h_cosmo_rate_with_at_least_3_neutron->Fill(assoc.dt);
             }
         }
     }
@@ -644,14 +645,17 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
 
     TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
     TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
-    for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
-        const IBD& ibd = ibd_dt_mu2p.first;
-        const std::vector<double>& dt_mu2p_times = ibd_dt_mu2p.second;
-        const std::vector<double>& d_mu2p_cdwp_values = ibds_d_mu2p_cdwp[ibd];
-        const std::vector<double>& d_mu2p_tt_values = ibds_d_mu2p_tt[ibd];
-        for (std::size_t k = 0ul; k < dt_mu2p_times.size(); ++k) {
-            h_d_mu2p_cdwp_vs_dt_mu2p->Fill(dt_mu2p_times[k], d_mu2p_cdwp_values[k]);
-            h_d_mu2p_tt_vs_dt_mu2p->Fill(dt_mu2p_times[k], d_mu2p_tt_values[k]);
+    for (const std::pair<IBD, std::vector<MuonDataAssociation>>& val : ibds_to_mu) {
+        const std::vector<MuonDataAssociation>& muon_data = val.second;
+        for (const MuonDataAssociation& assoc : muon_data) {
+            std::vector<double>::const_iterator it_dlat_cdwp = std::min_element(assoc.dlat_cdwp.begin(), assoc.dlat_cdwp.end());
+            std::vector<double>::const_iterator it_dlat_tt = std::min_element(assoc.dlat_tt.begin(), assoc.dlat_tt.end());
+            if (it_dlat_cdwp != assoc.dlat_cdwp.end()) {
+                h_d_mu2p_cdwp_vs_dt_mu2p->Fill(assoc.dt, *it_dlat_cdwp);
+            }
+            if (it_dlat_tt != assoc.dlat_tt.end()) {
+                h_d_mu2p_tt_vs_dt_mu2p->Fill(assoc.dt, *it_dlat_tt);
+            }
         }
     }
 
