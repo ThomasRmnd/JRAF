@@ -459,7 +459,7 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries();
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -491,7 +491,7 @@ std::vector<Cosmo> get_all_cosmo(const std::string& filename, CosmoAnalysis* ana
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries();
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -571,7 +571,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries();
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -722,7 +722,7 @@ void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries();
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -840,7 +840,7 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries();
         }
         std::set<VanessaIBD>::const_iterator it = std::find_if(
             vanessa_ibds.begin(),
