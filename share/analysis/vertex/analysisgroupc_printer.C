@@ -590,9 +590,10 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         std::vector<double> d_mu2p_tt_values;
         std::vector<TTimeStamp> used_muon_times;
         int neutron_count = 0;
+        bool found_muon = false;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
-            if (ibd.prompt.ts < ts_mu || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
+            if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
             std::vector<TTimeStamp>::const_iterator it = std::find_if(
                 used_muon_times.begin(), used_muon_times.end(),
                 [ts_mu](const TTimeStamp& used_ts_mu) {
@@ -602,7 +603,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             );
             if (it != used_muon_times.end()) continue;
             used_muon_times.push_back(ts_mu);
-            if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
+            found_muon = true;
             for (std::size_t i = 0ul; i < analysis->sec_n->size(); ++i) {
                 if (analysis->e_n->operator[](i) < 2.0 || 2.5 < analysis->e_n->operator[](i)) continue;
                 TTimeStamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
@@ -629,6 +630,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
                     }
                 }
             }
+            if (!found_muon) continue;
             dt_mu2p_times.push_back(static_cast<double>(ibd.prompt.ts - ts_mu));
             d_mu2p_cdwp_values.push_back(d_mu2p_cdwp);
             d_mu2p_tt_values.push_back(d_mu2p_tt);
