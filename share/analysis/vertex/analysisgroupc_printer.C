@@ -684,6 +684,33 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     c_d_mu2p_tt_vs_dt_mu2p->Update();
 }
 
+void daq_time(const std::string& filename) {
+    TChain* chain = new TChain("DAQTree");
+    if (!chain) {
+        std::cerr << "Cannot create TChain DAQTree\n";
+        return;
+    }
+    chain->Add(filename.c_str());
+    time_t daq_sec;
+    int daq_nsec;
+    time_t muveto_sec;
+    int muveto_nsec;
+    chain->SetBranchAddress("daq_sec", &daq_sec);
+    chain->SetBranchAddress("daq_nsec", &daq_nsec);
+    chain->SetBranchAddress("muveto_sec", &muveto_sec);
+    chain->SetBranchAddress("muveto_nsec", &muveto_nsec);
+    timestamp tot_ts, tot_ts_mu;
+    for (int k = 0; k < chain->GetEntries(); ++k) {
+        chain->GetEntry(k);
+        timestamp ts{daq_sec, daq_nsec};
+        timestamp ts_mu{muveto_sec, muveto_nsec};
+        tot_ts += ts;
+        tot_ts_mu += ts_mu;
+    }
+    std::cout << "Total DAQ time: " << tot_ts << '\n';
+    std::cout << "Total MuVeto time: " << tot_ts_mu << '\n';
+}
+
 void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
@@ -999,6 +1026,7 @@ std::vector<double> create_custom_e_p_bins() {
 #define GET_ALL_IBD
 
 void analysisgroupc_printer(const std::string& filename, const std::string& suffix) {
+    daq_time(filename);
 
     CosmoRateWithNeutronAnalysis cosmo_rate_with_neutron_analysis(suffix);
     analyze_cosmo_rate_with_neutron(filename, &cosmo_rate_with_neutron_analysis);

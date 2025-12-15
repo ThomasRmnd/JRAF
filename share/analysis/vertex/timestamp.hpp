@@ -14,7 +14,27 @@ public:
         normalize();
     }
 
+    timestamp(const timestamp& other) = default;
+    timestamp(timestamp&& other) = default;
+
     ~timestamp() = default;
+
+    timestamp& operator=(const timestamp& other) = default;
+    timestamp& operator=(timestamp&& other) = default;
+
+    timestamp& operator+=(const timestamp& other) {
+        sec += other.sec;
+        nsec += other.nsec;
+        normalize();
+        return *this;
+    }
+
+    timestamp& operator-=(const timestamp& other) {
+        sec -= other.sec;
+        nsec -= other.nsec;
+        normalize();
+        return *this;
+    }
 
     time_t sec;
     int nsec;
