@@ -380,12 +380,54 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
     return ibds;
 }
 
+void fit_and_plot_cosmo_rate_with_neutron(TH1D* h) {
+    TCanvas* c = new TCanvas(Form("%s_canvas", h->GetName()), Form("%s Canvas", h->GetName()), 800, 600);
+    c->cd();
+
+    double constant_term = 0.0;
+    for (int bin = h->GetXaxis()->FindBin(0.8); bin <= h->GetXaxis()->GetNbins(); ++bin) {
+        constant_term += h->GetBinContent(bin);
+    }
+    constant_term /= (h->GetXaxis()->GetNbins() - h->GetXaxis()->FindBin(0.8) + 1);
+    double exponential_term = h->GetMaximum() - constant_term;
+
+    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
+    f->SetParameter(0, constant_term);
+    f->SetParameter(1, exponential_term);
+    f->SetParameter(2, 180.0e-3);
+
+    f->SetLineColor(kRed);
+    f->SetLineWidth(3);
+
+    h->Fit(f, "R");
+    h->SetLineWidth(3);
+    h->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
+    h->GetXaxis()->CenterTitle(kTRUE);
+    h->GetYaxis()->SetTitle("Entries");
+    h->GetYaxis()->CenterTitle(kTRUE);
+    h->GetYaxis()->SetTitleOffset(1.5);
+    h->Draw();
+    f->Draw("SAME");
+    
+    c->SetTickx();
+    c->SetTicky();
+
+    c->Update();
+
+    double time_window = 1.2;
+    double binning = time_window / 120.0;
+    std::cout << "Fit Results for " << h->GetName() << ":\n";
+    std::cout << "nIBD = " << f->GetParameter(0) * time_window / binning << " +/- " << f->GetParError(0) * time_window / binning << '\n';
+    std::cout << "nLiHe = " << f->GetParameter(1) * f->GetParameter(2) * (1 - std::exp(-time_window / f->GetParameter(2))) / binning << '\n';    
+}
+
 void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithNeutronAnalysis* analysis) {
     TChain* chain = analysis->retrieve(filename);
     if (!chain) return;
     std::map<IBD, std::vector<double>> ibds_dt_mu2p;
     std::map<IBD, std::vector<double>> ibds_d_mu2p_cdwp;
     std::map<IBD, std::vector<double>> ibds_d_mu2p_tt;
+    std::map<IBD, int> ibds_neutron_count;
     std::cout << "=== Analysis: CosmoRateWithNeutron (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
@@ -401,11 +443,11 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         ibd.delayed.e = analysis->e_d;
         ibd.delayed.q = analysis->totq_d;
 
-        std::string method = "";
         std::vector<double> dt_mu2p_times;
         std::vector<double> d_mu2p_cdwp_values;
         std::vector<double> d_mu2p_tt_values;
         std::vector<TTimeStamp> used_muon_times;
+        int neutron_count = 0;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
             std::vector<TTimeStamp>::const_iterator it = std::find_if(
@@ -418,6 +460,12 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             if (it != used_muon_times.end()) continue;
             used_muon_times.push_back(ts_mu);
             if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
+            for (std::size_t i = 0ul; i < analysis->sec_n->size(); ++i) {
+                if (analysis->e_n->operator[](i) < 1.5 || 20.0 < analysis->e_n->operator[](i)) continue;
+                TTimeStamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
+                if (ts_n < ts_mu + TTimeStamp{0, 20000} || ts_mu + TTimeStamp{0, 2000000} < ts_n) continue;
+                ++neutron_count;
+            }
             double d_mu2p_cdwp = std::numeric_limits<double>::infinity();
             double d_mu2p_tt = std::numeric_limits<double>::infinity();
             for (std::size_t i = 0ul; i < analysis->method_mu->size(); ++i) {
@@ -444,52 +492,45 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         ibds_dt_mu2p[ibd] = dt_mu2p_times;
         ibds_d_mu2p_cdwp[ibd] = d_mu2p_cdwp_values;
         ibds_d_mu2p_tt[ibd] = d_mu2p_tt_values;
+        ibds_neutron_count[ibd] = neutron_count;
     }
 
     TH1D* h_cosmo_rate_with_neutron = new TH1D("h_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 120, 0.0, 1.2);
+    TH1D* h_cosmo_rate_with_no_neutron = new TH1D("h_cosmo_rate_with_no_neutron", "Cosmo Rate With No Neutron", 120, 0.0, 1.2);
+    TH1D* h_cosmo_rate_with_at_least_1_neutron = new TH1D("h_cosmo_rate_with_at_least_1_neutron", "Cosmo Rate With At Least 1 Neutron", 120, 0.0, 1.2);
+    TH1D* h_cosmo_rate_with_at_least_2_neutron = new TH1D("h_cosmo_rate_with_at_least_2_neutron", "Cosmo Rate With At Least 2 Neutron", 120, 0.0, 1.2);
+    TH1D* h_cosmo_rate_with_at_least_3_neutron = new TH1D("h_cosmo_rate_with_at_least_3_neutron", "Cosmo Rate With At Least 3 Neutron", 120, 0.0, 1.2);
     for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
         for (double dt_mu2p : ibd_dt_mu2p.second) {
             h_cosmo_rate_with_neutron->Fill(dt_mu2p);
         }
+        int neutron_count = ibds_neutron_count[ibd_dt_mu2p.first];
+        if (neutron_count == 0) {
+            for (double dt_mu2p : ibd_dt_mu2p.second) {
+                h_cosmo_rate_with_no_neutron->Fill(dt_mu2p);
+            }
+        }
+        if (neutron_count >= 1) {
+            for (double dt_mu2p : ibd_dt_mu2p.second) {
+                h_cosmo_rate_with_at_least_1_neutron->Fill(dt_mu2p);
+            }
+        }
+        if (neutron_count >= 2) {
+            for (double dt_mu2p : ibd_dt_mu2p.second) {
+                h_cosmo_rate_with_at_least_2_neutron->Fill(dt_mu2p);
+            }
+        }
+        if (neutron_count >= 3) {
+            for (double dt_mu2p : ibd_dt_mu2p.second) {
+                h_cosmo_rate_with_at_least_3_neutron->Fill(dt_mu2p);
+            }
+        }
     }
 
-    TCanvas* c_cosmo_rate_with_neutron = new TCanvas("c_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 1000, 1000);
-    c_cosmo_rate_with_neutron->cd();
-
-    double constant_term = 0.0;
-    for (int bin = h_cosmo_rate_with_neutron->GetXaxis()->FindBin(0.8); bin <= h_cosmo_rate_with_neutron->GetXaxis()->GetNbins(); ++bin) {
-        constant_term += h_cosmo_rate_with_neutron->GetBinContent(bin);
-    }
-    constant_term /= (h_cosmo_rate_with_neutron->GetXaxis()->GetNbins() - h_cosmo_rate_with_neutron->GetXaxis()->FindBin(0.8) + 1);
-    double exponential_term = h_cosmo_rate_with_neutron->GetMaximum() - constant_term;
-
-    TF1* f_cosmo_rate_with_neutron = new TF1("f_cosmo_rate_with_neutron", "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
-    f_cosmo_rate_with_neutron->SetParameter(0, constant_term);
-    f_cosmo_rate_with_neutron->SetParameter(1, exponential_term);
-    f_cosmo_rate_with_neutron->SetParameter(2, 180.0e-3);
-
-    f_cosmo_rate_with_neutron->SetLineColor(kRed);
-    f_cosmo_rate_with_neutron->SetLineWidth(3);
-
-    h_cosmo_rate_with_neutron->Fit(f_cosmo_rate_with_neutron, "R");
-    h_cosmo_rate_with_neutron->SetLineWidth(3);
-    h_cosmo_rate_with_neutron->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
-    h_cosmo_rate_with_neutron->GetXaxis()->CenterTitle(kTRUE);
-    h_cosmo_rate_with_neutron->GetYaxis()->SetTitle("Entries");
-    h_cosmo_rate_with_neutron->GetYaxis()->CenterTitle(kTRUE);
-    h_cosmo_rate_with_neutron->GetYaxis()->SetTitleOffset(1.5);
-    h_cosmo_rate_with_neutron->Draw();
-    f_cosmo_rate_with_neutron->Draw("SAME");
-    
-    c_cosmo_rate_with_neutron->SetTickx();
-    c_cosmo_rate_with_neutron->SetTicky();
-
-    c_cosmo_rate_with_neutron->Update();
-
-    double time_window = 1.2;
-    double binning = time_window / 120.0;
-    std::cout << "nIBD = " << f_cosmo_rate_with_neutron->GetParameter(0) * time_window / binning << " +/- " << f_cosmo_rate_with_neutron->GetParError(0) * time_window / binning << '\n';
-    std::cout << "nLiHe = " << f_cosmo_rate_with_neutron->GetParameter(1) * f_cosmo_rate_with_neutron->GetParameter(2) * (1 - std::exp(-time_window / f_cosmo_rate_with_neutron->GetParameter(2))) / binning << '\n';
+    fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_neutron);
+    fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_1_neutron);
+    fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_2_neutron);
+    fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_3_neutron);
 
     TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 20000.0);
     TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 20000.0);
