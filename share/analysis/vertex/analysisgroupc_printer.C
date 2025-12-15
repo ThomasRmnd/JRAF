@@ -72,6 +72,10 @@ inline bool operator<(const IBD& lhs, const IBD& rhs) {
     return lhs.prompt.ts < rhs.prompt.ts;
 }
 
+inline bool operator<(const Cosmo& lhs, const Cosmo& rhs) {
+    return lhs.prompt.ts < rhs.prompt.ts;
+}
+
 class AnalysisBase {
 
 public:
