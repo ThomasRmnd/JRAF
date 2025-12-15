@@ -358,6 +358,9 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
     std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
+        if (k % 1000 == 0) {
+            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+        }
         // analysis->print();
         if (!analysis->selection()) continue;
         IBD ibd;
@@ -431,6 +434,9 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     std::cout << "=== Analysis: CosmoRateWithNeutron (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
+        if (k % 1000 == 0) {
+            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+        }
         // analysis->print();
         if (!analysis->selection()) continue;
         IBD ibd;
@@ -577,6 +583,9 @@ void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
     std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
+        if (k % 1000 == 0) {
+            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+        }
         // analysis->print();
         if (!analysis->selection()) continue;
         IBD ibd;
@@ -692,6 +701,9 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
     std::cout << "=== Analysis: " << analysis->name << " (Total Entries: " << chain->GetEntries() << ") ===\n";
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
+        if (k % 1000 == 0) {
+            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+        }
         std::set<VanessaIBD>::const_iterator it = std::find_if(
             vanessa_ibds.begin(),
             vanessa_ibds.end(),
