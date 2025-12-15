@@ -37,6 +37,15 @@ struct Vertex {
 
 };
 
+struct Track {
+
+    TVector3 pos;
+    TVector3 dir;
+    TTimeStamp ts;
+    double q;
+
+};
+
 inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
     return lhs.ts < rhs.ts;
 }
@@ -45,6 +54,17 @@ struct IBD {
 
     Vertex prompt;
     Vertex delayed;
+
+};
+
+struct Cosmo {
+
+    Vertex prompt;
+    Vertex delayed;
+    double dlat_mu2p;
+    double dlat_mu2d;
+    double dt_mu2p;
+    double dt_mu2d;
 
 };
 
@@ -316,6 +336,83 @@ public:
 
 };
 
+class CosmoAnalysis : public MainAnalysis {
+
+public:
+
+    CosmoAnalysis(const std::string& suffix, const TTimeStamp& ts_low, const TTimeStamp& ts_high, double radius) :
+        MainAnalysis{suffix}, 
+        m_ts_low{ts_low}, 
+        m_ts_high{ts_high},
+        m_radius{radius}
+    {}
+
+    ~CosmoAnalysis() override = default;
+
+    bool selection() override {
+        if (stdt_p > 200.0 || stdt_d > 200.0) return false;
+        TTimeStamp ts_p{sec_p, nsec_p};
+        TTimeStamp ts_d{sec_d, nsec_d};
+        TVector3 pos_p{posx_p, posy_p, posz_p};
+        TVector3 pos_d{posx_d, posy_d, posz_d};
+        if (pos_p.Mag() > 16500.0) return false;
+        if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
+        if (e_p < 0.7 || 12.0 < e_p) return false;
+        if (e_d < 2.0 || 2.5 < e_d) return false;
+
+        std::size_t nb_multu_veto = 0ul;
+        for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
+            if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
+            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            // if (pos_mult.Mag() > 17700.0) continue;
+            // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
+            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            ++nb_multu_veto;
+        }
+
+        bool found = false;
+        for (std::size_t k = 0ul; k < method_mu->size(); ++k) {
+            if (method_mu->operator[](k) != "CdWpTtChi2") continue;
+            TTimeStamp ts_mu{sec_mu->operator[](k), nsec_mu->operator[](k)};
+            if (ts_p < ts_mu + m_ts_low || m_ts_high + ts_mu < ts_p) continue;
+            if (ts_d < ts_mu + m_ts_low || m_ts_high + ts_mu < ts_d) continue;
+            TVector3 pos_mu{posx_mu->operator[](k), posy_mu->operator[](k), posz_mu->operator[](k)};
+            TVector3 dir_mu{dirx_mu->operator[](k), diry_mu->operator[](k), dirz_mu->operator[](k)};
+            double d_mu2p = dir_mu.Cross(pos_p - pos_mu).Mag();
+            double d_mu2d = dir_mu.Cross(pos_d - pos_mu).Mag();
+            if (d_mu2p < m_radius && d_mu2d < m_radius) {
+                found = true;
+                m_dlat_mu2p = d_mu2p;
+                m_dlat_mu2d = d_mu2d;
+                m_dt_mu2p = static_cast<double>(ts_p - ts_mu);
+                m_dt_mu2d = static_cast<double>(ts_d - ts_mu);
+                break;
+            }
+        }
+
+        return (nb_multu_veto == 0ul && found);
+    }
+
+    double dlat_p() const { return m_dlat_mu2p; }
+    double dlat_d() const { return m_dlat_mu2d; }
+    double dt_mu2p() const { return m_dt_mu2p; }
+    double dt_mu2d() const { return m_dt_mu2d; }
+
+private:
+
+    TTimeStamp m_ts_low;
+    TTimeStamp m_ts_high;
+    double m_radius;
+
+    double m_dlat_mu2p;
+    double m_dlat_mu2d;
+    double m_dt_mu2p;
+    double m_dt_mu2d;
+
+};
+
+
 class CosmoRateWithNeutronAnalysis : public MainAnalysis {
 
 public:
@@ -381,6 +478,42 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
         ibds.push_back(*it);
     }
     return ibds;
+}
+
+std::vector<Cosmo> get_all_cosmo(const std::string& filename, CosmoAnalysis* analysis) {
+    TChain* chain = analysis->retrieve(filename);
+    if (!chain) return {};
+    std::set<Cosmo> cosmos_ordered;
+    std::cout << "=== Analysis: Cosmo (Total Entries: " << chain->GetEntries() << ") ===\n";
+    for (long k = 0; k < chain->GetEntries(); ++k) {
+        chain->GetEntry(k);
+        if (k % 1000 == 0) {
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
+        }
+        // analysis->print();
+        if (!analysis->selection()) continue;
+        Cosmo cosmo;
+        cosmo.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        cosmo.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        cosmo.prompt.e = analysis->e_p;
+        cosmo.prompt.q = analysis->totq_p;
+        cosmo.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        cosmo.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        cosmo.delayed.e = analysis->e_d;
+        cosmo.delayed.q = analysis->totq_d;
+        cosmo.dlat_mu2p = analysis->dlat_p();
+        cosmo.dlat_mu2d = analysis->dlat_d();
+        cosmo.dt_mu2p = analysis->dt_mu2p();
+        cosmo.dt_mu2d = analysis->dt_mu2d();
+        cosmos_ordered.insert(cosmo);
+    }
+
+    std::vector<Cosmo> cosmos;
+    cosmos.reserve(cosmos_ordered.size());
+    for (std::set<Cosmo>::const_iterator it = cosmos_ordered.begin(); it != cosmos_ordered.end(); ++it) {
+        cosmos.push_back(*it);
+    }
+    return cosmos;
 }
 
 void fit_and_plot_cosmo_rate_with_neutron(TH1D* h) {
@@ -897,6 +1030,11 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     CosmoRateWithNeutronAnalysis cosmo_rate_with_neutron_analysis(suffix);
     analyze_cosmo_rate_with_neutron(filename, &cosmo_rate_with_neutron_analysis);
 
+    CosmoAnalysis cosmo_before_analysis(suffix, TTimeStamp{0, -1200000000}, TTimeStamp{0, -5000000}, 3000.0);
+    CosmoAnalysis cosmo_after_analysis(suffix, TTimeStamp{0, 5000000}, TTimeStamp{0, 1200000000}, 3000.0);
+    std::vector<Cosmo> cosmos_before = get_all_cosmo(filename, &cosmo_before_analysis);
+    std::vector<Cosmo> cosmos_after = get_all_cosmo(filename, &cosmo_after_analysis);
+
     IBDAnalysis ibd_analysis(suffix);
 #ifdef PRINT_ALL_ENTRIES
     print_all_entries(filename, &ibd_analysis);
@@ -917,6 +1055,8 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     std::vector<double> e_p_bins = create_custom_e_p_bins();
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy", e_p_bins.size() - 1, e_p_bins.data());
     TH1D* h_e_p_vanessa = new TH1D("h_e_p_vanessa", "Prompt energy (Vanessa)", e_p_bins.size() - 1, e_p_bins.data());
+    TH1D* h_e_p_cosmo_before = new TH1D("h_e_p_cosmo_before", "Prompt energy (Cosmo Before)", e_p_bins.size() - 1, e_p_bins.data());
+    TH1D* h_e_p_cosmo_after = new TH1D("h_e_p_cosmo_after", "Prompt energy (Cosmo After)", e_p_bins.size() - 1, e_p_bins.data());
 
     double e_d_min = 2.0;
     double e_d_max = 2.5;
@@ -925,6 +1065,8 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     std::vector<double> e_d_bins = linspace_cpp(e_d_min, e_d_max, e_d_nbin);
     TH1D* h_e_d = new TH1D("h_e_d", "Delayed energy", e_d_bins.size() - 1, e_d_bins.data());
     TH1D* h_e_d_vanessa = new TH1D("h_e_d_vanessa", "Delayed energy (Vanessa)", e_d_bins.size() - 1, e_d_bins.data());
+    TH1D* h_e_d_cosmo_before = new TH1D("h_e_d_cosmo_before", "Delayed energy (Cosmo Before)", e_d_bins.size() - 1, e_d_bins.data());
+    TH1D* h_e_d_cosmo_after = new TH1D("h_e_d_cosmo_after", "Delayed energy (Cosmo After)", e_d_bins.size() - 1, e_d_bins.data());
 
     double e_dt_min = 0.0;
     double e_dt_max = 1.0;
@@ -933,6 +1075,8 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     std::vector<double> e_dt_bins = linspace_cpp(e_dt_min, e_dt_max, e_dt_nbin);
     TH1D* h_dt = new TH1D("h_dt", "Prompt-Delayed time difference", e_dt_bins.size() - 1, e_dt_bins.data());
     TH1D* h_dt_vanessa = new TH1D("h_dt_vanessa", "Prompt-Delayed time difference (Vanessa)", e_dt_bins.size() - 1, e_dt_bins.data());
+    TH1D* h_dt_cosmo_before = new TH1D("h_dt_cosmo_before", "Prompt-Delayed time difference (Cosmo Before)", e_dt_bins.size() - 1, e_dt_bins.data());
+    TH1D* h_dt_cosmo_after = new TH1D("h_dt_cosmo_after", "Prompt-Delayed time difference (Cosmo After)", e_dt_bins.size() - 1, e_dt_bins.data());
 
     double e_dr_min = 0.0;
     double e_dr_max = 1.5;
@@ -940,6 +1084,8 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     int e_dr_nbin = std::round((e_dr_max - e_dr_min) / e_dr_width) + 1;
     std::vector<double> e_dr_bins = linspace_cpp(e_dr_min, e_dr_max, e_dr_nbin);
     TH1D* h_dr = new TH1D("h_dr", "Prompt-Delayed distance", e_dr_bins.size() - 1, e_dr_bins.data());
+    TH1D* h_dr_cosmo_before = new TH1D("h_dr_cosmo_before", "Prompt-Delayed distance (Cosmo Before)", e_dr_bins.size() - 1, e_dr_bins.data());
+    TH1D* h_dr_cosmo_after = new TH1D("h_dr_cosmo_after", "Prompt-Delayed distance (Cosmo After)", e_dr_bins.size() - 1, e_dr_bins.data());
 
     double rho_min = 0.0;
     double rho_max = 17.7 * 17.7;
@@ -951,6 +1097,10 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     std::vector<double> z_bins = linspace_cpp(z_min, z_max, z_nbin);
     TH2D* h_rho_z_p = new TH2D("h_rho_z_p", "Prompt vertex distribution", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
     TH2D* h_rho_z_d = new TH2D("h_rho_z_d", "Delayed vertex distribution", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
+    TH2D* h_rho_z_p_cosmo_before = new TH2D("h_rho_z_p_cosmo_before", "Prompt vertex distribution (Cosmo Before)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
+    TH2D* h_rho_z_d_cosmo_before = new TH2D("h_rho_z_d_cosmo_before", "Delayed vertex distribution (Cosmo Before)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
+    TH2D* h_rho_z_p_cosmo_after = new TH2D("h_rho_z_p_cosmo_after", "Prompt vertex distribution (Cosmo After)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
+    TH2D* h_rho_z_d_cosmo_after = new TH2D("h_rho_z_d_cosmo_after", "Delayed vertex distribution (Cosmo After)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
 
     for (const IBD& ibd : ibds) {
         h_e_p->Fill(ibd.prompt.e);
@@ -1057,4 +1207,161 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     h_rho_z_d->Draw();
     c_rho_z_d->Update();
 #endif
+
+    // ============================================================================================
+    // Cosmo before - Prompt energy
+    // ============================================================================================
+
+    TCanvas* c_e_p_cosmo_before = new TCanvas("c_e_p_cosmo_before", "Prompt energy (Cosmo before)", 1000, 1000);
+    c_e_p_cosmo_before->cd();
+
+    h_e_p_cosmo_before->SetLineWidth(3);
+    h_e_p_cosmo_before->SetLineStyle(kSolid);
+    h_e_p_cosmo_before->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_p_cosmo_before->Draw();
+
+    c_e_p_cosmo_before->Update();
+
+    // ============================================================================================
+    // Cosmo before - Delayed energy
+    // ============================================================================================
+
+    TCanvas* c_e_d_cosmo_before = new TCanvas("c_e_d_cosmo_before", "Delayed energy (Cosmo before)", 1000, 1000);
+    c_e_d_cosmo_before->cd();
+
+    h_e_d_cosmo_before->SetLineWidth(3);
+    h_e_d_cosmo_before->SetLineStyle(kSolid);
+    h_e_d_cosmo_before->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_d_cosmo_before->Draw();
+
+    c_e_d_cosmo_before->Update();
+
+    // ============================================================================================
+    // Cosmo before - Prompt-Delayed time difference
+    // ============================================================================================
+
+    TCanvas* c_dt_cosmo_before = new TCanvas("c_dt_cosmo_before", "Prompt-Delayed time difference (Cosmo before)", 1000, 1000);
+    c_dt_cosmo_before->cd();
+    
+    h_dt_cosmo_before->SetLineWidth(3);
+    h_dt_cosmo_before->SetLineStyle(kSolid);
+    h_dt_cosmo_before->SetLineColorAlpha(kBlue, 1.0);
+
+    h_dt_cosmo_before->Draw();
+
+    c_dt_cosmo_before->Update();
+
+    // ============================================================================================
+    // Cosmo before - Prompt-Delayed distance
+    // ============================================================================================
+
+    TCanvas* c_dr_cosmo_before = new TCanvas("c_dr_cosmo_before", "Prompt-Delayed distance (Cosmo before)", 1000, 1000);
+    c_dr_cosmo_before->cd();
+
+    h_dr_cosmo_before->Draw();
+
+    c_dr_cosmo_before->Update();
+
+    // ============================================================================================
+    // Cosmo before - Prompt vertex position
+    // ============================================================================================
+
+    TCanvas* c_rho_z_p_cosmo_before = new TCanvas("c_rho_z_p_cosmo_before", "Prompt vertex distribution (Cosmo before)", 1000, 1000);
+    c_rho_z_p_cosmo_before->cd();
+
+    h_rho_z_p_cosmo_before->Draw();
+
+    c_rho_z_p_cosmo_before->Update();
+
+    // ============================================================================================
+    // Cosmo before - Delayed vertex position
+    // ============================================================================================
+
+    TCanvas* c_rho_z_d_cosmo_before = new TCanvas("c_rho_z_d_cosmo_before", "Delayed vertex distribution (Cosmo before)", 1000, 1000);
+    c_rho_z_d_cosmo_before->cd();
+
+    h_rho_z_d_cosmo_before->Draw();
+
+    c_rho_z_d_cosmo_before->Update();
+
+    // ============================================================================================
+    // Cosmo after - Prompt energy
+    // ============================================================================================
+
+    TCanvas* c_e_p_cosmo_after = new TCanvas("c_e_p_cosmo_after", "Prompt energy (Cosmo after)", 1000, 1000);
+    c_e_p_cosmo_after->cd();
+
+    h_e_p_cosmo_after->SetLineWidth(3);
+    h_e_p_cosmo_after->SetLineStyle(kSolid);
+    h_e_p_cosmo_after->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_p_cosmo_after->Draw();
+
+    c_e_p_cosmo_after->Update();
+
+    // ============================================================================================
+    // Cosmo after - Delayed energy
+    // ============================================================================================
+
+    TCanvas* c_e_d_cosmo_after = new TCanvas("c_e_d_cosmo_after", "Delayed energy (Cosmo after)", 1000, 1000);
+    c_e_d_cosmo_after->cd();
+    
+    h_e_d_cosmo_after->SetLineWidth(3);
+    h_e_d_cosmo_after->SetLineStyle(kSolid);
+    h_e_d_cosmo_after->SetLineColorAlpha(kBlue, 1.0);
+
+    h_e_d_cosmo_after->Draw();
+
+    c_e_d_cosmo_after->Update();
+
+    // ============================================================================================
+    // Cosmo after - Prompt-Delayed time difference
+    // ============================================================================================
+
+    TCanvas* c_dt_cosmo_after = new TCanvas("c_dt_cosmo_after", "Prompt-Delayed time difference (Cosmo after)", 1000, 1000);
+    c_dt_cosmo_after->cd();
+
+    h_dt_cosmo_after->SetLineWidth(3);
+    h_dt_cosmo_after->SetLineStyle(kSolid);
+    h_dt_cosmo_after->SetLineColorAlpha(kBlue, 1.0);
+
+    h_dt_cosmo_after->Draw();
+
+    c_dt_cosmo_after->Update();
+
+    // ============================================================================================
+    // Cosmo after - Prompt-Delayed distance
+    // ============================================================================================
+
+    TCanvas* c_dr_cosmo_after = new TCanvas("c_dr_cosmo_after", "Prompt-Delayed distance (Cosmo after)", 1000, 1000);
+    c_dr_cosmo_after->cd();
+
+    h_dr_cosmo_after->Draw();
+
+    c_dr_cosmo_after->Update();
+
+    // ============================================================================================
+    // Cosmo after - Prompt vertex position
+    // ============================================================================================
+
+    TCanvas* c_rho_z_p_cosmo_after = new TCanvas("c_rho_z_p_cosmo_after", "Prompt vertex distribution (Cosmo after)", 1000, 1000);
+    c_rho_z_p_cosmo_after->cd();
+
+    h_rho_z_p_cosmo_after->Draw();
+
+    c_rho_z_p_cosmo_after->Update();
+
+    // ============================================================================================
+    // Cosmo after - Delayed vertex position
+    // ============================================================================================
+
+    TCanvas* c_rho_z_d_cosmo_after = new TCanvas("c_rho_z_d_cosmo_after", "Delayed vertex distribution (Cosmo after)", 1000, 1000);
+    c_rho_z_d_cosmo_after->cd();
+
+    h_rho_z_d_cosmo_after->Draw();
+
+    c_rho_z_d_cosmo_after->Update();
+
 }
