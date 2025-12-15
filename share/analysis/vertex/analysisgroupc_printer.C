@@ -359,7 +359,7 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -435,7 +435,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -467,7 +467,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             used_muon_times.push_back(ts_mu);
             if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
             for (std::size_t i = 0ul; i < analysis->sec_n->size(); ++i) {
-                if (analysis->e_n->operator[](i) < 1.5 || 20.0 < analysis->e_n->operator[](i)) continue;
+                if (analysis->e_n->operator[](i) < 2.0 || 2.5 < analysis->e_n->operator[](i)) continue;
                 TTimeStamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
                 if (ts_n < ts_mu + TTimeStamp{0, 20000} || ts_mu + TTimeStamp{0, 2000000} < ts_n) continue;
                 ++neutron_count;
@@ -476,7 +476,8 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             double d_mu2p_tt = std::numeric_limits<double>::infinity();
             for (std::size_t i = 0ul; i < analysis->method_mu->size(); ++i) {
                 TTimeStamp ts_mu2{analysis->sec_mu->operator[](i), analysis->nsec_mu->operator[](i)};
-                if (ts_mu != ts_mu2) continue;
+                TTimeStamp diff = ts_mu - ts_mu2;
+                if (diff < TTimeStamp{0, -1000} || TTimeStamp{0, 1000} < diff) continue;
                 TVector3 pos_mu{analysis->posx_mu->operator[](i), analysis->posy_mu->operator[](i), analysis->posz_mu->operator[](i)};
                 TVector3 dir_mu{analysis->dirx_mu->operator[](i), analysis->diry_mu->operator[](i), analysis->dirz_mu->operator[](i)};
                 double tmp_d_mu2p = dir_mu.Cross(ibd.prompt.pos - pos_mu).Mag();
@@ -534,6 +535,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     }
 
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_neutron);
+    fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_no_neutron);
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_1_neutron);
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_2_neutron);
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_3_neutron);
@@ -584,7 +586,7 @@ void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
         }
         // analysis->print();
         if (!analysis->selection()) continue;
@@ -702,7 +704,7 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
     for (long k = 0; k < chain->GetEntries(); ++k) {
         chain->GetEntry(k);
         if (k % 1000 == 0) {
-            std::cout << "Processing Entry " << k << " / " << chain->GetEntries() << "\n";
+            std::cout << "\rProcessing Entry " << k << " / " << chain->GetEntries() << "\n";
         }
         std::set<VanessaIBD>::const_iterator it = std::find_if(
             vanessa_ibds.begin(),
