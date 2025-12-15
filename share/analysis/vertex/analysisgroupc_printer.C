@@ -679,8 +679,8 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_2_neutron);
     fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_3_neutron);
 
-    TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 40000.0);
-    TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 40000.0);
+    TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
+    TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
     for (const std::pair<IBD, std::vector<double>>& ibd_dt_mu2p : ibds_dt_mu2p) {
         const IBD& ibd = ibd_dt_mu2p.first;
         const std::vector<double>& dt_mu2p_times = ibd_dt_mu2p.second;
