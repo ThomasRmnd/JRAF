@@ -484,7 +484,7 @@ std::vector<Cosmo> get_all_cosmo(const std::string& filename, CosmoAnalysis* ana
 }
 
 void fit_and_plot_cosmo_rate_with_neutron(TH1D* h) {
-    TCanvas* c = new TCanvas(Form("%s_canvas", h->GetName()), Form("%s Canvas", h->GetName()), 800, 600);
+    TCanvas* c = new TCanvas(Form("%s_canvas", h->GetName()), Form("%s Canvas", h->GetName()), 1000, 1000);
     c->cd();
 
     double constant_term = 0.0;
@@ -494,7 +494,7 @@ void fit_and_plot_cosmo_rate_with_neutron(TH1D* h) {
     constant_term /= (h->GetXaxis()->GetNbins() - h->GetXaxis()->FindBin(0.8) + 1);
     double exponential_term = h->GetMaximum() - constant_term;
 
-    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] + [1] * exp(-x / [2])", 0.05, 1.2);
+    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] + [1] * exp(-x / [2])", 0.02, 1.2);
     f->SetParameter(0, constant_term);
     f->SetParameter(1, exponential_term);
     f->SetParameter(2, 180.0e-3);
