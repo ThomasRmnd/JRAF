@@ -709,6 +709,10 @@ void daq_time(const std::string& filename) {
     }
     std::cout << "Total DAQ time: " << tot_ts << '\n';
     std::cout << "Total MuVeto time: " << tot_ts_mu << '\n';
+    double tot_seconds = timestamp_to_double(tot_ts);
+    double tot_seconds_mu = timestamp_to_double(tot_ts_mu);
+    std::cout << "Total DAQ time in days: " << tot_seconds / (3600.0 * 24.0) << '\n';
+    std::cout << "Total MuVeto time in days: " << tot_seconds_mu / (3600.0 * 24.0) << '\n';
 }
 
 void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
