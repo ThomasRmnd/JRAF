@@ -554,7 +554,6 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         std::vector<double> d_mu2p_tt_values;
         std::vector<std::pair<timestamp, std::vector<std::string>>> used_muon_times;
         int neutron_count = 0;
-        bool found_muon = false;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
             timestamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
             if (ibd.prompt.ts < ts_mu + timestamp{0, 5000000} || ts_mu + timestamp{0, 1200000000} < ibd.prompt.ts) continue;
@@ -578,37 +577,22 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
             else {
                 used_muon_times.push_back(std::make_pair(ts_mu, std::vector<std::string>{analysis->method_mu->operator[](k)}));
             }
-            found_muon = true;
+            dt_mu2p_times.push_back(timestamp_to_double(ibd.prompt.ts - ts_mu));
             for (std::size_t i = 0ul; i < analysis->sec_n->size(); ++i) {
                 if (analysis->e_n->operator[](i) < 2.0 || 2.5 < analysis->e_n->operator[](i)) continue;
                 timestamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
                 if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
                 ++neutron_count;
             }
-            double d_mu2p_cdwp = std::numeric_limits<double>::infinity();
-            double d_mu2p_tt = std::numeric_limits<double>::infinity();
-            for (std::size_t i = 0ul; i < analysis->method_mu->size(); ++i) {
-                timestamp ts_mu2{analysis->sec_mu->operator[](i), analysis->nsec_mu->operator[](i)};
-                timestamp diff = ts_mu - ts_mu2;
-                if (diff < timestamp{0, -1000} || timestamp{0, 1000} < diff) continue;
-                vec3 pos_mu{analysis->posx_mu->operator[](i), analysis->posy_mu->operator[](i), analysis->posz_mu->operator[](i)};
-                vec3 dir_mu{analysis->dirx_mu->operator[](i), analysis->diry_mu->operator[](i), analysis->dirz_mu->operator[](i)};
-                double tmp_d_mu2p = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
-                if (analysis->method_mu->operator[](i) == "CdWpTtChi2") {
-                    if (tmp_d_mu2p < d_mu2p_cdwp) {
-                        d_mu2p_cdwp = tmp_d_mu2p;
-                    }
-                }
-                if (analysis->method_mu->operator[](i) == "Tt") {
-                    if (tmp_d_mu2p < d_mu2p_tt) {
-                        d_mu2p_tt = tmp_d_mu2p;
-                    }
-                }
+            vec3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+            vec3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+            double d_mu2p = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
+            if (analysis->method_mu->operator[](k) == "CdWpTtChi2") {
+                d_mu2p_cdwp_values.push_back(d_mu2p);
             }
-            if (!found_muon) continue;
-            dt_mu2p_times.push_back(timestamp_to_double(ibd.prompt.ts - ts_mu));
-            d_mu2p_cdwp_values.push_back(d_mu2p_cdwp);
-            d_mu2p_tt_values.push_back(d_mu2p_tt);
+            if (analysis->method_mu->operator[](k) == "Tt") {
+                d_mu2p_tt_values.push_back(d_mu2p);
+            }
         }
         ibds_dt_mu2p[ibd] = dt_mu2p_times;
         ibds_d_mu2p_cdwp[ibd] = d_mu2p_cdwp_values;
