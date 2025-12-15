@@ -10,57 +10,23 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include <TTimeStamp.h>
 #include <TTree.h>
-#include <TVector3.h>
 
-TTimeStamp operator-(const TTimeStamp& lhs, const TTimeStamp& rhs) {
-    return TTimeStamp{
-        lhs.GetSec() - rhs.GetSec(), 
-        lhs.GetNanoSec() - rhs.GetNanoSec()
-    };
-}
-
-TTimeStamp operator+(const TTimeStamp& lhs, const TTimeStamp& rhs) {
-    return TTimeStamp{
-        lhs.GetSec() + rhs.GetSec(), 
-        lhs.GetNanoSec() + rhs.GetNanoSec()
-    };
-}
-
-struct Vertex {
-
-    TVector3 pos;
-    TTimeStamp ts;
-    double e;
-    double q;
-
-};
-
-struct Track {
-
-    TVector3 pos;
-    TVector3 dir;
-    TTimeStamp ts;
-    double q;
-
-};
-
-inline bool operator<(const Vertex& lhs, const Vertex& rhs) {
-    return lhs.ts < rhs.ts;
-}
+#include "event.hpp"
+#include "timestamp.hpp"
+#include "vec3.hpp"
 
 struct IBD {
 
-    Vertex prompt;
-    Vertex delayed;
+    vertex prompt;
+    vertex delayed;
 
 };
 
 struct Cosmo {
 
-    Vertex prompt;
-    Vertex delayed;
+    vertex prompt;
+    vertex delayed;
     double dlat_mu2p;
     double dlat_mu2d;
     double dt_mu2p;
@@ -166,8 +132,8 @@ public:
     virtual bool selection() = 0;
 
     virtual void print() {
-        std::cout << "Prompt: " /* (" << posx_p << ", " << posy_p << ", " << posz_p << "), */ "E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp(sec_p, nsec_p) << '\n';
-        std::cout << "Delayed: " /* (" << posx_d << ", " << posy_d << ", " << posz_d << "), */ "E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp(sec_d, nsec_d) << '\n';
+        std::cout << "Prompt: " /* (" << posx_p << ", " << posy_p << ", " << posz_p << "), */ "E = " << e_p << ", Q = " << totq_p << ", Time = " << timestamp(sec_p, nsec_p) << '\n';
+        std::cout << "Delayed: " /* (" << posx_d << ", " << posy_d << ", " << posz_d << "), */ "E = " << e_d << ", Q = " << totq_d << ", Time = " << timestamp(sec_d, nsec_d) << '\n';
     }
 
 };
@@ -250,10 +216,10 @@ public:
     virtual bool selection() override = 0;
 
     void print() override {
-        TTimeStamp ts_p{sec_p, nsec_p};
-        TTimeStamp ts_d{sec_d, nsec_d};
-        TVector3 pos_p{posx_p, posy_p, posz_p};
-        TVector3 pos_d{posx_d, posy_d, posz_d};
+        timestamp ts_p{sec_p, nsec_p};
+        timestamp ts_d{sec_d, nsec_d};
+        vec3 pos_p{posx_p, posy_p, posz_p};
+        vec3 pos_d{posx_d, posy_d, posz_d};
 
         std::string method = "";
         double d_mu2p = std::numeric_limits<double>::infinity();
@@ -261,13 +227,13 @@ public:
         double d_mu2d = std::numeric_limits<double>::infinity();
         double t_mu2d = std::numeric_limits<double>::infinity();
         for (std::size_t k = 0ul; k < method_mu->size(); ++k) {
-            TTimeStamp ts_mu{sec_mu->operator[](k), nsec_mu->operator[](k)};
-            TVector3 pos_mu{posx_mu->operator[](k), posy_mu->operator[](k), posz_mu->operator[](k)};
-            TVector3 dir_mu{dirx_mu->operator[](k), diry_mu->operator[](k), dirz_mu->operator[](k)};
-            double tmp_d_mu2p = dir_mu.Cross(pos_p - pos_mu).Mag();
-            double tmp_t_mu2p = static_cast<double>(ts_p - ts_mu);
-            double tmp_d_mu2d = dir_mu.Cross(pos_d - pos_mu).Mag();
-            double tmp_t_mu2d = static_cast<double>(ts_d - ts_mu);
+            timestamp ts_mu{sec_mu->operator[](k), nsec_mu->operator[](k)};
+            vec3 pos_mu{posx_mu->operator[](k), posy_mu->operator[](k), posz_mu->operator[](k)};
+            vec3 dir_mu{dirx_mu->operator[](k), diry_mu->operator[](k), dirz_mu->operator[](k)};
+            double tmp_d_mu2p = mag(cross(dir_mu, pos_p - pos_mu));
+            double tmp_t_mu2p = timestamp_to_double(ts_p - ts_mu);
+            double tmp_d_mu2d = mag(cross(dir_mu, pos_d - pos_mu));
+            double tmp_t_mu2d = timestamp_to_double(ts_d - ts_mu);
             if (tmp_d_mu2p < d_mu2p && 0.0 < tmp_t_mu2p && tmp_t_mu2p < 1.2) {
                 method = method_mu->operator[](k);
                 d_mu2p = tmp_d_mu2p;
@@ -277,8 +243,6 @@ public:
             }
         }
 
-        if (ts_p < TTimeStamp(2025, 8, 30, 0, 0, 0) || TTimeStamp(2025, 8, 31, 0, 0, 0) < ts_p) return; 
-
         // std::cout << "Prompt: (" << posx_p << ", " << posy_p << ", " << posz_p << "), E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp(sec_p, nsec_p) << '\n';
         // std::cout << "Delayed: (" << posx_d << ", " << posy_d << ", " << posz_d << "), E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp(sec_d, nsec_d) << '\n';
         // std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
@@ -286,8 +250,8 @@ public:
         // std::cout << "Muon (" << method << "): d_mu2p = " << d_mu2p << ", t_mu2p = " << t_mu2p << ", d_mu2d = " << d_mu2d << ", t_mu2d = " << t_mu2d << '\n';
 
         if (selection()) {
-            std::cout << "Prompt: E = " << e_p << ", Q = " << totq_p << ", Time = " << TTimeStamp{sec_p, nsec_p} << '\n';
-            std::cout << "Delayed: E = " << e_d << ", Q = " << totq_d << ", Time = " << TTimeStamp{sec_d, nsec_d} << '\n';
+            std::cout << "Prompt: E = " << e_p << ", Q = " << totq_p << ", Time = " << timestamp{sec_p, nsec_p} << '\n';
+            std::cout << "Delayed: E = " << e_d << ", Q = " << totq_d << ", Time = " << timestamp{sec_d, nsec_d} << '\n';
         }
     }
 
@@ -303,11 +267,11 @@ public:
 
     bool selection() override {
         if (stdt_p > 200.0 || stdt_d > 200.0) return false;
-        TTimeStamp ts_p{sec_p, nsec_p};
-        TTimeStamp ts_d{sec_d, nsec_d};
-        TVector3 pos_p{posx_p, posy_p, posz_p};
-        TVector3 pos_d{posx_d, posy_d, posz_d};
-        if (pos_p.Mag() > 16500.0) return false;
+        timestamp ts_p{sec_p, nsec_p};
+        timestamp ts_d{sec_d, nsec_d};
+        vec3 pos_p{posx_p, posy_p, posz_p};
+        vec3 pos_d{posx_d, posy_d, posz_d};
+        if (mag(pos_p) > 16500.0) return false;
         if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
         if (e_p < 0.7 || 12.0 < e_p) return false;
         if (e_d < 2.0 || 2.5 < e_d) return false;
@@ -315,23 +279,23 @@ public:
         std::size_t nb_neutron_veto = 0ul;
         for (std::size_t k = 0ul; k < e_n->size(); ++k) {
             if (e_n->operator[](k) < 1.5 || 20.0 < e_n->operator[](k)) continue;
-            TTimeStamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
-            TVector3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
+            timestamp ts_n{sec_n->operator[](k), nsec_n->operator[](k)};
+            vec3 pos_n{posx_n->operator[](k), posy_n->operator[](k), posz_n->operator[](k)};
             // if (pos_n.Mag() > 17700.0) continue;
-            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_p < ts_n + TTimeStamp{0, 20000} || ts_n + TTimeStamp{0, 1200000000} < ts_p) continue;
-            if (ts_d < ts_n + TTimeStamp{0, 20000} || ts_n + TTimeStamp{0, 1200000000} < ts_d) continue;
+            if (mag(pos_p - pos_n) > 4000.0 || mag(pos_p - pos_n) > 4000.0) continue;
+            if (ts_p < ts_n + timestamp{0, 20000} || ts_n + timestamp{0, 1200000000} < ts_p) continue;
+            if (ts_d < ts_n + timestamp{0, 20000} || ts_n + timestamp{0, 1200000000} < ts_d) continue;
             ++nb_neutron_veto;
         }
 
         std::size_t nb_multu_veto = 0ul;
         for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
             if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
-            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
-            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            timestamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            vec3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            if (ts_mult < ts_p - timestamp{0, 1000000} || ts_d + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
         }
 
@@ -344,7 +308,7 @@ class CosmoAnalysis : public MainAnalysis {
 
 public:
 
-    CosmoAnalysis(const std::string& suffix, const TTimeStamp& ts_low, const TTimeStamp& ts_high, double radius) :
+    CosmoAnalysis(const std::string& suffix, const timestamp& ts_low, const timestamp& ts_high, double radius) :
         MainAnalysis{suffix}, 
         m_ts_low{ts_low}, 
         m_ts_high{ts_high},
@@ -355,11 +319,11 @@ public:
 
     bool selection() override {
         if (stdt_p > 200.0 || stdt_d > 200.0) return false;
-        TTimeStamp ts_p{sec_p, nsec_p};
-        TTimeStamp ts_d{sec_d, nsec_d};
-        TVector3 pos_p{posx_p, posy_p, posz_p};
-        TVector3 pos_d{posx_d, posy_d, posz_d};
-        if (pos_p.Mag() > 16500.0) return false;
+        timestamp ts_p{sec_p, nsec_p};
+        timestamp ts_d{sec_d, nsec_d};
+        vec3 pos_p{posx_p, posy_p, posz_p};
+        vec3 pos_d{posx_d, posy_d, posz_d};
+        if (mag(pos_p) > 16500.0) return false;
         if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
         if (e_p < 0.7 || 12.0 < e_p) return false;
         if (e_d < 2.0 || 2.5 < e_d) return false;
@@ -367,30 +331,30 @@ public:
         std::size_t nb_multu_veto = 0ul;
         for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
             if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
-            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
-            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            timestamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            vec3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            if (ts_mult < ts_p - timestamp{0, 1000000} || ts_d + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
         }
 
         bool found = false;
         for (std::size_t k = 0ul; k < method_mu->size() && !found; ++k) {
             if (method_mu->operator[](k) != "CdWpTtChi2") continue;
-            TTimeStamp ts_mu{sec_mu->operator[](k), nsec_mu->operator[](k)};
+            timestamp ts_mu{sec_mu->operator[](k), nsec_mu->operator[](k)};
             if (ts_p < ts_mu + m_ts_low || m_ts_high + ts_mu < ts_p) continue;
             if (ts_d < ts_mu + m_ts_low || m_ts_high + ts_mu < ts_d) continue;
-            TVector3 pos_mu{posx_mu->operator[](k), posy_mu->operator[](k), posz_mu->operator[](k)};
-            TVector3 dir_mu{dirx_mu->operator[](k), diry_mu->operator[](k), dirz_mu->operator[](k)};
-            double d_mu2p = dir_mu.Cross(pos_p - pos_mu).Mag();
-            double d_mu2d = dir_mu.Cross(pos_d - pos_mu).Mag();
+            vec3 pos_mu{posx_mu->operator[](k), posy_mu->operator[](k), posz_mu->operator[](k)};
+            vec3 dir_mu{dirx_mu->operator[](k), diry_mu->operator[](k), dirz_mu->operator[](k)};
+            double d_mu2p = mag(cross(dir_mu, pos_p - pos_mu));
+            double d_mu2d = mag(cross(dir_mu, pos_d - pos_mu));
             if (d_mu2p < m_radius && d_mu2d < m_radius) {
                 found = true;
                 m_dlat_mu2p = d_mu2p;
                 m_dlat_mu2d = d_mu2d;
-                m_dt_mu2p = static_cast<double>(ts_p - ts_mu);
-                m_dt_mu2d = static_cast<double>(ts_d - ts_mu);
+                m_dt_mu2p = timestamp_to_double(ts_p - ts_mu);
+                m_dt_mu2d = timestamp_to_double(ts_d - ts_mu);
             }
         }
 
@@ -404,8 +368,8 @@ public:
 
 private:
 
-    TTimeStamp m_ts_low;
-    TTimeStamp m_ts_high;
+    timestamp m_ts_low;
+    timestamp m_ts_high;
     double m_radius;
 
     double m_dlat_mu2p;
@@ -426,11 +390,11 @@ public:
 
     bool selection() override {
         if (stdt_p > 200.0 || stdt_d > 200.0) return false;
-        TTimeStamp ts_p{sec_p, nsec_p};
-        TTimeStamp ts_d{sec_d, nsec_d};
-        TVector3 pos_p{posx_p, posy_p, posz_p};
-        TVector3 pos_d{posx_d, posy_d, posz_d};
-        if (pos_p.Mag() > 16500.0) return false;
+        timestamp ts_p{sec_p, nsec_p};
+        timestamp ts_d{sec_d, nsec_d};
+        vec3 pos_p{posx_p, posy_p, posz_p};
+        vec3 pos_d{posx_d, posy_d, posz_d};
+        if (mag(pos_p) > 16500.0) return false;
         if ((posz_p < -15500.0 || 15500 < posz_p) && std::sqrt(posx_p * posx_p + posy_p * posy_p) < 3000.0) return false;
         if (e_p < 0.7 || 12.0 < e_p) return false;
         if (e_d < 2.0 || 2.5 < e_d) return false;
@@ -438,11 +402,11 @@ public:
         std::size_t nb_multu_veto = 0ul;
         for (std::size_t k = 0ul; k < e_mult->size(); ++k) {
             if (e_mult->operator[](k) < 2.0 || 12.0 < e_mult->operator[](k)) continue;
-            TTimeStamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
-            TVector3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
+            timestamp ts_mult{sec_mult->operator[](k), nsec_mult->operator[](k)};
+            vec3 pos_mult{posx_mult->operator[](k), posy_mult->operator[](k), posz_mult->operator[](k)};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            if (ts_mult < ts_p - timestamp{0, 1000000} || ts_d + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
         }
 
@@ -464,12 +428,12 @@ std::vector<IBD> get_all_ibd(const std::string& filename, AnalysisBase* analysis
         // analysis->print();
         if (!analysis->selection()) continue;
         IBD ibd;
-        ibd.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
-        ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.prompt.pos = vec3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        ibd.prompt.ts = timestamp{analysis->sec_p, analysis->nsec_p};
         ibd.prompt.e = analysis->e_p;
         ibd.prompt.q = analysis->totq_p;
-        ibd.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
-        ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.delayed.pos = vec3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.ts = timestamp{analysis->sec_d, analysis->nsec_d};
         ibd.delayed.e = analysis->e_d;
         ibd.delayed.q = analysis->totq_d;
         ibds_ordered.insert(ibd);
@@ -496,12 +460,12 @@ std::vector<Cosmo> get_all_cosmo(const std::string& filename, CosmoAnalysis* ana
         // analysis->print();
         if (!analysis->selection()) continue;
         Cosmo cosmo;
-        cosmo.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
-        cosmo.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        cosmo.prompt.pos = vec3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        cosmo.prompt.ts = timestamp{analysis->sec_p, analysis->nsec_p};
         cosmo.prompt.e = analysis->e_p;
         cosmo.prompt.q = analysis->totq_p;
-        cosmo.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
-        cosmo.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        cosmo.delayed.pos = vec3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        cosmo.delayed.ts = timestamp{analysis->sec_d, analysis->nsec_d};
         cosmo.delayed.e = analysis->e_d;
         cosmo.delayed.q = analysis->totq_d;
         cosmo.dlat_mu2p = analysis->dlat_p();
@@ -576,49 +540,60 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
         // analysis->print();
         if (!analysis->selection()) continue;
         IBD ibd;
-        ibd.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
-        ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.prompt.pos = vec3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        ibd.prompt.ts = timestamp{analysis->sec_p, analysis->nsec_p};
         ibd.prompt.e = analysis->e_p;
         ibd.prompt.q = analysis->totq_p;
-        ibd.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
-        ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.delayed.pos = vec3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.ts = timestamp{analysis->sec_d, analysis->nsec_d};
         ibd.delayed.e = analysis->e_d;
         ibd.delayed.q = analysis->totq_d;
 
         std::vector<double> dt_mu2p_times;
         std::vector<double> d_mu2p_cdwp_values;
         std::vector<double> d_mu2p_tt_values;
-        std::vector<TTimeStamp> used_muon_times;
+        std::vector<std::pair<timestamp, std::vector<std::string>>> used_muon_times;
         int neutron_count = 0;
         bool found_muon = false;
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
-            TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
-            if (ibd.prompt.ts < ts_mu + TTimeStamp{0, 5000000} || ts_mu + TTimeStamp{0, 1200000000} < ibd.prompt.ts) continue;
-            std::vector<TTimeStamp>::const_iterator it = std::find_if(
+            timestamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            if (ibd.prompt.ts < ts_mu + timestamp{0, 5000000} || ts_mu + timestamp{0, 1200000000} < ibd.prompt.ts) continue;
+            std::vector<std::pair<timestamp, std::vector<std::string>>>::iterator it = std::find_if(
                 used_muon_times.begin(), used_muon_times.end(),
-                [ts_mu](const TTimeStamp& used_ts_mu) {
-                    TTimeStamp diff = ts_mu - used_ts_mu;
-                    return (TTimeStamp{0, -1000} < diff && diff < TTimeStamp{0, 1000});
+                [ts_mu](const std::pair<timestamp, std::vector<std::string>>& used_ts_mu) {
+                    timestamp diff = ts_mu - used_ts_mu.first;
+                    return (timestamp{0, -1000} < diff && diff < timestamp{0, 1000});
                 }
             );
-            if (it != used_muon_times.end()) continue;
-            used_muon_times.push_back(ts_mu);
+            if (it != used_muon_times.end()) {
+                std::vector<std::string>::iterator method_it = std::find(
+                    it->second.begin(), it->second.end(),
+                    analysis->method_mu->operator[](k)
+                );
+                if (method_it != it->second.end()) continue;
+                else {
+                    it->second.push_back(analysis->method_mu->operator[](k));
+                }
+            }
+            else {
+                used_muon_times.push_back(std::make_pair(ts_mu, std::vector<std::string>{analysis->method_mu->operator[](k)}));
+            }
             found_muon = true;
             for (std::size_t i = 0ul; i < analysis->sec_n->size(); ++i) {
                 if (analysis->e_n->operator[](i) < 2.0 || 2.5 < analysis->e_n->operator[](i)) continue;
-                TTimeStamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
-                if (ts_n < ts_mu + TTimeStamp{0, 20000} || ts_mu + TTimeStamp{0, 2000000} < ts_n) continue;
+                timestamp ts_n{analysis->sec_n->operator[](i), analysis->nsec_n->operator[](i)};
+                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
                 ++neutron_count;
             }
             double d_mu2p_cdwp = std::numeric_limits<double>::infinity();
             double d_mu2p_tt = std::numeric_limits<double>::infinity();
             for (std::size_t i = 0ul; i < analysis->method_mu->size(); ++i) {
-                TTimeStamp ts_mu2{analysis->sec_mu->operator[](i), analysis->nsec_mu->operator[](i)};
-                TTimeStamp diff = ts_mu - ts_mu2;
-                if (diff < TTimeStamp{0, -1000} || TTimeStamp{0, 1000} < diff) continue;
-                TVector3 pos_mu{analysis->posx_mu->operator[](i), analysis->posy_mu->operator[](i), analysis->posz_mu->operator[](i)};
-                TVector3 dir_mu{analysis->dirx_mu->operator[](i), analysis->diry_mu->operator[](i), analysis->dirz_mu->operator[](i)};
-                double tmp_d_mu2p = dir_mu.Cross(ibd.prompt.pos - pos_mu).Mag();
+                timestamp ts_mu2{analysis->sec_mu->operator[](i), analysis->nsec_mu->operator[](i)};
+                timestamp diff = ts_mu - ts_mu2;
+                if (diff < timestamp{0, -1000} || timestamp{0, 1000} < diff) continue;
+                vec3 pos_mu{analysis->posx_mu->operator[](i), analysis->posy_mu->operator[](i), analysis->posz_mu->operator[](i)};
+                vec3 dir_mu{analysis->dirx_mu->operator[](i), analysis->diry_mu->operator[](i), analysis->dirz_mu->operator[](i)};
+                double tmp_d_mu2p = mag(cross(dir_mu, ibd.prompt.pos - pos_mu));
                 if (analysis->method_mu->operator[](i) == "CdWpTtChi2") {
                     if (tmp_d_mu2p < d_mu2p_cdwp) {
                         d_mu2p_cdwp = tmp_d_mu2p;
@@ -631,7 +606,7 @@ void analyze_cosmo_rate_with_neutron(const std::string& filename, CosmoRateWithN
                 }
             }
             if (!found_muon) continue;
-            dt_mu2p_times.push_back(static_cast<double>(ibd.prompt.ts - ts_mu));
+            dt_mu2p_times.push_back(timestamp_to_double(ibd.prompt.ts - ts_mu));
             d_mu2p_cdwp_values.push_back(d_mu2p_cdwp);
             d_mu2p_tt_values.push_back(d_mu2p_tt);
         }
@@ -730,12 +705,12 @@ void print_all_entries(const std::string& filename, AnalysisBase* analysis) {
         // analysis->print();
         if (!analysis->selection()) continue;
         IBD ibd;
-        ibd.prompt.pos = TVector3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
-        ibd.prompt.ts = TTimeStamp{analysis->sec_p, analysis->nsec_p};
+        ibd.prompt.pos = vec3{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        ibd.prompt.ts = timestamp{analysis->sec_p, analysis->nsec_p};
         ibd.prompt.e = analysis->e_p;
         ibd.prompt.q = analysis->totq_p;
-        ibd.delayed.pos = TVector3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
-        ibd.delayed.ts = TTimeStamp{analysis->sec_d, analysis->nsec_d};
+        ibd.delayed.pos = vec3{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        ibd.delayed.ts = timestamp{analysis->sec_d, analysis->nsec_d};
         ibd.delayed.e = analysis->e_d;
         ibd.delayed.q = analysis->totq_d;
         ibds.insert(ibd);
@@ -751,11 +726,11 @@ struct VanessaIBD {
 
     int run_id;
 
-    TTimeStamp ts_p;
+    timestamp ts_p;
     double e_p;
     double totq_p;
 
-    TTimeStamp ts_d;
+    timestamp ts_d;
     double e_d;
     double totq_d;
 
@@ -788,10 +763,10 @@ std::vector<VanessaIBD> analyze_vanessa_result() {
         int nsec_d = static_cast<int>(t_d - static_cast<double>(sec_d) * 1.0e9);
         VanessaIBD ibd;
         ibd.run_id = run_id;
-        ibd.ts_p = TTimeStamp{sec_p, nsec_p};
+        ibd.ts_p = timestamp{sec_p, nsec_p};
         ibd.e_p = e_p;
         ibd.totq_p = totq_p;
-        ibd.ts_d = TTimeStamp{sec_d, nsec_d};
+        ibd.ts_d = timestamp{sec_d, nsec_d};
         ibd.e_d = e_d;
         ibd.totq_d = totq_d;
         ibds.insert(ibd);
@@ -827,10 +802,10 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
         int nsec_d = static_cast<int>(t_d - static_cast<double>(sec_d) * 1.0e9);
         VanessaIBD ibd;
         ibd.run_id = run_id;
-        ibd.ts_p = TTimeStamp{sec_p, nsec_p};
+        ibd.ts_p = timestamp{sec_p, nsec_p};
         ibd.e_p = e_p;
         ibd.totq_p = totq_p;
-        ibd.ts_d = TTimeStamp{sec_d, nsec_d};
+        ibd.ts_d = timestamp{sec_d, nsec_d};
         ibd.e_d = e_d;
         ibd.totq_d = totq_d;
         vanessa_ibds.insert(ibd);
@@ -850,8 +825,8 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
             vanessa_ibds.end(),
             [&](const VanessaIBD& vanessa_ibd) {
                 return (
-                    vanessa_ibd.ts_p.GetSec() == analysis->sec_p &&
-                    vanessa_ibd.ts_d.GetSec() == analysis->sec_d &&
+                    vanessa_ibd.ts_p.sec == analysis->sec_p &&
+                    vanessa_ibd.ts_d.sec == analysis->sec_d &&
                     vanessa_ibd.e_p == analysis->e_p &&
                     vanessa_ibd.e_d == analysis->e_d
                 );
@@ -861,31 +836,31 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
         bool is_only_in_analysis = (it == vanessa_ibds.end() && analysis->selection());
         if (!is_only_in_vanessa && !is_only_in_analysis) continue;
 
-        TTimeStamp ts_p{analysis->sec_p, analysis->nsec_p};
-        TTimeStamp ts_d{analysis->sec_d, analysis->nsec_d};
-        TVector3 pos_p{analysis->posx_p, analysis->posy_p, analysis->posz_p};
-        TVector3 pos_d{analysis->posx_d, analysis->posy_d, analysis->posz_d};
+        timestamp ts_p{analysis->sec_p, analysis->nsec_p};
+        timestamp ts_d{analysis->sec_d, analysis->nsec_d};
+        vec3 pos_p{analysis->posx_p, analysis->posy_p, analysis->posz_p};
+        vec3 pos_d{analysis->posx_d, analysis->posy_d, analysis->posz_d};
 
         std::size_t nb_neutron_veto = 0ul;
         for (std::size_t k = 0ul; k < analysis->e_n->size(); ++k) {
             if (analysis->e_n->operator[](k) < 1.5 || 20.0 < analysis->e_n->operator[](k)) continue;
-            TTimeStamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
-            TVector3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
+            timestamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
+            vec3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
             // if (pos_n.Mag() > 17700.0) continue;
-            if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_p - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_p - ts_n) continue;
-            if (ts_d - ts_n < TTimeStamp{0, 20000} || TTimeStamp{0, 1200000000} < ts_d - ts_n) continue;
+            if (mag(pos_p - pos_n) > 4000.0 || mag(pos_p - pos_n) > 4000.0) continue;
+            if (ts_p - ts_n < timestamp{0, 20000} || timestamp{0, 1200000000} < ts_p - ts_n) continue;
+            if (ts_d - ts_n < timestamp{0, 20000} || timestamp{0, 1200000000} < ts_d - ts_n) continue;
             ++nb_neutron_veto;
         }
 
         std::size_t nb_multu_veto = 0ul;
         for (std::size_t k = 0ul; k < analysis->e_mult->size(); ++k) {
             if (analysis->e_mult->operator[](k) < 2.0 || 12.0 < analysis->e_mult->operator[](k)) continue;
-            TTimeStamp ts_mult{analysis->sec_mult->operator[](k), analysis->nsec_mult->operator[](k)};
-            TVector3 pos_mult{analysis->posx_mult->operator[](k), analysis->posy_mult->operator[](k), analysis->posz_mult->operator[](k)};
+            timestamp ts_mult{analysis->sec_mult->operator[](k), analysis->nsec_mult->operator[](k)};
+            vec3 pos_mult{analysis->posx_mult->operator[](k), analysis->posy_mult->operator[](k), analysis->posz_mult->operator[](k)};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
-            if (ts_mult < ts_p - TTimeStamp{0, 1000000} || ts_d + TTimeStamp{0, 1000000} < ts_mult) continue;
+            if (ts_mult < ts_p - timestamp{0, 1000000} || ts_d + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
         }
 
@@ -895,13 +870,13 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
         double d_mu2d = std::numeric_limits<double>::infinity();
         double t_mu2d = std::numeric_limits<double>::infinity();
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
-            TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
-            TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
-            TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
-            double tmp_d_mu2p = dir_mu.Cross(pos_p - pos_mu).Mag();
-            double tmp_t_mu2p = static_cast<double>(ts_p - ts_mu);
-            double tmp_d_mu2d = dir_mu.Cross(pos_d - pos_mu).Mag();
-            double tmp_t_mu2d = static_cast<double>(ts_d - ts_mu);
+            timestamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            vec3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+            vec3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+            double tmp_d_mu2p = mag(cross(dir_mu, pos_p - pos_mu));
+            double tmp_t_mu2p = timestamp_to_double(ts_p - ts_mu);
+            double tmp_d_mu2d = mag(cross(dir_mu, pos_d - pos_mu));
+            double tmp_t_mu2d = timestamp_to_double(ts_d - ts_mu);
             if (tmp_d_mu2p < d_mu2p && 0.0 < tmp_t_mu2p && tmp_t_mu2p < 1.2) {
                 method = analysis->method_mu->operator[](k);
                 d_mu2p = tmp_d_mu2p;
@@ -914,37 +889,37 @@ void compare_with_vanessa(const std::string& filename, IBDAnalysis* analysis) {
         std::cout << (is_only_in_vanessa ? "[Only in Vanessa] ======================================" : "");
         std::cout << (is_only_in_analysis ? "[Only in Analysis] ======================================" : "");
         std::cout << '\n';
-        std::cout << "Prompt: (" << analysis->posx_p << ", " << analysis->posy_p << ", " << analysis->posz_p << "), E = " << analysis->e_p << ", Q = " << analysis->totq_p << ", Time = " << TTimeStamp(analysis->sec_p, analysis->nsec_p) << '\n';
-        std::cout << "Delayed: (" << analysis->posx_d << ", " << analysis->posy_d << ", " << analysis->posz_d << "), E = " << analysis->e_d << ", Q = " << analysis->totq_d << ", Time = " << TTimeStamp(analysis->sec_d, analysis->nsec_d) << '\n';
+        std::cout << "Prompt: (" << analysis->posx_p << ", " << analysis->posy_p << ", " << analysis->posz_p << "), E = " << analysis->e_p << ", Q = " << analysis->totq_p << ", Time = " << timestamp{analysis->sec_p, analysis->nsec_p} << '\n';
+        std::cout << "Delayed: (" << analysis->posx_d << ", " << analysis->posy_d << ", " << analysis->posz_d << "), E = " << analysis->e_d << ", Q = " << analysis->totq_d << ", Time = " << timestamp{analysis->sec_d, analysis->nsec_d} << '\n';
         std::cout << "Number of Neutron Veto associated: " << nb_neutron_veto << '\n';
         std::cout << "Number of Multiplicity Veto associated: " << nb_multu_veto << '\n';
 
         // print neutrons
         for (std::size_t k = 0ul; k < analysis->e_n->size(); ++k) {
-            TTimeStamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
-            TVector3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
+            timestamp ts_n{analysis->sec_n->operator[](k), analysis->nsec_n->operator[](k)};
+            vec3 pos_n{analysis->posx_n->operator[](k), analysis->posy_n->operator[](k), analysis->posz_n->operator[](k)};
             double e_n = analysis->e_n->operator[](k);
             double totq_n = analysis->totq_n->operator[](k);
-            std::cout << "  Neutron: (" << pos_n.X() << ", " << pos_n.Y() << ", " << pos_n.Z() << "), E = " << e_n << ", Q = " << totq_n << ", Time = " << ts_n << '\n';
+            std::cout << "  Neutron: " << pos_n << ", E = " << e_n << ", Q = " << totq_n << ", Time = " << ts_n << '\n';
         }
 
         // print mults
         for (std::size_t k = 0ul; k < analysis->e_mult->size(); ++k) {
-            TTimeStamp ts_mult{analysis->sec_mult->operator[](k), analysis->nsec_mult->operator[](k)};
-            TVector3 pos_mult{analysis->posx_mult->operator[](k), analysis->posy_mult->operator[](k), analysis->posz_mult->operator[](k)};
+            timestamp ts_mult{analysis->sec_mult->operator[](k), analysis->nsec_mult->operator[](k)};
+            vec3 pos_mult{analysis->posx_mult->operator[](k), analysis->posy_mult->operator[](k), analysis->posz_mult->operator[](k)};
             double e_mult = analysis->e_mult->operator[](k);
             double totq_mult = analysis->totq_mult->operator[](k);
-            std::cout << "  Mult: (" << pos_mult.X() << ", " << pos_mult.Y() << ", " << pos_mult.Z() << "), E = " << e_mult << ", Q = " << totq_mult << ", Time = " << ts_mult << '\n';
+            std::cout << "  Mult: " << pos_mult << ", E = " << e_mult << ", Q = " << totq_mult << ", Time = " << ts_mult << '\n';
         }
 
         // print muons
         for (std::size_t k = 0ul; k < analysis->method_mu->size(); ++k) {
-            TTimeStamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
-            TVector3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
-            TVector3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
+            timestamp ts_mu{analysis->sec_mu->operator[](k), analysis->nsec_mu->operator[](k)};
+            vec3 pos_mu{analysis->posx_mu->operator[](k), analysis->posy_mu->operator[](k), analysis->posz_mu->operator[](k)};
+            vec3 dir_mu{analysis->dirx_mu->operator[](k), analysis->diry_mu->operator[](k), analysis->dirz_mu->operator[](k)};
             double totq_mu = analysis->totq_mu->operator[](k);
             double quality_mu = analysis->quality_mu->operator[](k);
-            std::cout << "  Muon (" << analysis->method_mu->operator[](k) << "): (" << pos_mu.X() << ", " << pos_mu.Y() << ", " << pos_mu.Z() << "), Dir = (" << dir_mu.X() << ", " << dir_mu.Y() << ", " << dir_mu.Z() << "), Q = " << totq_mu << ", Quality = " << quality_mu << ", Time = " << ts_mu << '\n';
+            std::cout << "  Muon (" << analysis->method_mu->operator[](k) << "): " << pos_mu << ", Dir = " << dir_mu << ", Q = " << totq_mu << ", Quality = " << quality_mu << ", Time = " << ts_mu << '\n';
         }
     }
 }
@@ -1036,8 +1011,8 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     CosmoRateWithNeutronAnalysis cosmo_rate_with_neutron_analysis(suffix);
     analyze_cosmo_rate_with_neutron(filename, &cosmo_rate_with_neutron_analysis);
 
-    CosmoAnalysis cosmo_before_analysis(suffix, TTimeStamp{0, -1200000000}, TTimeStamp{0, -5000000}, 3000.0);
-    CosmoAnalysis cosmo_after_analysis(suffix, TTimeStamp{0, 5000000}, TTimeStamp{0, 1200000000}, 3000.0);
+    CosmoAnalysis cosmo_before_analysis(suffix, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0);
+    CosmoAnalysis cosmo_after_analysis(suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0);
     std::vector<Cosmo> cosmos_before = get_all_cosmo(filename, &cosmo_before_analysis);
     std::vector<Cosmo> cosmos_after = get_all_cosmo(filename, &cosmo_after_analysis);
 
@@ -1112,28 +1087,28 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     for (const IBD& ibd : ibds) {
         h_e_p->Fill(ibd.prompt.e);
         h_e_d->Fill(ibd.delayed.e);
-        h_dt->Fill((ibd.delayed.ts - ibd.prompt.ts) * 1000.0);
-        h_dr->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
-        h_rho_z_p->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
-        h_rho_z_d->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
+        h_dt->Fill(timestamp_to_double(ibd.delayed.ts - ibd.prompt.ts) * 1000.0);
+        h_dr->Fill(mag(ibd.delayed.pos - ibd.prompt.pos) / 1000.0);
+        h_rho_z_p->Fill((ibd.prompt.pos.x * ibd.prompt.pos.x + ibd.prompt.pos.y * ibd.prompt.pos.y) / 1.0e6, ibd.prompt.pos.z / 1000.0);
+        h_rho_z_d->Fill((ibd.delayed.pos.x * ibd.delayed.pos.x + ibd.delayed.pos.y * ibd.delayed.pos.y) / 1.0e6, ibd.delayed.pos.z / 1000.0);
     }
 
     for (const Cosmo& cosmo : cosmos_before) {
         h_e_p_cosmo_before->Fill(cosmo.prompt.e);
         h_e_d_cosmo_before->Fill(cosmo.delayed.e);
-        h_dt_cosmo_before->Fill((cosmo.delayed.ts - cosmo.prompt.ts) * 1000.0);
-        h_dr_cosmo_before->Fill((cosmo.delayed.pos - cosmo.prompt.pos).Mag() / 1000.0);
-        h_rho_z_p_cosmo_before->Fill((cosmo.prompt.pos.X() * cosmo.prompt.pos.X() + cosmo.prompt.pos.Y() * cosmo.prompt.pos.Y()) / 1.0e6, cosmo.prompt.pos.Z() / 1000.0);
-        h_rho_z_d_cosmo_before->Fill((cosmo.delayed.pos.X() * cosmo.delayed.pos.X() + cosmo.delayed.pos.Y() * cosmo.delayed.pos.Y()) / 1.0e6, cosmo.delayed.pos.Z() / 1000.0);
+        h_dt_cosmo_before->Fill(timestamp_to_double(cosmo.delayed.ts - cosmo.prompt.ts) * 1000.0);
+        h_dr_cosmo_before->Fill(mag(cosmo.delayed.pos - cosmo.prompt.pos) / 1000.0);
+        h_rho_z_p_cosmo_before->Fill((cosmo.prompt.pos.x * cosmo.prompt.pos.x + cosmo.prompt.pos.y * cosmo.prompt.pos.y) / 1.0e6, cosmo.prompt.pos.z / 1000.0);
+        h_rho_z_d_cosmo_before->Fill((cosmo.delayed.pos.x * cosmo.delayed.pos.x + cosmo.delayed.pos.y * cosmo.delayed.pos.y) / 1.0e6, cosmo.delayed.pos.z / 1000.0);
     }
 
     for (const Cosmo& cosmo : cosmos_after) {
         h_e_p_cosmo_after->Fill(cosmo.prompt.e);
         h_e_d_cosmo_after->Fill(cosmo.delayed.e);
-        h_dt_cosmo_after->Fill((cosmo.delayed.ts - cosmo.prompt.ts) * 1000.0);
-        h_dr_cosmo_after->Fill((cosmo.delayed.pos - cosmo.prompt.pos).Mag() / 1000.0);
-        h_rho_z_p_cosmo_after->Fill((cosmo.prompt.pos.X() * cosmo.prompt.pos.X() + cosmo.prompt.pos.Y() * cosmo.prompt.pos.Y()) / 1.0e6, cosmo.prompt.pos.Z() / 1000.0);
-        h_rho_z_d_cosmo_after->Fill((cosmo.delayed.pos.X() * cosmo.delayed.pos.X() + cosmo.delayed.pos.Y() * cosmo.delayed.pos.Y()) / 1.0e6, cosmo.delayed.pos.Z() / 1000.0);
+        h_dt_cosmo_after->Fill(timestamp_to_double(cosmo.delayed.ts - cosmo.prompt.ts) * 1000.0);
+        h_dr_cosmo_after->Fill(mag(cosmo.delayed.pos - cosmo.prompt.pos) / 1000.0);
+        h_rho_z_p_cosmo_after->Fill((cosmo.prompt.pos.x * cosmo.prompt.pos.x + cosmo.prompt.pos.y * cosmo.prompt.pos.y) / 1.0e6, cosmo.prompt.pos.z / 1000.0);
+        h_rho_z_d_cosmo_after->Fill((cosmo.delayed.pos.x * cosmo.delayed.pos.x + cosmo.delayed.pos.y * cosmo.delayed.pos.y) / 1.0e6, cosmo.delayed.pos.z / 1000.0);
     }
 
     h_e_p_cosmo_diff->Add(h_e_p_cosmo_after, h_e_p_cosmo_before, 1.0, -1.0);
@@ -1141,7 +1116,7 @@ void analysisgroupc_printer(const std::string& filename, const std::string& suff
     for (const VanessaIBD& ibd : vanessa_ibds) {
         h_e_p_vanessa->Fill(ibd.e_p);
         h_e_d_vanessa->Fill(ibd.e_d);
-        h_dt_vanessa->Fill((ibd.ts_d - ibd.ts_p) * 1000.0);
+        h_dt_vanessa->Fill(timestamp_to_double(ibd.ts_d - ibd.ts_p) * 1000.0);
         // h_dr_vanessa->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
         // h_rho_z_p_vanessa->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
         // h_rho_z_d_vanessa->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
