@@ -90,7 +90,15 @@ inline std::ostream& operator<<(std::ostream& os, const timestamp& ts) {
     std::tm* tm_ptr = std::gmtime(&ts.sec);
     char buffer[32];
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_ptr);
+    
+    std::ios::fmtflags f(os.flags());
+    char fill = os.fill();
+    
     os << buffer << '.' << std::setw(9) << std::setfill('0') << ts.nsec;
+    
+    os.flags(f);
+    os.fill(fill);
+    
     return os;
 }
 
