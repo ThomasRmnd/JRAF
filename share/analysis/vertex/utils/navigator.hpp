@@ -166,7 +166,7 @@ public:
         map_type::iterator it = s_cache.find(key);
         if (it != s_cache.end()) {
             if (std::shared_ptr<navigator_base> existing = it->second.lock()) {
-                if (std::shared_ptr<T> typed_ptr = std::dynamic_pointer_cast<T>(existing)) {
+                if (std::shared_ptr<_Nav> typed_ptr = std::dynamic_pointer_cast<_Nav>(existing)) {
                     std::cout << "Reusing navigator " << key << '\n';
                     return typed_ptr;
                 }
