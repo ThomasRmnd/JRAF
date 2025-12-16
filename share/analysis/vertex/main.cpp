@@ -52,18 +52,18 @@ int main(const std::string& filepath, const std::string& suffix) {
     analysis_manager manager(registry);
 
     std::shared_ptr<analysis_base> main_analysis(new ibd_analysis(filepath, suffix));
-    registry.book(main_analysis);
+    if (!registry.book(main_analysis)) return 1;
 
 
     std::shared_ptr<analysis_base> cosmo_rate_with_neutron_analysis(new cosmo_rate_analysis(filepath, suffix));
-    registry.book(cosmo_rate_with_neutron_analysis);
+    if (!registry.book(cosmo_rate_with_neutron_analysis)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_before_analysis(new cosmo_shape_analysis(filepath, suffix, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
     std::shared_ptr<analysis_base> cosmo_after_analysis(new cosmo_shape_analysis(filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0));
-    registry.book(cosmo_before_analysis);
-    registry.book(cosmo_after_analysis);
+    if (!registry.book(cosmo_before_analysis)) return 1;
+    if (!registry.book(cosmo_after_analysis)) return 1;
     
-    manager.run();
+    if (!manager.run()) return 1;
 
     return 0;
 }

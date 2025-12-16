@@ -914,6 +914,7 @@ public:
             return false;
         }
         m_registry[analysis->navigator()].push_back(analysis);
+        return true;
     }
 
 private:
@@ -968,6 +969,7 @@ public:
             std::cout << "[Group End] Finished processing group\n";
         }
         std::cout << "\n--- All Analysis Groups Finished ---\n";
+        return true;
     }
 
 private:
