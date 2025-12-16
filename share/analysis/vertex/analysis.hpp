@@ -31,7 +31,7 @@ public:
             return false;
         }
 
-        m_chain->SetBranchAddress("run_id", &run_id);
+        // m_chain->SetBranchAddress("run_id", &run_id);
 
         m_chain->SetBranchAddress("posx_p", &prompt.pos.x);
         m_chain->SetBranchAddress("posy_p", &prompt.pos.y);
