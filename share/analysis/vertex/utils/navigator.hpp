@@ -189,7 +189,7 @@ public:
 private:
 
     typedef std::unordered_map<std::string, std::weak_ptr<navigator_base>> map_type;
-    static map_type s_cache;
+    inline static map_type s_cache;
 
     navigator_manager() = delete;
 
