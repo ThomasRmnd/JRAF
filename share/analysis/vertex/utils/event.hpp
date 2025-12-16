@@ -15,10 +15,39 @@ struct vertex {
 
 };
 
-std::ostream& operator<<(std::ostream& os, const vertex& v) {
-    // os << "Pos = " << v.pos << ", E = " << v.e << ", Q = " << v.q << ", Time = " << v.ts;
-    os << "E = " << v.e << ", Q = " << v.q << ", Time = " << v.ts;
-    return os;
+inline bool operator<(const vertex& lhs, const vertex& rhs) {
+    return lhs.ts < rhs.ts;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const vertex& v) {
+    // return os << "Pos = " << v.pos << ", E = " << v.e << ", Q = " << v.q << ", Time = " << v.ts;
+    return os << "E = " << v.e << ", Q = " << v.q << ", Time = " << v.ts;
+}
+
+struct ibd {
+
+    vertex prompt;
+    vertex delayed;
+
+};
+
+inline bool operator<(const ibd& lhs, const ibd& rhs) {
+    return lhs.prompt < rhs.prompt;
+}
+
+struct cosmogenic {
+
+    vertex prompt;
+    vertex delayed;
+    double dlat_mu2p;
+    double dlat_mu2d;
+    double dt_mu2p;
+    double dt_mu2d;
+
+};
+
+inline bool operator<(const cosmogenic& lhs, const cosmogenic& rhs) {
+    return lhs.prompt < rhs.prompt;
 }
 
 struct vertex_metadata {
