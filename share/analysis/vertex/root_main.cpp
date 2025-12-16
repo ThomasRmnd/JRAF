@@ -45,7 +45,7 @@ void daq_time(const std::string& filename) {
     std::cout << "Total MuVeto time in days: " << tot_seconds_mu / (3600.0 * 24.0) << '\n';
 }
 
-int main(const std::string& filepath, const std::string& suffix) {
+int root_main(const std::string& filepath, const std::string& suffix) {
     daq_time(filepath);
 
     analysis_registry registry;
