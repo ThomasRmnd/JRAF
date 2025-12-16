@@ -958,7 +958,7 @@ public:
                     }
                 }
 
-                if ((k + 1) % 100000 == 0) {
+                if ((k + 1) % 1000 == 0) {
                      std::cout << "  [Group Status] Processed entry " << k + 1 << " / " << entries << '\n';
                 }
             }
