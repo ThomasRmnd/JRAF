@@ -974,7 +974,7 @@ public:
 
 private:
 
-    analysis_registry m_reg;
+    analysis_registry& m_reg;
 
 };
 
