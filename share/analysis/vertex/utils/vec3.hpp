@@ -1,5 +1,5 @@
-#ifndef UTILSTHOMAS_UTILS_VEC3_HPP_
-#define UTILSTHOMAS_UTILS_VEC3_HPP_
+#ifndef UTILS_VEC3_HPP_
+#define UTILS_VEC3_HPP_
 
 #include <cmath>
 #include <iostream>
@@ -116,4 +116,4 @@ std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits
     return os << '(' << vec.x << ", " << vec.y << ", " << vec.z << ')';
 }
 
-#endif // UTILSTHOMAS_UTILS_VEC3_HPP_
+#endif // UTILS_VEC3_HPP_

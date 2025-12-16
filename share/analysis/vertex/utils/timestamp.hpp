@@ -1,5 +1,5 @@
-#ifndef TIMESTAMP_HPP_
-#define TIMESTAMP_HPP_
+#ifndef UTILS_TIMESTAMP_HPP_
+#define UTILS_TIMESTAMP_HPP_
 
 #include <ctime>
 #include <iomanip>
@@ -106,4 +106,4 @@ inline double timestamp_to_double(const timestamp& ts) {
     return static_cast<double>(ts.sec) + static_cast<double>(ts.nsec) * 1.0e-9;
 }
 
-#endif // TIMESTAMP_HPP_
+#endif // UTILS_TIMESTAMP_HPP_
