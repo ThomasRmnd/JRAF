@@ -219,7 +219,7 @@ class cosmo_shape_analysis : public basic_analysis {
 public:
 
     cosmo_shape_analysis(const std::string& suffix, const timestamp& low, const timestamp& high, double radius) :
-        basic_analysis{"IBDAnalysis" + suffix},
+        basic_analysis{suffix},
         m_ts_low{low},
         m_ts_high{high},
         m_radius{radius}
@@ -282,7 +282,7 @@ class cosmo_rate_analysis : public basic_analysis {
 public:
 
     cosmo_rate_analysis(const std::string& suffix) :
-        basic_analysis{"IBDAnalysis" + suffix}
+        basic_analysis{suffix}
     {}
 
     bool selection() override {
