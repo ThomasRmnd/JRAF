@@ -54,14 +54,11 @@ int root_main(const std::string& filepath, const std::string& suffix) {
     std::shared_ptr<analysis_base> main_analysis(new ibd_analysis(filepath, suffix));
     if (!registry.book(main_analysis)) return 1;
 
-
     std::shared_ptr<analysis_base> cosmo_rate_with_neutron_analysis(new cosmo_rate_analysis(filepath, suffix));
     if (!registry.book(cosmo_rate_with_neutron_analysis)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after(new cosmo_shape_analysis(filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
-    std::shared_ptr<analysis_base> cosmo_shape_analysis_after_later(new cosmo_shape_analysis(filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{5, 5000000}, timestamp{5, 1200000000}, 3000.0));
     if (!registry.book(cosmo_shape_analysis_before_after)) return 1;
-    if (!registry.book(cosmo_shape_analysis_after_later)) return 1;
     
     if (!manager.run()) return 1;
 
