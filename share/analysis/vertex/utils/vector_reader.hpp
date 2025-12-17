@@ -31,7 +31,7 @@ public:
     const_iterator crbegin() const noexcept { return m_data->crbegin(); }
 
     const_iterator rend() const noexcept { return m_data->rend(); }
-    const_iterator crend() const noexcept { return mdata->crend(); }
+    const_iterator crend() const noexcept { return m_data->crend(); }
 
     vector_type* data() noexcept { return m_data; }
     const vector_type* data() const noexcept { return m_data; }
