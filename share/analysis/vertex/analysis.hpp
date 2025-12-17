@@ -371,15 +371,15 @@ public:
 
     cosmo_shape_analysis(
         const std::string& filepath, const std::string& suffix, 
+        const timestamp& sig_low, const timestamp& sig_high, 
         const timestamp& bkg_low, const timestamp& bkg_high, 
-        const timestamp& sig_low, const timestamp& sig_high,
         double radius
     ) :
         basic_analysis{filepath, suffix},
-        m_ts_bkg_low{bkg_low},
-        m_ts_bkg_high{bkg_high},
         m_ts_sig_low{sig_low},
         m_ts_sig_high{sig_high},
+        m_ts_bkg_low{bkg_low},
+        m_ts_bkg_high{bkg_high},
         m_radius{radius}
     {}
 
@@ -699,10 +699,10 @@ public:
 
 private:
 
-    timestamp m_ts_bkg_low;
-    timestamp m_ts_bkg_high;
     timestamp m_ts_sig_low;
     timestamp m_ts_sig_high;
+    timestamp m_ts_bkg_low;
+    timestamp m_ts_bkg_high;
     double m_radius;
 
     std::vector<double> m_dlat_mu2p;
