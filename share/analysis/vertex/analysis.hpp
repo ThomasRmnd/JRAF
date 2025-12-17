@@ -133,10 +133,10 @@ public:
         if (m_nav->delayed.e < 2.0 || 2.5 < m_nav->delayed.e) return false; // Delayed energy cut
 
         std::size_t nb_multu_veto = 0ul;
-        for (std::size_t k = 0ul; k < m_nav->e_mult->size(); ++k) {
-            if (m_nav->e_mult->operator[](k) < 2.0 || 12.0 < m_nav->e_mult->operator[](k)) continue;
-            timestamp ts_mult{m_nav->sec_mult->operator[](k), m_nav->nsec_mult->operator[](k)};
-            vec3 pos_mult{m_nav->posx_mult->operator[](k), m_nav->posy_mult->operator[](k), m_nav->posz_mult->operator[](k)};
+        for (std::size_t k = 0ul; k < m_nav->e_mult.size(); ++k) {
+            if (m_nav->e_mult[k] < 2.0 || 12.0 < m_nav->e_mult[k]) continue;
+            timestamp ts_mult{m_nav->sec_mult[k], m_nav->nsec_mult[k]};
+            vec3 pos_mult{m_nav->posx_mult[k], m_nav->posy_mult[k], m_nav->posz_mult[k]};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
             if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
@@ -144,10 +144,10 @@ public:
         }
 
         std::size_t nb_neutron_veto = 0ul;
-        for (std::size_t k = 0ul; k < m_nav->e_n->size(); ++k) {
-            if (m_nav->e_n->operator[](k) < 1.5 || 20.0 < m_nav->e_n->operator[](k)) continue;
-            timestamp ts_n{m_nav->sec_n->operator[](k), m_nav->nsec_n->operator[](k)};
-            vec3 pos_n{m_nav->posx_n->operator[](k), m_nav->posy_n->operator[](k), m_nav->posz_n->operator[](k)};
+        for (std::size_t k = 0ul; k < m_nav->e_n.size(); ++k) {
+            if (m_nav->e_n[k] < 1.5 || 20.0 < m_nav->e_n[k]) continue;
+            timestamp ts_n{m_nav->sec_n[k], m_nav->nsec_n[k]};
+            vec3 pos_n{m_nav->posx_n[k], m_nav->posy_n[k], m_nav->posz_n[k]};
             // if (pos_n.Mag() > 17700.0) continue;
             if (mag(m_nav->prompt.pos - pos_n) > 4000.0 || mag(m_nav->delayed.pos - pos_n) > 4000.0) continue;
             if (m_nav->prompt.ts < ts_n + timestamp{0, 20000} || ts_n + timestamp{0, 1200000000} < m_nav->prompt.ts) continue;
@@ -384,10 +384,10 @@ public:
         if (m_nav->delayed.e < 2.0 || 2.5 < m_nav->delayed.e) return false; // Delayed energy cut
 
         std::size_t nb_multu_veto = 0ul;
-        for (std::size_t k = 0ul; k < m_nav->e_mult->size(); ++k) {
-            if (m_nav->e_mult->operator[](k) < 2.0 || 12.0 < m_nav->e_mult->operator[](k)) continue;
-            timestamp ts_mult{m_nav->sec_mult->operator[](k), m_nav->nsec_mult->operator[](k)};
-            vec3 pos_mult{m_nav->posx_mult->operator[](k), m_nav->posy_mult->operator[](k), m_nav->posz_mult->operator[](k)};
+        for (std::size_t k = 0ul; k < m_nav->e_mult.size(); ++k) {
+            if (m_nav->e_mult[k] < 2.0 || 12.0 < m_nav->e_mult[k]) continue;
+            timestamp ts_mult{m_nav->sec_mult[k], m_nav->nsec_mult[k]};
+            vec3 pos_mult{m_nav->posx_mult[k], m_nav->posy_mult[k], m_nav->posz_mult[k]};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
             if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
@@ -395,13 +395,13 @@ public:
         }
 
         bool found = false;
-        for (std::size_t k = 0ul; k < m_nav->method_mu->size() && !found; ++k) {
-            if (m_nav->method_mu->operator[](k) != "CdWpTtChi2") continue;
-            timestamp ts_mu{m_nav->sec_mu->operator[](k), m_nav->nsec_mu->operator[](k)};
+        for (std::size_t k = 0ul; k < m_nav->method_mu.size() && !found; ++k) {
+            if (m_nav->method_mu[k] != "CdWpTtChi2") continue;
+            timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             if (m_nav->prompt.ts < ts_mu + m_ts_low || m_ts_high + ts_mu < m_nav->prompt.ts) continue;
             if (m_nav->delayed.ts < ts_mu + m_ts_low || m_ts_high + ts_mu < m_nav->delayed.ts) continue;
-            vec3 pos_mu{m_nav->posx_mu->operator[](k), m_nav->posy_mu->operator[](k), m_nav->posz_mu->operator[](k)};
-            vec3 dir_mu{m_nav->dirx_mu->operator[](k), m_nav->diry_mu->operator[](k), m_nav->dirz_mu->operator[](k)};
+            vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
+            vec3 dir_mu{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]};
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
             if (m_radius < d_mu2p || m_radius < d_mu2d) continue;
@@ -697,10 +697,10 @@ public:
         if (m_nav->delayed.e < 2.0 || 2.5 < m_nav->delayed.e) return false; // Delayed energy cut
 
         std::size_t nb_multu_veto = 0ul;
-        for (std::size_t k = 0ul; k < m_nav->e_mult->size(); ++k) {
-            if (m_nav->e_mult->operator[](k) < 2.0 || 12.0 < m_nav->e_mult->operator[](k)) continue;
-            timestamp ts_mult{m_nav->sec_mult->operator[](k), m_nav->nsec_mult->operator[](k)};
-            vec3 pos_mult{m_nav->posx_mult->operator[](k), m_nav->posy_mult->operator[](k), m_nav->posz_mult->operator[](k)};
+        for (std::size_t k = 0ul; k < m_nav->e_mult.size(); ++k) {
+            if (m_nav->e_mult[k] < 2.0 || 12.0 < m_nav->e_mult[k]) continue;
+            timestamp ts_mult{m_nav->sec_mult[k], m_nav->nsec_mult[k]};
+            vec3 pos_mult{m_nav->posx_mult[k], m_nav->posy_mult[k], m_nav->posz_mult[k]};
             // if (pos_mult.Mag() > 17700.0) continue;
             // if ((pos_p - pos_n).Mag() > 4000.0 || (pos_p - pos_n).Mag() > 4000.0) continue;
             if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
@@ -715,8 +715,8 @@ public:
 
         std::vector<physical_muon> phy_mu;
         std::vector<muon_data_association> muon_data;
-        for (std::size_t k = 0ul; k < m_nav->method_mu->size(); ++k) {
-            timestamp ts_mu{m_nav->sec_mu->operator[](k), m_nav->nsec_mu->operator[](k)};
+        for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
+            timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             std::vector<physical_muon>::iterator it = std::find_if(
                 phy_mu.begin(), phy_mu.end(),
                 [ts_mu](const physical_muon& mu) {
@@ -740,20 +740,20 @@ public:
             assoc.dt = timestamp_to_double(diff);
 
             int neutron_count = 0;
-            for (std::size_t k = 0ul; k < m_nav->sec_n->size(); ++k) {
-                double e_n = m_nav->e_n->operator[](k);
+            for (std::size_t k = 0ul; k < m_nav->sec_n.size(); ++k) {
+                double e_n = m_nav->e_n[k];
                 if (e_n < 2.0 || 2.5 < e_n) continue;
-                timestamp ts_n{m_nav->sec_n->operator[](k), m_nav->nsec_n->operator[](k)};
+                timestamp ts_n{m_nav->sec_n[k], m_nav->nsec_n[k]};
                 if (ts_n < mu.ts + timestamp{0, 20000} || mu.ts + timestamp{0, 2000000} < ts_n) continue;
                 ++neutron_count;
             }
             assoc.neutron_count = neutron_count;
 
             for (std::size_t idx : mu.indices) {
-                const std::string& method = m_nav->method_mu->operator[](idx);
+                const std::string& method = m_nav->method_mu[idx];
                 if (method != "CdWpTtChi2" && method != "Tt") continue;
-                vec3 pos_mu{m_nav->posx_mu->operator[](idx), m_nav->posy_mu->operator[](idx), m_nav->posz_mu->operator[](idx)};
-                vec3 dir_mu{m_nav->dirx_mu->operator[](idx), m_nav->diry_mu->operator[](idx), m_nav->dirz_mu->operator[](idx)};
+                vec3 pos_mu{m_nav->posx_mu[idx], m_nav->posy_mu[idx], m_nav->posz_mu[idx]};
+                vec3 dir_mu{m_nav->dirx_mu[idx], m_nav->diry_mu[idx], m_nav->dirz_mu[idx]};
                 double d = mag(cross(dir_mu, v.prompt.pos - pos_mu));
 
                 if (method == "CdWpTtChi2") assoc.dlat_cdwp.push_back(d);

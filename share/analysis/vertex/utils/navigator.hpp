@@ -9,6 +9,7 @@
 
 #include "utils/chain_reader.hpp"
 #include "utils/event.hpp"
+#include "utils/vector_reader.hpp"
 
 class navigator_base {
 
@@ -87,68 +88,68 @@ public:
     {
         if (!is_valid()) return;
 
-        m_chain->branch("posx_n", posx_n);
-        m_chain->branch("posy_n", posy_n);
-        m_chain->branch("posz_n", posz_n);
-        m_chain->branch("e_n", e_n);
-        m_chain->branch("totq_n", totq_n);
-        m_chain->branch("sec_n", sec_n);
-        m_chain->branch("nsec_n", nsec_n);
+        m_chain->branch("posx_n", posx_n.data());
+        m_chain->branch("posy_n", posy_n.data());
+        m_chain->branch("posz_n", posz_n.data());
+        m_chain->branch("e_n", e_n.data());
+        m_chain->branch("totq_n", totq_n.data());
+        m_chain->branch("sec_n", sec_n.data());
+        m_chain->branch("nsec_n", nsec_n.data());
 
-        m_chain->branch("posx_mult", posx_mult);
-        m_chain->branch("posy_mult", posy_mult);
-        m_chain->branch("posz_mult", posz_mult);
-        m_chain->branch("e_mult", e_mult);
-        m_chain->branch("totq_mult", totq_mult);
-        m_chain->branch("sec_mult", sec_mult);
-        m_chain->branch("nsec_mult", nsec_mult);
-        m_chain->branch("mult_type", mult_type);
+        m_chain->branch("posx_mult", posx_mult.data());
+        m_chain->branch("posy_mult", posy_mult.data());
+        m_chain->branch("posz_mult", posz_mult.data());
+        m_chain->branch("e_mult", e_mult.data());
+        m_chain->branch("totq_mult", totq_mult.data());
+        m_chain->branch("sec_mult", sec_mult.data());
+        m_chain->branch("nsec_mult", nsec_mult.data());
+        m_chain->branch("mult_type", mult_type.data());
 
-        m_chain->branch("method_mu", method_mu);
-        m_chain->branch("loc_mu", loc_mu);
-        m_chain->branch("posx_mu", posx_mu);
-        m_chain->branch("posy_mu", posy_mu);
-        m_chain->branch("posz_mu", posz_mu);
-        m_chain->branch("dirx_mu", dirx_mu);
-        m_chain->branch("diry_mu", diry_mu);
-        m_chain->branch("dirz_mu", dirz_mu);
-        m_chain->branch("totq_mu", totq_mu);
-        m_chain->branch("sec_mu", sec_mu);
-        m_chain->branch("nsec_mu", nsec_mu);
-        m_chain->branch("quality_mu", quality_mu);
+        m_chain->branch("method_mu", method_mu.data());
+        m_chain->branch("loc_mu", loc_mu.data());
+        m_chain->branch("posx_mu", posx_mu.data());
+        m_chain->branch("posy_mu", posy_mu.data());
+        m_chain->branch("posz_mu", posz_mu.data());
+        m_chain->branch("dirx_mu", dirx_mu.data());
+        m_chain->branch("diry_mu", diry_mu.data());
+        m_chain->branch("dirz_mu", dirz_mu.data());
+        m_chain->branch("totq_mu", totq_mu.data());
+        m_chain->branch("sec_mu", sec_mu.data());
+        m_chain->branch("nsec_mu", nsec_mu.data());
+        m_chain->branch("quality_mu", quality_mu.data());
     }
 
     virtual ~basic_navigator() override = default;
 
-    std::vector<double>* posx_n = nullptr;
-    std::vector<double>* posy_n = nullptr;
-    std::vector<double>* posz_n = nullptr;
-    std::vector<double>* e_n = nullptr;
-    std::vector<double>* totq_n = nullptr;
-    std::vector<time_t>* sec_n = nullptr;
-    std::vector<int>* nsec_n = nullptr;
+    vector_reader<double> posx_n;
+    vector_reader<double> posy_n;
+    vector_reader<double> posz_n;
+    vector_reader<double> e_n;
+    vector_reader<double> totq_n;
+    vector_reader<time_t> sec_n;
+    vector_reader<int> nsec_n;
 
-    std::vector<double>* posx_mult = nullptr;
-    std::vector<double>* posy_mult = nullptr;
-    std::vector<double>* posz_mult = nullptr;
-    std::vector<double>* e_mult = nullptr;
-    std::vector<double>* totq_mult = nullptr;
-    std::vector<time_t>* sec_mult = nullptr;
-    std::vector<int>* nsec_mult = nullptr;
-    std::vector<int>* mult_type = nullptr;
+    vector_reader<double> posx_mult;
+    vector_reader<double> posy_mult;
+    vector_reader<double> posz_mult;
+    vector_reader<double> e_mult;
+    vector_reader<double> totq_mult;
+    vector_reader<time_t> sec_mult;
+    vector_reader<int> nsec_mult;
+    vector_reader<int> mult_type;
 
-    std::vector<std::string>* method_mu = nullptr;
-    std::vector<int>* loc_mu = nullptr;
-    std::vector<double>* posx_mu = nullptr;
-    std::vector<double>* posy_mu = nullptr;
-    std::vector<double>* posz_mu = nullptr;
-    std::vector<double>* dirx_mu = nullptr;
-    std::vector<double>* diry_mu = nullptr;
-    std::vector<double>* dirz_mu = nullptr;
-    std::vector<double>* totq_mu = nullptr;
-    std::vector<time_t>* sec_mu = nullptr;
-    std::vector<int>* nsec_mu = nullptr;
-    std::vector<double>* quality_mu = nullptr;
+    vector_reader<std::string> method_mu;
+    vector_reader<int> loc_mu;
+    vector_reader<double> posx_mu;
+    vector_reader<double> posy_mu;
+    vector_reader<double> posz_mu;
+    vector_reader<double> dirx_mu;
+    vector_reader<double> diry_mu;
+    vector_reader<double> dirz_mu;
+    vector_reader<double> totq_mu;
+    vector_reader<time_t> sec_mu;
+    vector_reader<int> nsec_mu;
+    vector_reader<double> quality_mu;
 
 };
 
