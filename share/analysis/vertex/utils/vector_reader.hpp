@@ -33,8 +33,8 @@ public:
     const_iterator rend() const noexcept { return m_data->rend(); }
     const_iterator crend() const noexcept { return m_data->crend(); }
 
-    vector_type* data() noexcept { return m_data; }
-    const vector_type* data() const noexcept { return m_data; }
+    vector_type*& data() noexcept { return m_data; }
+    const vector_type*& data() const noexcept { return m_data; }
 
     bool empty() const noexcept { return m_data->empty(); }
     size_type size() const noexcept { return m_data->size(); }

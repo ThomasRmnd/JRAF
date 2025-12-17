@@ -33,11 +33,6 @@ public:
         return m_chain->SetBranchAddress(key.c_str(), &value);
     }
 
-    template<typename _Tp>
-    int branch(const std::string& key, _Tp* value) {
-        return m_chain->SetBranchAddress(key.c_str(), &value);
-    }
-
 private:
 
     std::shared_ptr<TChain> m_chain;
