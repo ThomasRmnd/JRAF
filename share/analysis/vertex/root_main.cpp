@@ -59,7 +59,7 @@ int root_main(const std::string& filepath, const std::string& suffix) {
     if (!registry.book(cosmo_rate_with_neutron_analysis)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after(new cosmo_shape_analysis(filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
-    std::shared_ptr<analysis_base> cosmo_shape_analysis_after_later(new cosmo_shape_analysis(filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, 5005000000}, timestamp{0, 6200000000}, 3000.0));
+    std::shared_ptr<analysis_base> cosmo_shape_analysis_after_later(new cosmo_shape_analysis(filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{5, 5000000}, timestamp{5, 1200000000}, 3000.0));
     if (!registry.book(cosmo_shape_analysis_before_after)) return 1;
     if (!registry.book(cosmo_shape_analysis_after_later)) return 1;
     
