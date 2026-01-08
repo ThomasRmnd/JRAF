@@ -12,7 +12,9 @@
 #include <TH2D.h>
 #include <TTree.h>
 
-#include "analysis.hpp"
+#include "analysis/basic_analysis.hpp"
+#include "analysis/cosmo_rate_analysis.hpp"
+#include "analysis/cosmo_shape_analysis.hpp"
 
 void daq_time(const std::string& filename) {
     TChain* chain = new TChain("DAQTree");

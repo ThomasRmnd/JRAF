@@ -4,6 +4,8 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 class timestamp {
 
@@ -104,6 +106,12 @@ inline std::ostream& operator<<(std::ostream& os, const timestamp& ts) {
 
 inline double timestamp_to_double(const timestamp& ts) {
     return static_cast<double>(ts.sec) + static_cast<double>(ts.nsec) * 1.0e-9;
+}
+
+inline std::string timestamp_to_string(const timestamp& ts) {
+    std::ostringstream oss;
+    oss << ts;
+    return oss.str();
 }
 
 #endif // UTILS_TIMESTAMP_HPP_
