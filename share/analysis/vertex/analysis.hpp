@@ -911,18 +911,18 @@ private:
         constant_term /= (h->GetXaxis()->GetNbins() - h->GetXaxis()->FindBin(0.8) + 1);
         double exponential_term = h->GetMaximum() - constant_term;
 
-        // TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] + [1] * exp(-x / [2])", 0.02, 1.2);
-        // f->SetParameter(0, constant_term);
-        // f->SetParameter(1, exponential_term);
-        // f->SetParameter(2, 180.0e-3);
-
-        TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * [1] * [2] * exp(- [2] * x) + (1 - [0]) * [1] * [3] * exp(- [3] * x) + [4]", 0.02, 1.2);
-        // f * N * lambda_Li9 * exp(- lambda_Li9 * t) + (1 - f) * N * lamnda_He8 * exp(- lambda_He8 * t) + c
-        f->SetParameter(0, 0.85);
+        TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] + [1] * exp(-x / [2])", 0.02, 1.2);
+        f->SetParameter(0, constant_term);
         f->SetParameter(1, exponential_term);
-        f->SetParameter(2, 178.0e-3);
-        f->SetParameter(3, 119.0e-3);
-        f->SetParameter(4, constant_term);
+        f->SetParameter(2, 180.0e-3);
+
+        // TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * [1] * [2] * exp(- [2] * x) + (1 - [0]) * [1] * [3] * exp(- [3] * x) + [4]", 0.02, 1.2);
+        // f * N * lambda_Li9 * exp(- lambda_Li9 * t) + (1 - f) * N * lamnda_He8 * exp(- lambda_He8 * t) + c
+        // f->SetParameter(0, 0.85);
+        // f->SetParameter(1, exponential_term);
+        // f->SetParameter(2, 178.0e-3);
+        // f->SetParameter(3, 119.0e-3);
+        // f->SetParameter(4, constant_term);
 
         f->SetLineColor(kRed);
         f->SetLineWidth(3);
