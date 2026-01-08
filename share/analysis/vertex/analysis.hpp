@@ -367,15 +367,20 @@ using ibd_analysis = basic_analysis;
 
 class cosmo_shape_analysis : public basic_analysis {
 
+    // Essayer de voir si on peut, par le calcul, retrouver le nombre théorique de cosmo en prenant en compte les inéfficacité
+    // Essayer de faire la même chose mais avec les autres méthodes de reconstruction, i.e. CdClassify et WpClassify
+
 public:
 
     cosmo_shape_analysis(
         const std::string& filepath, const std::string& suffix, 
+        const std::string& recname,
         const timestamp& sig_low, const timestamp& sig_high, 
         const timestamp& bkg_low, const timestamp& bkg_high, 
         double radius
     ) :
         basic_analysis{filepath, suffix},
+        m_recname{recname},
         m_ts_sig_low{sig_low},
         m_ts_sig_high{sig_high},
         m_ts_bkg_low{bkg_low},
@@ -408,7 +413,7 @@ public:
         m_is_sig.clear();
 
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
-            if (m_nav->method_mu[k] != "CdWpTtChi2") continue;
+            if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             bool is_in_bkg = (
                 ts_mu + m_ts_bkg_low < m_nav->prompt.ts && m_nav->prompt.ts < ts_mu + m_ts_bkg_high &&
@@ -699,6 +704,7 @@ public:
 
 private:
 
+    std::string m_recname;
     timestamp m_ts_sig_low;
     timestamp m_ts_sig_high;
     timestamp m_ts_bkg_low;
@@ -716,6 +722,8 @@ private:
 };
 
 class cosmo_rate_analysis : public basic_analysis {
+
+    // Regarder nombre cosmo en fonction du nombre de neutron ==> est-ce que ça suit une loi de poisson
 
 public:
 
