@@ -79,7 +79,7 @@ struct VanessaIBD {
 
 };
 
-bool operator<(const VanessaIBD& lhs, const VanessaIBD& rhs) {
+inline bool operator<(const VanessaIBD& lhs, const VanessaIBD& rhs) {
     return lhs.ts_p < rhs.ts_p;
 }
 

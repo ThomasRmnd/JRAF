@@ -109,18 +109,18 @@ public:
         double ts_sig_high_as_double = timestamp_to_double(m_ts_sig_high);
         std::vector<double> e_p_bins = create_custom_e_p_bins();
         TH1D* h_e_p_cosmo_bkg = new TH1D(
-            Form("h_e_p_cosmo_bkg__%s_%.3f_%.3f_%.0f", m_recname, ts_bkg_low_as_double, ts_bkg_high_as_double, m_radius), 
-            Form("Prompt energy (Cosmo bkg) {%s, %.3f, %.3f, %.0f}", m_recname, ts_bkg_low_as_double, ts_bkg_high_as_double, m_radius), 
+            Form("h_e_p_cosmo_bkg__%s_%.3f_%.3f_%.0f", m_recname.c_str(), ts_bkg_low_as_double, ts_bkg_high_as_double, m_radius), 
+            Form("Prompt energy (Cosmo bkg) {%s, %.3f, %.3f, %.0f}", m_recname.c_str(), ts_bkg_low_as_double, ts_bkg_high_as_double, m_radius), 
             e_p_bins.size() - 1, e_p_bins.data()
         );
         TH1D* h_e_p_cosmo_sig = new TH1D(
-            Form("h_e_p_cosmo_sig__%s_%.3f_%.3f_%.0f", m_recname, ts_sig_low_as_double, ts_sig_high_as_double, m_radius), 
-            Form("Prompt energy (Cosmo sig) {%s, %.3f, %.3f, %.0f}", m_recname, ts_sig_low_as_double, ts_sig_high_as_double, m_radius), 
+            Form("h_e_p_cosmo_sig__%s_%.3f_%.3f_%.0f", m_recname.c_str(), ts_sig_low_as_double, ts_sig_high_as_double, m_radius), 
+            Form("Prompt energy (Cosmo sig) {%s, %.3f, %.3f, %.0f}", m_recname.c_str(), ts_sig_low_as_double, ts_sig_high_as_double, m_radius), 
             e_p_bins.size() - 1, e_p_bins.data()
         );
         TH1D* h_e_p_cosmo_diff = new TH1D(
-            Form("h_e_p_cosmo_diff__%s", m_recname), 
-            Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_recname), 
+            Form("h_e_p_cosmo_diff__%s", m_recname.c_str()), 
+            Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_recname.c_str()), 
             e_p_bins.size() - 1, e_p_bins.data()
         );
 
