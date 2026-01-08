@@ -1,3 +1,6 @@
+#ifndef ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
+#define ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
+
 #include "analysis/basic_analysis.hpp"
 
 class cosmo_shape_analysis : public basic_analysis {
@@ -371,3 +374,5 @@ private:
     std::set<cosmogenic> m_cosmos_bkg, m_cosmos_sig;
 
 };
+
+#endif // ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_

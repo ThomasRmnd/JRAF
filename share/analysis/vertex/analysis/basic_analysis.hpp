@@ -1,3 +1,6 @@
+#ifndef ANALYSIS_BASIC_ANALYSIS_HPP_
+#define ANALYSIS_BASIC_ANALYSIS_HPP_
+
 #include <set>
 
 #include <TCanvas.h>
@@ -339,3 +342,5 @@ protected:
 };
 
 using ibd_analysis = basic_analysis;
+
+#endif // ANALYSIS_BASIC_ANALYSIS_HPP_

@@ -1,3 +1,6 @@
+#ifndef ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
+#define ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
+
 #include <TF1.h>
 
 #include "analysis/basic_analysis.hpp"
@@ -243,3 +246,5 @@ private:
     }
 
 };
+
+#endif // ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
