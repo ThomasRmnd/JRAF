@@ -95,7 +95,8 @@ public:
 
     void result() override {
         std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
-        for (int k = 0; k < 200; ++k) {
+        int max_number_neutron = 200;
+        for (int k = 0; k < max_number_neutron; ++k) {
             cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_at_least_%i_neutron", k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
         }
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
@@ -115,7 +116,7 @@ public:
             // plot_cosmo_rate_with_fit_res(h, cosmo_rate_fit_result[n]);
         }
 
-        TH1I* h_rate_cosmo_per_at_least_neutron = new TH1I("h_rate_cosmo_per_at_least_neutron", "h_rate_cosmo_per_at_least_neutron", 50, 0, 50);
+        TH1I* h_rate_cosmo_per_at_least_neutron = new TH1I("h_rate_cosmo_per_at_least_neutron", "h_rate_cosmo_per_at_least_neutron", max_number_neutron, 0, max_number_neutron);
         for (const auto& [n, res] : cosmo_rate_fit_result) {
             h_rate_cosmo_per_at_least_neutron->SetBinContent(n + 1, static_cast<double>(res.nLiHe));
             h_rate_cosmo_per_at_least_neutron->SetBinError(n + 1, res.nLiHe_err);
