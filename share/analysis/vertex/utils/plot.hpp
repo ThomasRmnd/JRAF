@@ -69,11 +69,6 @@ std::vector<double> create_custom_e_p_bins() {
 }
 
 TH1D* make_prompt_energy_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
-    // double xmin = 0.7;
-    // double xmax = 12.0;
-    // double width = 0.20;
-    // int nbins = std::round((xmax - xmin) / width) + 1;
-    // std::vector<double> bins = np::linspace(xmin, xmax, nbins);
     std::vector<double> bins = create_custom_e_p_bins();
     TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
     for (const ibd& i : ibds) {
@@ -83,12 +78,20 @@ TH1D* make_prompt_energy_plot(const std::string& name, const std::string& title,
 }
 
 TH1D* make_prompt_energy_plot(const std::string& name, const std::string& title, const std::vector<cosmogenic>& cosmos) {
-    // double xmin = 0.7;
-    // double xmax = 12.0;
-    // double width = 0.20;
-    // int nbins = std::round((xmax - xmin) / width) + 1;
-    // std::vector<double> bins = np::linspace(xmin, xmax, nbins);
     std::vector<double> bins = create_custom_e_p_bins();
+    TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
+    for (const cosmogenic& c : cosmos) {
+        h->Fill(c.prompt.e);
+    }
+    return h;
+}
+
+TH1D* make_normal_prompt_energy_plot(const std::string& name, const std::string& title, const std::vector<cosmogenic>& cosmos) {
+    double xmin = 0.7;
+    double xmax = 12.0;
+    double width = 0.20;
+    int nbins = std::round((xmax - xmin) / width) + 1;
+    std::vector<double> bins = np::linspace(xmin, xmax, nbins);
     TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
     for (const cosmogenic& c : cosmos) {
         h->Fill(c.prompt.e);
@@ -183,9 +186,6 @@ TCanvas* plot_basic(TH1D* h, const char* options = "") {
 
 TCanvas* plot_multiple(const std::string& name, const std::string& title, std::initializer_list<TH1D*> hists, const char* options = "") {
     if (hists.size() == 0) return nullptr;
-    for (TH1D* h : hists) {
-        h->Print("all");
-    }
     
     double max_val = 0;
     double min_val = std::numeric_limits<double>::max();

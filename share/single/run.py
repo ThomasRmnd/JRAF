@@ -75,14 +75,9 @@ alg.cdfiller.property("Pmt20inchTimeReso").set(8.0)
 alg.useWpFiller("WpRangeFiller")
 alg.wpfiller.property("PmtTimeReso").set(8.0)
 
-alg.useClassifyLoader()
-alg.classify_wpfiller.property("PmtTimeReso").set(8.0)
-
 import CdWpTtChi2RecTool
-import WpMuonClassifyRecTool
 
 alg.useRecTool("CdWpTtChi2RecTool")
-alg.useClassifyTool("WpMuonClassifyRecTool")
 
 if args.property_file:
     try:
@@ -94,16 +89,6 @@ if args.property_file:
     except Exception as e:
         print(f"[ERROR] Failed to load or parse property file: {e}", file=sys.stderr)
         sys.exit(1)
-
-alg.classifytool.property("WpMuonClassifyRecToolInitialChargeCut").set(28.0)
-alg.classifytool.property("WpMuonClassifyRecToolMaxChargeThreshold").set(200.0)
-alg.classifytool.property("WpMuonClassifyRecToolDistanceThreshold").set(6500.0)
-alg.classifytool.property("UseAdditionalGainCorrection").set(True)
-cluster_to_ratio_copyno = {
-    "CC-IN2P3": "/sps/juno/jdeandre/rtraw_ThomasRaymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt",
-    "IHEP": "/junofs/users/traymond/data/WpClassifyMuonRecTool/RatioCopyNo.txt"
-}
-alg.classifytool.property("AdditionalGainCorrectionPath").set(cluster_to_ratio_copyno[args.cluster])
 
 task.setEvtMax(-1)
 if not task.run():

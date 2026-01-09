@@ -94,35 +94,34 @@ public:
     }
 
     void result() override {
-        TH1D* h_cosmo_rate_with_neutron = new TH1D("h_cosmo_rate_with_neutron", "Cosmo Rate With Neutron", 120, 0.0, 1.2);
-        TH1D* h_cosmo_rate_with_no_neutron = new TH1D("h_cosmo_rate_with_no_neutron", "Cosmo Rate With No Neutron", 120, 0.0, 1.2);
-        TH1D* h_cosmo_rate_with_at_least_1_neutron = new TH1D("h_cosmo_rate_with_at_least_1_neutron", "Cosmo Rate With At Least 1 Neutron", 120, 0.0, 1.2);
-        TH1D* h_cosmo_rate_with_at_least_2_neutron = new TH1D("h_cosmo_rate_with_at_least_2_neutron", "Cosmo Rate With At Least 2 Neutron", 120, 0.0, 1.2);
-        TH1D* h_cosmo_rate_with_at_least_3_neutron = new TH1D("h_cosmo_rate_with_at_least_3_neutron", "Cosmo Rate With At Least 3 Neutron", 120, 0.0, 1.2);
+        std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
+        std::unordered_map<int, TH1D*> cosmo_rate_with_n_neutron;
+        for (int k = 0; k < 10; ++k) {
+            cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_at_least_%i_neutron", k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
+            cosmo_rate_with_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_%i_neutron", k), Form("Cosmo rate with %i neutron", k), 120, 0.0, 1.2);
+        }
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
             const std::vector<muon_data_association>& muon_data = val.second;
             for (const muon_data_association& assoc : muon_data) {
-                h_cosmo_rate_with_neutron->Fill(assoc.dt);
-                if (assoc.neutron_count == 0) {
-                    h_cosmo_rate_with_no_neutron->Fill(assoc.dt);
+                for (auto& [n, h] : cosmo_rate_with_at_least_n_neutron) {
+                    if (assoc.neutron_count >= n) {
+                        h->Fill(assoc.dt);
+                    }
                 }
-                if (assoc.neutron_count >= 1) {
-                    h_cosmo_rate_with_at_least_1_neutron->Fill(assoc.dt);
-                }
-                if (assoc.neutron_count >= 2) {
-                    h_cosmo_rate_with_at_least_2_neutron->Fill(assoc.dt);
-                }
-                if (assoc.neutron_count >= 3) {
-                    h_cosmo_rate_with_at_least_3_neutron->Fill(assoc.dt);
+                for (auto& [n, h] : cosmo_rate_with_n_neutron) {
+                    if (assoc.neutron_count == n) {
+                        h->Fill(assoc.dt);
+                    }
                 }
             }
         }
 
-        fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_neutron);
-        fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_no_neutron);
-        fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_1_neutron);
-        fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_2_neutron);
-        fit_and_plot_cosmo_rate_with_neutron(h_cosmo_rate_with_at_least_3_neutron);
+        for (auto& [n, h] : cosmo_rate_with_at_least_n_neutron) {
+            fit_and_plot_cosmo_rate_with_neutron(h);
+        }
+        for (auto& [n, h] : cosmo_rate_with_n_neutron) {
+            fit_and_plot_cosmo_rate_with_neutron(h);
+        }
 
         TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
         TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);

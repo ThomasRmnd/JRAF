@@ -465,7 +465,6 @@ bool AnalysisGroupC::execute() {
 
 bool AnalysisGroupC::finalize() {
     if (m_loader && !m_loader->finalize()) return false;
-    if (m_classifyLoader && !m_classifyLoader->finalize()) return false;
     if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
     
     if (!m_trkSaver.save()) return false;

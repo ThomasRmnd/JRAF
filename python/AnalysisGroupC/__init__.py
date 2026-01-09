@@ -23,21 +23,10 @@ def useTtFiller(self, name):
     self.property("TtFiller").set(name)
     self.ttfiller = ttfiller
 
-def useClassifyLoader(self):
-    classify_loader = self.createTool("BasicLoader")
-    classify_wpfiller = self.createTool("AkiraWpRangeFiller")
-    self.classify_loader = classify_loader
-    self.classify_wpfiller = classify_wpfiller
-
 def useRecTool(self, name):
     rectool = self.createTool(name)
     self.property("RecTool").set(name)
     self.rectool = rectool
-
-def useClassifyTool(self, name):
-    classifytool = self.createTool(name)
-    self.property("ClassifyTool").set(name)
-    self.classifytool = classifytool
 
 def createAlg(task, name="AnalysisGroupC"):
     alg = task.createAlg(name)
@@ -45,7 +34,5 @@ def createAlg(task, name="AnalysisGroupC"):
     alg.useCdFiller = types.MethodType(useCdFiller, alg)
     alg.useWpFiller = types.MethodType(useWpFiller, alg)
     alg.useTtFiller = types.MethodType(useTtFiller, alg)
-    alg.useClassifyLoader = types.MethodType(useClassifyLoader, alg)
     alg.useRecTool = types.MethodType(useRecTool, alg)
-    alg.useClassifyTool = types.MethodType(useClassifyTool, alg)
     return alg

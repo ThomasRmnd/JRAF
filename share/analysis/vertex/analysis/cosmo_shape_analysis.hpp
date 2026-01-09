@@ -94,9 +94,9 @@ public:
         std::vector<cosmogenic> cosmos_bkg(m_cosmos_bkg.begin(), m_cosmos_bkg.end());
         std::vector<cosmogenic> cosmos_sig(m_cosmos_sig.begin(), m_cosmos_sig.end());
 
-        TH1D* h_e_p_cosmo_bkg = make_prompt_energy_plot(Form("h_e_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH1D* h_e_p_cosmo_sig = make_prompt_energy_plot(Form("h_e_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-        TH1D* h_e_p_cosmo_diff = make_prompt_energy_plot(Form("h_e_p_cosmo_diff__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_name.c_str()), std::vector<cosmogenic>{});
+        TH1D* h_e_p_cosmo_bkg = make_normal_prompt_energy_plot(Form("h_e_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        TH1D* h_e_p_cosmo_sig = make_normal_prompt_energy_plot(Form("h_e_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
+        TH1D* h_e_p_cosmo_diff = make_normal_prompt_energy_plot(Form("h_e_p_cosmo_diff__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_name.c_str()), std::vector<cosmogenic>{});
         h_e_p_cosmo_diff->Add(h_e_p_cosmo_sig, h_e_p_cosmo_bkg, 1.0, -1.0);
 
         TH1D* h_e_d_cosmo_bkg = make_delayed_energy_plot(Form("h_e_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
@@ -108,10 +108,10 @@ public:
         TH1D* h_dr_cosmo_bkg = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_bkg__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
         TH1D* h_dr_cosmo_sig = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_sig__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
-        TH2D* h_rho_z_p_cosmo_bkg = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH2D* h_rho_z_d_cosmo_bkg = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH2D* h_rho_z_p_cosmo_sig = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-        TH2D* h_rho_z_d_cosmo_sig = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
+        // TH2D* h_rho_z_p_cosmo_bkg = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        // TH2D* h_rho_z_d_cosmo_bkg = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        // TH2D* h_rho_z_p_cosmo_sig = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
+        // TH2D* h_rho_z_d_cosmo_sig = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
         // Prompt energy
         pimp_my_histogram(h_e_p_cosmo_bkg, kSolid, 3, kRed, 1.0);
@@ -144,16 +144,16 @@ public:
         plot_multiple(Form("c_dr_cosmo__%s", m_name.c_str()), "Prompt-Delayed distance", {h_dr_cosmo_bkg, h_dr_cosmo_sig}, "HIST");
 
         // Cosmo bkg - Prompt vertex position
-        plot_basic(h_rho_z_p_cosmo_bkg, "COLZ");
+        // plot_basic(h_rho_z_p_cosmo_bkg, "COLZ");
 
         // Cosmo bkg - Delayed vertex position
-        plot_basic(h_rho_z_d_cosmo_bkg, "COLZ");
+        // plot_basic(h_rho_z_d_cosmo_bkg, "COLZ");
 
         // Cosmo sig - Prompt vertex position
-        plot_basic(h_rho_z_p_cosmo_sig, "COLZ");
+        // plot_basic(h_rho_z_p_cosmo_sig, "COLZ");
 
         // Cosmo sig - Delayed vertex position
-        plot_basic(h_rho_z_d_cosmo_sig, "COLZ");
+        // plot_basic(h_rho_z_d_cosmo_sig, "COLZ");
     }
 
 private:
