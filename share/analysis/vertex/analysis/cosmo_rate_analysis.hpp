@@ -95,10 +95,8 @@ public:
 
     void result() override {
         std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
-        std::unordered_map<int, TH1D*> cosmo_rate_with_n_neutron;
-        for (int k = 0; k < 20; ++k) {
+        for (int k = 0; k < 50; ++k) {
             cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_at_least_%i_neutron", k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
-            cosmo_rate_with_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_%i_neutron", k), Form("Cosmo rate with %i neutron", k), 120, 0.0, 1.2);
         }
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
             const std::vector<muon_data_association>& muon_data = val.second;
@@ -108,20 +106,25 @@ public:
                         h->Fill(assoc.dt);
                     }
                 }
-                for (auto& [n, h] : cosmo_rate_with_n_neutron) {
-                    if (assoc.neutron_count == n) {
-                        h->Fill(assoc.dt);
-                    }
-                }
             }
         }
 
+        std::unordered_map<int, CosmoRateFitResult> cosmo_rate_fit_result;
         for (auto& [n, h] : cosmo_rate_with_at_least_n_neutron) {
-            fit_and_plot_cosmo_rate_with_neutron(h);
+            cosmo_rate_fit_result[n] = fit_cosmo_rate(h);
+            // plot_cosmo_rate_with_fit_res(h, cosmo_rate_fit_result[n]);
         }
-        for (auto& [n, h] : cosmo_rate_with_n_neutron) {
-            fit_and_plot_cosmo_rate_with_neutron(h);
+
+        TH1I* h_rate_cosmo_per_at_least_neutron = new TH1I("h_rate_cosmo_per_at_least_neutron", "h_rate_cosmo_per_at_least_neutron", 50, 0, 50);
+        for (const auto& [n, res] : cosmo_rate_fit_result) {
+            h_rate_cosmo_per_at_least_neutron->SetBinContent(n + 1, static_cast<double>(res.nLiHe));
+            h_rate_cosmo_per_at_least_neutron->SetBinError(n + 1, res.nLiHe_err);
         }
+
+        TCanvas* c_rate_cosmo_per_at_least_neutron = new TCanvas("h_rate_cosmo_per_at_least_neutron", "h_rate_cosmo_per_at_least_neutron", 1000, 1000);
+        c_rate_cosmo_per_at_least_neutron->cd();
+        h_rate_cosmo_per_at_least_neutron->Draw("HIST");
+        c_rate_cosmo_per_at_least_neutron->Update();
 
         TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
         TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
@@ -184,10 +187,21 @@ private:
 
     std::map<ibd, std::vector<muon_data_association>> m_ibds_to_mu;
 
-    void fit_and_plot_cosmo_rate_with_neutron(TH1D* h) {
-        TCanvas* c = new TCanvas(Form("%s_canvas", h->GetName()), Form("%s Canvas", h->GetName()), 1000, 1000);
-        c->cd();
+    struct CosmoRateFitResult {
+        double nIBD;
+        double nIBD_err;
+        double nLiHe;
+        double nLiHe_err;
 
+        double p0;
+        double p1;
+        double p2;
+        double sp0;
+        double sp1;
+        double sp2;
+    };
+
+    CosmoRateFitResult fit_cosmo_rate(TH1D* h) {
         double constant_term = 0.0;
         for (int bin = h->GetXaxis()->FindBin(0.8); bin <= h->GetXaxis()->GetNbins(); ++bin) {
             constant_term += h->GetBinContent(bin);
@@ -200,10 +214,48 @@ private:
         f->SetParameter(1, exponential_term);
         f->SetParameter(2, 180.0e-3);
 
+        TFitResultPtr res = h->Fit(f, "RS");
+
+        double time_window = 1.2;
+        double binning = time_window / 120.0;
+
+        CosmoRateFitResult rate_res;
+        rate_res.p0 = f->GetParameter(0);
+        rate_res.p1 = f->GetParameter(1);
+        rate_res.p2 = f->GetParameter(2);
+        rate_res.sp0 = f->GetParError(0);
+        rate_res.sp1 = f->GetParError(1);
+        rate_res.sp2 = f->GetParError(2);
+    
+        double covp1p2 = res->CovMatrix(1, 2);
+
+        double exp_term = std::exp(-time_window / rate_res.p2);
+
+        double df_dp1 = (rate_res.p2 * (1.0 - exp_term)) / binning;
+        double df_dp2 = (rate_res.p1 / binning) * (1.0 - exp_term * (1.0 + time_window / rate_res.p2));
+
+        rate_res.nIBD = rate_res.p0 * time_window / binning;
+        rate_res.nIBD_err = rate_res.sp0 * time_window / binning;
+        rate_res.nLiHe = (rate_res.p1 * rate_res.p2 * (1.0 - exp_term)) / binning;
+        rate_res.nLiHe_err = std::sqrt(std::pow(df_dp1 * rate_res.sp1, 2.0) + std::pow(df_dp2 * rate_res.sp2, 2.0) + 2.0 * df_dp1 * df_dp2 * covp1p2);
+        
+        return rate_res;
+    }
+
+    void plot_cosmo_rate_with_fit_res(TH1D* h, const CosmoRateFitResult& res) {
+        TCanvas* c = new TCanvas(Form("%s_canvas", h->GetName()), Form("%s Canvas", h->GetName()), 1000, 1000);
+        c->cd();
+
+        TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] + [1] * exp(-x / [2])", 0.02, 1.2);
+        f->SetParameter(0, res.p0);
+        f->SetParameter(1, res.p1);
+        f->SetParameter(2, res.p2);
+        f->SetParError(0, res.sp0);
+        f->SetParError(1, res.sp1);
+        f->SetParError(2, res.sp2);
         f->SetLineColor(kRed);
         f->SetLineWidth(3);
 
-        TFitResultPtr res = h->Fit(f, "RS");
         h->SetLineWidth(3);
         h->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
         h->GetXaxis()->CenterTitle(kTRUE);
@@ -217,28 +269,6 @@ private:
         c->SetTicky();
 
         c->Update();
-
-        double time_window = 1.2;
-        double binning = time_window / 120.0;
-
-        double p1 = f->GetParameter(1);
-        double p2 = f->GetParameter(2);
-        double sp1 = f->GetParError(1);
-        double sp2 = f->GetParError(2);
-    
-        double covp1p2 = res->CovMatrix(1, 2);
-
-        double exp_term = std::exp(-time_window / p2);
-        double nLiHe = (p1 * p2 * (1 - exp_term)) / binning;
-
-        double df_dp1 = (p2 * (1 - exp_term)) / binning;
-        double df_dp2 = (p1 / binning) * (1 - exp_term * (1 + time_window / p2));
-
-        double nLiHe_err = std::sqrt(std::pow(df_dp1 * sp1, 2.0) + std::pow(df_dp2 * sp2, 2.0) + 2.0 * df_dp1 * df_dp2 * covp1p2);
-
-        std::cout << "Fit Results for " << h->GetName() << ":\n";
-        std::cout << "nIBD = " << f->GetParameter(0) * time_window / binning << " +/- " << f->GetParError(0) * time_window / binning << '\n';
-        std::cout << "nLiHe = " << nLiHe << " +/- " << nLiHe_err << std::endl;
     }
 
 };
