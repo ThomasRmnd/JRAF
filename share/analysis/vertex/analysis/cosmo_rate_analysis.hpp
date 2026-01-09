@@ -96,7 +96,7 @@ public:
     void result() override {
         std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
         std::unordered_map<int, TH1D*> cosmo_rate_with_n_neutron;
-        for (int k = 0; k < 10; ++k) {
+        for (int k = 0; k < 20; ++k) {
             cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_at_least_%i_neutron", k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
             cosmo_rate_with_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_%i_neutron", k), Form("Cosmo rate with %i neutron", k), 120, 0.0, 1.2);
         }
