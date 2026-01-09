@@ -116,9 +116,9 @@ public:
         TH1D* h_dr_cosmo_sig = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_sig__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
         TH2D* h_rho_z_p_cosmo_bkg = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH2D* h_rho_z_d_cosmo_bkg = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo bkg)", m_name.c_str()), cosmos_bkg);
-        TH2D* h_rho_z_p_cosmo_sig = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo sig)", m_name.c_str()), cosmos_sig);
-        TH2D* h_rho_z_d_cosmo_sig = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo sig)", m_name.c_str()), cosmos_sig);
+        TH2D* h_rho_z_d_cosmo_bkg = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        TH2D* h_rho_z_p_cosmo_sig = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
+        TH2D* h_rho_z_d_cosmo_sig = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
         h_e_p_cosmo_diff->Add(h_e_p_cosmo_sig, h_e_p_cosmo_bkg, 1.0, -1.0);
 
