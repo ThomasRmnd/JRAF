@@ -95,7 +95,7 @@ public:
 
     void result() override {
         std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
-        for (int k = 0; k < 50; ++k) {
+        for (int k = 0; k < 200; ++k) {
             cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_at_least_%i_neutron", k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
         }
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
