@@ -91,16 +91,8 @@ public:
     }
 
     void result() override {
-        std::vector<cosmogenic> cosmos_bkg;
-        cosmos_bkg.reserve(m_cosmos_bkg.size());
-        for (std::set<cosmogenic>::const_iterator it = m_cosmos_bkg.begin(); it != m_cosmos_bkg.end(); ++it) {
-            cosmos_bkg.push_back(*it);
-        }
-        std::vector<cosmogenic> cosmos_sig;
-        cosmos_sig.reserve(m_cosmos_sig.size());
-        for (std::set<cosmogenic>::const_iterator it = m_cosmos_sig.begin(); it != m_cosmos_sig.end(); ++it) {
-            cosmos_sig.push_back(*it);
-        }
+        std::vector<cosmogenic> cosmos_bkg(m_cosmos_bkg.begin(), m_cosmos_bkg.end());
+        std::vector<cosmogenic> cosmos_sig(m_cosmos_sig.begin(), m_cosmos_sig.end());
 
         TH1D* h_e_p_cosmo_bkg = make_prompt_energy_plot(Form("h_e_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
         TH1D* h_e_p_cosmo_sig = make_prompt_energy_plot(Form("h_e_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);

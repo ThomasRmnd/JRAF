@@ -30,7 +30,6 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("TtFiller", m_ttFillerName = "TtRangeFiller");
 
     declProp("RecTool", m_recToolName);
-    declProp("ClassifyTool", m_classifyToolName);
 
     declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("OutputFilename", m_ofilename = "output.root");
@@ -80,16 +79,6 @@ bool AnalysisGroupC::initLoader() {
     RangeFiller<TtFillerTag>* tt_filler = tool<RangeFiller<TtFillerTag>>(m_ttFillerName);
     if (!m_loader->configure(&m_pmtTable, cd_filler, wp_filler, tt_filler)) return false;
 	if (!m_loader->initialize()) return false;
-
-    m_classifyLoader = tool<Loader>("BasicLoader");
-    if (!m_classifyLoader) {
-        LogError << "Failed to retrieve reconstruction tool named BasicLoader\n";
-        return false;
-    }
-    wp_filler = tool<RangeFiller<WpFillerTag>>("AkiraWpRangeFiller");
-    if (!m_classifyLoader->configure(&m_classifyPmtTable, nullptr, wp_filler, nullptr)) return false;
-    if (!m_classifyLoader->initialize()) return false;
-
     return true;
 }
 
@@ -101,14 +90,6 @@ bool AnalysisGroupC::initRecTool() {
     }
     if (!m_recTool->configure(&m_params, &m_pmtTable)) return false;
 	// if (!dynamic_cast<ToolBase*>(m_recTool)->initialize()) return false;
-
-    m_classifyTool = tool<IRecMuonTool>(m_classifyToolName);
-    if (!m_classifyTool) {
-        LogError << "Failed to retrieve classification tool named " << m_classifyToolName << '\n';
-        return false;
-    }
-    if (!m_classifyTool->configure(&m_classifyParams, &m_classifyPmtTable)) return false;
-    // if (!dynamic_cast<ToolBase*>(m_classifyTool)->initialize()) return false;
     return true;
 }
 
@@ -240,7 +221,6 @@ bool AnalysisGroupC::execute() {
         std::shared_ptr<Event> evt = std::make_shared<Event>();
 
         if (!m_loader->load(&bufwrap)) return false;
-        if (!m_classifyLoader->load(&bufwrap)) return false;
 
         TimeStamp curts{bufwrap.curEvt()->TimeStamp().GetTimeSpec()};
 
@@ -332,6 +312,7 @@ bool AnalysisGroupC::execute() {
                     addTrack(rtrks, "CdWpTtChi2", curts, track::loc::cd, tracks);
                     LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
                     m_trkSaver.add(rtrks, "CdWpTtChi2", bufwrap.curEvt()->RunID(), curts);
+                    // TODO: Add track saver for CdClassify
                 }
                 if (is_possibly_wp_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::WP) {
                     JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
@@ -339,28 +320,7 @@ bool AnalysisGroupC::execute() {
                     LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
                     JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
                     addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
-                
-                    if (!classify_wpt_hdr) { // if not here we do the reconstruction ourself
-                        RecTrks rtrks;
-                        bool ok = false;
-                        try {
-                            ok = m_classifyTool->reconstruct(&rtrks);
-                        }
-                        catch (const SniperException& e) {
-                            LogError << "Sniper exception during WP classification: " << e.what() << '\n';
-                        }
-                        catch (const std::exception& e) {
-                            LogError << "std exception during WP classification: " << e.what() << '\n';
-                        }
-                        catch (...) {
-                            LogError << "Unknown exception during WP classification\n";
-                        }
-                        if (!ok) {
-                            LogWarn << "Could not classify the event with classification tool\n";
-                        }
-                        addTrack(rtrks, "WpClassify", curts, track::loc::wp, tracks);
-                        m_trkSaver.add(rtrks, "WpClassify", bufwrap.curEvt()->RunID(), curts, track::loc::wp);
-                    }
+                    // TODO: Add track saver for WpClassify
                 }
             }
             if (tracks.empty()) {
@@ -426,6 +386,10 @@ bool AnalysisGroupC::execute() {
     // JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
     JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
     // JM::WpTriggerHeader* wp_trig_hdr = JM::getHeaderObject<JM::WpTriggerHeader>(nav);
+
+    // TODO: Re-add the header veto is missing
+    // TODO: Add big gaps veto
+    // TODO: Enlarge veto for begging of job
         
     if (!oec_hdr || (!cd_lpmt_calib_hdr && !wp_calib_hdr) /* || (!cd_trig_hdr && !wp_trig_hdr) */) {
         m_vetoTs = m_tsEvt;

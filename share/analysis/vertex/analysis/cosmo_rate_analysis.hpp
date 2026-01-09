@@ -201,18 +201,10 @@ private:
         f->SetParameter(1, exponential_term);
         f->SetParameter(2, 180.0e-3);
 
-        // TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * [1] * [2] * exp(- [2] * x) + (1 - [0]) * [1] * [3] * exp(- [3] * x) + [4]", 0.02, 1.2);
-        // f * N * lambda_Li9 * exp(- lambda_Li9 * t) + (1 - f) * N * lamnda_He8 * exp(- lambda_He8 * t) + c
-        // f->SetParameter(0, 0.85);
-        // f->SetParameter(1, exponential_term);
-        // f->SetParameter(2, 178.0e-3);
-        // f->SetParameter(3, 119.0e-3);
-        // f->SetParameter(4, constant_term);
-
         f->SetLineColor(kRed);
         f->SetLineWidth(3);
 
-        h->Fit(f, "R");
+        TFitResultPtr res = h->Fit(f, "RS");
         h->SetLineWidth(3);
         h->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
         h->GetXaxis()->CenterTitle(kTRUE);
@@ -227,16 +219,6 @@ private:
 
         c->Update();
 
-        // double time_window = 1.2;
-        // double binning = time_window / 120.0;
-        // std::cout << "nIBD = " << f->GetParameter(4) * time_window / binning << " +/- " << f->GetParError(4) * time_window / binning << '\n';
-        // std::cout << "nLi = " << f->GetParameter(0) * f->GetParameter(1) << '\n';
-        // std::cout << "nHe = " << (1.0 - f->GetParameter(0)) * f->GetParameter(1) << '\n';
-        // std::cout << "Li decay = " << f->GetParameter(2) << '\n';
-        // std::cout << "He decay = " << f->GetParameter(3) << '\n';
-        // std::cout << "Fit Results for " << h->GetName() << ":\n";
-
-        TFitResultPtr res = h->Fit(f, "RS");
         double time_window = 1.2;
         double binning = time_window / 120.0;
 

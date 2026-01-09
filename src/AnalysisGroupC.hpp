@@ -326,12 +326,6 @@ private:
     PmtTable m_pmtTable;
     Params m_params;
 
-    std::string m_classifyToolName;
-    IRecMuonTool* m_classifyTool;
-    Loader* m_classifyLoader;
-    PmtTable m_classifyPmtTable;
-    Params m_classifyParams;
-
     // Muon selection variable
 
     double m_cd_muon_totq_thold = 30000.0;

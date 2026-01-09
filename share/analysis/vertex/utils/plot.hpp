@@ -183,6 +183,9 @@ TCanvas* plot_basic(TH1D* h, const char* options = "") {
 
 TCanvas* plot_multiple(const std::string& name, const std::string& title, std::initializer_list<TH1D*> hists, const char* options = "") {
     if (hists.size() == 0) return nullptr;
+    for (TH1D* h : hists) {
+        h->Print("all");
+    }
     
     double max_val = 0;
     double min_val = std::numeric_limits<double>::max();
