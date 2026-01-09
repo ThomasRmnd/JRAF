@@ -183,14 +183,28 @@ TCanvas* plot_basic(TH1D* h, const char* options = "") {
 
 TCanvas* plot_multiple(const std::string& name, const std::string& title, std::initializer_list<TH1D*> hists, const char* options = "") {
     if (hists.size() == 0) return nullptr;
-    TH1D* first = *hists.begin();
+    
     double max_val = 0;
-    for (TH1D* h : hists) max_val = std::max(max_val, h->GetMaximum());
-    first->SetMaximum(max_val * 1.15);
+    double min_val = std::numeric_limits<double>::max();
+    for (TH1D* h : hists) {
+        if (!h) continue;
+        max_val = std::max(max_val, h->GetMaximum());
+        min_val = std::min(min_val, h->GetMinimum());
+    }
+    
+    for (TH1D* h : hists) {
+        if (!h) continue;
+        h->SetMaximum(max_val * 1.15);
+        h->SetMinimum(std::min(0.0, min_val));
+    }
+    
     TCanvas* c = new TCanvas(name.c_str(), title.c_str(), 1000, 1000);
     c->SetGrid();
+    c->cd();
+    
     TLegend* leg = new TLegend(0.65, 0.75, 0.88, 0.88);
     leg->SetBorderSize(1);
+    
     bool is_first = true;
     for (TH1D* h : hists) {
         if (!h) continue;
@@ -201,9 +215,9 @@ TCanvas* plot_multiple(const std::string& name, const std::string& title, std::i
         else {
             h->Draw(Form("%s SAME", options));
         }
-
         leg->AddEntry(h, h->GetTitle(), "l");
     }
+    
     leg->Draw();
     c->Update();
     return c;

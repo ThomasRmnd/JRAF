@@ -2,6 +2,7 @@
 #define ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
 
 #include <TF1.h>
+#include <TFitResult.h>
 
 #include "analysis/basic_analysis.hpp"
 
@@ -235,14 +236,28 @@ private:
         // std::cout << "He decay = " << f->GetParameter(3) << '\n';
         // std::cout << "Fit Results for " << h->GetName() << ":\n";
 
-
+        TFitResultPtr res = h->Fit(f, "RS");
         double time_window = 1.2;
         double binning = time_window / 120.0;
+
+        double p1 = f->GetParameter(1);
+        double p2 = f->GetParameter(2);
+        double sp1 = f->GetParError(1);
+        double sp2 = f->GetParError(2);
+    
+        double covp1p2 = res->CovMatrix(1, 2);
+
+        double exp_term = std::exp(-time_window / p2);
+        double nLiHe = (p1 * p2 * (1 - exp_term)) / binning;
+
+        double df_dp1 = (p2 * (1 - exp_term)) / binning;
+        double df_dp2 = (p1 / binning) * (1 - exp_term * (1 + time_window / p2));
+
+        double nLiHe_err = std::sqrt(std::pow(df_dp1 * sp1, 2.0) + std::pow(df_dp2 * sp2, 2.0) + 2.0 * df_dp1 * df_dp2 * covp1p2);
+
         std::cout << "Fit Results for " << h->GetName() << ":\n";
         std::cout << "nIBD = " << f->GetParameter(0) * time_window / binning << " +/- " << f->GetParError(0) * time_window / binning << '\n';
-        std::cout << "nLiHe = " << f->GetParameter(1) * f->GetParameter(2) * (1 - std::exp(-time_window / f->GetParameter(2))) / binning << '\n'; 
-
-
+        std::cout << "nLiHe = " << nLiHe << " +/- " << nLiHe_err << std::endl;
     }
 
 };
