@@ -123,7 +123,7 @@ public:
         }
         TH1I* h_rate_cosmo_per_neutron = new TH1I("h_rate_cosmo_per_neutron", "h_rate_cosmo_per_neutron", max_number_neutron, 0, max_number_neutron);
         for (int k = 0; k < max_number_neutron - 1; ++k) {
-            h_rate_cosmo_per_neutron->SetBinContent(k, h_rate_cosmo_per_at_least_neutron->GetBinContent(k), h_rate_cosmo_per_at_least_neutron->GetBinContent(k + 1));
+            h_rate_cosmo_per_neutron->SetBinContent(k, h_rate_cosmo_per_at_least_neutron->GetBinContent(k) - h_rate_cosmo_per_at_least_neutron->GetBinContent(k + 1));
         }
 
         // TF1* f_rate_cosmo_per_at_least_neutron = new TF1("f_rate_cosmo_per_at_least_neutron", "[0] * exp(-x / [1])", 0.0, 100.0);
