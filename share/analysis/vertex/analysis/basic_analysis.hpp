@@ -9,64 +9,7 @@
 #include <TH2D.h>
 
 #include "analysis/analysis.hpp"
-#include "utils/numpy.hpp"
-
-std::vector<double> generate_segment_boundaries(double start, double stop, int num_bins) {
-    if (num_bins <= 0) return {};
-    int num_points = num_bins + 1;
-    double expected_width = (stop - start) / num_bins;
-    
-    std::vector<double> segment;
-    segment.reserve(num_points);
-    segment.push_back(start); 
-
-    for (int i = 1; i < num_points; ++i) {
-        double boundary = start + i * expected_width;
-        
-        if (i == num_points - 1) {
-             segment.push_back(stop);
-        } else {
-             segment.push_back(boundary);
-        }
-    }
-    return segment;
-}
-
-std::vector<double> create_custom_e_p_bins() {
-
-    // double s1_start = 0.8;
-    // double s2_start = 0.94;
-    // double s3_start = 7.44;
-    // double s4_start = 7.8;
-    // double s5_start = 8.2;
-    // double stop = 12.0;
-
-    // int s1_bins = 1;
-    // int s2_bins = 325;
-    // int s3_bins = 9;
-    // int s4_bins = 4;
-    // int s5_bins = 1;
-    // int tot_bins = s1_bins + s2_bins + s3_bins + s4_bins + s5_bins;
-
-    double edges[] = {0.7, 1.0, 6.6, 7.4, 7.7, 8.1, 8.6, 9.4, 12.0};
-    int    bins[]  = {  1,  56,   4,   1,   1,   1,   1,   1};
-    
-    std::vector<double> e_p_bins;
-
-    for (std::size_t k = 0ul; k < 8ul; ++k) {
-        double start = edges[k];
-        double stop = edges[k + 1];
-        int nbins = bins[k];
-        std::vector<double> segment = generate_segment_boundaries(start, stop, nbins);
-        if (k == 0ul) {
-            e_p_bins.insert(e_p_bins.end(), segment.begin(), segment.end());
-        } else {
-            e_p_bins.insert(e_p_bins.end(), segment.begin() + 1, segment.end());
-        }
-    }
-    
-    return e_p_bins;
-}
+#include "utils/plot.hpp"
 
 struct VanessaIBD {
 
@@ -90,7 +33,9 @@ class basic_analysis : public analysis_base {
 
 public:
 
-    basic_analysis(const std::string& filepath, const std::string& suffix) {
+    basic_analysis(const std::string& name, const std::string& filepath, const std::string& suffix) :
+        analysis_base{name}
+    {
         std::string treename = "IBDAnalysis" + suffix;
         m_nav = navigator_manager::retrieve<basic_navigator>(filepath, treename);
         if (!m_nav->is_valid()) {

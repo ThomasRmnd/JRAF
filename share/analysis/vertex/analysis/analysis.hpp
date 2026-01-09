@@ -7,6 +7,10 @@ class analysis_base {
 
 public:
 
+    analysis_base(const std::string& name) :
+        m_name(name)
+    {}
+
     virtual ~analysis_base() = default;
 
     virtual std::shared_ptr<navigator_base> navigator() const = 0;
@@ -17,6 +21,8 @@ public:
     virtual void result() = 0;
 
 protected:
+
+    std::string m_name;
 
 };
 

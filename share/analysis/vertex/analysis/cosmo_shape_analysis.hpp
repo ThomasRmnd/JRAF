@@ -11,13 +11,14 @@ class cosmo_shape_analysis : public basic_analysis {
 public:
 
     cosmo_shape_analysis(
+        const std::string& name, 
         const std::string& filepath, const std::string& suffix, 
         const std::string& recname,
         const timestamp& sig_low, const timestamp& sig_high, 
         const timestamp& bkg_low, const timestamp& bkg_high, 
         double radius
     ) :
-        basic_analysis{filepath, suffix},
+        basic_analysis{name, filepath, suffix},
         m_recname{recname},
         m_ts_sig_low{sig_low},
         m_ts_sig_high{sig_high},
@@ -101,86 +102,23 @@ public:
             cosmos_sig.push_back(*it);
         }
 
-        // double e_p_min = 0.7;
-        // double e_p_max = 12.0;
-        // double e_p_width = 0.20;
-        // int e_p_nbin = std::round((e_p_max - e_p_min) / e_p_width) + 1;
-        // std::vector<double> e_p_bins = np::linspace(e_p_min, e_p_max, e_p_nbin);
-        double ts_bkg_low_as_double = timestamp_to_double(m_ts_bkg_low);
-        double ts_bkg_high_as_double = timestamp_to_double(m_ts_bkg_high);
-        double ts_sig_low_as_double = timestamp_to_double(m_ts_sig_low);
-        double ts_sig_high_as_double = timestamp_to_double(m_ts_sig_high);
-        std::vector<double> e_p_bins = create_custom_e_p_bins();
-        TH1D* h_e_p_cosmo_bkg = new TH1D(
-            Form("h_e_p_cosmo_bkg__%s_%.3f_%.3f_%.0f", m_recname.c_str(), ts_bkg_low_as_double, ts_bkg_high_as_double, m_radius), 
-            Form("Prompt energy (Cosmo bkg) {%s, %.3f, %.3f, %.0f}", m_recname.c_str(), ts_bkg_low_as_double, ts_bkg_high_as_double, m_radius), 
-            e_p_bins.size() - 1, e_p_bins.data()
-        );
-        TH1D* h_e_p_cosmo_sig = new TH1D(
-            Form("h_e_p_cosmo_sig__%s_%.3f_%.3f_%.0f", m_recname.c_str(), ts_sig_low_as_double, ts_sig_high_as_double, m_radius), 
-            Form("Prompt energy (Cosmo sig) {%s, %.3f, %.3f, %.0f}", m_recname.c_str(), ts_sig_low_as_double, ts_sig_high_as_double, m_radius), 
-            e_p_bins.size() - 1, e_p_bins.data()
-        );
-        TH1D* h_e_p_cosmo_diff = new TH1D(
-            Form("h_e_p_cosmo_diff__%s", m_recname.c_str()), 
-            Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_recname.c_str()), 
-            e_p_bins.size() - 1, e_p_bins.data()
-        );
+        TH1D* h_e_p_cosmo_bkg = make_prompt_energy_plot(Form("h_e_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        TH1D* h_e_p_cosmo_sig = make_prompt_energy_plot(Form("h_e_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
+        TH1D* h_e_p_cosmo_diff = make_prompt_energy_plot(Form("h_e_p_cosmo_diff__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_name.c_str()), std::vector<cosmogenic>{});
 
-        double e_d_min = 2.0;
-        double e_d_max = 2.5;
-        double e_d_width = 0.02;
-        int e_d_nbin = std::round((e_d_max - e_d_min) / e_d_width) + 1;
-        std::vector<double> e_d_bins = np::linspace(e_d_min, e_d_max, e_d_nbin);
-        TH1D* h_e_d_cosmo_bkg = new TH1D("h_e_d_cosmo_bkg", "Delayed energy (Cosmo bkg)", e_d_bins.size() - 1, e_d_bins.data());
-        TH1D* h_e_d_cosmo_sig = new TH1D("h_e_d_cosmo_sig", "Delayed energy (Cosmo sig)", e_d_bins.size() - 1, e_d_bins.data());
+        TH1D* h_e_d_cosmo_bkg = make_delayed_energy_plot(Form("h_e_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        TH1D* h_e_d_cosmo_sig = make_delayed_energy_plot(Form("h_e_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
-        double e_dt_min = 0.0;
-        double e_dt_max = 1.0;
-        double e_dt_width = 0.025;
-        int e_dt_nbin = std::round((e_dt_max - e_dt_min) / e_dt_width) + 1;
-        std::vector<double> e_dt_bins = np::linspace(e_dt_min, e_dt_max, e_dt_nbin);
-        TH1D* h_dt_cosmo_bkg = new TH1D("h_dt_cosmo_bkg", "Prompt-Delayed time difference (Cosmo bkg)", e_dt_bins.size() - 1, e_dt_bins.data());
-        TH1D* h_dt_cosmo_sig = new TH1D("h_dt_cosmo_sig", "Prompt-Delayed time difference (Cosmo sig)", e_dt_bins.size() - 1, e_dt_bins.data());
+        TH1D* h_dt_cosmo_bkg = make_prompt_delayed_time_plot(Form("h_dt_cosmo_bkg__%s", m_name.c_str()), Form("Prompt-Delayed time difference (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg); 
+        TH1D* h_dt_cosmo_sig = make_prompt_delayed_time_plot(Form("h_dt_cosmo_sig__%s", m_name.c_str()), Form("Prompt-Delayed time difference (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
-        double e_dr_min = 0.0;
-        double e_dr_max = 1.5;
-        double e_dr_width = 0.05;
-        int e_dr_nbin = std::round((e_dr_max - e_dr_min) / e_dr_width) + 1;
-        std::vector<double> e_dr_bins = np::linspace(e_dr_min, e_dr_max, e_dr_nbin);
-        TH1D* h_dr_cosmo_bkg = new TH1D("h_dr_cosmo_bkg", "Prompt-Delayed distance (Cosmo bkg)", e_dr_bins.size() - 1, e_dr_bins.data());
-        TH1D* h_dr_cosmo_sig = new TH1D("h_dr_cosmo_sig", "Prompt-Delayed distance (Cosmo sig)", e_dr_bins.size() - 1, e_dr_bins.data());
+        TH1D* h_dr_cosmo_bkg = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_bkg__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        TH1D* h_dr_cosmo_sig = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_sig__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
 
-        double rho_min = 0.0;
-        double rho_max = 17.7 * 17.7;
-        int rho_nbin = 51;
-        double z_min = -20.0;
-        double z_max = 20.0;
-        int z_nbin = 51;
-        std::vector<double> rho_bins = np::linspace(rho_min, rho_max, rho_nbin);
-        std::vector<double> z_bins = np::linspace(z_min, z_max, z_nbin);
-        TH2D* h_rho_z_p_cosmo_bkg = new TH2D("h_rho_z_p_cosmo_bkg", "Prompt vertex distribution (Cosmo bkg)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
-        TH2D* h_rho_z_d_cosmo_bkg = new TH2D("h_rho_z_d_cosmo_bkg", "Delayed vertex distribution (Cosmo bkg)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
-        TH2D* h_rho_z_p_cosmo_sig = new TH2D("h_rho_z_p_cosmo_sig", "Prompt vertex distribution (Cosmo sig)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
-        TH2D* h_rho_z_d_cosmo_sig = new TH2D("h_rho_z_d_cosmo_sig", "Delayed vertex distribution (Cosmo sig)", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
-
-        for (const cosmogenic& v : cosmos_bkg) {
-            h_e_p_cosmo_bkg->Fill(v.prompt.e);
-            h_e_d_cosmo_bkg->Fill(v.delayed.e);
-            h_dt_cosmo_bkg->Fill(timestamp_to_double(v.delayed.ts - v.prompt.ts) * 1000.0);
-            h_dr_cosmo_bkg->Fill(mag(v.delayed.pos - v.prompt.pos) / 1000.0);
-            h_rho_z_p_cosmo_bkg->Fill((v.prompt.pos.x * v.prompt.pos.x + v.prompt.pos.y * v.prompt.pos.y) / 1.0e6, v.prompt.pos.z / 1000.0);
-            h_rho_z_d_cosmo_bkg->Fill((v.delayed.pos.x * v.delayed.pos.x + v.delayed.pos.y * v.delayed.pos.y) / 1.0e6, v.delayed.pos.z / 1000.0);
-        }
-
-        for (const cosmogenic& v : cosmos_sig) {
-            h_e_p_cosmo_sig->Fill(v.prompt.e);
-            h_e_d_cosmo_sig->Fill(v.delayed.e);
-            h_dt_cosmo_sig->Fill(timestamp_to_double(v.delayed.ts - v.prompt.ts) * 1000.0);
-            h_dr_cosmo_sig->Fill(mag(v.delayed.pos - v.prompt.pos) / 1000.0);
-            h_rho_z_p_cosmo_sig->Fill((v.prompt.pos.x * v.prompt.pos.x + v.prompt.pos.y * v.prompt.pos.y) / 1.0e6, v.prompt.pos.z / 1000.0);
-            h_rho_z_d_cosmo_sig->Fill((v.delayed.pos.x * v.delayed.pos.x + v.delayed.pos.y * v.delayed.pos.y) / 1.0e6, v.delayed.pos.z / 1000.0);
-        }
+        TH2D* h_rho_z_p_cosmo_bkg = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
+        TH2D* h_rho_z_d_cosmo_bkg = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo bkg)", m_name.c_str()), cosmos_bkg);
+        TH2D* h_rho_z_p_cosmo_sig = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo sig)", m_name.c_str()), cosmos_sig);
+        TH2D* h_rho_z_d_cosmo_sig = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo sig)", m_name.c_str()), cosmos_sig);
 
         h_e_p_cosmo_diff->Add(h_e_p_cosmo_sig, h_e_p_cosmo_bkg, 1.0, -1.0);
 
@@ -188,16 +126,8 @@ public:
         // Cosmo bkg - Prompt energy
         // ============================================================================================
 
-        TCanvas* c_e_p_cosmo_bkg = new TCanvas("c_e_p_cosmo_bkg", "Prompt energy (Cosmo bkg)", 1000, 1000);
-        c_e_p_cosmo_bkg->cd();
-
-        h_e_p_cosmo_bkg->SetLineWidth(3);
-        h_e_p_cosmo_bkg->SetLineStyle(kSolid);
-        h_e_p_cosmo_bkg->SetLineColorAlpha(kBlue, 1.0);
-
-        h_e_p_cosmo_bkg->Draw();
-
-        c_e_p_cosmo_bkg->Update();
+        pimp_my_histogram(h_e_p_cosmo_bkg, kSolid, 3, kBlue, 1.0);
+        plot_basic(h_e_p_cosmo_bkg);
 
         // ============================================================================================
         // Cosmo bkg - Delayed energy
@@ -206,10 +136,7 @@ public:
         TCanvas* c_e_d_cosmo_bkg = new TCanvas("c_e_d_cosmo_bkg", "Delayed energy (Cosmo bkg)", 1000, 1000);
         c_e_d_cosmo_bkg->cd();
 
-        h_e_d_cosmo_bkg->SetLineWidth(3);
-        h_e_d_cosmo_bkg->SetLineStyle(kSolid);
-        h_e_d_cosmo_bkg->SetLineColorAlpha(kBlue, 1.0);
-
+        pimp_my_histogram(h_e_d_cosmo_bkg, kSolid, 3, kBlue, 1.0);
         h_e_d_cosmo_bkg->Draw();
 
         c_e_d_cosmo_bkg->Update();
@@ -220,11 +147,8 @@ public:
 
         TCanvas* c_dt_cosmo_bkg = new TCanvas("c_dt_cosmo_bkg", "Prompt-Delayed time difference (Cosmo bkg)", 1000, 1000);
         c_dt_cosmo_bkg->cd();
-    
-        h_dt_cosmo_bkg->SetLineWidth(3);
-        h_dt_cosmo_bkg->SetLineStyle(kSolid);
-        h_dt_cosmo_bkg->SetLineColorAlpha(kBlue, 1.0);
 
+        pimp_my_histogram(h_dt_cosmo_bkg, kSolid, 3, kBlue, 1.0);
         h_dt_cosmo_bkg->Draw();
 
         c_dt_cosmo_bkg->Update();

@@ -11,8 +11,8 @@ class cosmo_rate_analysis : public basic_analysis {
 
 public:
 
-    cosmo_rate_analysis(const std::string& filepath, const std::string& suffix) :
-        basic_analysis{filepath, suffix}
+    cosmo_rate_analysis(const std::string& name, const std::string& filepath, const std::string& suffix) :
+        basic_analysis{name, filepath, suffix}
     {}
 
     bool selection() override {
