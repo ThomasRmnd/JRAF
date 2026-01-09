@@ -121,22 +121,34 @@ public:
             h_rate_cosmo_per_at_least_neutron->SetBinContent(n + 1, static_cast<double>(res.nLiHe));
             h_rate_cosmo_per_at_least_neutron->SetBinError(n + 1, res.nLiHe_err);
         }
+        TH1I* h_rate_cosmo_per_neutron = new TH1I("h_rate_cosmo_per_neutron", "h_rate_cosmo_per_neutron", max_number_neutron, 0, max_number_neutron);
+        for (int k = 0; k < max_number_neutron - 1; ++k) {
+            h_rate_cosmo_per_neutron->SetBinContent(k, h_rate_cosmo_per_at_least_neutron->GetBinContent(k), h_rate_cosmo_per_at_least_neutron->GetBinContent(k + 1));
+        }
 
-        TF1* f_rate_cosmo_per_at_least_neutron = new TF1("f_rate_cosmo_per_at_least_neutron", "[0] * exp(-x / [1])", 0.0, 100.0);
-        f_rate_cosmo_per_at_least_neutron->SetParameter(0, 30000);
-        f_rate_cosmo_per_at_least_neutron->SetParameter(1, 25.0);
-        h_rate_cosmo_per_at_least_neutron->Fit(f_rate_cosmo_per_at_least_neutron);
+        // TF1* f_rate_cosmo_per_at_least_neutron = new TF1("f_rate_cosmo_per_at_least_neutron", "[0] * exp(-x / [1])", 0.0, 100.0);
+        // f_rate_cosmo_per_at_least_neutron->SetParameter(0, 30000);
+        // f_rate_cosmo_per_at_least_neutron->SetParameter(1, 25.0);
+        // h_rate_cosmo_per_at_least_neutron->Fit(f_rate_cosmo_per_at_least_neutron);
 
-        TCanvas* c_rate_cosmo_per_at_least_neutron = new TCanvas("h_rate_cosmo_per_at_least_neutron", "h_rate_cosmo_per_at_least_neutron", 1000, 1000);
+        TCanvas* c_rate_cosmo_per_at_least_neutron = new TCanvas("c_rate_cosmo_per_at_least_neutron", "c_rate_cosmo_per_at_least_neutron", 1000, 1000);
         c_rate_cosmo_per_at_least_neutron->cd();
         h_rate_cosmo_per_at_least_neutron->SetLineStyle(kSolid);
         h_rate_cosmo_per_at_least_neutron->SetLineWidth(3);
         h_rate_cosmo_per_at_least_neutron->SetLineColorAlpha(kBlue, 1.0);
         h_rate_cosmo_per_at_least_neutron->Draw("HIST");
-        f_rate_cosmo_per_at_least_neutron->SetLineStyle(kSolid);
-        f_rate_cosmo_per_at_least_neutron->SetLineWidth(3);
-        h_rate_cosmo_per_at_least_neutron->SetLineColorAlpha(kRed, 1.0);
+        // f_rate_cosmo_per_at_least_neutron->SetLineStyle(kSolid);
+        // f_rate_cosmo_per_at_least_neutron->SetLineWidth(3);
+        // f_rate_cosmo_per_at_least_neutron->SetLineColorAlpha(kRed, 1.0);
         c_rate_cosmo_per_at_least_neutron->Update();
+
+        TCanvas* c_rate_cosmo_per_neutron = new TCanvas("c_rate_cosmo_per_neutron", "c_rate_cosmo_per_neutron", 1000, 1000);
+        c_rate_cosmo_per_neutron->cd();
+        h_rate_cosmo_per_neutron->SetLineStyle(kSolid);
+        h_rate_cosmo_per_neutron->SetLineWidth(3);
+        h_rate_cosmo_per_neutron->SetLineColorAlpha(kBlue, 1.0);
+        h_rate_cosmo_per_neutron->Draw("HIST");
+        c_rate_cosmo_per_neutron->Update();
 
         TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
         TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
