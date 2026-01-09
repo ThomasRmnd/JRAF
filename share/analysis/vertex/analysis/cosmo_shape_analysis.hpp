@@ -122,162 +122,47 @@ public:
 
         h_e_p_cosmo_diff->Add(h_e_p_cosmo_sig, h_e_p_cosmo_bkg, 1.0, -1.0);
 
-        // ============================================================================================
-        // Cosmo bkg - Prompt energy
-        // ============================================================================================
+        // Prompt energy
+        pimp_my_histogram(h_e_p_cosmo_bkg, kSolid, 3, kRed, 1.0);
+        h_e_p_cosmo_bkg->SetTitle("Background");
+        pimp_my_histogram(h_e_p_cosmo_sig, kSolid, 3, kBlue, 1.0);
+        h_e_p_cosmo_sig->SetTitle("Signal");
+        pimp_my_histogram(h_e_p_cosmo_diff, kSolid, 3, kBlack, 1.0);
+        h_e_p_cosmo_diff->SetTitle("Substraction");
+        plot_multiple(Form("c_e_p_cosmo__%s", m_name.c_str()), "Prompt energy", {h_e_p_cosmo_bkg, h_e_p_cosmo_sig, h_e_p_cosmo_diff});
 
-        pimp_my_histogram(h_e_p_cosmo_bkg, kSolid, 3, kBlue, 1.0);
-        plot_basic(h_e_p_cosmo_bkg);
-
-        // ============================================================================================
         // Cosmo bkg - Delayed energy
-        // ============================================================================================
+        pimp_my_histogram(h_e_d_cosmo_bkg, kSolid, 3, kRed, 1.0);
+        h_e_d_cosmo_bkg->SetTitle("Background");
+        pimp_my_histogram(h_e_d_cosmo_sig, kSolid, 3, kBlue, 1.0);
+        h_e_d_cosmo_sig->SetTitle("Signal");
+        plot_multiple(Form("c_e_d_cosmo__%s", m_name.c_str()), "Delayed energy", {h_e_d_cosmo_bkg, h_e_d_cosmo_sig});
 
-        TCanvas* c_e_d_cosmo_bkg = new TCanvas("c_e_d_cosmo_bkg", "Delayed energy (Cosmo bkg)", 1000, 1000);
-        c_e_d_cosmo_bkg->cd();
-
-        pimp_my_histogram(h_e_d_cosmo_bkg, kSolid, 3, kBlue, 1.0);
-        h_e_d_cosmo_bkg->Draw();
-
-        c_e_d_cosmo_bkg->Update();
-
-        // ============================================================================================
         // Cosmo bkg - Prompt-Delayed time difference
-        // ============================================================================================
+        pimp_my_histogram(h_dt_cosmo_bkg, kSolid, 3, kRed, 1.0);
+        h_dt_cosmo_bkg->SetTitle("Background");
+        pimp_my_histogram(h_dt_cosmo_sig, kSolid, 3, kBlue, 1.0);
+        h_dt_cosmo_sig->SetTitle("Signal");
+        plot_multiple(Form("c_dt_cosmo__%s", m_name.c_str()), "Prompt-Delayed time difference", {h_dt_cosmo_bkg, h_dt_cosmo_sig});
 
-        TCanvas* c_dt_cosmo_bkg = new TCanvas("c_dt_cosmo_bkg", "Prompt-Delayed time difference (Cosmo bkg)", 1000, 1000);
-        c_dt_cosmo_bkg->cd();
-
-        pimp_my_histogram(h_dt_cosmo_bkg, kSolid, 3, kBlue, 1.0);
-        h_dt_cosmo_bkg->Draw();
-
-        c_dt_cosmo_bkg->Update();
-
-        // ============================================================================================
         // Cosmo bkg - Prompt-Delayed distance
-        // ============================================================================================
+        pimp_my_histogram(h_dr_cosmo_bkg, kSolid, 3, kRed, 1.0);
+        h_dr_cosmo_bkg->SetTitle("Background");
+        pimp_my_histogram(h_dr_cosmo_sig, kSolid, 3, kBlue, 1.0);
+        h_dr_cosmo_sig->SetTitle("Signal");
+        plot_multiple(Form("c_dr_cosmo__%s", m_name.c_str()), "Prompt-Delayed distance", {h_dr_cosmo_bkg, h_dr_cosmo_sig});
 
-        TCanvas* c_dr_cosmo_bkg = new TCanvas("c_dr_cosmo_bkg", "Prompt-Delayed distance (Cosmo bkg)", 1000, 1000);
-        c_dr_cosmo_bkg->cd();
-
-        h_dr_cosmo_bkg->Draw();
-
-        c_dr_cosmo_bkg->Update();
-
-        // ============================================================================================
         // Cosmo bkg - Prompt vertex position
-        // ============================================================================================
+        plot_basic(h_rho_z_p_cosmo_bkg, "COLZ");
 
-        TCanvas* c_rho_z_p_cosmo_bkg = new TCanvas("c_rho_z_p_cosmo_bkg", "Prompt vertex distribution (Cosmo bkg)", 1000, 1000);
-        c_rho_z_p_cosmo_bkg->cd();
-
-        h_rho_z_p_cosmo_bkg->Draw();
-
-        c_rho_z_p_cosmo_bkg->Update();
-
-        // ============================================================================================
         // Cosmo bkg - Delayed vertex position
-        // ============================================================================================
+        plot_basic(h_rho_z_d_cosmo_bkg, "COLZ");
 
-        TCanvas* c_rho_z_d_cosmo_bkg = new TCanvas("c_rho_z_d_cosmo_bkg", "Delayed vertex distribution (Cosmo bkg)", 1000, 1000);
-        c_rho_z_d_cosmo_bkg->cd();
-
-        h_rho_z_d_cosmo_bkg->Draw();
-
-        c_rho_z_d_cosmo_bkg->Update();
-
-        // ============================================================================================
-        // Cosmo sig - Prompt energy
-        // ============================================================================================
-
-        TCanvas* c_e_p_cosmo_sig = new TCanvas("c_e_p_cosmo_sig", "Prompt energy (Cosmo sig)", 1000, 1000);
-        c_e_p_cosmo_sig->cd();
-
-        h_e_p_cosmo_sig->SetLineWidth(3);
-        h_e_p_cosmo_sig->SetLineStyle(kSolid);
-        h_e_p_cosmo_sig->SetLineColorAlpha(kBlue, 1.0);
-
-        h_e_p_cosmo_sig->Draw();
-
-        c_e_p_cosmo_sig->Update();
-
-        // ============================================================================================
-        // Cosmo sig - Delayed energy
-        // ============================================================================================
-
-        TCanvas* c_e_d_cosmo_sig = new TCanvas("c_e_d_cosmo_sig", "Delayed energy (Cosmo sig)", 1000, 1000);
-        c_e_d_cosmo_sig->cd();
-    
-        h_e_d_cosmo_sig->SetLineWidth(3);
-        h_e_d_cosmo_sig->SetLineStyle(kSolid);
-        h_e_d_cosmo_sig->SetLineColorAlpha(kBlue, 1.0);
-
-        h_e_d_cosmo_sig->Draw();
-
-        c_e_d_cosmo_sig->Update();
-
-        // ============================================================================================
-        // Cosmo sig - Prompt-Delayed time difference
-        // ============================================================================================
-
-        TCanvas* c_dt_cosmo_sig = new TCanvas("c_dt_cosmo_sig", "Prompt-Delayed time difference (Cosmo sig)", 1000, 1000);
-        c_dt_cosmo_sig->cd();
-
-        h_dt_cosmo_sig->SetLineWidth(3);
-        h_dt_cosmo_sig->SetLineStyle(kSolid);
-        h_dt_cosmo_sig->SetLineColorAlpha(kBlue, 1.0);
-
-        h_dt_cosmo_sig->Draw();
-
-        c_dt_cosmo_sig->Update();
-
-        // ============================================================================================
-        // Cosmo sig - Prompt-Delayed distance
-        // ============================================================================================
-
-        TCanvas* c_dr_cosmo_sig = new TCanvas("c_dr_cosmo_sig", "Prompt-Delayed distance (Cosmo sig)", 1000, 1000);
-        c_dr_cosmo_sig->cd();
-
-        h_dr_cosmo_sig->Draw();
-
-        c_dr_cosmo_sig->Update();
-
-        // ============================================================================================
         // Cosmo sig - Prompt vertex position
-        // ============================================================================================
+        plot_basic(h_rho_z_p_cosmo_sig, "COLZ");
 
-        TCanvas* c_rho_z_p_cosmo_sig = new TCanvas("c_rho_z_p_cosmo_sig", "Prompt vertex distribution (Cosmo sig)", 1000, 1000);
-        c_rho_z_p_cosmo_sig->cd();
-
-        h_rho_z_p_cosmo_sig->Draw();
-
-        c_rho_z_p_cosmo_sig->Update();
-
-        // ============================================================================================
         // Cosmo sig - Delayed vertex position
-        // ============================================================================================
-
-        TCanvas* c_rho_z_d_cosmo_sig = new TCanvas("c_rho_z_d_cosmo_sig", "Delayed vertex distribution (Cosmo sig)", 1000, 1000);
-        c_rho_z_d_cosmo_sig->cd();
-
-        h_rho_z_d_cosmo_sig->Draw();
-
-        c_rho_z_d_cosmo_sig->Update();
-
-        // ============================================================================================
-        // Cosmo diff - Prompt energy
-        // ============================================================================================
-
-        TCanvas* c_e_p_cosmo_diff = new TCanvas("c_e_p_cosmo_diff", "Prompt energy (Cosmo diff)", 1000, 1000);
-        c_e_p_cosmo_diff->cd();
-
-        h_e_p_cosmo_diff->SetLineWidth(3);
-        h_e_p_cosmo_diff->SetLineStyle(kSolid);
-        h_e_p_cosmo_diff->SetLineColorAlpha(kBlue, 1.0);
-
-        h_e_p_cosmo_diff->Draw();
-
-        c_e_p_cosmo_diff->Update();
+        plot_basic(h_rho_z_d_cosmo_sig, "COLZ");
     }
 
 private:

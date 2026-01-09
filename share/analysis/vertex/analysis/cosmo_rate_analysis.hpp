@@ -226,21 +226,21 @@ private:
 
         c->Update();
 
-        double time_window = 1.2;
-        double binning = time_window / 120.0;
-        std::cout << "nIBD = " << f->GetParameter(4) * time_window / binning << " +/- " << f->GetParError(4) * time_window / binning << '\n';
-        std::cout << "nLi = " << f->GetParameter(0) * f->GetParameter(1) << '\n';
-        std::cout << "nHe = " << (1.0 - f->GetParameter(0)) * f->GetParameter(1) << '\n';
-        std::cout << "Li decay = " << f->GetParameter(2) << '\n';
-        std::cout << "He decay = " << f->GetParameter(3) << '\n';
-        std::cout << "Fit Results for " << h->GetName() << ":\n";
-
-
         // double time_window = 1.2;
         // double binning = time_window / 120.0;
+        // std::cout << "nIBD = " << f->GetParameter(4) * time_window / binning << " +/- " << f->GetParError(4) * time_window / binning << '\n';
+        // std::cout << "nLi = " << f->GetParameter(0) * f->GetParameter(1) << '\n';
+        // std::cout << "nHe = " << (1.0 - f->GetParameter(0)) * f->GetParameter(1) << '\n';
+        // std::cout << "Li decay = " << f->GetParameter(2) << '\n';
+        // std::cout << "He decay = " << f->GetParameter(3) << '\n';
         // std::cout << "Fit Results for " << h->GetName() << ":\n";
-        // std::cout << "nIBD = " << f->GetParameter(0) * time_window / binning << " +/- " << f->GetParError(0) * time_window / binning << '\n';
-        // std::cout << "nLiHe = " << f->GetParameter(1) * f->GetParameter(2) * (1 - std::exp(-time_window / f->GetParameter(2))) / binning << '\n'; 
+
+
+        double time_window = 1.2;
+        double binning = time_window / 120.0;
+        std::cout << "Fit Results for " << h->GetName() << ":\n";
+        std::cout << "nIBD = " << f->GetParameter(0) * time_window / binning << " +/- " << f->GetParError(0) * time_window / binning << '\n';
+        std::cout << "nLiHe = " << f->GetParameter(1) * f->GetParameter(2) * (1 - std::exp(-time_window / f->GetParameter(2))) / binning << '\n'; 
 
 
     }

@@ -6,6 +6,7 @@
 #include <TCanvas.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TLegend.h>
 
 #include "utils/event.hpp"
 #include "utils/numpy.hpp"
@@ -172,10 +173,46 @@ void pimp_my_histogram(TH1D* h, Style_t linestyle, Width_t linewidth, Color_t li
     h->SetLineColorAlpha(linecolor, linealpha);
 }
 
-TCanvas* plot_basic(TH1D* h) {
+TCanvas* plot_basic(TH1D* h, const char* options = "") {
     TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), h->GetTitle(), 1000, 1000);
     c->cd();
-    h->Draw();
+    h->Draw(options);
+    c->Update();
+    return c;
+}
+
+TCanvas* plot_multiple(const std::string& name, const std::string& title, std::initializer_list<TH1D*> hists, const char* options = "") {
+    if (hists.size() == 0) return nullptr;
+    TH1D* first = *hists.begin();
+    double max_val = 0;
+    for (TH1D* h : hists) max_val = std::max(max_val, h->GetMaximum());
+    first->SetMaximum(max_val * 1.15);
+    TCanvas* c = new TCanvas(name.c_str(), title.c_str(), 1000, 1000);
+    c->SetGrid();
+    TLegend* leg = new TLegend(0.65, 0.75, 0.88, 0.88);
+    leg->SetBorderSize(1);
+    bool is_first = true;
+    for (TH1D* h : hists) {
+        if (!h) continue;
+        if (is_first) {
+            h->Draw(options);
+            is_first = false;
+        } 
+        else {
+            h->Draw(Form("%s SAME", options));
+        }
+
+        leg->AddEntry(h, h->GetTitle(), "l");
+    }
+    leg->Draw();
+    c->Update();
+    return c;
+}
+
+TCanvas* plot_basic(TH2D* h, const char* options = "") {
+    TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), h->GetTitle(), 1000, 1000);
+    c->cd();
+    h->Draw(options);
     c->Update();
     return c;
 }
