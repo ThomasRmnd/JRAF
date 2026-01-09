@@ -68,6 +68,7 @@ bool IBDAnalysis::initialize() {
 
 void IBDAnalysis::process(const EventContext::View& events) {
     run_id = events.runid();
+    // TODO: correct the flasher cut
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
     std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;
     for (const track& trk : events.tracks()) {
