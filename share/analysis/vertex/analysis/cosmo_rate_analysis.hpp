@@ -202,6 +202,9 @@ private:
     };
 
     CosmoRateFitResult fit_cosmo_rate(TH1D* h) {
+        if (h->GetEntries() == 0) {
+            return {0, 0, 0, 0};
+        }
         double constant_term = 0.0;
         for (int bin = h->GetXaxis()->FindBin(0.8); bin <= h->GetXaxis()->GetNbins(); ++bin) {
             constant_term += h->GetBinContent(bin);
