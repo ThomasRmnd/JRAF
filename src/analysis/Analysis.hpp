@@ -42,9 +42,12 @@ protected:
     double stdq_p;
     double minq_p;
     double maxq_p;
-    std::size_t nhit_p;
     double meant_p;
     double stdt_p;
+    std::size_t npmt_p;
+    std::size_t nhit_p;
+    double meanhit_p;
+    double stdhit_p;
 
     double posx_d;
     double posy_d;
@@ -58,9 +61,12 @@ protected:
     double stdq_d;
     double minq_d;
     double maxq_d;
-    std::size_t nhit_d;
     double meant_d;
     double stdt_d;
+    std::size_t npmt_d;
+    std::size_t nhit_d;
+    double meanhit_d;
+    double stdhit_d;
 
 };
 

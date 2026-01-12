@@ -56,7 +56,7 @@ struct vertex_metadata {
     double stdq;
     double minq;
     double maxq;
-    std::size_t nhit;
+    std::size_t npmt;
     double meant;
     double stdt;
 

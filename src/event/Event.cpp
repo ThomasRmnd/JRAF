@@ -33,25 +33,30 @@ bool Event::load(JM::EvtNavigator* nav) {
             t = static_cast<double>(ch->firstHitTime());
             calib.totq += q;
             calib.meant += t;
-            ++calib.nhit;
+            ++calib.npmt;
+            calib.nhit += ch->time().size();
             if (q < calib.minq) calib.minq = q;
             if (q > calib.maxq) calib.maxq = q;
         }
-        if (calib.nhit > 0) {
-            calib.meanq = calib.totq = calib.nhit;
-            calib.meant = calib.meant / calib.nhit;
+        if (calib.npmt > 0) {
+            calib.meanq = calib.totq = calib.npmt;
+            calib.meant = calib.meant / calib.npmt;
+            calib.meanhit = static_cast<double>(calib.nhit) / calib.npmt;
         }
         double sqq = 0.0;
         double sqt = 0.0;
+        double sqhit = 0.0;
         for (const JM::CalibPmtChannel* ch : chlist) {
             q = static_cast<double>(ch->nPE());
             t = static_cast<double>(ch->firstHitTime());
             sqq += (q - calib.meanq) * (q - calib.meanq);
             sqt += (t - calib.meant) * (t - calib.meant);
+            sqhit += (static_cast<double>(ch->time().size()) - calib.meanhit) * (static_cast<double>(ch->time().size()) - calib.meanhit);
         }
-        if (calib.nhit > 1) {
-            calib.stdq = std::sqrt(sqq / (calib.nhit - 1));
-            calib.stdt = std::sqrt(sqt / (calib.nhit - 1));
+        if (calib.npmt > 1) {
+            calib.stdq = std::sqrt(sqq / (calib.npmt - 1));
+            calib.stdt = std::sqrt(sqt / (calib.npmt - 1));
+            calib.stdhit = std::sqrt(sqhit / (calib.npmt - 1));
         }
     }
     

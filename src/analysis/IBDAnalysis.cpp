@@ -29,9 +29,12 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("stdq_n", &stdq_n);
     m_tree->Branch("minq_n", &minq_n);
     m_tree->Branch("maxq_n", &maxq_n);
-    m_tree->Branch("nhit_n", &nhit_n);
     m_tree->Branch("meant_n", &meant_n);
     m_tree->Branch("stdt_n", &stdt_n);
+    m_tree->Branch("npmt_n", &npmt_n);
+    m_tree->Branch("nhit_n", &nhit_n);
+    m_tree->Branch("meanhit_n", &meanhit_n);
+    m_tree->Branch("stdhit_n", &stdhit_n);
 
     m_tree->Branch("posx_mult", &posx_mult);
     m_tree->Branch("posy_mult", &posy_mult);
@@ -46,9 +49,12 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("stdq_mult", &stdq_mult);
     m_tree->Branch("minq_mult", &minq_mult);
     m_tree->Branch("maxq_mult", &maxq_mult);
-    m_tree->Branch("nhit_mult", &nhit_mult);
     m_tree->Branch("meant_mult", &meant_mult);
     m_tree->Branch("stdt_mult", &stdt_mult);
+    m_tree->Branch("npmt_mult", &npmt_mult);
+    m_tree->Branch("nhit_mult", &nhit_mult);
+    m_tree->Branch("meanhit_mult", &meanhit_mult);
+    m_tree->Branch("stdhit_mult", &stdhit_mult);
 
     m_tree->Branch("method_mu", &method_mu);
     m_tree->Branch("loc_mu", &loc_mu);
@@ -68,7 +74,6 @@ bool IBDAnalysis::initialize() {
 
 void IBDAnalysis::process(const EventContext::View& events) {
     run_id = events.runid();
-    // TODO: correct the flasher cut
     std::vector<TimeRangeMuonVetoSelection> mu_cut;
     std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;
     for (const track& trk : events.tracks()) {
@@ -249,9 +254,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
         stdq_p = ibd.pair.prompt.calib.stdq;
         minq_p = ibd.pair.prompt.calib.minq;
         maxq_p = ibd.pair.prompt.calib.maxq;
-        nhit_p = ibd.pair.prompt.calib.nhit;
         meant_p = ibd.pair.prompt.calib.meant;
         stdt_p = ibd.pair.prompt.calib.stdt;
+        npmt_p = ibd.pair.prompt.calib.npmt;
+        nhit_p = ibd.pair.prompt.calib.nhit;
+        meanhit_p = ibd.pair.prompt.calib.meanhit;
+        stdhit_p = ibd.pair.prompt.calib.stdhit;
 
         posx_d = ibd.pair.delayed.pos.x;
         posy_d = ibd.pair.delayed.pos.y;
@@ -265,9 +273,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
         stdq_d = ibd.pair.delayed.calib.stdq;
         minq_d = ibd.pair.delayed.calib.minq;
         maxq_d = ibd.pair.delayed.calib.maxq;
-        nhit_d = ibd.pair.delayed.calib.nhit;
         meant_d = ibd.pair.delayed.calib.meant;
         stdt_d = ibd.pair.delayed.calib.stdt;
+        npmt_d = ibd.pair.delayed.calib.npmt;
+        nhit_d = ibd.pair.delayed.calib.nhit;
+        meanhit_d = ibd.pair.delayed.calib.meanhit;
+        stdhit_d = ibd.pair.delayed.calib.stdhit;
 
         posx_n.clear();
         posy_n.clear();
@@ -281,9 +292,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
         stdq_n.clear();
         minq_n.clear();
         maxq_n.clear();
-        nhit_n.clear();
         meant_n.clear();
         stdt_n.clear();
+        npmt_n.clear();
+        nhit_n.clear();
+        meanhit_n.clear();
+        stdhit_n.clear();
 
         for (const vertex& neu : ibd.neus) {
             posx_n.push_back(neu.pos.x);
@@ -298,9 +312,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
             stdq_n.push_back(neu.calib.stdq);
             minq_n.push_back(neu.calib.minq);
             maxq_n.push_back(neu.calib.maxq);
-            nhit_n.push_back(neu.calib.nhit);
             meant_n.push_back(neu.calib.meant);
             stdt_n.push_back(neu.calib.stdt);
+            npmt_n.push_back(neu.calib.npmt);
+            nhit_n.push_back(neu.calib.nhit);
+            meanhit_n.push_back(neu.calib.meanhit);
+            stdhit_n.push_back(neu.calib.stdhit);
         }
 
         posx_mult.clear();
@@ -316,9 +333,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
         stdq_mult.clear();
         minq_mult.clear();
         maxq_mult.clear();
-        nhit_mult.clear();
         meant_mult.clear();
         stdt_mult.clear();
+        npmt_mult.clear();
+        nhit_mult.clear();
+        meanhit_mult.clear();
+        stdhit_mult.clear();
 
         for (const mult_info& mult : ibd.mults) {
             posx_mult.push_back(mult.vtx.pos.x);
@@ -334,9 +354,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
             stdq_mult.push_back(mult.vtx.calib.stdq);
             minq_mult.push_back(mult.vtx.calib.minq);
             maxq_mult.push_back(mult.vtx.calib.maxq);
-            nhit_mult.push_back(mult.vtx.calib.nhit);
             meant_mult.push_back(mult.vtx.calib.meant);
             stdt_mult.push_back(mult.vtx.calib.stdt);
+            npmt_mult.push_back(mult.vtx.calib.npmt);
+            nhit_mult.push_back(mult.vtx.calib.nhit);
+            meanhit_mult.push_back(mult.vtx.calib.meanhit);
+            stdhit_mult.push_back(mult.vtx.calib.stdhit);
         }
 
         m_tree->Fill();

@@ -27,9 +27,12 @@ bool Analysis::initialize() {
     m_tree->Branch("stdq_p", &stdq_p);
     m_tree->Branch("minq_p", &minq_p);
     m_tree->Branch("maxq_p", &maxq_p);
-    m_tree->Branch("nhit_p", &nhit_p);
     m_tree->Branch("meant_p", &meant_p);
     m_tree->Branch("stdt_p", &stdt_p);
+    m_tree->Branch("npmt_p", &npmt_p);
+    m_tree->Branch("nhit_p", &nhit_p);
+    m_tree->Branch("meanhit_p", &meanhit_p);
+    m_tree->Branch("stdhit_p", &stdhit_p);
 
     m_tree->Branch("posx_d", &posx_d);
     m_tree->Branch("posy_d", &posy_d);
@@ -43,9 +46,12 @@ bool Analysis::initialize() {
     m_tree->Branch("stdq_d", &stdq_d);
     m_tree->Branch("minq_d", &minq_d);
     m_tree->Branch("maxq_d", &maxq_d);
-    m_tree->Branch("nhit_d", &nhit_d);
     m_tree->Branch("meant_d", &meant_d);
     m_tree->Branch("stdt_d", &stdt_d);
+    m_tree->Branch("npmt_d", &npmt_d);
+    m_tree->Branch("nhit_d", &nhit_d);
+    m_tree->Branch("meanhit_d", &meanhit_d);
+    m_tree->Branch("stdhit_d", &stdhit_d);
 
     return true;
 }

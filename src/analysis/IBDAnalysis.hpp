@@ -48,9 +48,12 @@ private:
     std::vector<double> stdq_n;
     std::vector<double> minq_n;
     std::vector<double> maxq_n;
-    std::vector<std::size_t> nhit_n;
     std::vector<double> meant_n;
     std::vector<double> stdt_n;
+    std::vector<std::size_t> npmt_n;
+    std::vector<std::size_t> nhit_n;
+    std::vector<double> meanhit_n;
+    std::vector<double> stdhit_n;
 
     std::vector<double> posx_mult;
     std::vector<double> posy_mult;
@@ -65,9 +68,12 @@ private:
     std::vector<double> stdq_mult;
     std::vector<double> minq_mult;
     std::vector<double> maxq_mult;
-    std::vector<std::size_t> nhit_mult;
     std::vector<double> meant_mult;
     std::vector<double> stdt_mult;
+    std::vector<std::size_t> npmt_mult;
+    std::vector<std::size_t> nhit_mult;
+    std::vector<double> meanhit_mult;
+    std::vector<double> stdhit_mult;
 
     std::vector<std::string> method_mu;
     std::vector<int> loc_mu;

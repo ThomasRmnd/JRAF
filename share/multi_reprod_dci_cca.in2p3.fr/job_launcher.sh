@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------------------------
 #  JUNO Job Submission Helper
-#  Purpose: Automate hep_sub job submissions for multi ReProd processing
+#  Purpose: Automate job submissions for multi processing
 #--------------------------------------------------------------------------------------------------
 
 set -euo pipefail
@@ -12,13 +12,28 @@ IFS=$'\n\t'
 # Utility functions
 #==============================
 
-source /pbs/home/t/traymond/share/bash/logging.sh
+HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+if [[ "${HOSTNAME}" =~ ^cca[0-9]+$ ]]; then
+    # Detect CC-IN2P3 cluster
+    CLUSTER="CC-IN2P3"
+    source /pbs/home/t/traymond/share/bash/logging.sh
+elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
+    # Detect IHEP cluster
+    CLUSTER="IHEP"
+    source /junofs/users/traymond/bash/logging.sh
+else
+    echo "ERROR: Unknown cluster. Hostname: ${HOSTNAME}" >&2
+    echo "Expected CC-IN2P3 (cca###) or IHEP (lxlogin###.ihep.ac.cn)" >&2
+    exit 1
+fi
+
+log INFO "Cluster detected: ${CLUSTER}"
 
 #==============================
 # Configuration defaults
 #==============================
 
-EOS_BASE="root://junoeos01.ihep.ac.cn/"
+XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
 FILE_RANGE=100
 TIME_WINDOW=("-2.0" "2.0")
@@ -36,7 +51,6 @@ Required:
   --run-number <number>        Run number to process
 
 Optional:
-  --list-base <path>           Path to list base (default: $LIST_BASE)
   --file-range <num>             Max number of consecutive files per job (default: $FILE_RANGE)
   --property-file <path>       Path to property file
   --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
@@ -54,7 +68,6 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --run-number)    RUN_NUMBER="$2"; shift 2 ;;
-            --list-base)     LIST_BASE="$2"; shift 2 ;;
             --file-range)    FILE_RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
@@ -77,13 +90,15 @@ parse_args() {
 
 load_file_lists() {
     local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
+    local esd_list_file="${LIST_BASE}/esd_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST   < <(xrdfs "$EOS_BASE" cat "$rtraw_list_file")
+    mapfile -t RTRAW_LIST < <(xrdfs "${XRD_URL_EOS}" cat "${rtraw_list_file}")
+    mapfile -t ESD_LIST   < <(xrdfs "${XRD_URL_EOS}" cat "${esd_list_file}")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
+    log INFO "Number of ESD   files: ${#ESD_LIST[@]}"
 }
-
 
 #==============================
 # Prepare submission arguments
@@ -165,7 +180,7 @@ submit_jobs() {
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
             job_worker.sh \
-            "$RUN_NUMBER" "$start" "$end" --skip-if-exist "${EXTRA_ARGS[@]}"
+            "$RUN_NUMBER" "$start" "$end" "${EXTRA_ARGS[@]}"
         # --no-local-copy --skip-if-exist
         # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log"
     done

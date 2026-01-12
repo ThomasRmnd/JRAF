@@ -34,6 +34,139 @@
 
 #include "analysis/Analysis.hpp"
 #include "event/Event.hpp"
+#include "veto/Veto.hpp"
+
+struct DAQTimeSaver {
+
+    TTree* tree = nullptr;
+    int run_id = 0;
+    time_t sec = 0l;
+    int nsec = 0;
+
+    bool is_initialized = false;
+    TimeStamp last_ts{0, 0};
+
+    bool init() {
+        tree = new TTree("DAQ", "DAQ");
+        if (!tree) {
+            LogError << "Cannot create DAQ TTree\n";
+            return false;
+        }
+        tree->Branch("run_id", &run_id);
+        tree->Branch("sec", &sec);
+        tree->Branch("nsec", &nsec);
+        return true;
+    }
+
+    bool add(const TimeStamp& ts, int run) {
+        run_id = run;
+        if (!is_initialized) {
+            last_ts = ts;
+            is_initialized = true;
+            return true;
+        }
+        TimeStamp diff = ts - last_ts;
+        TimeStamp daqtime{sec, nsec};
+        daqtime.Add(diff);
+        sec = daqtime.GetSec();
+        nsec = daqtime.GetNanoSec();
+        last_ts = ts;
+        return true;
+    };
+
+    bool write() {
+        if (!tree) return false;
+        tree->Fill();
+        tree->Write();
+        return true;
+    }
+
+};
+
+struct VetoTimeSaver {
+
+    std::unordered_map<VetoType, TimeStamp> veto_map {
+        {VetoType::MissingHeaders, TimeStamp{1, 200000000}},
+        {VetoType::BeginningOfJob, TimeStamp{1, 200000000}},
+        {VetoType::BigGaps, TimeStamp{1, 200000000}},
+        {VetoType::Muon, TimeStamp{0, 5000000}}
+    };
+
+    TTree* tree = nullptr;
+
+    int run_id = 0;
+    time_t sec = 0l;
+    int nsec = 0;
+
+    unsigned char veto_type = 0;
+    time_t veto_sec = 0l;
+    int veto_nsec = 0;
+
+    TimeStamp last_ts{0, 0};
+    TimeStamp veto_duration{0, 0};
+
+    bool init() {
+        tree = new TTree("Veto", "Veto");
+        if (!tree) {
+            LogError << "Cannot create veto TTree\n";
+            return false;
+        }
+        tree->Branch("run_id", &run_id);
+        tree->Branch("sec", &sec);
+        tree->Branch("nsec", &nsec);
+        tree->Branch("veto_type", &veto_type);
+        tree->Branch("veto_sec", &veto_sec);
+        tree->Branch("veto_nsec", &veto_nsec);
+        return true;
+    }
+
+    bool create(const TimeStamp& ts, VetoType type, int run) {
+        std::unordered_map<VetoType, TimeStamp>::const_iterator it = veto_map.find(type);
+        if (it == veto_map.end()) {
+            return false;
+        }
+        run_id = run;
+        sec = ts.GetSec();
+        nsec = ts.GetNanoSec();
+        last_ts = ts;
+        veto_type = static_cast<unsigned char>(it->first);
+        veto_duration = it->second;
+        veto_sec = veto_duration.GetSec();
+        veto_nsec = veto_duration.GetNanoSec();
+        tree->Fill();
+        return true;
+    }
+
+    bool create_no_veto(const TimeStamp& ts, VetoType type, int run) {
+        std::unordered_map<VetoType, TimeStamp>::const_iterator it = veto_map.find(type);
+        if (it == veto_map.end()) {
+            return false;
+        }
+        run_id = run;
+        sec = ts.GetSec();
+        nsec = ts.GetNanoSec();
+        veto_type = static_cast<unsigned char>(it->first);
+        veto_sec = it->second.GetSec();
+        veto_nsec = it->second.GetNanoSec();
+        tree->Fill();
+        return true;
+    }
+
+    bool inVeto(const TimeStamp& ts) {
+        TimeStamp diff = ts - last_ts;
+        if (diff < veto_duration) {
+            return true;
+        }
+        return false;
+    }
+
+    bool write() {
+        if (!tree) return false;
+        tree->Write();
+        return true;
+    }
+
+};
 
 struct ContextFileTracker {
 
@@ -337,25 +470,19 @@ private:
     
     TtRecoFile m_ttRecoFile;
     ContextFileTracker m_contextTracker;
-    bool m_targetIsFirst;
-    TimeStamp m_targetFirstTs{0, 0};
-    TimeStamp m_previousTs{0, 0};
-    TimeStamp m_vetoTs{0, 0};
-    TrackSaver m_trkSaver;
-    
-    std::vector<std::string> m_methods;
-    std::vector<std::shared_ptr<Analysis>> m_analyses;
-
-    // Output file
+    BeginningOfJobVetoTracker m_begOfJobVetoTrkr;
+    MissingHeaderVetoTracker m_missHdrVetoTrkr;
+    BigGapsVetoTracker m_bigGapsVetoTrkr;
+    MuonVetoTracker m_muvetoTrkr;
 
     std::string m_ofilename;
     TFile* m_file;
+    DAQTimeSaver m_daqTimeSaver;
+    VetoTimeSaver m_vetoTimeSaver;
+    std::vector<std::string> m_methods;
+    std::vector<std::shared_ptr<Analysis>> m_analyses;
 
-    TTree* m_daq_tree;
-    time_t m_daq_sec;
-    int m_daq_nsec;
-    time_t m_muveto_sec;
-    int m_muveto_nsec;
+    TrackSaver m_trkSaver;
 
 	bool initBufSvc();
     bool initRecTool();

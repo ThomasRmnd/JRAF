@@ -22,7 +22,7 @@ struct InputVars {
     double stdq_p;
     double minq_p;
     double maxq_p;
-    std::size_t nhit_p;
+    std::size_t npmt_p;
     double meant_p;
     double stdt_p;
 
@@ -38,7 +38,7 @@ struct InputVars {
     double stdq_d;
     double minq_d;
     double maxq_d;
-    std::size_t nhit_d;
+    std::size_t npmt_d;
     double meant_d;
     double stdt_d;
 
@@ -54,7 +54,7 @@ struct InputVars {
     std::vector<double> *stdq_n = nullptr;
     std::vector<double> *minq_n = nullptr;
     std::vector<double> *maxq_n = nullptr;
-    std::vector<std::size_t> *nhit_n = nullptr;
+    std::vector<std::size_t> *npmt_n = nullptr;
     std::vector<double> *meant_n = nullptr;
     std::vector<double> *stdt_n = nullptr;
 
@@ -71,7 +71,7 @@ struct InputVars {
     std::vector<double> *stdq_mult = nullptr;
     std::vector<double> *minq_mult = nullptr;
     std::vector<double> *maxq_mult = nullptr;
-    std::vector<std::size_t> *nhit_mult = nullptr;
+    std::vector<std::size_t> *npmt_mult = nullptr;
     std::vector<double> *meant_mult = nullptr;
     std::vector<double> *stdt_mult = nullptr;
 
@@ -106,7 +106,7 @@ struct OuputVars {
     double stdq_p;
     double minq_p;
     double maxq_p;
-    std::size_t nhit_p;
+    std::size_t npmt_p;
     double meant_p;
     double stdt_p;
 
@@ -122,7 +122,7 @@ struct OuputVars {
     double stdq_d;
     double minq_d;
     double maxq_d;
-    std::size_t nhit_d;
+    std::size_t npmt_d;
     double meant_d;
     double stdt_d;
 
@@ -138,7 +138,7 @@ struct OuputVars {
     std::vector<double> stdq_n;
     std::vector<double> minq_n;
     std::vector<double> maxq_n;
-    std::vector<std::size_t> nhit_n;
+    std::vector<std::size_t> npmt_n;
     std::vector<double> meant_n;
     std::vector<double> stdt_n;
 
@@ -155,7 +155,7 @@ struct OuputVars {
     std::vector<double> stdq_mult;
     std::vector<double> minq_mult;
     std::vector<double> maxq_mult;
-    std::vector<std::size_t> nhit_mult;
+    std::vector<std::size_t> npmt_mult;
     std::vector<double> meant_mult;
     std::vector<double> stdt_mult;
 
@@ -211,7 +211,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tin->SetBranchAddress("stdq_p", &varin.stdq_p);
         tin->SetBranchAddress("minq_p", &varin.minq_p);
         tin->SetBranchAddress("maxq_p", &varin.maxq_p);
-        tin->SetBranchAddress("nhit_p", &varin.nhit_p);
+        tin->SetBranchAddress("npmt_p", &varin.npmt_p);
         tin->SetBranchAddress("meant_p", &varin.meant_p);
         tin->SetBranchAddress("stdt_p", &varin.stdt_p);
         tin->SetBranchAddress("posx_d", &varin.posx_d);
@@ -225,7 +225,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tin->SetBranchAddress("stdq_d", &varin.stdq_d);
         tin->SetBranchAddress("minq_d", &varin.minq_d);
         tin->SetBranchAddress("maxq_d", &varin.maxq_d);
-        tin->SetBranchAddress("nhit_d", &varin.nhit_d);
+        tin->SetBranchAddress("npmt_d", &varin.npmt_d);
         tin->SetBranchAddress("meant_d", &varin.meant_d);
         tin->SetBranchAddress("stdt_d", &varin.stdt_d);
         tin->SetBranchAddress("posx_n", &varin.posx_n);
@@ -239,7 +239,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tin->SetBranchAddress("stdq_n", &varin.stdq_n);
         tin->SetBranchAddress("minq_n", &varin.minq_n);
         tin->SetBranchAddress("maxq_n", &varin.maxq_n);
-        tin->SetBranchAddress("nhit_n", &varin.nhit_n);
+        tin->SetBranchAddress("npmt_n", &varin.npmt_n);
         tin->SetBranchAddress("meant_n", &varin.meant_n);
         tin->SetBranchAddress("stdt_n", &varin.stdt_n);
         tin->SetBranchAddress("posx_mult", &varin.posx_mult);
@@ -254,7 +254,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tin->SetBranchAddress("stdq_mult", &varin.stdq_mult);
         tin->SetBranchAddress("minq_mult", &varin.minq_mult);
         tin->SetBranchAddress("maxq_mult", &varin.maxq_mult);
-        tin->SetBranchAddress("nhit_mult", &varin.nhit_mult);
+        tin->SetBranchAddress("npmt_mult", &varin.npmt_mult);
         tin->SetBranchAddress("meant_mult", &varin.meant_mult);
         tin->SetBranchAddress("stdt_mult", &varin.stdt_mult);
         tin->SetBranchAddress("method_mu", &varin.method_mu);
@@ -282,7 +282,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tout->Branch("stdq_p", &varout.stdq_p);
         tout->Branch("minq_p", &varout.minq_p);
         tout->Branch("maxq_p", &varout.maxq_p);
-        tout->Branch("nhit_p", &varout.nhit_p);
+        tout->Branch("npmt_p", &varout.npmt_p);
         tout->Branch("meant_p", &varout.meant_p);
         tout->Branch("stdt_p", &varout.stdt_p);
         tout->Branch("posx_d", &varout.posx_d);
@@ -296,7 +296,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tout->Branch("stdq_d", &varout.stdq_d);
         tout->Branch("minq_d", &varout.minq_d);
         tout->Branch("maxq_d", &varout.maxq_d);
-        tout->Branch("nhit_d", &varout.nhit_d);
+        tout->Branch("npmt_d", &varout.npmt_d);
         tout->Branch("meant_d", &varout.meant_d);
         tout->Branch("stdt_d", &varout.stdt_d);
         tout->Branch("posx_n", &varout.posx_n);
@@ -310,7 +310,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tout->Branch("stdq_n", &varout.stdq_n);
         tout->Branch("minq_n", &varout.minq_n);
         tout->Branch("maxq_n", &varout.maxq_n);
-        tout->Branch("nhit_n", &varout.nhit_n);
+        tout->Branch("npmt_n", &varout.npmt_n);
         tout->Branch("meant_n", &varout.meant_n);
         tout->Branch("stdt_n", &varout.stdt_n);
         tout->Branch("posx_mult", &varout.posx_mult);
@@ -325,7 +325,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
         tout->Branch("stdq_mult", &varout.stdq_mult);
         tout->Branch("minq_mult", &varout.minq_mult);
         tout->Branch("maxq_mult", &varout.maxq_mult);
-        tout->Branch("nhit_mult", &varout.nhit_mult);
+        tout->Branch("npmt_mult", &varout.npmt_mult);
         tout->Branch("meant_mult", &varout.meant_mult);
         tout->Branch("stdt_mult", &varout.stdt_mult);
         tout->Branch("method_mu", &varout.method_mu);
@@ -360,7 +360,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
             varout.stdq_p = varin.stdq_p;
             varout.minq_p = varin.minq_p;
             varout.maxq_p = varin.maxq_p;
-            varout.nhit_p = varin.nhit_p;
+            varout.npmt_p = varin.npmt_p;
             varout.meant_p = varin.meant_p;
             varout.stdt_p = varin.stdt_p;
             varout.posx_d = varin.posx_d;
@@ -374,7 +374,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
             varout.stdq_d = varin.stdq_d;
             varout.minq_d = varin.minq_d;
             varout.maxq_d = varin.maxq_d;
-            varout.nhit_d = varin.nhit_d;
+            varout.npmt_d = varin.npmt_d;
             varout.meant_d = varin.meant_d;
             varout.stdt_d = varin.stdt_d;
 
@@ -403,7 +403,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
             varout.stdq_n.assign(varin.stdq_n->end() - varin.e_n->size(), varin.stdq_n->end());
             varout.minq_n.assign(varin.minq_n->end() - varin.e_n->size(), varin.minq_n->end());
             varout.maxq_n.assign(varin.maxq_n->end() - varin.e_n->size(), varin.maxq_n->end());
-            varout.nhit_n.assign(varin.nhit_n->end() - varin.e_n->size(), varin.nhit_n->end());
+            varout.npmt_n.assign(varin.npmt_n->end() - varin.e_n->size(), varin.npmt_n->end());
             varout.meant_n.assign(varin.meant_n->end() - varin.e_n->size(), varin.meant_n->end());
             varout.stdt_n.assign(varin.stdt_n->end() - varin.e_n->size(), varin.stdt_n->end());
 
@@ -420,7 +420,7 @@ void tree_fixer(const std::string& ifilename, const std::string& ofilename) {
             varout.stdq_mult.assign(varin.stdq_mult->end() - varin.e_mult->size(), varin.stdq_mult->end());
             varout.minq_mult.assign(varin.minq_mult->end() - varin.e_mult->size(), varin.minq_mult->end());
             varout.maxq_mult.assign(varin.maxq_mult->end() - varin.e_mult->size(), varin.maxq_mult->end());
-            varout.nhit_mult.assign(varin.nhit_mult->end() - varin.e_mult->size(), varin.nhit_mult->end());
+            varout.npmt_mult.assign(varin.npmt_mult->end() - varin.e_mult->size(), varin.npmt_mult->end());
             varout.meant_mult.assign(varin.meant_mult->end() - varin.e_mult->size(), varin.meant_mult->end());
             varout.stdt_mult.assign(varin.stdt_mult->end() - varin.e_mult->size(), varin.stdt_mult->end());
 

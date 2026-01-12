@@ -100,19 +100,8 @@ bool AnalysisGroupC::initAnalyses() {
         return false;
     }
 
-    m_daq_tree = new TTree("DAQTree", "DAQTree");
-    if (!m_daq_tree) {
-        LogError << "Failed to create TTree DAQTree\n";
-        return false;
-    }
-    m_daq_tree->Branch("daq_sec", &m_daq_sec);
-    m_daq_tree->Branch("daq_nsec", &m_daq_nsec);
-    m_daq_tree->Branch("muveto_sec", &m_muveto_sec);
-    m_daq_tree->Branch("muveto_nsec", &m_muveto_nsec);
-    m_daq_sec = 0l;
-    m_daq_nsec = 0;
-    m_muveto_sec = 0l;
-    m_muveto_nsec = 0;
+    if (!m_daqTimeSaver.init()) return false;
+    if (!m_vetoTimeSaver.init()) return false;
 
     m_methods = std::vector<std::string>{/* "Oec", */ "OMILREC", "MixedPhase", "OMILREC_JVtx" /* "JVertex" */};
 
@@ -195,19 +184,10 @@ bool AnalysisGroupC::execute() {
         return false;
     }
     m_tsEvt = TimeStamp{nav->TimeStamp().GetTimeSpec()};
-
+    int runId = nav->RunID();
     LogInfo << "TimeStamp: " << m_tsEvt << '\n';
 
     if (!m_contextTracker.isTarget(m_iptSvc)) return true;
-    if (m_iEvt == 1ul) {
-        m_targetIsFirst = true;
-        m_targetFirstTs = m_tsEvt;
-    }
-    LogInfo << "Target input is first " << m_targetIsFirst << '\n';
-    if (m_targetIsFirst) {
-        TimeStamp ts_diff = m_tsEvt - m_targetFirstTs;
-        if (ts_diff <= TimeStamp{0, 5000000}) return true;
-    }
 
     // DEBUG --- Timing
     using clock = std::chrono::steady_clock;
@@ -231,7 +211,8 @@ bool AnalysisGroupC::execute() {
             if ( (it->type & PmtType::PMT_20INCH) == it->type ) {
                 calib.totq += it->q;
                 calib.meant += it->fht;
-                ++calib.nhit;
+                ++calib.npmt;
+                calib.nhit += it->hittime.size();
                 if (it->q < calib.minq) calib.minq = it->q;
                 if (it->q > calib.maxq) calib.maxq = it->q;
             }
@@ -239,21 +220,25 @@ bool AnalysisGroupC::execute() {
                 totq_wp += it->q;
             }
         }
-        if (calib.nhit > 0) {
-            calib.meanq = calib.totq / calib.nhit;
-            calib.meant = calib.meant / calib.nhit;
+        if (calib.npmt > 0) {
+            calib.meanq = calib.totq / calib.npmt;
+            calib.meant = calib.meant / calib.npmt;
+            calib.meanhit = static_cast<double>(calib.nhit) / calib.npmt;
         }
         double sqq = 0.0;
         double sqt = 0.0;
+        double sqhit = 0.0;
         for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
             if (!it->used) continue;
             if ( (it->type & PmtType::PMT_20INCH) != it->type ) continue;
             sqq += (it->q - calib.meanq) * (it->q - calib.meanq);
             sqt += (it->fht - calib.meant) * (it->fht - calib.meant);
+            sqhit += (static_cast<double>(it->hittime.size()) - calib.meanhit) * (static_cast<double>(it->hittime.size()) - calib.meanhit);
         }
-        if (calib.nhit > 1) {
-            calib.stdq = std::sqrt(sqq / (calib.nhit - 1));
-            calib.stdt = std::sqrt(sqt / (calib.nhit - 1));
+        if (calib.npmt > 1) {
+            calib.stdq = std::sqrt(sqq / (calib.npmt - 1));
+            calib.stdt = std::sqrt(sqt / (calib.npmt - 1));
+            calib.stdhit = std::sqrt(sqhit / (calib.npmt - 1));
         }
 
         LogInfo << "TotQ: CD = " << calib.totq << ", WP = " << totq_wp << '\n';
@@ -312,7 +297,7 @@ bool AnalysisGroupC::execute() {
                     addTrack(rtrks, "CdWpTtChi2", curts, track::loc::cd, tracks);
                     LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
                     m_trkSaver.add(rtrks, "CdWpTtChi2", bufwrap.curEvt()->RunID(), curts);
-                    // TODO: Add track saver for CdClassify
+                    m_trkSaver.add(classify_cdt_hdr, "CdClassify", bufwrap.curEvt()->RunID(), curts);
                 }
                 if (is_possibly_wp_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::WP) {
                     JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
@@ -320,7 +305,7 @@ bool AnalysisGroupC::execute() {
                     LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
                     JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
                     addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
-                    // TODO: Add track saver for WpClassify
+                    // TODO NOT FOR NOW: Add track saver for WpClassify
                 }
             }
             if (tracks.empty()) {
@@ -381,21 +366,32 @@ bool AnalysisGroupC::execute() {
     auto t_after_load = clock::now();
     // DEBUG --- Timing
 
-    JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(nav);
-    JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
-    // JM::CdTriggerHeader* cd_trig_hdr = JM::getHeaderObject<JM::CdTriggerHeader>(nav);
-    JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
-    // JM::WpTriggerHeader* wp_trig_hdr = JM::getHeaderObject<JM::WpTriggerHeader>(nav);
-
-    // TODO: Re-add the header veto is missing
-    // TODO: Add big gaps veto
-    // TODO: Enlarge veto for begging of job
-        
-    if (!oec_hdr || (!cd_lpmt_calib_hdr && !wp_calib_hdr) /* || (!cd_trig_hdr && !wp_trig_hdr) */) {
-        m_vetoTs = m_tsEvt;
+    if (m_begOfJobVetoTrkr.check(m_iEvt)) {
+        if (!m_vetoTimeSaver.create(m_tsEvt, VetoType::BeginningOfJob, runId)) {
+            LogError << "Failed to create veto time saver for beginning of job\n";
+            return false;
+        }
     }
-    TimeStamp ts_diff = m_tsEvt - m_vetoTs;
-    if (ts_diff <= TimeStamp{0, 5000000}) return true;
+    if (m_missHdrVetoTrkr.check(nav)) {
+        if (!m_vetoTimeSaver.create(m_tsEvt, VetoType::MissingHeaders, runId)) {
+            LogError << "Failed to create veto time saver for missing headers\n";
+            return false;
+        }
+    }
+    if (m_bigGapsVetoTrkr.check(nav)) {
+        if (!m_vetoTimeSaver.create(m_tsEvt, VetoType::BigGaps, runId)) {
+            LogError << "Failed to create veto time saver for big gaps\n";
+            return false;
+        }
+    }
+    if (m_muvetoTrkr.check(nav)) {
+        if (!m_vetoTimeSaver.create_no_veto(m_tsEvt, VetoType::Muon, runId)) {
+            LogError << "Failed to create veto time saver for muon\n";
+            return false;
+        }
+    }
+        
+    if (m_vetoTimeSaver.inVeto(m_tsEvt)) return true;
 
     // DEBUG --- Timing
     auto t_before_context = clock::now();
@@ -427,22 +423,6 @@ bool AnalysisGroupC::execute() {
     auto t_after_analysis = clock::now();
     // DEBUG --- Timing
 
-    if (m_buf->begin() <= m_buf->current() - 1l) {
-        JM::EvtNavigator* prv_nav = (m_buf->current() - 1l)->get();
-        TimeStamp prv_ts{prv_nav->TimeStamp().GetTimeSpec()};
-        TimeStamp daq_ts{m_daq_sec, m_daq_nsec};
-        daq_ts.Add(m_tsEvt - prv_ts);
-        m_daq_sec = daq_ts.GetSec();
-        m_daq_nsec = daq_ts.GetNanoSec();
-    }
-    std::shared_ptr<Event> evt = EventCache::load(nav);
-    if (!evt->tracks.empty()) {
-        TimeStamp muveto_ts{m_muveto_sec, m_muveto_nsec};
-        muveto_ts.Add(TimeStamp{0, 5000000});
-        m_muveto_sec = muveto_ts.GetSec();
-        m_muveto_nsec = muveto_ts.GetNanoSec();
-    }
-
     auto t_load_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_load - t_start).count();
     auto t_context_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_context - t_before_context).count();
     auto t_analysis_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_after_analysis - t_after_context).count();
@@ -469,9 +449,9 @@ bool AnalysisGroupC::finalize() {
     
     if (!m_trkSaver.save()) return false;
     if (!m_file) return false;
-    m_daq_tree->Fill();
     m_file->cd();
-    m_daq_tree->Write();
+    if (!m_daqTimeSaver.write()) return false;
+    if (!m_vetoTimeSaver.write()) return false;
     for (std::shared_ptr<Analysis>& ana : m_analyses) {
         if (!ana->write()) return false;
     }
