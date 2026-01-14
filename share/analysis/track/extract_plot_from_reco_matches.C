@@ -188,6 +188,7 @@ void extract_plot_from_reco_matches(const char* filename) {
                 std::cout << sec << ' ' << nsec << ' ' << run_id << ' '
                           << pos_tt.X() << ' ' << pos_tt.Y() << ' ' << pos_tt.Z() << ' ' << dir_tt.X() << ' ' << dir_tt.Y() << ' ' << dir_tt.Z() << ' '
                           << pos_cdwp.X() << ' ' << pos_cdwp.Y() << ' ' << pos_cdwp.Z() << ' ' << dir_cdwp.X() << ' ' << dir_cdwp.Y() << ' ' << dir_cdwp.Z() << '\n';
+        }
 
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
         //     std::cout << TTimeStamp{sec, nsec} << ", angle: " << angles.back() << ", distance: " << distances.back() 
