@@ -58,8 +58,8 @@ EOF
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --site)    SITE="$2"; shift ;;
-            --campaign) CAMPAIGN="$2"; shift ;;
+            --site)    SITE="$2"; shift 2 ;;
+            --campaign) CAMPAIGN="$2"; shift 2 ;;
             --lower)   LOWER_BOUND="$2"; shift 2 ;;
             --upper)   UPPER_BOUND="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
