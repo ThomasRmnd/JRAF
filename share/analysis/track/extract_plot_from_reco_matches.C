@@ -187,7 +187,7 @@ void extract_plot_from_reco_matches(const char* filename) {
             rectangle_first_left <= angles.back() && angles.back() <= rectangle_first_right &&
             rectangle_first_bottom <= distances.back() && distances.back() <= rectangle_first_top
         ) {
-                std::cout << sec << ' ' << nsec << '\n';
+                std::cout << sec << ' ' << nsec << ' ' << run_id << '\n';
         }
 
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
