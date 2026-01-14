@@ -183,11 +183,11 @@ void extract_plot_from_reco_matches(const char* filename) {
         double rectangle_first_bottom = 15.5;
         double rectangle_first_top = 18.0;
 
-        if (rectangle_first_left <= angles.back() && angles.back() <= rectangle_first_right &&
-            rectangle_first_bottom <= distances.back() && distances.back() <= rectangle_first_top) {
-                std::cout << sec << ' ' << nsec << ' ' << run_id << ' ' << chi2_cdwp_v.back() << ' ' << chi2_tt_v.back() << ' '
-                          << pos_tt.X() << ' ' << pos_tt.Y() << ' ' << pos_tt.Z() << ' ' << dir_tt.X() << ' ' << dir_tt.Y() << ' ' << dir_tt.Z() << ' '
-                          << pos_cdwp.X() << ' ' << pos_cdwp.Y() << ' ' << pos_cdwp.Z() << ' ' << dir_cdwp.X() << ' ' << dir_cdwp.Y() << ' ' << dir_cdwp.Z() << '\n';
+        if (
+            rectangle_first_left <= angles.back() && angles.back() <= rectangle_first_right &&
+            rectangle_first_bottom <= distances.back() && distances.back() <= rectangle_first_top
+        ) {
+                std::cout << sec << ' ' << nsec << '\n';
         }
 
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
