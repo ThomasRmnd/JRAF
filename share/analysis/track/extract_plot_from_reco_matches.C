@@ -188,15 +188,18 @@ void extract_plot_from_reco_matches(const char* filename) {
         // }
     }
 
-    TCanvas* c_ts_diff = new TCanvas("c_ts_diff", "c_ts_diff", 1000, 1000);
-    c_ts_diff->cd();
-    h_ts_diff->Draw();
-    c_ts_diff->Update();
+    int min_run = *std::min_element(run_ids.begin(), run_ids.end());
+    int max_run = *std::max_element(run_ids.begin(), run_ids.end());
 
-    TCanvas* c_z_pt = new TCanvas("c_z_pt", "c_z_pt", 1000, 1000);
-    c_z_pt->cd();
-    h_z_pt->Draw();
-    c_z_pt->Update();
+    // TCanvas* c_ts_diff = new TCanvas("c_ts_diff", "c_ts_diff", 1000, 1000);
+    // c_ts_diff->cd();
+    // h_ts_diff->Draw();
+    // c_ts_diff->Update();
+
+    // TCanvas* c_z_pt = new TCanvas("c_z_pt", "c_z_pt", 1000, 1000);
+    // c_z_pt->cd();
+    // h_z_pt->Draw();
+    // c_z_pt->Update();
 
     TH1I* h_det = new TH1I("h_det", "h_det", 8, 0, 8);
     TH1D* h_angle = new TH1D("h_angle", "h_angle", 20, 0.0, 5.0);
@@ -303,9 +306,6 @@ void extract_plot_from_reco_matches(const char* filename) {
         h->SetLineWidth(4);
         h->SetLineStyle(style);
     };
-
-    int min_run = *std::min_element(run_ids.begin(), run_ids.end());
-    int max_run = *std::max_element(run_ids.begin(), run_ids.end());
 
     TCanvas* c_angle_run = new TCanvas("c_angle_run", "c_angle_run", 1000, 1000);
     c_angle_run->cd();
