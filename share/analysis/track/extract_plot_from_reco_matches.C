@@ -245,11 +245,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     }
     for (auto& [run_id, values] : map_angle_run_values) {
         std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
-        h_angle_run_summry->SetBinContent(run_id - min_run + 1, angles[angles.size() * 682 / 1000]);
+        h_angle_run_summry->SetBinContent(run_id - min_run + 1, values[values.size() * 682 / 1000]);
     }
     for (auto& [run_id, values] : map_distance_run_values) {
         std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
-        h_distance_run_summry->SetBinContent(run_id - min_run + 1, distances[distances.size() * 682 / 1000]);
+        h_distance_run_summry->SetBinContent(run_id - min_run + 1, values[values.size() * 682 / 1000]);
     }
 
     std::cout << h_angle->Integral(0, 20) << '/' << h_angle->Integral(0, 50) << '\n';
