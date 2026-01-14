@@ -147,14 +147,14 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         std::unordered_map<std::string, std::size_t> method_count = {
             {"CdWpTtChi2", 0ul},
-            {"WpClassify", 0ul}
+            {"CdClassify", 0ul}
         };
         std::size_t j = 0ul;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             ++(method_count[(*method)[i]]);
             if ((*method)[i] == "CdWpTtChi2") j = i;
         }
-        if (method_count["WpClassify"] != 1ul || method_count["CdWpTtChi2"] != 1ul) continue;
+        if (method_count["CdClassify"] != 1ul || method_count["CdWpTtChi2"] != 1ul) continue;
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
