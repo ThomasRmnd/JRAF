@@ -25,8 +25,6 @@ XRD_URL_CNAF="root://xrootd-archive.cr.cnaf.infn.it:1095/"
 XRD_BASEPATH_EOS="/eos"
 XRD_BASEPATH_CNAF="/production/storm/dirac"
 
-LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
-
 #==============================
 # Global Flags
 #==============================
@@ -56,13 +54,14 @@ EOF
 }
 
 parse_args() {
-    if (( $# < 3 )); then
+    if (( $# < 5 )); then
         log ERROR "Missing required arguments"
         usage >&2
         exit 1
     fi
 
     RUN_NUMBER="$1"; shift
+    LIST_BASE="$1"; shift
     RANGE_START="$1"; shift
     RANGE_END="$1"; shift
 
