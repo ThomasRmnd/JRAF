@@ -94,18 +94,23 @@ parse_args() {
     case "${CAMPAIGN}" in
         Normal)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25A)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25B)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25C)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25D)
             LIST_BASE="${RUN_LIST_REPROD25D%/*}"
+            RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
             ;;
         *)
             log ERROR "Invalid --campaign: ${CAMPAIGN}"
