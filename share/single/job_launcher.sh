@@ -34,7 +34,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 #==============================
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
-LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
+
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
 
@@ -44,15 +44,16 @@ LOG_LEVEL=3
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") --run-number <number> --site <str> --campaign <str> [options]
+Usage: $(basename "$0") --site <str> --campaign <str> --run <number> [options]
 
 Required:
   --site <str>                 Storage site selection {EOS|CNAF}
   --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
-  --run-number <number>        Run number to process
+  --run <num>                  Run number to process
+  --list-base <str>            Basepath for the file list       
 
 Optional:
-  --file-range <num>           Number of files to process (default: all)
+  --range <num>                Number of files to process (default: all)
   --property-file <path>       Path to property file
   --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
   --log-level <num>            Logging level (default: $LOG_LEVEL)
@@ -69,10 +70,11 @@ parse_args() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --run-number)    RUN_NUMBER="$2"; shift 2 ;;
             --site)          SITE="$2"; shift 2 ;;
             --campaign)      CAMPAIGN="$2"; shift 2 ;;
-            --file-range)    FILE_RANGE="$2"; shift 2 ;;
+            --run)           RUN_NUMBER="$2"; shift 2 ;;
+            --list-base)     LIST_BASE="$2"; shift 2 ;;
+            --range)    FILE_RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
@@ -82,7 +84,7 @@ parse_args() {
     done
 
     if [[ -z "${RUN_NUMBER:-}" ]]; then
-        log ERROR "--run-number is required"
+        log ERROR "--run is required"
         usage
         exit 1
     fi
