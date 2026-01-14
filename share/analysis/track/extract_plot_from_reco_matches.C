@@ -178,6 +178,17 @@ void extract_plot_from_reco_matches(const char* filename) {
         zenith_tt_v.push_back(-dir_tt.CosTheta());
         azimuth_tt_v.push_back( 180.0 / M_PI * (dir_tt.Phi() > 0.0 ? dir_tt.Phi() : dir_tt.Phi() + 2.0 * M_PI) );
 
+        double rectangle_first_left = 70.0;
+        double rectangle_first_right = 90.0;
+        double rectangle_first_bottom = 15.5;
+        double rectangle_first_top = 18.0;
+
+        if (rectangle_first_left <= angles.back() && angles.back() <= rectangle_first_right &&
+            rectangle_first_bottom <= distances.back() && distances.back() <= rectangle_first_top) {
+                std::cout << sec << ' ' << nsec << ' ' << run_id << ' '
+                          << pos_tt.X() << ' ' << pos_tt.Y() << ' ' << pos_tt.Z() << ' ' << dir_tt.X() << ' ' << dir_tt.Y() << ' ' << dir_tt.Z() << ' '
+                          << pos_cdwp.X() << ' ' << pos_cdwp.Y() << ' ' << pos_cdwp.Z() << ' ' << dir_cdwp.X() << ' ' << dir_cdwp.Y() << ' ' << dir_cdwp.Z() << '\n';
+
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
         //     std::cout << TTimeStamp{sec, nsec} << ", angle: " << angles.back() << ", distance: " << distances.back() 
         //               << ", cdwp_dir: (" << dir_cdwp.Theta() << ", " << dir_cdwp.Phi() << "), tt_dir: (" << dir_tt.Theta() << ", "<< dir_tt.Phi() << ")\n";
