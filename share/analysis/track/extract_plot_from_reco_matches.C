@@ -243,11 +243,11 @@ void extract_plot_from_reco_matches(const char* filename) {
         ++(map_angle_run_counts[run_ids[k]]);
         ++(map_distance_run_counts[run_ids[k]]);
     }
-    for (const auto& [run_id, values] : map_angle_run_values) {
+    for (auto& [run_id, values] : map_angle_run_values) {
         std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
         h_angle_run_summry->SetBinContent(run_id - min_run + 1, angles[angles.size() * 682 / 1000]);
     }
-    for (const auto& [run_id, values] : map_distance_run_values) {
+    for (auto& [run_id, values] : map_distance_run_values) {
         std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
         h_distance_run_summry->SetBinContent(run_id - min_run + 1, distances[distances.size() * 682 / 1000]);
     }
