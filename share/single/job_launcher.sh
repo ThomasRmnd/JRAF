@@ -47,9 +47,9 @@ usage() {
 Usage: $(basename "$0") --run-number <number> --site <str> --campaign <str> [options]
 
 Required:
-  --run-number <number>        Run number to process
   --site <str>                 Storage site selection {EOS|CNAF}
-  --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C}
+  --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
+  --run-number <number>        Run number to process
 
 Optional:
   --file-range <num>           Number of files to process (default: all)
@@ -100,14 +100,14 @@ parse_args() {
     esac
 
     if [[ -z "${CAMPAIGN:-}" ]]; then
-        log ERROR "--campaign is required {Normal|ReProd25A|ReProd25B|ReProd25C}"
+        log ERROR "--campaign is required {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}"
         usage
         exit 1
     fi
 
     case "${CAMPAIGN}" in
-        Normal|ReProd25A|ReProd25B|ReProd25C) ;;
-        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C})"
+        Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D) ;;
+        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D})"
            exit 1 ;;
     esac
 

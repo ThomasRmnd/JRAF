@@ -13,7 +13,7 @@ IFS=$'\n\t'
 #==============================
 
 HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-if [[ "${HOSTNAME}" =~ ^cca[0-9]+$ ]]; then
+if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
     # Detect CC-IN2P3 cluster
     CLUSTER="CC-IN2P3"
     source /pbs/home/t/traymond/share/bash/logging.sh
@@ -34,35 +34,89 @@ log INFO "Cluster detected: ${CLUSTER}"
 #==============================
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
-RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
+RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
+RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good.txt"
+
+RANGE_BEFORE_11266=100
+RANGE_AFTER_11266=20
+RUN_CHANGE_RANGE=11266
 
 LOWER_BOUND=""
 UPPER_BOUND=""
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [options]
+Usage: $(basename "$0") --site <str> --campaign <str> [options]
 
-Options:
-  -r <num>         Starting run number (inclusive)
-  -R <num>         Ending run number (inclusive)
-  --help           Show this help message and exit
+Required:
+  --site <str>          Storage site selection {EOS|CNAF}
+  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
 
-Examples:
-  $(basename "$0") --r 9000 --R 9050
-  $(basename "$0") --list /path/to/custom_run_list.txt
+Optional:
+  --lower <num>         Starting run number (inclusive)
+  --upper <num>         Ending run number (inclusive)
+  --help                Show this help message and exit
 EOF
 }
 
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --lower)   LOWER_BOUND="$2"; shift 2 ;;
-            --upper)   UPPER_BOUND="$2"; shift 2 ;;
+            --site)     SITE="$2"; shift 2 ;;
+            --campaign) CAMPAIGN="$2"; shift 2 ;;
+            --lower)    LOWER_BOUND="$2"; shift 2 ;;
+            --upper)    UPPER_BOUND="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
     done
+
+    if [[ -z "${SITE:-}" ]]; then
+        log ERROR "--site is required {EOS|CNAF}"
+        usage
+        exit 1
+    fi
+
+    case "${SITE}" in
+        EOS|CNAF) ;;
+        *) 
+            log ERROR "Invalid --site: ${SITE}"
+            usage
+            exit 1 ;;
+    esac
+
+    if [[ "${CLUSTER}" == "IHEP" && "${SITE}" == "CNAF" ]]; then
+        log WARN "CNAF site was selected while running on IHEP cluster"
+    fi
+
+    if [[ -z "${CAMPAIGN:-}" ]]; then
+        log ERROR "--campaign is required"
+        usage
+        exit 1
+    fi
+
+    case "${CAMPAIGN}" in
+        Normal)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25A)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25B)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25C)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25D)
+            LIST_BASE="${RUN_LIST_REPROD25D%/*}"
+            ;;
+        *)
+            log ERROR "Invalid --campaign: ${CAMPAIGN}"
+            usage
+            exit 1
+            ;;
+    esac
 }
 
 #==============================
@@ -109,7 +163,14 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(bash job_launcher.sh --run-number "${run}")
+
+        if (( run < RUN_CHANGE_RANGE )); then
+            local RANGE="${RANGE_BEFORE_11266}"
+        else
+            local RANGE="${RANGE_AFTER_11266}"
+        fi
+
+        local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --list-base ${LIST_BASE} --range ${RANGE})
 
         if "${cmd[@]}"; then
             log INFO "Run ${run} submitted successfully"

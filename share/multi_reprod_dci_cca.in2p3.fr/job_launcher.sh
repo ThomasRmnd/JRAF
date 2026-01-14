@@ -34,8 +34,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 #==============================
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
-LIST_BASE="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
-FILE_RANGE=100
+
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
 
@@ -45,13 +44,16 @@ LOG_LEVEL=3
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") --run-number <number> [options]
+Usage: $(basename "$0") --run <number> [options]
 
 Required:
-  --run-number <number>        Run number to process
+  --site <str>                 Storage site selection {EOS|CNAF}
+  --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
+  --run <num>                  Run number to process
+  --list-base <str>            Basepath for the file list
+  --range <num>                Number of files to process per job
 
 Optional:
-  --file-range <num>             Max number of consecutive files per job (default: $FILE_RANGE)
   --property-file <path>       Path to property file
   --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
   --log-level <num>            Logging level (default: $LOG_LEVEL)
@@ -67,8 +69,11 @@ parse_args() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --run-number)    RUN_NUMBER="$2"; shift 2 ;;
-            --file-range)    FILE_RANGE="$2"; shift 2 ;;
+            --site)          SITE="$2"; shift 2 ;;
+            --campaign)      CAMPAIGN="$2"; shift 2 ;;
+            --run)           RUN_NUMBER="$2"; shift 2 ;;
+            --list-base)     LIST_BASE="$2"; shift 2 ;;
+            --range)         RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
@@ -77,8 +82,48 @@ parse_args() {
         esac
     done
 
+    if [[ -z "${SITE:-}" ]]; then
+        log ERROR "--site is required {EOS|CNAF}"
+        usage
+        exit 1
+    fi
+
+    case "${SITE}" in
+        EOS|CNAF) ;;
+        *) log ERROR "Invalid --site: ${SITE} (expected {EOS|CNAF})"
+           exit 1 ;;
+    esac
+
+    if [[ "${CLUSTER}" == "IHEP" && "${SITE}" == "CNAF" ]]; then
+        log WARN "CNAF site was selected while running on IHEP cluster"
+    fi
+
+    if [[ -z "${CAMPAIGN:-}" ]]; then
+        log ERROR "--campaign is required {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}"
+        usage
+        exit 1
+    fi
+
+    case "${CAMPAIGN}" in
+        Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D) ;;
+        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D})"
+           exit 1 ;;
+    esac
+
     if [[ -z "${RUN_NUMBER:-}" ]]; then
-        log ERROR "--run-number is required"
+        log ERROR "--run is required"
+        usage
+        exit 1
+    fi
+
+    if [[ -z "${LIST_BASE:-}" ]]; then
+        log ERROR "--list-base is required"
+        usage
+        exit 1
+    fi
+
+    if [[ -z "${RANGE:-}" ]]; then
+        log ERROR "--range is required"
         usage
         exit 1
     fi
@@ -105,7 +150,7 @@ load_file_lists() {
 #==============================
 
 prepare_job_arrays() {
-    log INFO "Building grouped file ranges (max ${FILE_RANGE} per group)..."
+    log INFO "Building grouped file ranges (max ${RANGE} per group)..."
 
     RANGES=()
     local range_start=""
@@ -127,7 +172,7 @@ prepare_job_arrays() {
             range_start=$i
             count=1
         else
-            if (( num == prev_num + 1 && count < FILE_RANGE )); then
+            if (( num == prev_num + 1 && count < RANGE )); then
                 ((count++))
             else
                 RANGES+=("$range_start-$prev_idx")

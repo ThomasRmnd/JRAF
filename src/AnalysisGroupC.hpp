@@ -86,8 +86,8 @@ struct DAQTimeSaver {
 struct VetoTimeSaver {
 
     std::unordered_map<VetoType, TimeStamp> veto_map {
-        {VetoType::MissingHeaders, TimeStamp{1, 200000000}},
         {VetoType::BeginningOfJob, TimeStamp{1, 200000000}},
+        {VetoType::MissingHeaders, TimeStamp{0, 5000000}},
         {VetoType::BigGaps, TimeStamp{1, 200000000}},
         {VetoType::Muon, TimeStamp{0, 5000000}}
     };

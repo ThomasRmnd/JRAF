@@ -34,7 +34,8 @@ log INFO "Cluster detected: ${CLUSTER}"
 #==============================
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
-RUN_LIST_PATH="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
+RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
+RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good.txt"
 
 LOWER_BOUND=""
 UPPER_BOUND=""
@@ -45,7 +46,7 @@ Usage: $(basename "$0") --site <str> --campaign <str> [options]
 
 Required:
   --site <str>          Storage site selection {EOS|CNAF}
-  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C}
+  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
 
 Optional:
   --lower <num>         Starting run number (inclusive)
@@ -65,6 +66,53 @@ parse_args() {
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
     done
+
+    if [[ -z "${SITE:-}" ]]; then
+        log ERROR "--site is required {EOS|CNAF}"
+        usage
+        exit 1
+    fi
+
+    case "${SITE}" in
+        EOS|CNAF) ;;
+        *) 
+            log ERROR "Invalid --site: ${SITE}"
+            usage
+            exit 1 ;;
+    esac
+
+    if [[ "${CLUSTER}" == "IHEP" && "${SITE}" == "CNAF" ]]; then
+        log WARN "CNAF site was selected while running on IHEP cluster"
+    fi
+
+    if [[ -z "${CAMPAIGN:-}" ]]; then
+        log ERROR "--campaign is required"
+        usage
+        exit 1
+    fi
+
+    case "${CAMPAIGN}" in
+        Normal)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25A)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25B)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25C)
+            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
+            ;;
+        ReProd25D)
+            LIST_BASE="${RUN_LIST_REPROD25D%/*}"
+            ;;
+        *)
+            log ERROR "Invalid --campaign: ${CAMPAIGN}"
+            usage
+            exit 1
+            ;;
+    esac
 }
 
 #==============================
@@ -111,7 +159,7 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(sh job_launcher.sh --run-number "${run}" --site ${SITE} --campaign ${CAMPAIGN})
+        local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --list-base ${LIST_BASE})
 
         if "${cmd[@]}"; then
             log INFO "Run ${run} submitted successfully"
