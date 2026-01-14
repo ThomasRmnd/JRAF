@@ -207,8 +207,14 @@ void extract_plot_from_reco_matches(const char* filename) {
     TH2D* h_angle_chi2cdwp = new TH2D("h_angle_chi2cdwp", "h_angle_chi2cdwp", 50, 0.0, 20.0, 50, 0.0, 10.0);
     TH2D* h_distance_chi2cdwp = new TH2D("h_distance_chi2cdwp", "h_distance_chi2cdwp", 50, 0.0, 5.0, 50, 0.0, 10.0);
 
-    std::unordered_map<int, TH1D*> map_angle_run;
-    std::unordered_map<int, TH1D*> map_distance_run;
+    // std::unordered_map<int, TH1D*> map_angle_run;
+    // std::unordered_map<int, TH1D*> map_distance_run;
+    TH1D* h_angle_run_summry = new TH1D("h_angle_run_summary", "h_angle_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
+    TH1D* h_distance_run_summry = new TH1D("h_distance_run_summary", "h_distance_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
+    std::unordered_map<int, std::vector<double>> map_angle_run_values;
+    std::unordered_map<int, std::vector<double>> map_distance_run_values;
+    std::unordered_map<int, int> map_angle_run_counts;
+    std::unordered_map<int, int> map_distance_run_counts;
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
         // if (chi2_cdwp_v[k] > 0.0) continue;
@@ -221,14 +227,26 @@ void extract_plot_from_reco_matches(const char* filename) {
         h_angle_chi2cdwp->Fill(angles[k], chi2_cdwp_v[k]);
         h_distance_chi2cdwp->Fill(distances[k], chi2_cdwp_v[k]);
 
-        if (map_angle_run.find(run_ids[k]) == map_angle_run.end()) {
-            map_angle_run[run_ids[k]] = new TH1D(Form("h_angle_run_%d", run_ids[k]), Form("h_angle_run_%d", run_ids[k]), 20, 0.0, 5.0);
-        }
-        map_angle_run[run_ids[k]]->Fill(angles[k]);
-        if (map_distance_run.find(run_ids[k]) == map_distance_run.end()) {
-            map_distance_run[run_ids[k]] = new TH1D(Form("h_distance_run_%d", run_ids[k]), Form("h_distance_run_%d", run_ids[k]), 20, 0.0, 2.0);
-        }
-        map_distance_run[run_ids[k]]->Fill(distances[k]);
+        // if (map_angle_run.find(run_ids[k]) == map_angle_run.end()) {
+        //     map_angle_run[run_ids[k]] = new TH1D(Form("h_angle_run_%d", run_ids[k]), Form("h_angle_run_%d", run_ids[k]), 20, 0.0, 5.0);
+        // }
+        // map_angle_run[run_ids[k]]->Fill(angles[k]);
+        // if (map_distance_run.find(run_ids[k]) == map_distance_run.end()) {
+        //     map_distance_run[run_ids[k]] = new TH1D(Form("h_distance_run_%d", run_ids[k]), Form("h_distance_run_%d", run_ids[k]), 20, 0.0, 2.0);
+        // }
+        // map_distance_run[run_ids[k]]->Fill(distances[k]);
+        map_angle_run_values[run_ids[k]].push_back(angles[k]);
+        map_distance_run_values[run_ids[k]].push_back(distances[k]);
+        ++(map_angle_run_counts[run_ids[k]]);
+        ++(map_distance_run_counts[run_ids[k]]);
+    }
+    for (const auto& [run_id, values] : map_angle_run_values) {
+        std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
+        h_angle_run_summry->SetBinContent(run_id - min_run + 1, angles[angles.size() * 682 / 1000]);
+    }
+    for (const auto& [run_id, values] : map_distance_run_values) {
+        std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
+        h_distance_run_summry->SetBinContent(run_id - min_run + 1, distances[distances.size() * 682 / 1000]);
     }
 
     std::cout << h_angle->Integral(0, 20) << '/' << h_angle->Integral(0, 50) << '\n';
@@ -291,13 +309,13 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TCanvas* c_angle_run = new TCanvas("c_angle_run", "c_angle_run", 1000, 1000);
     c_angle_run->cd();
-    TH1D* h_angle_run_summry = new TH1D("h_angle_run_summary", "h_angle_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
-    for (const auto& [run, h_run] : map_angle_run) {
-        double probs[1] = {0.68};
-        double quantiles[1];
-        h_run->GetQuantiles(1, quantiles, probs);
-        h_angle_run_summry->SetBinContent(run - min_run + 1, quantiles[0]);
-    }
+    // TH1D* h_angle_run_summry = new TH1D("h_angle_run_summary", "h_angle_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
+    // for (const auto& [run, h_run] : map_angle_run) {
+    //     double probs[1] = {0.68};
+    //     double quantiles[1];
+    //     h_run->GetQuantiles(1, quantiles, probs);
+    //     h_angle_run_summry->SetBinContent(run - min_run + 1, quantiles[0]);
+    // }
     h_angle_run_summry->GetXaxis()->SetTitle("Run ID");
     h_angle_run_summry->GetXaxis()->CenterTitle(kTRUE);
     h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% quantile");
@@ -311,13 +329,13 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TCanvas* c_distance_run = new TCanvas("c_distance_run", "c_distance_run", 1000, 1000);
     c_distance_run->cd();
-    TH1D* h_distance_run_summry = new TH1D("h_distance_run_summary", "h_distance_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
-    for (const auto& [run, h_run] : map_distance_run) {
-        double probs[1] = {0.68};
-        double quantiles[1];
-        h_run->GetQuantiles(1, quantiles, probs);
-        h_distance_run_summry->SetBinContent(run - min_run + 1, quantiles[0]);
-    }
+    // TH1D* h_distance_run_summry = new TH1D("h_distance_run_summary", "h_distance_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
+    // for (const auto& [run, h_run] : map_distance_run) {
+    //     double probs[1] = {0.68};
+    //     double quantiles[1];
+    //     h_run->GetQuantiles(1, quantiles, probs);
+    //     h_distance_run_summry->SetBinContent(run - min_run + 1, quantiles[0]);
+    // }
     h_distance_run_summry->GetXaxis()->SetTitle("Run ID");
     h_distance_run_summry->GetXaxis()->CenterTitle(kTRUE);
     h_distance_run_summry->GetYaxis()->SetTitle("d_{mid} (m) at 68% quantile");
