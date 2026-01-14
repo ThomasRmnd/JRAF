@@ -150,7 +150,8 @@ main() {
     input_file="${input_path}/${input_filename}"
     local_input_file="${TMPDIR}/${input_filename}"
 
-    output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/comparison"
+    # output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/comparison"
+    output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/test"
     output_filename="RUN.${RUN_NUMBER}.comparison.output.reprod25c.cca.root"
     output_file="${output_path}/${output_filename}"
     local_output_file="${TMPDIR}/${output_filename}"
