@@ -36,7 +36,7 @@ public:
         m_chain->branch("stdq_p", meta_prompt.stdq);
         m_chain->branch("minq_p", meta_prompt.minq);
         m_chain->branch("maxq_p", meta_prompt.maxq);
-        m_chain->branch("npmt_p", meta_prompt.npmt);
+        m_chain->branch("nhit_p", meta_prompt.nhit); // npmt
         m_chain->branch("meant_p", meta_prompt.meant);
         m_chain->branch("stdt_p", meta_prompt.stdt);
 
@@ -52,7 +52,7 @@ public:
         m_chain->branch("stdq_d", meta_delayed.stdq);
         m_chain->branch("minq_d", meta_delayed.minq);
         m_chain->branch("maxq_d", meta_delayed.maxq);
-        m_chain->branch("npmt_d", meta_delayed.npmt);
+        m_chain->branch("nhit_d", meta_delayed.nhit); // npmt
         m_chain->branch("meant_d", meta_delayed.meant);
         m_chain->branch("stdt_d", meta_delayed.stdt);
     }
