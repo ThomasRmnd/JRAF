@@ -150,11 +150,17 @@ void extract_plot_from_reco_matches(const char* filename) {
             {"CdClassify", 0ul}
         };
         std::size_t j = 0ul;
+        std::size_t j_cdclassify = 0ul;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             ++(method_count[(*method)[i]]);
             if ((*method)[i] == "CdWpTtChi2") j = i;
+            else if ((*method)[i] == "CdClassify") j_cdclassify = i;
         }
         if (method_count["CdClassify"] != 1ul || method_count["CdWpTtChi2"] != 1ul) continue;
+
+        TVector3 ipos_cdclassify((*iposx)[j_cdclassify], (*iposy)[j_cdclassify], (*iposz)[j_cdclassify]);
+        TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
+        if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
