@@ -197,6 +197,12 @@ void extract_plot_from_reco_matches(const char* filename) {
                 std::cout << sec << ' ' << nsec << ' ' << run_id << '\n';
         }
 
+        if (
+            angles.back() >= 10.0 || distances.back() >= 2
+        ) {
+                std::cout << sec << ' ' << nsec << ' ' << run_id << '\n';
+        }
+
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
         //     std::cout << TTimeStamp{sec, nsec} << ", angle: " << angles.back() << ", distance: " << distances.back() 
         //               << ", cdwp_dir: (" << dir_cdwp.Theta() << ", " << dir_cdwp.Phi() << "), tt_dir: (" << dir_tt.Theta() << ", "<< dir_tt.Phi() << ")\n";
