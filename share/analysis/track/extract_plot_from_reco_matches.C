@@ -200,7 +200,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         if (
             angles.back() >= 10.0 || distances.back() >= 2
         ) {
-                std::cout << sec << ' ' << nsec << ' ' << run_id << '\n';
+                std::cout << sec << ' ' << nsec << ' ' << run_id << ' ' << pos_cdwp.Theta() << ' ' << pos_cdwp.Phi() << ' ' << dir_cdwp.Theta() << ' ' << dir_cdwp.Phi() << '\n';
         }
 
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
