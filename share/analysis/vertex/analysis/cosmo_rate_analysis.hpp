@@ -291,13 +291,7 @@ private:
 
         c->Update();
 
-        TPaveStats* st = (TPaveStats*)h->FindObject("stats");
-        st->SetOptStat(ToROOTOpt(StatOpt::Entries));
-        st->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-        st->SetX1NDC(0.5);
-        st->SetX2NDC(0.85);
-        st->SetY1NDC(0.5);
-        st->SetY2NDC(0.85);
+        change_stats(h, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
         c->Modified();
         c->Update();

@@ -7,6 +7,7 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TLegend.h>
+#include <TPaveStats.h>
 
 #include "utils/event.hpp"
 #include "utils/numpy.hpp"
@@ -32,7 +33,7 @@ inline StatOpt operator|(StatOpt a, StatOpt b) {
     return static_cast<StatOpt>(static_cast<int>(a) + static_cast<int>(b));
 }
 
-inline int ToROOTOpt(StatOpt mode) {
+inline int to_root_opt(StatOpt mode) {
     return static_cast<int>(mode);
 }
 
@@ -49,7 +50,7 @@ inline FitOpt operator|(FitOpt a, FitOpt b) {
     return static_cast<FitOpt>(static_cast<int>(a) + static_cast<int>(b));
 }
 
-inline int ToROOTOpt(FitOpt mode) {
+inline int to_root_opt(FitOpt mode) {
     return static_cast<int>(mode);
 }
 
@@ -216,6 +217,17 @@ void pimp_my_histogram(TH1D* h, Style_t linestyle, Width_t linewidth, Color_t li
     h->SetLineStyle(linestyle);
     h->SetLineWidth(linewidth);
     h->SetLineColorAlpha(linecolor, linealpha);
+}
+
+TPaveStats* change_stats(TH1D* h, double xmin, double ymin, double xmax, double ymax, StatOpt statopt, FitOpt fitopt) {
+    TPaveStats* st = (TPaveStats*)h->FindObject("stats");
+    st->SetOptStat(to_root_opt(statopt));
+    st->SetOptFit(to_root_opt(fitopt));
+    st->SetX1NDC(xmin);
+    st->SetX2NDC(xmax);
+    st->SetY1NDC(ymin);
+    st->SetY2NDC(ymax);
+    return st;
 }
 
 TCanvas* plot_basic(TH1D* h, const char* options = "") {
