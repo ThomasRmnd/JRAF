@@ -11,6 +11,48 @@
 #include "utils/event.hpp"
 #include "utils/numpy.hpp"
 
+enum class StatOpt {
+    None        =         0,
+    Name        =         1,  // n = 1
+    Entries     =        10,  // e = 1
+    Mean        =       100,  // m = 1
+    MeanError   =       200,  // m = 2
+    RMS         =      1000,  // r = 1
+    RMSError    =      2000,  // r = 2
+    Underflow   =     10000,  // u = 1
+    Overflow    =    100000,  // o = 1
+    Integral    =   1000000,  // i = 1
+    Skew        =  10000000,  // s = 1
+    SkewError   =  20000000,  // s = 2
+    Kurtosis    = 100000000,  // k = 1
+    KurtError   = 200000000,  // k = 2
+};
+
+inline StatOpt operator|(StatOpt a, StatOpt b) {
+    return static_cast<StatOpt>(static_cast<int>(a) + static_cast<int>(b));
+}
+
+inline int ToROOTOpt(StatOpt mode) {
+    return static_cast<int>(mode);
+}
+
+enum class FitOpt {
+    None        =    0,
+    Params      =    1,  // v = 1 (requires FitErrors)
+    AllParams   =    2,  // v = 2
+    Errors      =   10,  // e = 1
+    Chi2NDF     =  100,  // c = 1
+    Proba       = 1000,  // p = 1
+};
+
+inline FitOpt operator|(FitOpt a, FitOpt b) {
+    return static_cast<FitOpt>(static_cast<int>(a) + static_cast<int>(b));
+}
+
+inline int ToROOTOpt(FitOpt mode) {
+    return static_cast<int>(mode);
+}
+
 std::vector<double> generate_segment_boundaries(double start, double stop, int num_bins) {
     if (num_bins <= 0) return {};
     int num_points = num_bins + 1;
@@ -184,7 +226,7 @@ TCanvas* plot_basic(TH1D* h, const char* options = "") {
     return c;
 }
 
-TCanvas* plot_multiple(const std::string& name, const std::string& title, std::initializer_list<TH1D*> hists, const char* options = "") {
+TCanvas* plot_multiple(const std::string& name, const std::string& title, std::initializer_list<TH1D*> hists, TLegend* leg, const char* options = "") {
     if (hists.size() == 0) return nullptr;
     
     double max_val = 0;
@@ -205,7 +247,6 @@ TCanvas* plot_multiple(const std::string& name, const std::string& title, std::i
     c->SetGrid();
     c->cd();
     
-    TLegend* leg = new TLegend(0.65, 0.75, 0.88, 0.88);
     leg->SetBorderSize(1);
     
     bool is_first = true;
