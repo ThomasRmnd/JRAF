@@ -4,19 +4,21 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, nargs="+", help="Input filepath")
+parser.add_argument("--input-correlation", type=str, nargs="+", default=[], help="Input correlation filepath")
 parser.add_argument("--output", type=str, help="Output filepath")
-parser.add_argument("--reco-output", type=str, default="", help="Muon reconstruction output filepath")
 parser.add_argument("--context-previous-filename", type=str, default="", help="Context previous filename")
 parser.add_argument("--context-next-filename", type=str, default="", help="Context next filename")
 parser.add_argument("--tt-reco-filepath", type=str, default="", help="TT reco filepath")
+parser.add_argument("--reco-output", type=str, default="", help="Muon reconstruction output filepath")
+parser.add_argument("--feature-output", type=str, default="", help="Feature output filepath")
 parser.add_argument("--property-file", type=str, help="Filepath of the property file")
-parser.add_argument("--time-window", nargs=2, type=float, metavar=("START", "END"), help="Buffer time window")
-parser.add_argument("--log-level", type=int, default=1, help="Log level (default: 1)")
+parser.add_argument("--time-window", nargs=2, type=float, default=(-2.0, 2.0), help="Buffer time window (default=[-2.0, 2.0])")
+parser.add_argument("--log-level", type=int, default=3, help="Log level (default: 3)")
+parser.add_argument("--cluster", type=str, choices=["CC-IN2P3", "IHEP"], help="Cluster name currently running on")
 args = parser.parse_args()
 
 ifilepath = args.input
 ofilepath = args.output
-orecofilepath = args.reco_output
 lower_tw, upper_tw = args.time_window
 loglevel = args.log_level
 
@@ -49,6 +51,8 @@ tt_geom_svc = task.createSvc("TTGeomSvc")
 import RootIOSvc
 ri_svc = task.createSvc("RootInputSvc/InputSvc")
 ri_svc.property("InputFile").set(ifilepath)
+if args.input_correlation:
+    ri_svc.property("InputCorrelationFile").set(args.input_correlation)
 
 # ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
 import AnalysisGroupC
@@ -56,10 +60,11 @@ alg = AnalysisGroupC.createAlg(task)
 alg.setLogLevel(loglevel)
 
 alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
-alg.property("OutputFilename").set(ofilepath)
-alg.property("RecoTrackOutputFilename").set(orecofilepath)
 alg.property("ContextPreviousFilename").set(args.context_previous_filename)
 alg.property("ContextNextFilename").set(args.context_next_filename)
+alg.property("OutputFilename").set(ofilepath)
+alg.property("RecoTrackOutputFilename").set(args.reco_output)
+alg.property("FeatureOutputFilename").set(args.feature_output)
 
 alg.useLoader("JointLoader")
 alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
