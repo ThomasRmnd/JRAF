@@ -306,7 +306,7 @@ bool AnalysisGroupC::execute() {
         return false;
     }
     m_tsEvt = TimeStamp{nav->TimeStamp().GetTimeSpec()};
-    int evtId = nav->EventID();
+    unsigned int evtId = nav->EventID();
     int runId = nav->RunID();
     LogInfo << "TimeStamp: " << m_tsEvt << ", EventID: " << evtId << ", RunID: " << runId << '\n';
 
