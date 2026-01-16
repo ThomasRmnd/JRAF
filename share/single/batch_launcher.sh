@@ -93,23 +93,18 @@ parse_args() {
 
     case "${CAMPAIGN}" in
         Normal)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25A)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25B)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25C)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25D)
-            LIST_BASE="${RUN_LIST_REPROD25D%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
             ;;
         *)
@@ -164,7 +159,7 @@ filter_runs() {
 launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
-        local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --list-base ${LIST_BASE})
+        local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run})
 
         if "${cmd[@]}"; then
             log INFO "Run ${run} submitted successfully"
