@@ -35,6 +35,9 @@ log INFO "Cluster detected: ${CLUSTER}"
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 
+LIST_BASE_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
+LIST_BASE_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0"
+
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=3
 
@@ -49,8 +52,7 @@ Usage: $(basename "$0") --site <str> --campaign <str> --run <number> [options]
 Required:
   --site <str>                 Storage site selection {EOS|CNAF}
   --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
-  --run <num>                  Run number to process
-  --list-base <str>            Basepath for the file list       
+  --run <num>                  Run number to process     
 
 Optional:
   --range <num>                Number of files to process (default: all)
@@ -73,8 +75,7 @@ parse_args() {
             --site)          SITE="$2"; shift 2 ;;
             --campaign)      CAMPAIGN="$2"; shift 2 ;;
             --run)           RUN_NUMBER="$2"; shift 2 ;;
-            --list-base)     LIST_BASE="$2"; shift 2 ;;
-            --range)         FILE_RANGE="$2"; shift 2 ;;
+            --range)         RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
@@ -108,9 +109,26 @@ parse_args() {
     fi
 
     case "${CAMPAIGN}" in
-        Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D) ;;
-        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D})"
-           exit 1 ;;
+        Normal)
+            LIST_BASE="${LIST_BASE_REPROD25C}"
+            ;;
+        ReProd25A)
+            LIST_BASE="${RUN_LIST_REPROD25C}"
+            ;;
+        ReProd25B)
+            LIST_BASE="${LIST_BASE_REPROD25C}"
+            ;;
+        ReProd25C)
+            LIST_BASE="${LIST_BASE_REPROD25C}"
+            ;;
+        ReProd25D)
+            LIST_BASE="${LIST_BASE_REPROD25D}"
+            ;;
+        *)
+            log ERROR "Invalid --campaign: ${CAMPAIGN}"
+            usage
+            exit 1
+            ;;
     esac
 
     if [[ "${CLUSTER}" == "IHEP" && "${SITE}" == "CNAF" ]]; then
@@ -139,17 +157,17 @@ load_file_lists() {
 #==============================
 
 prepare_job_arrays() {
-    FILE_RANGE="${FILE_RANGE:-${#RTRAW_LIST[@]}}"
+    RANGE="${RANGE:-${#RTRAW_LIST[@]}}"
 
-    if ! [[ "${FILE_RANGE}" =~ ^[0-9]+$ ]]; then
+    if ! [[ "${RANGE}" =~ ^[0-9]+$ ]]; then
         log ERROR "file-offset and file-range must be non-negative integers"
         exit 1
     fi
 
-    log INFO "Processing range: count=${FILE_RANGE}"
+    log INFO "Processing range: count=${RANGE}"
 
-    RTRAW_LIST=("${RTRAW_LIST[@]:0:$FILE_RANGE}")
-    ESD_LIST=("${ESD_LIST[@]:0:$FILE_RANGE}")
+    RTRAW_LIST=("${RTRAW_LIST[@]:0:$RANGE}")
+    ESD_LIST=("${ESD_LIST[@]:0:$RANGE}")
 
     JOB_COUNT_RTRAW=${#RTRAW_LIST[@]}
     JOB_COUNT_ESD=${#ESD_LIST[@]}
