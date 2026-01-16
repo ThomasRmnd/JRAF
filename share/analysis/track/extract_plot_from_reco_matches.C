@@ -235,8 +235,8 @@ void extract_plot_from_reco_matches(const char* filename) {
     TH1I* h_det = new TH1I("h_det", "h_det", 8, 0, 8);
     TH1D* h_angle = new TH1D("h_angle", "h_angle", 20, 0.0, 5.0);
     TH1D* h_distance = new TH1D("h_distance", "h_distance", 20, 0.0, 2.0);
-    TH2D* h_angle_clippingness = new TH2D("h_angle_clippingness", "h_angle_clippingness", 50, 0.0, 90.0, 50, 0.0, 20.5); // [0.0, 20.0] or [0.0, 90.0] or [0.0, 180.0]
-    TH2D* h_distance_clippingness = new TH2D("h_distance_clippingness", "h_distance_clippingness", 50, 0.0, 20.0, 50, 0.0, 20.5); // [0.0, 5.0] or [0.0, 20.0] or [0.0, 40.0]
+    TH2D* h_angle_clippingness = new TH2D("h_angle_clippingness", "h_angle_clippingness", 50, 0.0, 20.0, 50, 0.0, 20.5); // [0.0, 20.0] or [0.0, 90.0] or [0.0, 180.0]
+    TH2D* h_distance_clippingness = new TH2D("h_distance_clippingness", "h_distance_clippingness", 50, 0.0, 5.0, 50, 0.0, 20.5); // [0.0, 5.0] or [0.0, 20.0] or [0.0, 40.0]
     TH2D* h_angle_distance = new TH2D("h_angle_distance", "h_angle_distance", 50, 0.0, 90.0, 50, 0.0, 20.0);
     TH2D* h_angle_chi2cdwp = new TH2D("h_angle_chi2cdwp", "h_angle_chi2cdwp", 50, 0.0, 20.0, 50, 0.0, 10.0);
     TH2D* h_distance_chi2cdwp = new TH2D("h_distance_chi2cdwp", "h_distance_chi2cdwp", 50, 0.0, 5.0, 50, 0.0, 10.0);
