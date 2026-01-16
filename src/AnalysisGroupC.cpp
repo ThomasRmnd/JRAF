@@ -202,7 +202,7 @@ void AnalysisGroupC::addTtToTrack(std::vector<track>& tracks, const TimeStamp& c
 
     for (Int_t k = 0; k < std::min(m_ttRecoFile.NTracks, 20); ++k) {
         if (m_ttRecoFile.NPoints[k] < 3) continue;
-        vec3 ipos{m_ttRecoFile.Coeff0[k], m_ttRecoFile.Coeff1[k], m_ttRecoFile.Coeff2[k]};
+        vec3 ipos{m_ttRecoFile.Coeff0[k], m_ttRecoFile.Coeff1[k], m_ttRecoFile.Coeff2[k] + 26452.0};
         vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[k], m_ttRecoFile.Coeff4[k], m_ttRecoFile.Coeff5[k]});
         vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
         tracks.push_back(track{
@@ -270,7 +270,7 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
     m_featureSaver.chi2.push_back(trk_cdclassify->quality);
     m_featureSaver.det.push_back(1 << 1);
 
-    vec3 ipos(m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0]);
+    vec3 ipos(m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0] + 26452.0);
     vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
     vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
     m_featureSaver.iposx.push_back(ipos.x);
