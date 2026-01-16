@@ -32,10 +32,12 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("RecTool", m_recToolName);
 
     declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
-    declProp("OutputFilename", m_ofilename = "output.root");
-    declProp("RecoTrackOutputFilename", m_trkSaver.filename = "");
     declProp("ContextPreviousFilename", m_contextTracker.prevctx);
     declProp("ContextNextFilename", m_contextTracker.nextctx);
+
+    declProp("OutputFilename", m_ofilename = "output.root");
+    declProp("RecoTrackOutputFilename", m_trkSaver.filename = "");
+    declProp("FeatureOutputFilename", m_featureSaver.filename = "");
 }
 
 bool AnalysisGroupC::initialize() {
@@ -50,6 +52,7 @@ bool AnalysisGroupC::initialize() {
 
     if (!m_ttRecoFile.init()) return false;
     if (!m_trkSaver.init()) return false;
+    if (!m_featureSaver.init()) return false;
     if (!initLoader()) return false;
     if (!initRecTool()) return false;
     if (!initAnalyses()) return false;
@@ -173,6 +176,123 @@ void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string
             method, vec3{v->x(), v->y(), v->z()}, v->energy(), ts, calib, "Unknown"
         });
     }
+}
+
+int AnalysisGroupC::getTtLayerId(double z) {
+    if (24000.0 <= z && z <= 25000.0) return 0;  // main
+    if (25500.0 <= z && z <= 26500.0) return 1;  // main
+    if (27000.0 <= z && z <= 28000.0) return 2;  // main
+    if (30000.0 <= z && z <= 30200.0) return 3;  // chimney
+    if (30200.0 <= z && z <= 30400.0) return 4;  // chimney
+    if (30400.0 <= z && z <= 30600.0) return 5;  // chimney
+
+    return -1; // not inside any valid layer
+};
+
+void AnalysisGroupC::addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts) {
+    if (!m_ttRecoFile.find(curts)) return;
+    
+    if (m_ttRecoFile.NTracks < 1) {
+        LogInfo << "No TT events found\n";
+        return;
+    }
+    if (m_ttRecoFile.NTracks > 20) {
+        LogWarn << "More than 20 tracks reconstructed by the TT!\n";
+    }
+
+    for (Int_t k = 0; k < std::min(m_ttRecoFile.NTracks, 20); ++k) {
+        if (m_ttRecoFile.NPoints[k] < 3) continue;
+        vec3 ipos{m_ttRecoFile.Coeff0[k], m_ttRecoFile.Coeff1[k], m_ttRecoFile.Coeff2[k]};
+        vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[k], m_ttRecoFile.Coeff4[k], m_ttRecoFile.Coeff5[k]});
+        vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
+        tracks.push_back(track{
+            "Tt", ipos, fpos, 0.0, curts, track::loc::tt, m_ttRecoFile.Chi2[k]
+        });
+    }
+}
+
+void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
+    if (!m_ttRecoFile.find(curts)) return;
+    if (m_ttRecoFile.NTracks != 1) {
+        LogInfo << "Muon event is empty or a bundle considering TT (" << m_ttRecoFile.NTracks << " tracks, " << m_ttRecoFile.NTotPoints << " points)\n";
+        return;
+    }
+    if (m_ttRecoFile.NPoints[0] < 3) {
+        LogInfo << "Muon track has less than 3 points in the TT\n";
+        return;
+    }
+
+    std::unordered_set<int> layers_hit;
+    layers_hit.reserve(6);
+
+    for (int i = 0; i < m_ttRecoFile.NTotPoints; ++i) {
+        int lid = getTtLayerId(m_ttRecoFile.PointZ[i] + 26452.0);
+        if (lid >= 0) layers_hit.insert(lid);
+    }
+
+    if (layers_hit.size() < 3) {
+        LogInfo << "Muon track is not in three different layers of the TT\n";
+        return;
+    }
+
+    std::map<std::string, std::vector<std::vector<track>::const_iterator>> track_map;
+    track_map["CdWpTtChi2"] = {};
+    track_map["CdClassify"] = {};
+    for (std::vector<track>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
+        track_map[it->method].push_back(it);
+    }
+    if (track_map["CdWpTtChi2"].size() != 1 || track_map["CdClassify"].size() != 1) {
+        LogInfo << "Muon event is empty or a bundle considering CdWpTtChi2 or CdClassify\n";
+        return;
+    }
+    std::vector<track>::const_iterator trk_cdwpttchi2 = track_map["CdWpTtChi2"][0];
+    std::vector<track>::const_iterator trk_cdclassify = track_map["CdClassify"][0];
+
+    m_featureSaver.run_id = run_id;
+    m_featureSaver.sec = curts.GetSec();
+    m_featureSaver.nsec = curts.GetNanoSec();
+
+    m_featureSaver.iposx.push_back(trk_cdwpttchi2->ipos.x);
+    m_featureSaver.iposy.push_back(trk_cdwpttchi2->ipos.y);
+    m_featureSaver.iposz.push_back(trk_cdwpttchi2->ipos.z);
+    m_featureSaver.fposx.push_back(trk_cdwpttchi2->fpos.x);
+    m_featureSaver.fposy.push_back(trk_cdwpttchi2->fpos.y);
+    m_featureSaver.fposz.push_back(trk_cdwpttchi2->fpos.z);
+    m_featureSaver.chi2.push_back(trk_cdwpttchi2->quality);
+    m_featureSaver.det.push_back(1 << 0);
+
+    m_featureSaver.iposx.push_back(trk_cdclassify->ipos.x);
+    m_featureSaver.iposy.push_back(trk_cdclassify->ipos.y);
+    m_featureSaver.iposz.push_back(trk_cdclassify->ipos.z);
+    m_featureSaver.fposx.push_back(trk_cdclassify->fpos.x);
+    m_featureSaver.fposy.push_back(trk_cdclassify->fpos.y);
+    m_featureSaver.fposz.push_back(trk_cdclassify->fpos.z);
+    m_featureSaver.chi2.push_back(trk_cdclassify->quality);
+    m_featureSaver.det.push_back(1 << 1);
+
+    vec3 ipos(m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0]);
+    vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
+    vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
+    m_featureSaver.iposx.push_back(ipos.x);
+    m_featureSaver.iposy.push_back(ipos.y);
+    m_featureSaver.iposz.push_back(ipos.z);
+    m_featureSaver.fposx.push_back(fpos.x);
+    m_featureSaver.fposy.push_back(fpos.y);
+    m_featureSaver.fposz.push_back(fpos.z);
+    m_featureSaver.chi2.push_back(m_ttRecoFile.Chi2[0]);
+    m_featureSaver.det.push_back(1 << 2);
+
+    for (const PmtProp& pmt : m_pmtTable) {
+        if (!pmt.used) continue;
+        if ( ( (pmt.type & PmtType::PMT_20INCH) != pmt.type ) && ( (pmt.type & PmtType::PMT_WP) != pmt.type ) ) continue;
+        m_featureSaver.id.push_back(pmt.pmtid);
+        m_featureSaver.fht.push_back(pmt.fht);
+        m_featureSaver.totq.push_back(pmt.q);
+        m_featureSaver.q.push_back(static_cast<double>(pmt.hitq[0]));
+        m_featureSaver.nhit.push_back(pmt.hitq.size());
+    }
+
+    m_featureSaver.fill();
 }
 
 bool AnalysisGroupC::execute() {
@@ -314,33 +434,8 @@ bool AnalysisGroupC::execute() {
         }
         m_trkSaver.fill();
 
-        if (m_ttRecoFile.find(curts)) {
-            if (m_ttRecoFile.ntracks > 20) {
-                LogWarn << "More than 20 tracks reconstructed by the TT!\n";
-            }
-
-            bool is_good_tt_reco = false;
-            if (m_ttRecoFile.ntracks >= 1) {
-                for (Int_t k = 0; k < m_ttRecoFile.ntracks; ++k) {
-                    if (m_ttRecoFile.npts[k] >= 3) {
-                        is_good_tt_reco = true;
-                        break;
-                    }
-                }
-            }
-
-            if (is_good_tt_reco) {
-                for (Int_t k = 0; k < std::min(m_ttRecoFile.ntracks, 20); ++k) {
-                    if (m_ttRecoFile.npts[k] < 3) continue;
-                    vec3 ipos{m_ttRecoFile.coeff0[k], m_ttRecoFile.coeff1[k], m_ttRecoFile.coeff2[k]};
-                    vec3 dir = unit(vec3{m_ttRecoFile.coeff3[k], m_ttRecoFile.coeff4[k], m_ttRecoFile.coeff5[k]});
-                    vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
-                    tracks.push_back(track{
-                        "Tt", ipos, fpos, 0.0, curts, track::loc::tt, m_ttRecoFile.chi2[k]
-                    });
-                }
-            }
-        }
+        addTtToTrack(tracks, curts);
+        addFeature(tracks, curts, runId);
 
         std::vector<vertex> vertices;
         // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
@@ -448,6 +543,8 @@ bool AnalysisGroupC::finalize() {
     if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
     
     if (!m_trkSaver.save()) return false;
+    if (!m_featureSaver.save()) return false;
+
     if (!m_file) return false;
     m_file->cd();
     if (!m_daqTimeSaver.write()) return false;

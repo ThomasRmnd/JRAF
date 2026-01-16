@@ -197,6 +197,7 @@ resolve_output_paths() {
         local run_group=$(printf "%08d" "$group_val")
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
         reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
         tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${year}/${monthday}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     elif [[ "${input_file}" =~ /juno/juno-([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/${RUN_NUMBER}/RUN\.${RUN_NUMBER}\. ]]; then
         local type="${BASH_REMATCH[1]}"
@@ -206,6 +207,7 @@ resolve_output_paths() {
         local run_group="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
         reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
         tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
     else
         log ERROR "Unrecognized path format: ${input_file}"
@@ -321,6 +323,10 @@ main() {
     local_reco_output_file="${TEMPDIR}/${input_filename/.rtraw/.reco.output.root}"
     reco_output_file="${reco_output_path}/$(basename "${local_reco_output_file}")"
 
+    local_feature_output_file="${TEMPDIR}/${input_filename/.rtraw/.feature.output.root}"
+    feature_output_file="${feature_output_path}/$(basename "${local_feature_output_file}")"
+
+
     if (( prev_idx >= 0 )); then
         if [[ "${USE_CORRELATION}" == "true" ]]; then
             prev_file_local="$(basename "${ESD_LIST[${prev_idx}]}")"
@@ -357,10 +363,11 @@ main() {
 
     python_args+=(
         "--output" "${local_output_file}"
-        --reco-output "${local_reco_output_file}" \
         "--context-previous-filename" "${prev_file_local}"
         "--context-next-filename" "${next_file_local}"
         "--tt-reco-filepath" "${tt_reco_filepath}"
+        "--reco-output ${local_reco_output_file}"
+        "--feature-output ${local_feature_output_file}"
         "--cluster" "${CLUSTER}"
         "${EXTRA_ARGS[@]}"
     )
@@ -370,14 +377,21 @@ main() {
     if cp "${local_output_file}" "${output_file}"; then
         log INFO "Output copied to ${output_file}"
     else
-        log ERROR "Failed to copy output file to destination"
+        log ERROR "Failed to copy ${local_output_file} to ${output_file}"
         exit 1
     fi
 
     if cp "${local_reco_output_file}" "${reco_output_file}"; then
         log INFO "Output copied to ${reco_output_file}"
     else
-        log ERROR "Failed to copy output file to destination"
+        log ERROR "Failed to copy ${local_reco_output_file} to ${reco_output_file}"
+        exit 1
+    fi
+
+    if cp "${local_feature_output_file}" "${feature_output_file}"; then
+        log INFO "Output copied to ${feature_output_file}"
+    else
+        log ERROR "Failed to copy ${local_feature_output_file} to ${feature_output_file}"
         exit 1
     fi
 

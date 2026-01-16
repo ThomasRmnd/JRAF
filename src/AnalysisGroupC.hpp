@@ -205,11 +205,13 @@ struct TtRecoFile {
     std::string treename = "TT";
     TChain* chain = nullptr;
     int cur_idx = 0;
-    Int_t ntracks;
-    TTimeStamp* ts = nullptr;
-    Int_t npts[20];
-    Double_t coeff0[20], coeff1[20], coeff2[20], coeff3[20], coeff4[20], coeff5[20];
-    Double_t chi2[20];
+    
+    Int_t evtID, NTotPoints, NTracks;
+    Int_t NPoints[20];
+    TTimeStamp* start_TS = nullptr;
+    Float_t PointX[20], PointY[20], PointZ[20];
+    Double_t Coeff0[20], Coeff1[20], Coeff2[20], Coeff3[20], Coeff4[20], Coeff5[20];
+    Double_t Chi2[20];
 
     bool init() {
         chain = new TChain(treename.c_str());
@@ -219,16 +221,21 @@ struct TtRecoFile {
         }
         chain->Add(filename.c_str());
 
-        chain->SetBranchAddress("NTracks", &ntracks);
-        chain->SetBranchAddress("NPoints", &npts);
-        chain->SetBranchAddress("start_TS", &ts);
-        chain->SetBranchAddress("Coeff0", &coeff0);
-        chain->SetBranchAddress("Coeff1", &coeff1);
-        chain->SetBranchAddress("Coeff2", &coeff2);
-        chain->SetBranchAddress("Coeff3", &coeff3);
-        chain->SetBranchAddress("Coeff4", &coeff4);
-        chain->SetBranchAddress("Coeff5", &coeff5);
-        chain->SetBranchAddress("Chi2", &chi2);
+        chain->SetBranchAddress("evtID", &evtID);
+        chain->SetBranchAddress("NTotPoints", &NTotPoints);
+        chain->SetBranchAddress("PointX", &PointX);
+        chain->SetBranchAddress("PointY", &PointY);
+        chain->SetBranchAddress("PointZ", &PointZ);
+        chain->SetBranchAddress("NTracks", &NTracks);
+        chain->SetBranchAddress("NPoints", NPoints);
+        chain->SetBranchAddress("start_TS", &start_TS);
+        chain->SetBranchAddress("Coeff0", &Coeff0);
+        chain->SetBranchAddress("Coeff1", &Coeff1);
+        chain->SetBranchAddress("Coeff2", &Coeff2);
+        chain->SetBranchAddress("Coeff3", &Coeff3);
+        chain->SetBranchAddress("Coeff4", &Coeff4);
+        chain->SetBranchAddress("Coeff5", &Coeff5);
+        chain->SetBranchAddress("Chi2", &Chi2);
 
         LogInfo << "TtRecoFile has " << chain->GetEntries() << " entries\n";
 
@@ -243,7 +250,7 @@ struct TtRecoFile {
         for (; cur_idx < nentries; ++cur_idx) {
             chain->GetEntry(cur_idx);
             
-            TimeStamp cur_ts{ts->GetTimeSpec()};
+            TimeStamp cur_ts{start_TS->GetTimeSpec()};
             if (cur_ts < lower_bound) continue;
             else if (upper_bound < cur_ts) break;
 
@@ -257,6 +264,7 @@ struct TtRecoFile {
 struct TrackSaver {
 
     std::string filename;
+    std::string treename = "muons";
     TFile* file = nullptr;
     TTree* tree = nullptr;
 
@@ -282,7 +290,7 @@ struct TrackSaver {
             LogWarn << "Cannot open ROOT file " << filename << ". Skipping track saving\n";
             return true;
         }
-        tree = new TTree("muons", "muons");
+        tree = new TTree(treename.c_str(), treename.c_str());
         tree->Branch("run_id", &run_id);
         tree->Branch("sec", &sec);
         tree->Branch("nsec", &nsec);
@@ -406,6 +414,97 @@ struct TrackSaver {
 
 };
 
+struct FeatureSaver {
+
+    std::string filename;
+    std::string treename = "Features";
+    TFile* file = nullptr;
+    TTree* tree = nullptr;
+
+    int run_id;
+    time_t sec;
+    int nsec;
+
+    std::vector<double> iposx;
+    std::vector<double> iposy;
+    std::vector<double> iposz;
+    std::vector<double> fposx;
+    std::vector<double> fposy;
+    std::vector<double> fposz;
+    std::vector<double> chi2;
+    std::vector<unsigned char> det; // 1 = CdWpTtChi2, 2 = CdClassify, 4 = TT
+
+    std::vector<unsigned int> id;
+    std::vector<double> fht;
+    std::vector<double> totq;
+    std::vector<double> q;
+    std::vector<int> nhit;
+
+    bool init() {
+        file = TFile::Open(filename.c_str(), "RECREATE");
+        if (!file) {
+            LogWarn << "Cannot open ROOT file " << filename << ". Skipping feature saving\n";
+            return true;
+        }
+        tree = new TTree(treename.c_str(), treename.c_str());
+
+        tree->Branch("run_id", &run_id);
+        tree->Branch("sec", &sec);
+        tree->Branch("nsec", &nsec);
+        
+        tree->Branch("iposx", &iposx);
+        tree->Branch("iposy", &iposy);
+        tree->Branch("iposz", &iposz);
+        tree->Branch("fposx", &fposx);
+        tree->Branch("fposy", &fposy);
+        tree->Branch("fposz", &fposz);
+        tree->Branch("chi2", &chi2);
+        tree->Branch("det", &det);
+
+        tree->Branch("id", &id);
+        tree->Branch("fht", &fht);
+        tree->Branch("totq", &totq);
+        tree->Branch("q", &q);
+        tree->Branch("nhit", &nhit);
+
+        return true;  
+    }
+    
+    void reset() {
+        run_id = 0;
+        sec = 0l;
+        nsec = 0;
+
+        iposx.clear();
+        iposy.clear();
+        iposz.clear();
+        fposx.clear();
+        fposy.clear();
+        fposz.clear();
+        chi2.clear();
+        det.clear();
+
+        id.clear();
+        fht.clear();
+        totq.clear();
+        q.clear();
+        nhit.clear();
+    }
+
+    void fill() {
+        if (tree && !chi2.empty() && !id.empty()) tree->Fill();
+    }
+
+    bool save() {
+        if (!file || !tree) return false;
+        file->cd();
+        tree->Write();
+        file->Close();
+        return true;
+    }
+
+};
+
 class NavBufferWrapper : public JM::NavBuffer {
 
 public:
@@ -483,11 +582,16 @@ private:
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 
     TrackSaver m_trkSaver;
+    FeatureSaver m_featureSaver;
 
 	bool initBufSvc();
     bool initRecTool();
     bool initLoader();
     bool initAnalyses();
+
+    int getTtLayerId(double z);
+    void addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts);
+    void addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id);
 
     void addTrack(RecTrks& rec_tracks, const std::string& method, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks);
     void addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);

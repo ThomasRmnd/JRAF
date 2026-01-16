@@ -346,11 +346,14 @@ main() {
     resolve_input_paths "${input_reprod_file}"
     resolve_output_paths "${input_reprod_file}"
 
-    local_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.reprod25c.cca.root"
+    local_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.root"
     output_file="$output_path/$(basename "${local_output_file}")"
 
-    local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.reco.output.reprod25c.cca.root"
-    reco_output_file="$reco_output_path/$(basename "${local_reco_output_file}")"
+    local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.reco.output.root"
+    reco_output_file="${reco_output_path}/$(basename "${local_reco_output_file}")"
+
+    local_feature_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.feature.output.root"
+    feature_output_file="${feature_output_path}/$(basename "${local_feature_output_file}")"
 
     log INFO "Context previous file: ${prev_file_local:-<none>}"
     log INFO "Context next file: ${next_file_local:-<none>}"
@@ -359,23 +362,31 @@ main() {
     python run.py \
         --input "${reprod_files[@]}" \
         --output "${local_output_file}" \
-        --reco-output "${local_reco_output_file}" \
         --context-previous-filename "${prev_file_local}" \
         --context-next-filename "${next_file_local}" \
         --tt-reco-filepath "${tt_reco_filepath}" \
+        --reco-output "${local_reco_output_file}" \
+        --feature-output "${local_feature_output_file}" \
         "${EXTRA_ARGS[@]}"
 
     if cp "${local_output_file}" "${output_file}"; then
         log INFO "Output copied to ${output_file}"
     else
-        log ERROR "Failed to copy output file to destination"
+        log ERROR "Failed to copy ${local_output_file} to ${output_file}"
         exit 1
     fi
 
     if cp "${local_reco_output_file}" "${reco_output_file}"; then
         log INFO "Output copied to ${reco_output_file}"
     else
-        log ERROR "Failed to copy output file to destination"
+        log ERROR "Failed to copy ${local_reco_output_file} to ${reco_output_file}"
+        exit 1
+    fi
+
+    if cp "${local_feature_output_file}" "${feature_output_file}"; then
+        log INFO "Output copied to ${feature_output_file}"
+    else
+        log ERROR "Failed to copy ${local_feature_output_file} to ${feature_output_file}"
         exit 1
     fi
 

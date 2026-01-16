@@ -74,7 +74,7 @@ parse_args() {
             --campaign)      CAMPAIGN="$2"; shift 2 ;;
             --run)           RUN_NUMBER="$2"; shift 2 ;;
             --list-base)     LIST_BASE="$2"; shift 2 ;;
-            --range)    FILE_RANGE="$2"; shift 2 ;;
+            --range)         FILE_RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
