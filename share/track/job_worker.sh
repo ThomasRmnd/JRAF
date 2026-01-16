@@ -144,14 +144,12 @@ main() {
     parse_args "$@"
     resolve_input_paths
 
-    # input_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary"
-    input_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/test"
+    input_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary"
     input_filename="RUN.${RUN_NUMBER}.output.reprod25c.cca.root"
     input_file="${input_path}/${input_filename}"
     local_input_file="${TMPDIR}/${input_filename}"
 
-    # output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/comparison"
-    output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/test"
+    output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/comparison"
     output_filename="RUN.${RUN_NUMBER}.comparison.output.reprod25c.cca.root"
     output_file="${output_path}/${output_filename}"
     local_output_file="${TMPDIR}/${output_filename}"
