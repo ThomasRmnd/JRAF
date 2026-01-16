@@ -215,6 +215,9 @@ resolve_output_paths() {
     fi
 
     mkdir -p "${output_path}"
+    mkdir -p "${reco_output_path}"
+    mkdir -p "${feature_output_path}"
+
     log INFO "Output path: ${output_path}"
     log DEBUG "TT reco file path: ${tt_reco_filepath}"
 }

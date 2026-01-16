@@ -187,14 +187,18 @@ resolve_output_paths() {
         run_number="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
         reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
     else
         log ERROR "Unrecognized ReProd path format: $input_reprod_file"
         exit 1
     fi
 
-    mkdir -p "$output_path"
-    mkdir -p "$reco_output_path"
-    log INFO "Output path: $output_path"
+    mkdir -p "${output_path}"
+    mkdir -p "${reco_output_path}"
+    mkdir -p "${feature_output_path}"
+
+    log INFO "Output path: ${output_path}"
+    log DEBUG "TT reco file path: ${tt_reco_filepath}"
 }
 
 check_output_existence() {
