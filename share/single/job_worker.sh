@@ -366,7 +366,7 @@ main() {
         "--context-previous-filename" "${prev_file_local}"
         "--context-next-filename" "${next_file_local}"
         "--tt-reco-filepath" "${tt_reco_filepath}"
-        "--reco-output "${local_reco_output_file}"
+        "--reco-output" "${local_reco_output_file}"
         "--feature-output" "${local_feature_output_file}"
         "--cluster" "${CLUSTER}"
         "${EXTRA_ARGS[@]}"
