@@ -438,6 +438,10 @@ bool AnalysisGroupC::execute() {
 
         addTtToTrack(tracks, curts);
 
+        if (m_tsEvt <= curts) {
+            addFeature(tracks, m_tsEvt, runId);
+        }
+
         std::vector<vertex> vertices;
         // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
         // addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
@@ -457,9 +461,6 @@ bool AnalysisGroupC::execute() {
         EventCache::insert(curts, evt);
         LogInfo << *evt << '\n';
     }
-
-    std::shared_ptr<Event> evt = EventCache::load(nav);
-    addFeature(evt->tracks, m_tsEvt, runId);
 
     // DEBUG --- Timing
     auto t_after_load = clock::now();
