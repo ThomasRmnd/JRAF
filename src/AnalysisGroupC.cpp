@@ -212,6 +212,8 @@ void AnalysisGroupC::addTtToTrack(std::vector<track>& tracks, const TimeStamp& c
 }
 
 void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
+    m_featureSaver.reset();
+    
     if (!m_ttRecoFile.find(curts)) return;
     if (m_ttRecoFile.NTracks != 1) {
         LogInfo << "Muon event is empty or a bundle considering TT (" << m_ttRecoFile.NTracks << " tracks, " << m_ttRecoFile.NTotPoints << " points)\n";
@@ -304,8 +306,9 @@ bool AnalysisGroupC::execute() {
         return false;
     }
     m_tsEvt = TimeStamp{nav->TimeStamp().GetTimeSpec()};
+    int evtId = nav->EventID();
     int runId = nav->RunID();
-    LogInfo << "TimeStamp: " << m_tsEvt << '\n';
+    LogInfo << "TimeStamp: " << m_tsEvt << ", EventID: " << evtId << ", RunID: " << runId << '\n';
 
     if (!m_contextTracker.isTarget(m_iptSvc)) return true;
 
@@ -435,7 +438,10 @@ bool AnalysisGroupC::execute() {
         m_trkSaver.fill();
 
         addTtToTrack(tracks, curts);
-        addFeature(tracks, curts, runId);
+
+        if (m_tsEvt <= curts && evtId <= bufwrap.curEvt()->EventID()) {
+            addFeature(tracks, curts, runId);
+        }
 
         std::vector<vertex> vertices;
         // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
