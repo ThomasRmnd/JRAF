@@ -306,9 +306,8 @@ bool AnalysisGroupC::execute() {
         return false;
     }
     m_tsEvt = TimeStamp{nav->TimeStamp().GetTimeSpec()};
-    unsigned int evtId = nav->EventID();
     int runId = nav->RunID();
-    LogInfo << "TimeStamp: " << m_tsEvt << ", EventID: " << evtId << ", RunID: " << runId << '\n';
+    LogInfo << "TimeStamp: " << m_tsEvt << ", RunID: " << runId << '\n';
 
     if (!m_contextTracker.isTarget(m_iptSvc)) return true;
 
@@ -439,10 +438,6 @@ bool AnalysisGroupC::execute() {
 
         addTtToTrack(tracks, curts);
 
-        if (m_tsEvt <= curts && evtId <= bufwrap.curEvt()->EventID()) {
-            addFeature(tracks, curts, runId);
-        }
-
         std::vector<vertex> vertices;
         // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
         // addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
@@ -462,6 +457,9 @@ bool AnalysisGroupC::execute() {
         EventCache::insert(curts, evt);
         LogInfo << *evt << '\n';
     }
+
+    std::shared_ptr<Event> evt = EventCache::load(nav);
+    addFeature(evt->tracks, m_tsEvt, runId);
 
     // DEBUG --- Timing
     auto t_after_load = clock::now();
