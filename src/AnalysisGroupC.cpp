@@ -294,7 +294,7 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
         m_featureSaver.nhit.push_back(pmt.hitq.size());
     }
 
-    for (std::size_t k = 0; k < m_ttRecoFile.NTotPoints; ++k) {
+    for (Int_t k = 0; k < m_ttRecoFile.NTotPoints; ++k) {
         m_featureSaver.pointx.push_back(m_ttRecoFile.PointX[k]);
         m_featureSaver.pointy.push_back(m_ttRecoFile.PointY[k]);
         m_featureSaver.pointz.push_back(m_ttRecoFile.PointZ[k] + 26452.0);
