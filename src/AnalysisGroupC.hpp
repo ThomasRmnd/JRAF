@@ -128,8 +128,8 @@ struct VetoTimeSaver {
         run_id = run;
         sec = ts.GetSec();
         nsec = ts.GetNanoSec();
-        last_ts = ts;
         veto_type = static_cast<unsigned char>(it->first);
+        last_ts = ts;
         veto_duration = it->second;
         veto_sec = veto_duration.GetSec();
         veto_nsec = veto_duration.GetNanoSec();
