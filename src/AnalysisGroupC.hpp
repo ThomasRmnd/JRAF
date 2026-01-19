@@ -440,6 +440,10 @@ struct FeatureSaver {
     std::vector<double> q;
     std::vector<int> nhit;
 
+    std::vector<double> pointx;
+    std::vector<double> pointy;
+    std::vector<double> pointz;
+
     bool init() {
         file = TFile::Open(filename.c_str(), "RECREATE");
         if (!file) {
@@ -467,6 +471,10 @@ struct FeatureSaver {
         tree->Branch("q", &q);
         tree->Branch("nhit", &nhit);
 
+        tree->Branch("pointx", &pointx);
+        tree->Branch("pointy", &pointy);
+        tree->Branch("pointz", &pointz);
+
         return true;  
     }
     
@@ -489,6 +497,10 @@ struct FeatureSaver {
         totq.clear();
         q.clear();
         nhit.clear();
+
+        pointx.clear();
+        pointy.clear();
+        pointz.clear();
     }
 
     void fill() {
