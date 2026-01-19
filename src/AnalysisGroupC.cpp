@@ -445,7 +445,7 @@ bool AnalysisGroupC::execute() {
         addTtToTrack(tracks, curts);
 
         if (m_tsEvt <= curts) {
-            addFeature(tracks, m_tsEvt, runId);
+            addFeature(tracks, curts, runId);
         }
 
         std::vector<vertex> vertices;
