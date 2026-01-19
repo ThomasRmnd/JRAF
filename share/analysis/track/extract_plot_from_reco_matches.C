@@ -143,7 +143,8 @@ void extract_plot_from_reco_matches(const char* filename) {
         dir_tt.SetXYZ(Coeff3[0], Coeff4[0], Coeff5[0]);
         dir_tt = dir_tt.Unit();
 
-        if (dir_tt.Cross(pos_tt).Mag() / 1000.0 > 17.7) continue;
+        double clipness = dir_tt.Cross(pos_tt).Mag() / 1000.0;
+        if (clipness > 17.7) continue;
 
         std::unordered_map<std::string, std::size_t> method_count = {
             {"CdWpTtChi2", 0ul},
@@ -160,7 +161,9 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         TVector3 ipos_cdclassify((*iposx)[j_cdclassify], (*iposy)[j_cdclassify], (*iposz)[j_cdclassify]);
         TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
-        if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+
+        // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+        if (clipness < 16.0 && fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
@@ -172,9 +175,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         distances.push_back(
             ((pos_tt - (pos_tt * dir_tt) * dir_tt) - (pos_cdwp - (pos_cdwp * dir_cdwp) * dir_cdwp)).Mag() / 1000.0
         );
-        clippingness.push_back(
-            dir_tt.Cross(pos_tt).Mag() / 1000.0
-        );
+        clippingness.push_back(clipness);
         chi2_cdwp_v.push_back((*quality)[j]);
         chi2_tt_v.push_back(Chi2[0]);
         det_cdwp_v.push_back((*det)[j]);
