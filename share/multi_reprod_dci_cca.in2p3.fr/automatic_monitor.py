@@ -470,10 +470,14 @@ class JobLauncher(Module):
 
     def register_options(self, parser : argparse.ArgumentParser):
         parser.add_argument("--launcher-script", type=str, default="job_launcher.sh", help="File used to launch jobs")
+        parser.add_argument("--site", type=str, help="Site used to get the data files")
+        parser.add_argument("--campaign", type=str, help="Campaign used to get the data files")
         parser.add_argument("--dry-run", action="store_true", help="Don't actually submit jobs")
 
     def init(self, args : argparse.Namespace) -> bool:
         self.script = Path(args.launcher_script)
+        self.site = args.site
+        self.campaign = args.campaign
         self.dry_run = args.dry_run
         if not self.dry_run and not self.script.exists():
             logger.error(f"Launcher script not found: {self.script}")
@@ -487,7 +491,21 @@ class JobLauncher(Module):
             return [900000 + run] # Fake job ID
         
         try:
-            out = run_cmd(["bash", str(self.script), "--run-number", str(run)])
+            list_base = ""
+            if self.campaign == "ReProd25C":
+                list_base = "/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
+            elif self.campaign == "ReProd25D":
+                list_base = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0"
+            if not list_base:
+                raise ValueError(f"Unknown campaign: {self.campaign}")
+            
+            file_range = 0
+            if run < 11266:
+                file_range = 100
+            else:
+                file_range = 20
+
+            out = run_cmd(["sh", str(self.script), "--site", str(self.site), "--campaign", str(self.campaign), "--run", str(run), "--list-base", str(list_base), "--range", str(file_range)])
             jobids = []
             for line in out.splitlines():
                 if "Submitted batch job" in line:
