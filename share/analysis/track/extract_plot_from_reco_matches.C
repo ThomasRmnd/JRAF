@@ -409,9 +409,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     set_style(h_wpcluster_angle, kDashed, 4, kViolet);
     set_style(h_cdcluster_angle, kDashed, 4, kGreen+2);
 
-    h_angle->GetXaxis()->SetTitle("#alpha (deg)");
+    h_angle->GetXaxis()->SetTitle("#alpha (#circ)");
     h_angle->GetXaxis()->CenterTitle(kTRUE);
-    h_angle->GetYaxis()->SetTitle("Entries");
+    h_angle->GetYaxis()->SetTitle("Normalized entries");
     h_angle->GetYaxis()->CenterTitle(kTRUE);
     h_angle->GetYaxis()->SetTitleOffset(1.5);
     h_angle->Draw("HIST");
@@ -428,11 +428,11 @@ void extract_plot_from_reco_matches(const char* filename) {
         return line;
     };
 
-    TLine* line_sftm_angle_68p = construct_68p_line(sftm_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 4, kOrange+2);
-    TLine* line_ml_angle_68p = construct_68p_line(ml_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 4, kRed);
-    TLine* line_wpcluster_angle_68p = construct_68p_line(wpcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 4, kViolet);
-    TLine* line_cdcluster_angle_68p = construct_68p_line(cdcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 4, kGreen+2);
-    TLine* line_cdwptt_angle_68p = construct_68p_line(angles[angles.size() * 682 / 1000], 0.0, h_angle->GetMaximum(), kDashed, 4, kBlack);
+    TLine* line_sftm_angle_68p = construct_68p_line(sftm_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kOrange+2);
+    TLine* line_ml_angle_68p = construct_68p_line(ml_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kRed);
+    TLine* line_wpcluster_angle_68p = construct_68p_line(wpcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kViolet);
+    TLine* line_cdcluster_angle_68p = construct_68p_line(cdcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kGreen+2);
+    TLine* line_cdwptt_angle_68p = construct_68p_line(angles[angles.size() * 682 / 1000], 0.0, h_angle->GetMaximum(), kDotted, 4, kBlack);
     line_sftm_angle_68p->Draw("SAME");
     line_ml_angle_68p->Draw("SAME");
     line_wpcluster_angle_68p->Draw("SAME");
@@ -440,11 +440,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdwptt_angle_68p->Draw("SAME");
 
     TLegend* leg_angle = new TLegend(0.55, 0.65, 0.85, 0.85);
-    leg_angle->AddEntry(h_angle, "Joint #chi^2", "l");
-    leg_angle->AddEntry(h_sftm_angle, "SFTM", "l");
-    leg_angle->AddEntry(h_ml_angle, "ML", "l");
-    leg_angle->AddEntry(h_wpcluster_angle, "WP cluster", "l");
-    leg_angle->AddEntry(h_cdcluster_angle, "CD cluster", "l");
+    leg_angle->AddEntry(h_angle, Form("Joint #chi^2: 68%% quantile = %.2f #circ", angles[angles.size() * 682 / 1000]), "l");
+    leg_angle->AddEntry(h_sftm_angle, Form("SFTM: 68%% quantile = %.2f #circ", sftm_angle_68p), "l");
+    leg_angle->AddEntry(h_ml_angle, Form("ML: 68%% quantile = %.2f #circ", ml_angle_68p), "l");
+    leg_angle->AddEntry(h_wpcluster_angle, Form("WP cluster: 68%% quantile = %.2f #circ", wpcluster_angle_68p), "l");
+    leg_angle->AddEntry(h_cdcluster_angle, Form("CD cluster: 68%% quantile = %.2f #circ", cdcluster_angle_68p), "l");
     leg_angle->Draw();
 
     // double x_text = 0.55;
@@ -483,7 +483,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     
     h_distance->GetXaxis()->SetTitle("d_{mid} (m)");
     h_distance->GetXaxis()->CenterTitle(kTRUE);
-    h_distance->GetYaxis()->SetTitle("Entries");
+    h_distance->GetYaxis()->SetTitle("Normalized entries");
     h_distance->GetYaxis()->CenterTitle(kTRUE);
     h_distance->GetYaxis()->SetTitleOffset(1.5);
     h_distance->Draw("HIST");
@@ -492,11 +492,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_wpcluster_distance->Draw("HIST SAME");
     h_cdcluster_distance->Draw("HIST SAME");
 
-    TLine* line_sftm_distance_68p = construct_68p_line(sftm_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 4, kOrange+2);
-    TLine* line_ml_distance_68p = construct_68p_line(ml_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 4, kRed);
-    TLine* line_wpcluster_distance_68p = construct_68p_line(wpcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 4, kViolet);
-    TLine* line_cdcluster_distance_68p = construct_68p_line(cdcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 4, kGreen+2);
-    TLine* line_cdwptt_distance_68p = construct_68p_line(distances[distances.size() * 682 / 1000], 0.0, h_distance->GetMaximum(), kDashed, 4, kBlack);
+    TLine* line_sftm_distance_68p = construct_68p_line(sftm_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kOrange+2);
+    TLine* line_ml_distance_68p = construct_68p_line(ml_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kRed);
+    TLine* line_wpcluster_distance_68p = construct_68p_line(wpcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kViolet);
+    TLine* line_cdcluster_distance_68p = construct_68p_line(cdcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kGreen+2);
+    TLine* line_cdwptt_distance_68p = construct_68p_line(distances[distances.size() * 682 / 1000], 0.0, h_distance->GetMaximum(), kDotted, 4, kBlack);
     line_sftm_distance_68p->Draw("SAME");
     line_ml_distance_68p->Draw("SAME");
     line_wpcluster_distance_68p->Draw("SAME");
@@ -504,11 +504,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdwptt_distance_68p->Draw("SAME");
 
     TLegend* leg_distance = new TLegend(0.45, 0.65, 0.85, 0.85);
-    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68%% quantile = %.2f", distances[distances.size() * 682 / 1000]), "l");
-    leg_distance->AddEntry(h_sftm_distance, Form("SFTM: 68%% quantile = %.2f", sftm_distance_68p), "l");
-    leg_distance->AddEntry(h_ml_distance, Form("ML: 68%% quantile = %.2f", ml_distance_68p), "l");
-    leg_distance->AddEntry(h_wpcluster_distance, Form("WP cluster: 68%% quantile = %.2f", wpcluster_distance_68p), "l");
-    leg_distance->AddEntry(h_cdcluster_distance, Form("CD cluster: 68%% quantile = %.2f", cdcluster_distance_68p), "l");
+    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68%% quantile = %.2f m", distances[distances.size() * 682 / 1000]), "l");
+    leg_distance->AddEntry(h_sftm_distance, Form("SFTM: 68%% quantile = %.2f m", sftm_distance_68p), "l");
+    leg_distance->AddEntry(h_ml_distance, Form("ML: 68%% quantile = %.2f m", ml_distance_68p), "l");
+    leg_distance->AddEntry(h_wpcluster_distance, Form("WP cluster: 68%% quantile = %.2f m", wpcluster_distance_68p), "l");
+    leg_distance->AddEntry(h_cdcluster_distance, Form("CD cluster: 68%% quantile = %.2f m", cdcluster_distance_68p), "l");
     leg_distance->Draw();
 
     // TLatex* tex1_distance = new TLatex();
