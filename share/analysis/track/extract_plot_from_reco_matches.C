@@ -467,6 +467,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     c_angle->SetTickx();
     c_angle->SetTicky();
+    c_angle->SetGrid();
     c_angle->Update();
 
     TCanvas* c_distance = new TCanvas("c_distance", "c_distance", 1000, 1000);
@@ -504,7 +505,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdwptt_distance_68p->Draw("SAME");
 
     TLegend* leg_distance = new TLegend(0.55, 0.65, 0.85, 0.85);
-    leg_distance->AddEntry(h_distance, "Joint #chi^2", "l");
+    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68% quantile = %lf", distances[distances.size() * 682 / 1000]), "l");
     leg_distance->AddEntry(h_sftm_distance, "SFTM", "l");
     leg_distance->AddEntry(h_ml_distance, "ML", "l");
     leg_distance->AddEntry(h_wpcluster_distance, "WP cluster", "l");
@@ -527,6 +528,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     c_distance->SetTickx();
     c_distance->SetTicky();
+    c_distance->SetGrid();
     c_distance->Update();
 
     TCanvas* c_angle_clippingness = new TCanvas("c_angle_clippingness", "c_angle_clippingness", 1000, 1000);
