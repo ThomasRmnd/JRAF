@@ -163,7 +163,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
 
         // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
-        if (clipness < 16.0 && fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+        // if (clipness < 16.0 && fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
