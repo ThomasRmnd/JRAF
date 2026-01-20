@@ -439,7 +439,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdcluster_angle_68p->Draw("SAME");
     line_cdwptt_angle_68p->Draw("SAME");
 
-    TLegend* leg_angle = new TLegend(0.55, 0.65, 0.85, 0.85);
+    TLegend* leg_angle = new TLegend(0.45, 0.65, 0.85, 0.85);
     leg_angle->AddEntry(h_angle, Form("Joint #chi^2: 68%% quantile = %.2f #circ", angles[angles.size() * 682 / 1000]), "l");
     leg_angle->AddEntry(h_sftm_angle, Form("SFTM: 68%% quantile = %.2f #circ", sftm_angle_68p), "l");
     leg_angle->AddEntry(h_ml_angle, Form("ML: 68%% quantile = %.2f #circ", ml_angle_68p), "l");
