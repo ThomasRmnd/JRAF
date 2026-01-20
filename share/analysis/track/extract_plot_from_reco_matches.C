@@ -505,8 +505,8 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdwptt_distance_68p->Draw("SAME");
 
     TLegend* leg_distance = new TLegend(0.55, 0.65, 0.85, 0.85);
-    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68% quantile = %lf", distances[distances.size() * 682 / 1000]), "l");
-    leg_distance->AddEntry(h_sftm_distance, "SFTM", "l");
+    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68\% quantile = %.2f", distances[distances.size() * 682 / 1000]), "l");
+    leg_distance->AddEntry(h_sftm_distance, Form("SFTM: 68\% quantile = %.2f", sftm_distance_68p), "l");
     leg_distance->AddEntry(h_ml_distance, "ML", "l");
     leg_distance->AddEntry(h_wpcluster_distance, "WP cluster", "l");
     leg_distance->AddEntry(h_cdcluster_distance, "CD cluster", "l");
