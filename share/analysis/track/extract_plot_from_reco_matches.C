@@ -345,12 +345,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     std::cout << "68.2% angle: " << angles[angles.size() * 682 / 1000] << ", size: " << angles.size() << '\n';
     std::cout << "68.2% distance: " << distances[distances.size() * 682 / 1000] << ", size: " << distances.size() << '\n';
 
-    /* std::function<void(TH1*, Color_t, Style_t, int)> */ auto set_style = [](TH1* h, Color_t color, Style_t style, int alpha = 100) {
-        h->SetLineColor(color);
-        // h->SetFillColor(color + (alpha << 24));
+    auto set_style = [](TH1* h, Style_t style, int width, Color_t color, float alpha = 1.0) {
         h->SetFillStyle(3004);       // transparent fill pattern
-        h->SetLineWidth(4);
         h->SetLineStyle(style);
+        h->SetLineWidth(width);
+        h->SetLineColorAlpha(color, alpha);
     };
 
     TCanvas* c_angle_run = new TCanvas("c_angle_run", "c_angle_run", 1000, 1000);
@@ -404,11 +403,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle->SetStats(0);
     h_angle->SetMaximum(1.1 * std::max({h_angle->GetMaximum(), h_sftm_angle->GetMaximum(), h_ml_angle->GetMaximum()}));
     
-    set_style(h_angle, kBlack, kSolid);
-    set_style(h_sftm_angle, kOrange+2, kDashDotted);
-    set_style(h_ml_angle, kRed, kDotted);
-    set_style(h_wpcluster_angle, kViolet, kDashed);
-    set_style(h_cdcluster_angle, kGreen+2, kDashed);
+    set_style(h_angle, kSolid, 4, kBlack);
+    set_style(h_sftm_angle, kSolid, 4, kOrange+2);
+    set_style(h_ml_angle, kSolid, 4, kRed);
+    set_style(h_wpcluster_angle, kSolid, 4, kViolet);
+    set_style(h_cdcluster_angle, kSolid, 4, kGreen+2);
 
     h_angle->GetXaxis()->SetTitle("#alpha (deg)");
     h_angle->GetXaxis()->CenterTitle(kTRUE);
@@ -430,7 +429,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     };
 
     TLine* line_sftm_angle_68p = construct_68p_line(sftm_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 2, kOrange+2);
-    TLine* line_ml_angle_68p = construct_68p_line(ml_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 2, kRed);
+    TLine* line_ml_angle_68p = construct_68p_line(ml_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 2, kRed);
     TLine* line_wpcluster_angle_68p = construct_68p_line(wpcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 2, kViolet);
     TLine* line_cdcluster_angle_68p = construct_68p_line(cdcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDashed, 2, kGreen+2);
     TLine* line_cdwptt_angle_68p = construct_68p_line(angles[angles.size() * 682 / 1000], 0.0, h_angle->GetMaximum(), kDashed, 2, kBlack);
@@ -476,11 +475,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_distance->SetStats(0);
     h_distance->SetMaximum(1.1 * std::max({h_angle->GetMaximum(), h_sftm_angle->GetMaximum(), h_ml_angle->GetMaximum()}));
     
-    set_style(h_distance, kBlack, kSolid);
-    set_style(h_sftm_distance, kOrange+2, kDashDotted);
-    set_style(h_ml_distance, kRed, kDotted);
-    set_style(h_wpcluster_distance, kViolet, kDashed);
-    set_style(h_cdcluster_distance, kGreen+2, kDashed);
+    set_style(h_distance, kSolid, 4, kBlack);
+    set_style(h_sftm_distance, kSolid, 4, kOrange+2);
+    set_style(h_ml_distance, kSolid, 4, kRed);
+    set_style(h_wpcluster_distance, kSolid, 4, kViolet);
+    set_style(h_cdcluster_distance, kSolid, 4, kGreen+2);
     
     h_distance->GetXaxis()->SetTitle("d_{mid} (m)");
     h_distance->GetXaxis()->CenterTitle(kTRUE);
@@ -493,11 +492,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_wpcluster_distance->Draw("HIST SAME");
     h_cdcluster_distance->Draw("HIST SAME");
 
-    TLine* line_sftm_distance_68p = construct_68p_line(sftm_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 2, kOrange+2);
-    TLine* line_ml_distance_68p = construct_68p_line(ml_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 2, kRed);
-    TLine* line_wpcluster_distance_68p = construct_68p_line(wpcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 2, kViolet);
-    TLine* line_cdcluster_distance_68p = construct_68p_line(cdcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 2, kGreen+2);
-    TLine* line_cdwptt_distance_68p = construct_68p_line(distances[distances.size() * 682 / 1000], 0.0, h_distance->GetMaximum(), kDashed, 2, kBlack);
+    TLine* line_sftm_distance_68p = construct_68p_line(sftm_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 3, kOrange+2);
+    TLine* line_ml_distance_68p = construct_68p_line(ml_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 3, kRed);
+    TLine* line_wpcluster_distance_68p = construct_68p_line(wpcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 3, kViolet);
+    TLine* line_cdcluster_distance_68p = construct_68p_line(cdcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDashed, 3, kGreen+2);
+    TLine* line_cdwptt_distance_68p = construct_68p_line(distances[distances.size() * 682 / 1000], 0.0, h_distance->GetMaximum(), kDashed, 3, kBlack);
     line_sftm_distance_68p->Draw("SAME");
     line_ml_distance_68p->Draw("SAME");
     line_wpcluster_distance_68p->Draw("SAME");
