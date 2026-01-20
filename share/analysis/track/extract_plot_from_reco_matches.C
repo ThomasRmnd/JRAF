@@ -627,7 +627,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     //     h_sim_tt_azimuth->Fill(phi_deg);
     // }
 
-    TFile* simfile = TFile::Open("/home/traymond/Documents/test/reconstruction_summary/rec.TT_simreco.user.root", "READ");
+    TFile* simfile = TFile::Open("rec.TT_simreco.user.root", "READ");
     TTree* ttrecomu = simfile->Get<TTree>("TT");
     ttrecomu->SetBranchAddress("NTotPoints", &NTotPoints);
     ttrecomu->SetBranchAddress("PointX", &PointX);
