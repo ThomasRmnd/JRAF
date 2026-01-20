@@ -573,6 +573,63 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_distance_chi2cdwp->Draw("COLZ");
     c_distance_chi2cdwp->Update();
 
+#undef COMPARE_WITH_SIMULATION_FILE
+#ifndef COMPARE_WITH_SIMULATION_FILE
+
+    TH1D* h_cdwp_zenith = new TH1D("h_cdwp_zenith", "h_cdwp_zenith", 100, -1.0, 1.0);
+    TH1D* h_cdwp_azimuth = new TH1D("h_cdwp_azimuth", "h_cdwp_azimuth", 100, 0.0, 360.0);
+
+    for (std::size_t k = 0ul; k < zenith_cdwp_v.size(); ++k) {
+        h_cdwp_zenith->Fill(zenith_cdwp_v[k]);
+        h_cdwp_azimuth->Fill(azimuth_cdwp_v[k]);
+    }
+    h_cdwp_zenith->Scale(1.0 / h_cdwp_zenith->Integral());
+    h_cdwp_azimuth->Scale(1.0 / h_cdwp_azimuth->Integral());
+
+    TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
+    c_zenith->cd();
+
+    h_cdwp_zenith->SetStats(0);
+    h_cdwp_zenith->GetXaxis()->SetTitle("cos(#theta_{d})");
+    h_cdwp_zenith->GetXaxis()->CenterTitle(kTRUE);
+    h_cdwp_zenith->GetYaxis()->SetTitle("Entries");
+    h_cdwp_zenith->GetYaxis()->CenterTitle(kTRUE);
+    h_cdwp_zenith->GetYaxis()->SetTitleOffset(1.5);
+    h_cdwp_zenith->SetLineColor(kRed+1);
+    h_cdwp_zenith->SetLineWidth(3);
+    h_cdwp_zenith->SetMarkerColor(kRed+1);
+    h_cdwp_zenith->SetMarkerSize(1.25);
+    h_cdwp_zenith->SetMarkerStyle(kFullCircle);
+    h_cdwp_zenith->Draw("HIST");
+
+    c_zenith->SetTickx();
+    c_zenith->SetTicky();
+    c_zenith->SetGrid();
+    c_zenith->Update();
+
+    TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
+    c_azimuth->cd();
+
+    h_cdwp_azimuth->SetStats(0);
+    h_cdwp_azimuth->GetXaxis()->SetTitle("#phi_{d}");
+    h_cdwp_azimuth->GetXaxis()->CenterTitle(kTRUE);
+    h_cdwp_azimuth->GetYaxis()->SetTitle("Entries");
+    h_cdwp_azimuth->GetYaxis()->CenterTitle(kTRUE);
+    h_cdwp_azimuth->GetYaxis()->SetTitleOffset(1.5);
+    h_cdwp_azimuth->SetLineColor(kRed+1);
+    h_cdwp_azimuth->SetLineWidth(1);
+    h_cdwp_azimuth->SetMarkerColor(kRed+1);
+    h_cdwp_azimuth->SetMarkerSize(1.25);
+    h_cdwp_azimuth->SetMarkerStyle(kFullCircle);
+    h_cdwp_azimuth->Draw("HIST");
+
+    c_azimuth->SetTickx();
+    c_azimuth->SetTicky();
+    c_azimuth->SetGrid();
+    c_azimuth->Update();
+
+#else
+
     TH1D* h_sim_tt_zenith = new TH1D("h_sim_tt_zenith", "h_sim_tt_zenith", 100, 0.0, 1.0);
     TH1D* h_sim_tt_azimuth = new TH1D("h_sim_tt_azimuth", "h_sim_tt_azimuth", 100, 0.0, 360.0);
 
@@ -841,4 +898,6 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_sim_tt_azimuth_good->SetTickx();
     c_sim_tt_azimuth_good->SetTicky();
     c_sim_tt_azimuth_good->Update();
+
+#endif // COMPARE_WITH_SIMULATION_FILE
 }
