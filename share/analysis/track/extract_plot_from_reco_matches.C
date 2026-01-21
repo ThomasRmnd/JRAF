@@ -452,7 +452,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", nbins, r2_min, r2_max);
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
-        double r2 = clippingness[k] / 1000.0 * clippingness[k] / 1000.0;
+        double r2 = clippingness[k] * clippingness[k];
         std::size_t j = std::floor(r2 * nbins / r2_max);
         angle_r2_bin_content[j].push_back(angles[k]);
         distance_r2_bin_counts[j].push_back(distances[k]);
@@ -743,90 +743,18 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle_distance->Draw("COLZ");
     c_angle_distance->Update();
 
-    TCanvas* c_angle_chi2cdwp = new TCanvas("c_angle_chi2cdwp", "c_angle_chi2cdwp", 1000, 1000);
-    c_angle_chi2cdwp->cd();
-    h_angle_chi2cdwp->Draw("COLZ");
-    c_angle_chi2cdwp->Update();
+    // TCanvas* c_angle_chi2cdwp = new TCanvas("c_angle_chi2cdwp", "c_angle_chi2cdwp", 1000, 1000);
+    // c_angle_chi2cdwp->cd();
+    // h_angle_chi2cdwp->Draw("COLZ");
+    // c_angle_chi2cdwp->Update();
 
-    TCanvas* c_distance_chi2cdwp = new TCanvas("c_distance_chi2cdwp", "c_distance_chi2cdwp", 1000, 1000);
-    c_distance_chi2cdwp->cd();
-    h_distance_chi2cdwp->Draw("COLZ");
-    c_distance_chi2cdwp->Update();
+    // TCanvas* c_distance_chi2cdwp = new TCanvas("c_distance_chi2cdwp", "c_distance_chi2cdwp", 1000, 1000);
+    // c_distance_chi2cdwp->cd();
+    // h_distance_chi2cdwp->Draw("COLZ");
+    // c_distance_chi2cdwp->Update();
 
 #undef COMPARE_WITH_SIMULATION_FILE
-#ifndef COMPARE_WITH_SIMULATION_FILE
-
-    TH1D* h_cdwp_zenith = new TH1D("h_cdwp_zenith", "h_cdwp_zenith", 100, -1.0, 1.0);
-    TH1D* h_cdwp_azimuth = new TH1D("h_cdwp_azimuth", "h_cdwp_azimuth", 100, 0.0, 360.0);
-    TH2D* h_cdwp_zenith_clippingness = new TH2D("h_cdwp_zenith_clippingness", "h_cdwp_zenith_clippingness", 100, -1.0, 1.0, 100, 0.0, 20.0);
-
-    for (std::size_t k = 0ul; k < zenith_cdwp_v.size(); ++k) {
-        h_cdwp_zenith->Fill(zenith_cdwp_v[k]);
-        h_cdwp_azimuth->Fill(azimuth_cdwp_v[k]);
-        h_cdwp_zenith_clippingness->Fill(zenith_cdwp_v[k], clippingness[k]);
-    }
-    h_cdwp_zenith->Scale(1.0 / h_cdwp_zenith->Integral());
-    h_cdwp_azimuth->Scale(1.0 / h_cdwp_azimuth->Integral());
-
-    TCanvas* c_zenith_comp_with_tt = new TCanvas("c_zenith_comp_with_tt", "c_zenith_comp_with_tt", 1000, 1000);
-    c_zenith_comp_with_tt->cd();
-
-    h_cdwp_zenith->SetStats(0);
-    h_cdwp_zenith->GetXaxis()->SetTitle("cos(#theta_{d})");
-    h_cdwp_zenith->GetXaxis()->CenterTitle(kTRUE);
-    h_cdwp_zenith->GetYaxis()->SetTitle("Entries");
-    h_cdwp_zenith->GetYaxis()->CenterTitle(kTRUE);
-    h_cdwp_zenith->GetYaxis()->SetTitleOffset(1.5);
-    h_cdwp_zenith->SetLineColor(kRed+1);
-    h_cdwp_zenith->SetLineWidth(3);
-    h_cdwp_zenith->SetMarkerColor(kRed+1);
-    h_cdwp_zenith->SetMarkerSize(1.25);
-    h_cdwp_zenith->SetMarkerStyle(kFullCircle);
-    h_cdwp_zenith->Draw("HIST");
-
-    c_zenith_comp_with_tt->SetTickx();
-    c_zenith_comp_with_tt->SetTicky();
-    c_zenith_comp_with_tt->SetGrid();
-    c_zenith_comp_with_tt->Update();
-
-    TCanvas* c_azimuth_comp_with_tt = new TCanvas("c_azimuth_comp_with_tt", "c_azimuth_comp_with_tt", 1000, 1000);
-    c_azimuth_comp_with_tt->cd();
-
-    h_cdwp_azimuth->SetStats(0);
-    h_cdwp_azimuth->GetXaxis()->SetTitle("#phi_{d}");
-    h_cdwp_azimuth->GetXaxis()->CenterTitle(kTRUE);
-    h_cdwp_azimuth->GetYaxis()->SetTitle("Entries");
-    h_cdwp_azimuth->GetYaxis()->CenterTitle(kTRUE);
-    h_cdwp_azimuth->GetYaxis()->SetTitleOffset(1.5);
-    h_cdwp_azimuth->SetLineColor(kRed+1);
-    h_cdwp_azimuth->SetLineWidth(1);
-    h_cdwp_azimuth->SetMarkerColor(kRed+1);
-    h_cdwp_azimuth->SetMarkerSize(1.25);
-    h_cdwp_azimuth->SetMarkerStyle(kFullCircle);
-    h_cdwp_azimuth->Draw("HIST");
-
-    c_azimuth_comp_with_tt->SetTickx();
-    c_azimuth_comp_with_tt->SetTicky();
-    c_azimuth_comp_with_tt->SetGrid();
-    c_azimuth_comp_with_tt->Update();
-
-    TCanvas* c_zenith_clippingness = new TCanvas("c_zenith_clippingness", "c_zenith_clippingness", 1000, 1000);
-    c_zenith_clippingness->cd();
-
-    h_cdwp_zenith_clippingness->SetStats(0);
-    h_cdwp_zenith_clippingness->GetXaxis()->SetTitle("cos(#theta_{d})");
-    h_cdwp_zenith_clippingness->GetXaxis()->CenterTitle(kTRUE);
-    h_cdwp_zenith_clippingness->GetYaxis()->SetTitle("L (m)");
-    h_cdwp_zenith_clippingness->GetYaxis()->CenterTitle(kTRUE);
-    h_cdwp_zenith_clippingness->GetYaxis()->SetTitleOffset(1.5);
-    h_cdwp_zenith_clippingness->Draw("COLZ");
-
-    c_zenith_clippingness->SetTickx();
-    c_zenith_clippingness->SetTicky();
-    c_zenith_clippingness->SetGrid();
-    c_zenith_clippingness->Update();
-
-#else
+#ifdef COMPARE_WITH_SIMULATION_FILE
 
     TH1D* h_sim_tt_zenith = new TH1D("h_sim_tt_zenith", "h_sim_tt_zenith", 100, 0.0, 1.0);
     TH1D* h_sim_tt_azimuth = new TH1D("h_sim_tt_azimuth", "h_sim_tt_azimuth", 100, 0.0, 360.0);
