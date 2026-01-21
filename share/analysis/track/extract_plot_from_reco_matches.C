@@ -106,12 +106,9 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     std::cout << "[INFO] Number of entries: " << tree->GetEntries() << '\n';
 
-    TH1D* h_zenith = new TH1D("h_zenith", "h_zenith", 100, -1.0, 1.0);
-    TH1D* h_azimuth = new TH1D("h_azimuth", "h_azimuth", 100, 0.0, 360.0);
+    TH1D* h_zenith = new TH1D("h_zenith", "h_zenith", 66, -1.0, 1.0);
+    TH1D* h_azimuth = new TH1D("h_azimuth", "h_azimuth", 57, 0.0, 360.0);
     TH2D* h_zenith_azimuth = new TH2D("h_zenith_azimuth", "h_zenith_azimuth", 100, -1.0, 1.0, 100, 0.0, 360.0);
-
-    TH1D* h_ts_diff = new TH1D("h_ts_diff", "h_ts_diff", 100, -1000.0, 1000.0);
-    TH1D* h_z_pt = new TH1D("h_z_pt", "h_z_pt", 1000, -10000.0, 10000.0 /* 24000.0, 31000.0 */);
 
     auto layer_id = [&](double z) {
         if (layer_0_zmin <= z && z <= layer_0_zmax) return 0;  // main
@@ -162,9 +159,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         std::unordered_set<int> layers_hit;
         layers_hit.reserve(6);
 
-        h_ts_diff->Fill(1.0e9 * (TTimeStamp{sec, nsec} - *start_TS));
         for (int i = 0; i < NTotPoints; ++i) {
-            h_z_pt->Fill(PointZ[i] + cdwp_tt_coordinate_offset);
             int lid = layer_id(PointZ[i] + cdwp_tt_coordinate_offset);
             if (lid >= 0) layers_hit.insert(lid);
         }
@@ -232,16 +227,6 @@ void extract_plot_from_reco_matches(const char* filename) {
     int min_run = *std::min_element(run_ids.begin(), run_ids.end());
     int max_run = *std::max_element(run_ids.begin(), run_ids.end());
 
-    // TCanvas* c_ts_diff = new TCanvas("c_ts_diff", "c_ts_diff", 1000, 1000);
-    // c_ts_diff->cd();
-    // h_ts_diff->Draw();
-    // c_ts_diff->Update();
-
-    // TCanvas* c_z_pt = new TCanvas("c_z_pt", "c_z_pt", 1000, 1000);
-    // c_z_pt->cd();
-    // h_z_pt->Draw();
-    // c_z_pt->Update();    
-
     TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
     c_zenith->cd();
     h_zenith->Scale(1.0 / h_zenith->Integral());
@@ -285,13 +270,16 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetLineWidth(3);
     h_azimuth->SetLineColor(kBlack);
     h_azimuth->SetMarkerStyle(kFullCircle);
-    h_azimuth->SetMarkerSize(1.5);
+    h_azimuth->SetMarkerSize(1.25);
     h_azimuth->SetMarkerColor(kBlack);
     h_azimuth->Draw("E1");
     h_simu_azimuth->SetLineColor(kBlue);
     h_simu_azimuth->SetLineStyle(kSolid);
     h_simu_azimuth->SetLineWidth(3);
     h_simu_azimuth->Draw("HIST SAME");
+    c_azimuth->SetTickx();
+    c_azimuth->SetTicky();
+    c_azimuth->SetGrid();
     c_azimuth->Update();
 
     TCanvas* c_zenith_azimuth = new TCanvas("c_zenith_azimuth", "c_zenith_azimuth", 1000, 1000);
