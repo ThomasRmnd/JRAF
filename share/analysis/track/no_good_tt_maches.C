@@ -221,14 +221,23 @@ void no_good_tt_maches(const char* filename) {
                 cdwp_reco_x_at_layer[i] = p_cdwp_at_z.X();
                 cdwp_reco_y_at_layer[i] = p_cdwp_at_z.Y();
             }
-            if (
-                -23500.0 <= cdwp_reco_x_at_layer[0] && cdwp_reco_x_at_layer[0] <= 23500.0 &&
-                -10000.0 <= cdwp_reco_y_at_layer[0] && cdwp_reco_y_at_layer[0] <= 10000.0 &&
-                -23500.0 <= cdwp_reco_x_at_layer[1] && cdwp_reco_x_at_layer[1] <= 23500.0 &&
-                -10000.0 <= cdwp_reco_y_at_layer[1] && cdwp_reco_y_at_layer[1] <= 10000.0 &&
-                -23500.0 <= cdwp_reco_x_at_layer[2] && cdwp_reco_x_at_layer[2] <= 23500.0 &&
-                -10000.0 <= cdwp_reco_y_at_layer[2] && cdwp_reco_y_at_layer[2] <= 10000.0
-            ) {
+            bool is_in_layer = (
+                std::abs(cdwp_reco_x_at_layer[0]) <= 23500.0 &&
+                std::abs(cdwp_reco_x_at_layer[1]) <= 23500.0 &&
+                std::abs(cdwp_reco_x_at_layer[2]) <= 23500.0 &&
+                std::abs(cdwp_reco_y_at_layer[0]) <= 10000.0 &&
+                std::abs(cdwp_reco_y_at_layer[1]) <= 10000.0 &&
+                std::abs(cdwp_reco_y_at_layer[2]) <= 10000.0
+            );
+            bool is_in_chimney = (
+                std::abs(cdwp_reco_x_at_layer[0]) <= 3350.0 &&
+                std::abs(cdwp_reco_x_at_layer[1]) <= 3350.0 &&
+                std::abs(cdwp_reco_x_at_layer[2]) <= 3350.0 &&
+                std::abs(cdwp_reco_y_at_layer[0]) <= 3350.0 &&
+                std::abs(cdwp_reco_y_at_layer[1]) <= 3350.0 &&
+                std::abs(cdwp_reco_y_at_layer[2]) <= 3350.0
+            );
+            if (is_in_layer && !is_in_chimney) {
                 if (!set_cdwp_no_tt_rate_previous_muon) {
                     set_cdwp_no_tt_rate_previous_muon = true;
                     cdwp_no_tt_rate_previous_muon = ts;

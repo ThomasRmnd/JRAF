@@ -471,25 +471,37 @@ void extract_plot_from_reco_matches(const char* filename) {
         h_distance_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
     }
     for (int i = 0; i < nbins; ++i) {
-        if (angle_r2_bin_content[i].empty()) continue;
         int nchunks = 10;
         std::size_t chunk_size = angle_r2_bin_content[i].size() / nchunks;
         if (chunk_size > 10) {
-            std::vector<double> chunk_quantiles;
+            std::vector<double> angle_chunk_quantiles, distance_chunk_quantiles;
             for (int c = 0; c < nchunks; ++c) {
                 std::vector<double>::const_iterator start = angle_r2_bin_content[i].begin() + (c * chunk_size);
                 std::vector<double>::const_iterator end = (c == nchunks - 1) ? angle_r2_bin_content[i].end() : start + chunk_size;
-                std::vector<double> chunk_data(start, end);
-                chunk_quantiles.push_back(get_quantile_68(chunk_data));
+                std::vector<double> angle_chunk_data(start, end);
+                angle_chunk_quantiles.push_back(get_quantile_68(angle_chunk_data));
+                start = distance_r2_bin_counts[i].begin() + (c * chunk_size);
+                end = (c == nchunks - 1) ? distance_r2_bin_counts[i].end() : start + chunk_size;
+                std::vector<double> distance_chunk_data(start, end);
+                distance_chunk_quantiles.push_back(get_quantile_68(distance_chunk_data));
             }
-            double sum = 0, sq_sum = 0;
-            for(double q : chunk_quantiles) { 
+            double sum = 0.0, sq_sum = 0.0;
+            for(double q : angle_chunk_quantiles) { 
                 sum += q; 
                 sq_sum += q * q; 
             }
             double stdev = std::sqrt((sq_sum / nchunks) - (sum / nchunks) * (sum / nchunks));
             double err = stdev / std::sqrt(nchunks);
             h_angle_r2->SetBinError(i + 1, err);
+            sum = 0.0; 
+            sq_sum = 0.0;
+            for(double q : distance_chunk_quantiles) { 
+                sum += q; 
+                sq_sum += q * q; 
+            }
+            stdev = std::sqrt((sq_sum / nchunks) - (sum / nchunks) * (sum / nchunks));
+            err = stdev / std::sqrt(nchunks);
+            h_distance_r2->SetBinError(i + 1, err);
         }
     }
     h_angle_r2->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
