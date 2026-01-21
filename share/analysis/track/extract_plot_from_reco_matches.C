@@ -437,7 +437,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     };
 
     auto get_quantile_68 = [](std::vector<double>& v) {
-        if (v.empty()) return std::numeric_limits<double>::quiet_NaN();
+        if (v.empty()) return 0.0;
         std::size_t idx = static_cast<std::size_t>(0.682 * v.size());
         std::nth_element(v.begin(), v.begin() + idx, v.end());
         return v[idx];
