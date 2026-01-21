@@ -460,6 +460,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         distance_r2_bin_counts[j].push_back(distances[k]);
     }
     for (int i = 0; i < nbins; ++i) {
+        std::cout << angle_r2_bin_content[i].size() << ' ' << distance_r2_bin_counts[i].size() << '\n';
         h_angle_r2->SetBinContent(i + 1, get_quantile_68(angle_r2_bin_content[i]));
         h_distance_r2->SetBinContent(i + 1, get_quantile_68(distance_r2_bin_counts[i]));
         double bin_edge = std::sqrt(i * r2_max / nbins);
