@@ -484,9 +484,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     g_angle_run->GetYaxis()->SetLabelSize(0.06);
     g_angle_run->Draw("APL");
 
-    TLine* line_angle_run_68p = new TLine(min_run - 0.5, angles[angles.size() * 682 / 1000], max_run + 0.5, angles[angles.size() * 682 / 1000]);
+    TLine* line_angle_run_68p = new TLine(g_angle_run->GetXaxis()->GetXmin(), angles[angles.size() * 682 / 1000], g_angle_run->GetXaxis()->GetXmax(), angles[angles.size() * 682 / 1000]);
     line_angle_run_68p->SetLineStyle(kDotted);
-    line_angle_run_68p->SetLineWidth(2);
+    line_angle_run_68p->SetLineWidth(3);
     line_angle_run_68p->SetLineColor(kRed);
     line_angle_run_68p->Draw("SAME");
 
@@ -512,9 +512,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     g_distance_run->GetYaxis()->SetLabelSize(0.06);
     g_distance_run->Draw("APL");
 
-    TLine* line_distance_run_68p = new TLine(min_run - 0.5, angles[angles.size() * 682 / 1000], max_run + 0.5, angles[angles.size() * 682 / 1000]);
+    TLine* line_distance_run_68p = new TLine(g_distance_run->GetXaxis()->GetXmin(), angles[angles.size() * 682 / 1000], g_distance_run->GetXaxis()->GetXmax(), angles[angles.size() * 682 / 1000]);
     line_distance_run_68p->SetLineStyle(kDotted);
-    line_distance_run_68p->SetLineWidth(2);
+    line_distance_run_68p->SetLineWidth(3);
     line_distance_run_68p->SetLineColor(kRed);
     line_distance_run_68p->Draw("SAME");
 
