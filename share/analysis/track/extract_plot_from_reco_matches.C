@@ -309,6 +309,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->GetYaxis()->SetTitle("Normalized entries");
     h_azimuth->GetYaxis()->CenterTitle(kTRUE);
     h_azimuth->GetYaxis()->SetTitleOffset(1.5);
+    h_azimuth->GetYaxis()->SetMaxDigits(3);
     h_azimuth->Draw("E");
     
     h_simu_azimuth->SetLineColor(kBlue);
