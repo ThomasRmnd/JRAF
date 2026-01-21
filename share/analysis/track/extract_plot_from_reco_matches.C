@@ -466,10 +466,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle_run_summry->SetLineWidth(1);
     h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
     h_angle_run_summry->GetYaxis()->CenterTitle(true);
-    h_angle_run_summry->GetYaxis()->SetTitleOffset(1.5);
+    h_angle_run_summry->GetYaxis()->SetTitleOffset(1.0);
     h_angle_run_summry->GetYaxis()->SetTitleSize(0.06);
     h_angle_run_summry->GetXaxis()->SetLabelSize(0);
     h_angle_run_summry->GetXaxis()->SetTitle("");
+    h_angle_run_summry->SetBinErrorOption(TH1::kPoisson);
     h_angle_run_summry->Draw("PL");
 
     pad_top->SetTickx();
@@ -487,8 +488,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_distance_run_summry->GetXaxis()->CenterTitle(true);
     h_distance_run_summry->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
     h_distance_run_summry->GetYaxis()->CenterTitle(true);
-    h_distance_run_summry->GetYaxis()->SetTitleOffset(1.5);
+    h_distance_run_summry->GetYaxis()->SetTitleOffset(1.0);
     h_distance_run_summry->GetYaxis()->SetTitleSize(0.06);
+    h_distance_run_summry->SetBinErrorOption(TH1::kPoisson);
     h_distance_run_summry->Draw("PL");
 
     pad_bottom->SetTickx();
