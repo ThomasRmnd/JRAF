@@ -348,7 +348,6 @@ void extract_plot_from_reco_matches(const char* filename) {
     std::map<int, std::vector<double>> map_angle_run_values;
     std::map<int, std::vector<double>> map_distance_run_values;
     std::map<int, std::vector<double>> map_clippingness_run_values;
-    std::map<int, std::vector<double>> map_distance_run_values;
     std::map<int, int> map_angle_run_counts;
     std::map<int, int> map_distance_run_counts;
 
