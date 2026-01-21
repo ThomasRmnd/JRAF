@@ -252,7 +252,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->SetLineWidth(3);
     h_zenith->SetLineColor(kBlack);
     h_zenith->SetMarkerStyle(kFullCircle);
-    h_zenith->SetMarkerSize(1.5);
+    h_zenith->SetMarkerSize(1.00);
     h_zenith->SetMarkerColor(kBlack);
     h_zenith->GetXaxis()->SetTitle("cos(#theta_{z})");
     h_zenith->GetXaxis()->CenterTitle(kTRUE);
@@ -293,7 +293,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetLineWidth(3);
     h_azimuth->SetLineColor(kBlack);
     h_azimuth->SetMarkerStyle(kFullCircle);
-    h_azimuth->SetMarkerSize(1.25);
+    h_azimuth->SetMarkerSize(1.00);
     h_azimuth->SetMarkerColor(kBlack);
     h_azimuth->Draw("E1");
     h_simu_azimuth->SetLineColor(kBlue);
