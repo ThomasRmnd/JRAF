@@ -508,7 +508,7 @@ struct FeatureSaver {
     }
 
     bool save() {
-        if (!file || !tree) return false;
+        if (!file || !tree) return true;
         file->cd();
         tree->Write();
         file->Close();

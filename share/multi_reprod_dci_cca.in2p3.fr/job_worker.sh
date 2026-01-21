@@ -187,7 +187,7 @@ resolve_output_paths() {
         run_number="${BASH_REMATCH[5]}"
         output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
         reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
-        feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        # feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
     else
         log ERROR "Unrecognized ReProd path format: $input_reprod_file"
         exit 1
@@ -195,7 +195,7 @@ resolve_output_paths() {
 
     mkdir -p "${output_path}"
     mkdir -p "${reco_output_path}"
-    mkdir -p "${feature_output_path}"
+    # mkdir -p "${feature_output_path}"
 
     log INFO "Output path: ${output_path}"
     log DEBUG "TT reco file path: ${tt_reco_filepath}"
@@ -356,8 +356,8 @@ main() {
     local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.reco.output.root"
     reco_output_file="${reco_output_path}/$(basename "${local_reco_output_file}")"
 
-    local_feature_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.feature.output.root"
-    feature_output_file="${feature_output_path}/$(basename "${local_feature_output_file}")"
+    # local_feature_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.feature.output.root"
+    # feature_output_file="${feature_output_path}/$(basename "${local_feature_output_file}")"
 
     log INFO "Context previous file: ${prev_file_local:-<none>}"
     log INFO "Context next file: ${next_file_local:-<none>}"
@@ -370,8 +370,8 @@ main() {
         --context-next-filename "${next_file_local}" \
         --tt-reco-filepath "${tt_reco_filepath}" \
         --reco-output "${local_reco_output_file}" \
-        --feature-output "${local_feature_output_file}" \
         "${EXTRA_ARGS[@]}"
+        # --feature-output "${local_feature_output_file}" \
 
     if cp "${local_output_file}" "${output_file}"; then
         log INFO "Output copied to ${output_file}"
@@ -387,12 +387,12 @@ main() {
         exit 1
     fi
 
-    if cp "${local_feature_output_file}" "${feature_output_file}"; then
-        log INFO "Output copied to ${feature_output_file}"
-    else
-        log ERROR "Failed to copy ${local_feature_output_file} to ${feature_output_file}"
-        exit 1
-    fi
+    # if cp "${local_feature_output_file}" "${feature_output_file}"; then
+    #     log INFO "Output copied to ${feature_output_file}"
+    # else
+    #     log ERROR "Failed to copy ${local_feature_output_file} to ${feature_output_file}"
+    #     exit 1
+    # fi
 
     log INFO "Completed run ${RUN_NUMBER} (RANGE=[${RANGE_START}, ${RANGE_END}])"
 }
