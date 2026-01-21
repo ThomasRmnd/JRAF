@@ -361,14 +361,6 @@ void extract_plot_from_reco_matches(const char* filename) {
         h_angle_chi2cdwp->Fill(angles[k], chi2_cdwp_v[k]);
         h_distance_chi2cdwp->Fill(distances[k], chi2_cdwp_v[k]);
 
-        // if (map_angle_run.find(run_ids[k]) == map_angle_run.end()) {
-        //     map_angle_run[run_ids[k]] = new TH1D(Form("h_angle_run_%d", run_ids[k]), Form("h_angle_run_%d", run_ids[k]), 20, 0.0, 5.0);
-        // }
-        // map_angle_run[run_ids[k]]->Fill(angles[k]);
-        // if (map_distance_run.find(run_ids[k]) == map_distance_run.end()) {
-        //     map_distance_run[run_ids[k]] = new TH1D(Form("h_distance_run_%d", run_ids[k]), Form("h_distance_run_%d", run_ids[k]), 20, 0.0, 2.0);
-        // }
-        // map_distance_run[run_ids[k]]->Fill(distances[k]);
         map_angle_run_values[run_ids[k]].push_back(angles[k]);
         map_distance_run_values[run_ids[k]].push_back(distances[k]);
         ++(map_angle_run_counts[run_ids[k]]);
@@ -450,50 +442,48 @@ void extract_plot_from_reco_matches(const char* filename) {
         h->SetLineColorAlpha(color, alpha);
     };
 
-    TCanvas* c_angle_run = new TCanvas("c_angle_run", "c_angle_run", 1000, 1000);
-    c_angle_run->cd();
-    // TH1D* h_angle_run_summry = new TH1D("h_angle_run_summary", "h_angle_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
-    // for (const auto& [run, h_run] : map_angle_run) {
-    //     double probs[1] = {0.68};
-    //     double quantiles[1];
-    //     h_run->GetQuantiles(1, quantiles, probs);
-    //     h_angle_run_summry->SetBinContent(run - min_run + 1, quantiles[0]);
-    // }
-    h_angle_run_summry->GetXaxis()->SetTitle("Run ID");
-    h_angle_run_summry->GetXaxis()->CenterTitle(kTRUE);
-    h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% quantile");
-    h_angle_run_summry->GetYaxis()->CenterTitle(kTRUE);
-    h_angle_run_summry->GetYaxis()->SetTitleOffset(1.5);
+    TCanvas* c_run_summary = new TCanvas("c_run_summary", "Run summary", 1000, 1000);
+    c_run_summary->cd();
+    
+    TPad* pad_top = new TPad("pad_top", "pad_top", 0.0, 0.5, 1.0, 1.0);
+    pad_top->SetBottomMargin(0.02);
+    pad_top->SetLeftMargin(0.12);
+    pad_top->Draw();
+    
+    TPad* pad_bottom = new TPad("pad_bottom", "pad_bottom", 0.0, 0.0, 1.0, 0.5);
+    pad_bottom->SetTopMargin(0.02);
+    pad_bottom->SetBottomMargin(0.12);
+    pad_bottom->SetLeftMargin(0.12);
+    pad_bottom->Draw();
+
+    pad_top->cd();
+
     h_angle_run_summry->SetStats(0);
+    h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
+    h_angle_run_summry->GetYaxis()->CenterTitle(true);
+    h_angle_run_summry->GetYaxis()->SetTitleOffset(1.5);
+    h_angle_run_summry->GetXaxis()->SetLabelSize(0);
+    h_angle_run_summry->GetXaxis()->SetTitle("");
     h_angle_run_summry->Draw("HIST");
-    c_angle_run->SetTickx();
-    c_angle_run->SetTicky();
-    c_angle_run->Update();
 
-    TCanvas* c_distance_run = new TCanvas("c_distance_run", "c_distance_run", 1000, 1000);
-    c_distance_run->cd();
-    // TH1D* h_distance_run_summry = new TH1D("h_distance_run_summary", "h_distance_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
-    // for (const auto& [run, h_run] : map_distance_run) {
-    //     double probs[1] = {0.68};
-    //     double quantiles[1];
-    //     h_run->GetQuantiles(1, quantiles, probs);
-    //     h_distance_run_summry->SetBinContent(run - min_run + 1, quantiles[0]);
-    // }
-    h_distance_run_summry->GetXaxis()->SetTitle("Run ID");
-    h_distance_run_summry->GetXaxis()->CenterTitle(kTRUE);
-    h_distance_run_summry->GetYaxis()->SetTitle("d_{mid} (m) at 68% quantile");
-    h_distance_run_summry->GetYaxis()->CenterTitle(kTRUE);
-    h_distance_run_summry->GetYaxis()->SetTitleOffset(1.5);
+    pad_top->SetTickx();
+    pad_top->SetTicky();
+
+    pad_bottom->cd();
+
     h_distance_run_summry->SetStats(0);
-    h_distance_run_summry->Draw("HIST");
-    c_distance_run->SetTickx();
-    c_distance_run->SetTicky();
-    c_distance_run->Update();
+    h_distance_run_summry->GetXaxis()->SetTitle("Run ID");
+    h_distance_run_summry->GetXaxis()->CenterTitle(true);
+    h_distance_run_summry->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
+    h_distance_run_summry->GetYaxis()->CenterTitle(true);
+    h_distance_run_summry->GetYaxis()->SetTitleOffset(1.5);
 
-    // TCanvas* c_det = new TCanvas("c_det", "c_det", 1000, 1000);
-    // c_det->cd();
-    // h_det->Draw();
-    // c_det->Update();
+    h_distance_run_summry->Draw("HIST");
+
+    pad_bottom->SetTickx();
+    pad_bottom->SetTicky();
+    
+    c_distance_run->Update();
 
     TCanvas* c_angle = new TCanvas("c_angle", "c_angle", 1000, 1000);
     c_angle->cd();
