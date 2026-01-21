@@ -443,32 +443,29 @@ void extract_plot_from_reco_matches(const char* filename) {
         return v[idx];
     };
     
-    std::vector<double> r2_bin_edge = {0.0, 6.0, 8.5, 10.4, 12.0, 13.4, 14.7, 15.9, 17.0, 18.0, 19.0};
-    int n_bins = r2_bin_edge.size() - 1;
-    std::vector<std::vector<double>> angle_r2_bin_content(n_bins);
-    TH1D* h_angle_r2 = new TH1D("h_angle_r2", "h_angle_r2", n_bins, r2_bin_edge.front(), r2_bin_edge.back());
-    std::vector<std::vector<double>> distance_r2_bin_counts(n_bins);
-    TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", n_bins, r2_bin_edge.front(), r2_bin_edge.back());
+    double r2_max = 18.0 * 18.0;
+    double r2_min = 0.0 * 0.0;
+    int nbins = 9;
+    std::vector<std::vector<double>> angle_r2_bin_content(nbins);
+    TH1D* h_angle_r2 = new TH1D("h_angle_r2", "h_angle_r2", nbins, r2_min, r2_max);
+    std::vector<std::vector<double>> distance_r2_bin_counts(nbins);
+    TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", nbins, r2_min, r2_max);
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
-        double r2 = clippingness[k] * clippingness[k];
-        for (int i = 0; i < n_bins; ++i) {
-            double r2_low = r2_bin_edge[i] * r2_bin_edge[i];
-            double r2_high = r2_bin_edge[i + 1] * r2_bin_edge[i + 1];
-            if (r2 < r2_low || r2_high <= r2) continue;
-            angle_r2_bin_content[i].push_back(angles[k]);
-            distance_r2_bin_counts[i].push_back(distances[k]);
-            break;
-        }
+        double r2 = clippingness[k] / 1000.0 * clippingness[k] / 1000.0;
+        std::size_t j = std::floor(r2 * nbins / r2_max);
+        angle_r2_bin_content[j].push_back(angles[k]);
+        distance_r2_bin_counts[j].push_back(distances[k]);
     }
-    for (int i = 0; i < n_bins; ++i) {
+    for (int i = 0; i < nbins; ++i) {
         h_angle_r2->SetBinContent(i + 1, get_quantile_68(angle_r2_bin_content[i]));
         h_distance_r2->SetBinContent(i + 1, get_quantile_68(distance_r2_bin_counts[i]));
-        h_angle_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[i]));
-        h_distance_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[i]));
+        double bin_edge = std::sqrt(i * r2_max / nbins);
+        h_angle_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
+        h_distance_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
     }
-    h_angle_r2->GetXaxis()->ChangeLabel(n_bins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[n_bins]));
-    h_distance_r2->GetXaxis()->ChangeLabel(n_bins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[n_bins]));
+    h_angle_r2->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
+    h_distance_r2->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
 
     TCanvas* c_angle_r2 = new TCanvas("c_angle_r2", "c_angle_r2", 1000, 1000);
     c_angle_r2->cd();
