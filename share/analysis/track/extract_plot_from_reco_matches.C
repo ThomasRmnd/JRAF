@@ -485,6 +485,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle_r2->SetLineWidth(2);
     h_angle_r2->SetLineColor(kRed);
     h_angle_r2->Draw("E P");
+    c_angle_r2->SetTickx();
+    c_angle_r2->SetTicky();
+    c_angle_r2->SetGrid();
     c_angle_r2->Update();
 
     TCanvas* c_distance_r2 = new TCanvas("c_distance_r2", "c_distance_r2", 1000, 1000);
@@ -496,6 +499,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_distance_r2->SetLineWidth(2);
     h_distance_r2->SetLineColor(kBlue);
     h_distance_r2->Draw("E P");
+    c_distance_r2->SetTickx();
+    c_distance_r2->SetTicky();
+    c_distance_r2->SetGrid();
     c_distance_r2->Update();
     
     
