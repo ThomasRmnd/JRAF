@@ -241,6 +241,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     for (std::size_t k = 0ul; k < simu_zenith_content.size(); ++k) {
         h_simu_zenith->SetBinContent(k + 1, simu_zenith_content[k]);
     }
+    h_simu_zenith->Scale(1.0 / h_simu_zenith->Integral());
 
     TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
     c_zenith->cd();
@@ -263,6 +264,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_simu_zenith->SetLineStyle(kSolid);
     h_simu_zenith->SetLineWidth(3);
     h_simu_zenith->Draw("HIST SAME");
+    c_zenith->SetTickx();
+    c_zenith->SetTicky();
+    c_zenith->SetGrid();
     c_zenith->Update();
 
     std::vector<double> simu_azimuth_content = {
