@@ -144,7 +144,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         TVector3 ipos_cdclassify((*iposx)[j_cdclassify], (*iposy)[j_cdclassify], (*iposz)[j_cdclassify]);
         TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
 
-        if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+        // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
@@ -244,12 +244,28 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
     c_zenith->cd();
-    h_zenith->Draw();
+    h_zenith->Scale(1.0 / h_zenith->Integral());
+    h_zenith->SetStats(0);
+    h_zenith->SetLineStyle(kSolid);
+    h_zenith->SetLineWidth(3);
+    h_zenith->SetLineColor(kBlack);
+    h_zenith->SetMarkerStyle(kFullCircle);
+    h_zenith->SetMarkerSize(1.5);
+    h_zenith->SetMarkerColor(kBlack);
+    h_zenith->Draw("HIST");
     c_zenith->Update();
 
     TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
     c_azimuth->cd();
-    h_azimuth->Draw();
+    h_azimuth->Scale(1.0 / h_azimuth->Integral());
+    h_azimuth->SetStats(0);
+    h_azimuth->SetLineStyle(kSolid);
+    h_azimuth->SetLineWidth(3);
+    h_azimuth->SetLineColor(kBlack);
+    h_azimuth->SetMarkerStyle(kFullCircle);
+    h_azimuth->SetMarkerSize(1.5);
+    h_azimuth->SetMarkerColor(kBlack);
+    h_azimuth->Draw("HIST");
     c_azimuth->Update();
 
     TCanvas* c_zenith_azimuth = new TCanvas("c_zenith_azimuth", "c_zenith_azimuth", 1000, 1000);
