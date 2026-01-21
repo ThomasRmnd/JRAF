@@ -8,6 +8,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TGraph.h>
+#include <TGraphErrors.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TLatex.h>
@@ -346,6 +347,8 @@ void extract_plot_from_reco_matches(const char* filename) {
     // std::unordered_map<int, TH1D*> map_distance_run;
     std::map<int, std::vector<double>> map_angle_run_values;
     std::map<int, std::vector<double>> map_distance_run_values;
+    std::map<int, std::vector<double>> map_clippingness_run_values;
+    std::map<int, std::vector<double>> map_distance_run_values;
     std::map<int, int> map_angle_run_counts;
     std::map<int, int> map_distance_run_counts;
 
@@ -362,6 +365,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         map_angle_run_values[run_ids[k]].push_back(angles[k]);
         map_distance_run_values[run_ids[k]].push_back(distances[k]);
+        map_clippingness_run_values[run_ids[k]].push_back(clippingness[k]);
         ++(map_angle_run_counts[run_ids[k]]);
         ++(map_distance_run_counts[run_ids[k]]);
     }
@@ -433,11 +437,50 @@ void extract_plot_from_reco_matches(const char* filename) {
         h->SetLineColorAlpha(color, alpha);
     };
 
+    auto get_quantile_68 = [](std::vector<double>& v) {
+        if (v.empty()) return std::numeric_limits<double>::quiet_NaN();
+        std::size_t idx = static_cast<std::size_t>(0.682 * v.size());
+        std::nth_element(v.begin(), v.begin() + idx, v.end());
+        return v[idx];
+    };
+    
+    std::vector<double> per_run_quantiles;
+
+    for (const auto& [run, angles] : map_angle_run_values) {
+        const auto& clip = map_clippingness_run_values.at(run);
+
+        std::vector<double> selected_angles;
+        for (std::size_t i = 0; i < angles.size(); ++i) {
+            if (clip[i] >= 17.0*17.0 && clip[i] < 18.0*18.0) {
+                selected_angles.push_back(angles[i]);
+            }
+        }
+
+        if (selected_angles.size() < 20) continue; // safety cut
+
+        double q68 = get_quantile_68(selected_angles);
+        if (std::isfinite(q68)) {
+            per_run_quantiles.push_back(q68);
+        }
+    }
+    double mean = std::accumulate(
+        per_run_quantiles.begin(),
+        per_run_quantiles.end(), 0.0
+    ) / per_run_quantiles.size();
+
+    double rms = 0.0;
+    for (double v : per_run_quantiles) {
+        rms += (v - mean) * (v - mean);
+    }
+    rms = std::sqrt(rms / (per_run_quantiles.size() - 1));
+
+    std::cout << "rms = " << rms << '\n';
+
     auto make_quantile_graph = [](
         const std::map<int, std::vector<double>>& run_values,
         double quantile = 0.682
     ) {
-        TGraph* g = new TGraph();
+        TGraphErrors* g = new TGraphErrors();
         int ip = 0;
 
         for (const auto& [run, values] : run_values) {
@@ -445,13 +488,15 @@ void extract_plot_from_reco_matches(const char* filename) {
             std::vector<double> v = values;  // copy (nth_element mutates)
             std::size_t idx = static_cast<std::size_t>(quantile * v.size());
             std::nth_element(v.begin(), v.begin() + idx, v.end());
-            g->SetPoint(ip++, run, v[idx]);
+            g->SetPoint(ip, run, v[idx]);
+            g->SetPointError(ip, 0.0, 0.0);
+            ++ip;
         }
         return g;
     };
 
-    TGraph* g_angle_run = make_quantile_graph(map_angle_run_values, 0.682);
-    TGraph* g_distance_run = make_quantile_graph(map_distance_run_values, 0.682);
+    TGraphErrors* g_angle_run = make_quantile_graph(map_angle_run_values, 0.682);
+    TGraphErrors* g_distance_run = make_quantile_graph(map_distance_run_values, 0.682);
 
     TCanvas* c_run_summary = new TCanvas("c_run_summary", "Run summary", 1000, 1000);
     c_run_summary->cd();
