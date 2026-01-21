@@ -252,7 +252,12 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->SetMarkerStyle(kFullCircle);
     h_zenith->SetMarkerSize(1.5);
     h_zenith->SetMarkerColor(kBlack);
-    h_zenith->Draw("HIST");
+    h_zenith->GetXaxis()->SetTitle("cos(#theta_{z})");
+    h_zenith->GetXaxis()->CenterTitle(kTRUE);
+    h_zenith->GetYaxis()->SetTitle("Normalized entries");
+    h_zenith->GetYaxis()->CenterTitle(kTRUE);
+    h_zenith->GetYaxis()->SetTitleOffset(1.5);
+    h_zenith->Draw();
     c_zenith->Update();
 
     TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
@@ -265,7 +270,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetMarkerStyle(kFullCircle);
     h_azimuth->SetMarkerSize(1.5);
     h_azimuth->SetMarkerColor(kBlack);
-    h_azimuth->Draw("HIST");
+    h_azimuth->Draw();
     c_azimuth->Update();
 
     TCanvas* c_zenith_azimuth = new TCanvas("c_zenith_azimuth", "c_zenith_azimuth", 1000, 1000);
