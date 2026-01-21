@@ -461,7 +461,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle_run_summry->SetStats(0);
     h_angle_run_summry->SetTitle("");
     h_angle_run_summry->SetMarkerStyle(kFullCircle);
-    h_angle_run_summry->SetMarkerSize(2.0);
+    h_angle_run_summry->SetMarkerSize(1.25);
     h_angle_run_summry->SetLineStyle(kDashed);
     h_angle_run_summry->SetLineWidth(1);
     h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
@@ -481,7 +481,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_distance_run_summry->SetStats(0);
     h_distance_run_summry->SetTitle("");
     h_distance_run_summry->SetMarkerStyle(kFullCircle);
-    h_distance_run_summry->SetMarkerSize(2.0);
+    h_distance_run_summry->SetMarkerSize(1.25);
     h_distance_run_summry->SetLineStyle(kDashed);
     h_distance_run_summry->SetLineWidth(1);
     h_distance_run_summry->GetXaxis()->SetTitle("Run ID");
