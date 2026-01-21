@@ -344,10 +344,10 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     // std::unordered_map<int, TH1D*> map_angle_run;
     // std::unordered_map<int, TH1D*> map_distance_run;
-    std::unordered_map<int, std::vector<double>> map_angle_run_values;
-    std::unordered_map<int, std::vector<double>> map_distance_run_values;
-    std::unordered_map<int, int> map_angle_run_counts;
-    std::unordered_map<int, int> map_distance_run_counts;
+    std::map<int, std::vector<double>> map_angle_run_values;
+    std::map<int, std::vector<double>> map_distance_run_values;
+    std::map<int, int> map_angle_run_counts;
+    std::map<int, int> map_distance_run_counts;
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
         // if (chi2_cdwp_v[k] > 0.0) continue;
@@ -434,7 +434,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     };
 
     auto make_quantile_graph = [](
-        const std::unordered_map<int, std::vector<double>>& run_values,
+        const std::map<int, std::vector<double>>& run_values,
         double quantile = 0.682
     ) {
         TGraph* g = new TGraph();
