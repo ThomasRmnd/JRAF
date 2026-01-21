@@ -445,91 +445,42 @@ void extract_plot_from_reco_matches(const char* filename) {
     
     std::vector<double> r2_bin_edge = {0.0, 6.0, 8.5, 10.4, 12.0, 13.4, 14.7, 15.9, 17.0, 18.0, 19.0};
     int n_bins = r2_bin_edge.size() - 1;
-    int n_runs = 0;
+    std::vector<std::vector<double>> angle_r2_bin_content(n_bins);
+    TH1D* h_angle_r2 = new TH1D("h_angle_r2", "h_angle_r2", n_bins, r2_bin_edge.data());
+    std::vector<std::vector<double>> distance_r2_bin_counts(n_bins);
+    TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", n_bins, r2_bin_edge.data());
 
-    std::vector<double> angle_r2_mean(n_bins, 0.0);
-    std::vector<double> angle_r2_stddev(n_bins, 0.0);
-    std::vector<double> distance_r2_mean(n_bins, 0.0);
-    std::vector<double> distance_r2_stddev(n_bins, 0.0);
-
-    for (int k = 0; k < n_bins; ++k) {
-        double r2_low = r2_bin_edge[k] * r2_bin_edge[k];
-        double r2_high = r2_bin_edge[k+1] * r2_bin_edge[k+1];
-
-        std::vector<double> run_quantiles_angle;
-        std::vector<double> run_quantiles_dist;
-
-        for (const auto& [run, ang_vec] : map_angle_run_values) {
-            std::vector<double> entries_angle;
-            std::vector<double> entries_dist;
-            
-            const auto& clip_vec = map_clippingness_run_values.at(run);
-            const auto& dist_vec = map_distance_run_values.at(run);
-
-            for (std::size_t i = 0; i < ang_vec.size(); ++i) {
-                double clip2 = clip_vec[i] * clip_vec[i];
-                if (r2_low <= clip2 && clip2 < r2_high) {
-                    entries_angle.push_back(ang_vec[i]);
-                    entries_dist.push_back(dist_vec[i]);
-                }
-            }
-
-            if (entries_angle.size() > 10) { 
-                run_quantiles_angle.push_back(get_quantile_68(entries_angle));
-                run_quantiles_dist.push_back(get_quantile_68(entries_dist));
-            }
+    for (std::size_t k = 0ul; k < angles.size(); ++k) {
+        double r2 = clippingness[k] * clippingness[k];
+        for (int i = 0; i < n_bins; ++i) {
+            double r2_low = r2_bin_edge[i] * r2_bin_edge[i];
+            double r2_high = r2_bin_edge[i + 1] * r2_bin_edge[i + 1];
+            if (r2 < r2_low || r2_high <= r2) continue;
+            angle_r2_bin_content[i].push_back(angles[k]);
+            distance_r2_bin_counts[i].push_back(distances[k]);
+            break;
         }
-
-        auto calc_stats = [](const std::vector<double>& qs, double& mean, double& stddev) {
-            if (qs.empty()) return;
-            mean = std::accumulate(qs.begin(), qs.end(), 0.0) / qs.size();
-            double sq_sum = 0;
-            for(double q : qs) sq_sum += (q - mean) * (q - mean);
-            
-            stddev = (qs.size() > 1) ? std::sqrt(sq_sum / (qs.size() - 1)) : 0.0;
-        };
-
-        calc_stats(run_quantiles_angle, angle_r2_mean[k], angle_r2_stddev[k]);
-        calc_stats(run_quantiles_dist, distance_r2_mean[k], distance_r2_stddev[k]);
-        n_runs = run_quantiles_angle.size();
     }
-
-    std::vector<double> x(n_bins), ex(n_bins), y_ang(n_bins), ey_ang(n_bins), y_dist(n_bins), ey_dist(n_bins);
     for (int i = 0; i < n_bins; ++i) {
-        x[i] = (r2_bin_edge[i] + r2_bin_edge[i+1]) / 2.0;
-        ex[i] = (r2_bin_edge[i+1] - r2_bin_edge[i]) / 2.0;
-
-        y_ang[i] = angle_r2_mean[i];
-        y_dist[i] = distance_r2_mean[i];
-
-        ey_ang[i] = (n_runs > 1) ? angle_r2_stddev[i] / std::sqrt(n_runs) : 0.0;
-        ey_dist[i] = (n_runs > 1) ? distance_r2_stddev[i] / std::sqrt(n_runs) : 0.0;
+        h_angle_r2->SetBinContent(i + 1, get_quantile_68(angle_r2_bin_content[i]));
+        h_distance_r2->SetBinContent(i + 1, get_quantile_68(distance_r2_bin_counts[i]));
+        h_angle_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[i]));
+        h_distance_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[i]));
     }
+    h_angle_r2->GetXaxis()->ChangeLabel(n_bins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[n_bins]));
+    h_distance_r2->GetXaxis()->ChangeLabel(n_bins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", r2_bin_edge[n_bins]));
 
-    TGraphErrors* gr_angle = new TGraphErrors(n_bins, x.data(), y_ang.data(), ex.data(), ey_ang.data());
-    gr_angle->SetTitle("68% Quantile vs Clippingness;Clippingness (m);Angular Resolution (#circ)");
-    gr_angle->SetMarkerStyle(20);
-    gr_angle->SetMarkerColor(kBlue);
-    gr_angle->SetLineColor(kBlue);
+    TCanvas* c_angle_r2 = new TCanvas("c_angle_r2", "c_angle_r2", 1000, 1000);
+    c_angle_r2->cd();
+    h_angle_r2->SetStats(0);
+    h_angle_r2->Draw();
+    c_angle_r2->Update();
 
-    TGraphErrors* gr_dist = new TGraphErrors(n_bins, x.data(), y_dist.data(), ex.data(), ey_dist.data());
-    gr_dist->SetTitle("68% Quantile vs Clippingness;Clippingness (m);Distance Resolution (mm)");
-    gr_dist->SetMarkerStyle(21);
-    gr_dist->SetMarkerColor(kRed);
-    gr_dist->SetLineColor(kRed);
-
-    TCanvas* c1 = new TCanvas("c_quantile_res", "Quantile Resolution", 1200, 600);
-    c1->Divide(2, 1);
-
-    c1->cd(1);
-    gPad->SetGrid();
-    gr_angle->Draw("AP");
-
-    c1->cd(2);
-    gPad->SetGrid();
-    gr_dist->Draw("AP");
-
-    c1->Update();
+    TCanvas* c_distance_r2 = new TCanvas("c_distance_r2", "c_distance_r2", 1000, 1000);
+    c_distance_r2->cd();
+    h_distance_r2->SetStats(0);
+    h_distance_r2->Draw();
+    c_distance_r2->Update();
     
     
     
