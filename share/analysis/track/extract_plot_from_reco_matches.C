@@ -108,7 +108,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TH1D* h_zenith = new TH1D("h_zenith", "h_zenith", 100, -1.0, 1.0);
     TH1D* h_azimuth = new TH1D("h_azimuth", "h_azimuth", 100, 0.0, 360.0);
-    TH1D* h_clippingness = new TH1D("h_clippingness", "h_clippingness", 100, 0.0, 20.0);
+    TH2D* h_zenith_azimuth = new TH2D("h_zenith_azimuth", "h_zenith_azimuth", 100, -1.0, 1.0, 100, 0.0, 360.0);
 
     TH1D* h_ts_diff = new TH1D("h_ts_diff", "h_ts_diff", 100, -1000.0, 1000.0);
     TH1D* h_z_pt = new TH1D("h_z_pt", "h_z_pt", 1000, -10000.0, 10000.0 /* 24000.0, 31000.0 */);
@@ -153,7 +153,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         h_zenith->Fill(-dir_cdwp.CosTheta());
         h_azimuth->Fill(180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
-        h_clippingness->Fill(dir_cdwp.Cross(-pos_cdwp).Mag() / 1000.0);
+        h_zenith_azimuth->Fill(-dir_cdwp.CosTheta(), 180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
 
         if (NTotPoints == 0) continue;
         if (NTracks != 1) continue;
@@ -252,10 +252,10 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->Draw();
     c_azimuth->Update();
 
-    TCanvas* c_clippingness = new TCanvas("c_clippingness", "c_clippingness", 1000, 1000);
-    c_clippingness->cd();
-    h_clippingness->Draw();
-    c_clippingness->Update();
+    TCanvas* c_zenith_azimuth = new TCanvas("c_zenith_azimuth", "c_zenith_azimuth", 1000, 1000);
+    c_zenith_azimuth->cd();
+    h_zenith_azimuth->Draw("COLZ");
+    c_zenith_azimuth->Update();
 
     TH1I* h_det = new TH1I("h_det", "h_det", 8, 0, 8);
     TH1D* h_angle = new TH1D("h_angle", "h_angle", 20, 0.0, 5.0);
