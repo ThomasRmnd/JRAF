@@ -482,8 +482,8 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     pad_bottom->SetTickx();
     pad_bottom->SetTicky();
-    
-    c_distance_run->Update();
+
+    c_run_summary->Update();
 
     TCanvas* c_angle = new TCanvas("c_angle", "c_angle", 1000, 1000);
     c_angle->cd();
