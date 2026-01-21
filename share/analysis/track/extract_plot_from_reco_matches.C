@@ -448,8 +448,10 @@ void extract_plot_from_reco_matches(const char* filename) {
     int nbins = 9;
     std::vector<std::vector<double>> angle_r2_bin_content(nbins);
     TH1D* h_angle_r2 = new TH1D("h_angle_r2", "h_angle_r2", nbins, r2_min, r2_max);
+    h_angle_r2->GetXaxis()->SetNdivisions(nbins, kFALSE);
     std::vector<std::vector<double>> distance_r2_bin_counts(nbins);
     TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", nbins, r2_min, r2_max);
+    h_distance_r2->GetXaxis()->SetNdivisions(nbins, kFALSE);
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
         double r2 = clippingness[k] * clippingness[k];
@@ -470,13 +472,23 @@ void extract_plot_from_reco_matches(const char* filename) {
     TCanvas* c_angle_r2 = new TCanvas("c_angle_r2", "c_angle_r2", 1000, 1000);
     c_angle_r2->cd();
     h_angle_r2->SetStats(0);
-    h_angle_r2->Draw();
+    h_angle_r2->SetMarkerStyle(kFullCircle);
+    h_angle_r2->SetMarkerSize(2.0);
+    h_angle_r2->SetMarkerColor(kRed);
+    h_angle_r2->SetLineWidth(2);
+    h_angle_r2->SetLineColor(kRed);
+    h_angle_r2->Draw("E P");
     c_angle_r2->Update();
 
     TCanvas* c_distance_r2 = new TCanvas("c_distance_r2", "c_distance_r2", 1000, 1000);
     c_distance_r2->cd();
     h_distance_r2->SetStats(0);
-    h_distance_r2->Draw();
+    h_distance_r2->SetMarkerStyle(kFullCircle);
+    h_distance_r2->SetMarkerSize(2.0);
+    h_distance_r2->SetMarkerColor(kBlue);
+    h_distance_r2->SetLineWidth(2);
+    h_distance_r2->SetLineColor(kBlue);
+    h_distance_r2->Draw("E P");
     c_distance_r2->Update();
     
     
