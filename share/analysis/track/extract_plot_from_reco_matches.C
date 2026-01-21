@@ -121,7 +121,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     };
 
     for (int k = 0; k < tree->GetEntries(); ++k) {
-        // if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
+        if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
         tree->GetEntry(k);
 
         if (NTotPoints == 0) continue;
