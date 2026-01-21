@@ -106,6 +106,10 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     std::cout << "[INFO] Number of entries: " << tree->GetEntries() << '\n';
 
+    TH1D* h_zenith = new TH1D("h_zenith", "h_zenith", 100, -1.0, 1.0);
+    TH1D* h_azimuth = new TH1D("h_azimuth", "h_azimuth", 100, 0.0, 360.0);
+    TH1D* h_clippingness = new TH1D("h_clippingness", "h_clippingness", 100, 0.0, 20.0);
+
     TH1D* h_ts_diff = new TH1D("h_ts_diff", "h_ts_diff", 100, -1000.0, 1000.0);
     TH1D* h_z_pt = new TH1D("h_z_pt", "h_z_pt", 1000, -10000.0, 10000.0 /* 24000.0, 31000.0 */);
 
@@ -123,6 +127,18 @@ void extract_plot_from_reco_matches(const char* filename) {
     for (int k = 0; k < tree->GetEntries(); ++k) {
         if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
         tree->GetEntry(k);
+
+        for (std::size_t i = 0ul; i < method->size(); ++i) {
+            if ((*method)[i] != "CdWpTtChi2") continue;
+            ipos.SetXYZ((*iposx)[i], (*iposy)[i], (*iposz)[i]);
+            fpos.SetXYZ((*fposx)[i], (*fposy)[i], (*fposz)[i]);
+            pos_cdwp = ipos;
+            dir_cdwp = (fpos - ipos).Unit();
+            h_zenith->Fill(-dir_cdwp.CosTheta());
+            h_azimuth->Fill(180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
+            h_clippingness->Fill(dir_cdwp.Cross(-pos_cdwp).Mag() / 1000.0);
+        
+        }
 
         if (NTotPoints == 0) continue;
         if (NTracks != 1) continue;
@@ -164,7 +180,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
 
         // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
-        if (clipness < 16.0 && fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+        // if (clipness < 16.0 && fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
@@ -233,6 +249,21 @@ void extract_plot_from_reco_matches(const char* filename) {
     // c_z_pt->cd();
     // h_z_pt->Draw();
     // c_z_pt->Update();
+
+    TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
+    c_zenith->cd();
+    h_zenith->Draw();
+    c_zenith->Update();
+
+    TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
+    c_azimuth->cd();
+    h_azimuth->Draw();
+    c_azimuth->Update();
+
+    TCanvas* c_clippingness = new TCanvas("c_clippingness", "c_clippingness", 1000, 1000);
+    c_clippingness->cd();
+    h_clippingness->Draw();
+    c_clippingness->Update();
 
     TH1I* h_det = new TH1I("h_det", "h_det", 8, 0, 8);
     TH1D* h_angle = new TH1D("h_angle", "h_angle", 20, 0.0, 5.0);
