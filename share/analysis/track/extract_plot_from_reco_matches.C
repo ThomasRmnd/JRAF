@@ -450,7 +450,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         std::vector<double> selected_angles;
         for (std::size_t i = 0; i < angles.size(); ++i) {
-            if (clip[i] >= 17.0*17.0 && clip[i] < 18.0*18.0) {
+            if (clip[i] * clip[i] >= 17.0 * 17.0 && clip[i] * clip[i] < 18.0 * 18.0) {
                 selected_angles.push_back(angles[i]);
             }
         }
@@ -458,9 +458,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         if (selected_angles.size() < 20) continue; // safety cut
 
         double q68 = get_quantile_68(selected_angles);
-        if (std::isfinite(q68)) {
-            per_run_quantiles.push_back(q68);
-        }
+        per_run_quantiles.push_back(q68);
     }
     double mean = std::accumulate(
         per_run_quantiles.begin(),
