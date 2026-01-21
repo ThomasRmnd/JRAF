@@ -455,6 +455,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
         double r2 = clippingness[k] * clippingness[k];
+        if (r2 < r2_min || r2_max <= r2) continue;
         std::size_t j = std::floor(r2 * nbins / r2_max);
         angle_r2_bin_content[j].push_back(angles[k]);
         distance_r2_bin_counts[j].push_back(distances[k]);
