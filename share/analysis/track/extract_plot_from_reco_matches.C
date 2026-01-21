@@ -245,6 +245,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
     c_zenith->cd();
+    
     h_zenith->Scale(1.0 / h_zenith->Integral());
     h_zenith->SetMinimum(0.0);
     h_zenith->SetStats(0);
@@ -259,11 +260,20 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->GetYaxis()->SetTitle("Normalized entries");
     h_zenith->GetYaxis()->CenterTitle(kTRUE);
     h_zenith->GetYaxis()->SetTitleOffset(1.5);
-    h_zenith->Draw("E1");
+    h_zenith->Draw("E");
+    
     h_simu_zenith->SetLineColor(kBlue);
     h_simu_zenith->SetLineStyle(kSolid);
     h_simu_zenith->SetLineWidth(3);
     h_simu_zenith->Draw("HIST SAME");
+    
+    TLegend* leg_zenith = new TLegend(0.15, 0.5, 0.5, 0.85);
+    leg_zenith->SetBorderSize(0);
+    leg_zenith->SetFillColor(0);
+    leg_zenith->AddEntry(h_simu_zenith, "JUNO MC", "l");
+    leg_zenith->AddEntry(h_zenith, "Joint #chi^2", "l");
+    leg_zenith->Draw();
+    
     c_zenith->SetTickx();
     c_zenith->SetTicky();
     c_zenith->SetGrid();
@@ -286,6 +296,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
     c_azimuth->cd();
+    
     h_azimuth->Scale(1.0 / h_azimuth->Integral());
     h_azimuth->SetMinimum(0.0);
     h_azimuth->SetStats(0);
@@ -295,11 +306,20 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetMarkerStyle(kFullCircle);
     h_azimuth->SetMarkerSize(1.00);
     h_azimuth->SetMarkerColor(kBlack);
-    h_azimuth->Draw("E1");
+    h_azimuth->Draw("E");
+    
     h_simu_azimuth->SetLineColor(kBlue);
     h_simu_azimuth->SetLineStyle(kSolid);
     h_simu_azimuth->SetLineWidth(3);
     h_simu_azimuth->Draw("HIST SAME");
+
+    TLegend* leg_azimuth = new TLegend(0.5, 0.15, 0.85, 0.5);
+    leg_azimuth->SetBorderSize(0);
+    leg_azimuth->SetFillColor(0);
+    leg_azimuth->AddEntry(h_simu_azimuth, "JUNO MC", "l");
+    leg_azimuth->AddEntry(h_azimuth, "Joint #chi^2", "l");
+    leg_azimuth->Draw();
+    
     c_azimuth->SetTickx();
     c_azimuth->SetTicky();
     c_azimuth->SetGrid();
@@ -518,7 +538,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TLegend* leg_angle = new TLegend(0.45, 0.65, 0.85, 0.85);
     leg_angle->AddEntry(h_angle, Form("Joint #chi^2: 68%% quantile = %.2f #circ", angles[angles.size() * 682 / 1000]), "l");
     leg_angle->AddEntry(h_sftm_angle, Form("SFTM: 68%% quantile = %.2f #circ", sftm_angle_68p), "l");
-    leg_angle->AddEntry(h_ml_angle, Form("ML: 68%% quantile = %.2f #circ", ml_angle_68p), "l");
+    leg_angle->AddEntry(h_ml_angle, Form("EDWIN: 68%% quantile = %.2f #circ", ml_angle_68p), "l");
     leg_angle->AddEntry(h_wpcluster_angle, Form("WP cluster: 68%% quantile = %.2f #circ", wpcluster_angle_68p), "l");
     leg_angle->AddEntry(h_cdcluster_angle, Form("CD cluster: 68%% quantile = %.2f #circ", cdcluster_angle_68p), "l");
     leg_angle->Draw();
@@ -582,7 +602,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TLegend* leg_distance = new TLegend(0.45, 0.65, 0.85, 0.85);
     leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68%% quantile = %.2f m", distances[distances.size() * 682 / 1000]), "l");
     leg_distance->AddEntry(h_sftm_distance, Form("SFTM: 68%% quantile = %.2f m", sftm_distance_68p), "l");
-    leg_distance->AddEntry(h_ml_distance, Form("ML: 68%% quantile = %.2f m", ml_distance_68p), "l");
+    leg_distance->AddEntry(h_ml_distance, Form("EDWIN: 68%% quantile = %.2f m", ml_distance_68p), "l");
     leg_distance->AddEntry(h_wpcluster_distance, Form("WP cluster: 68%% quantile = %.2f m", wpcluster_distance_68p), "l");
     leg_distance->AddEntry(h_cdcluster_distance, Form("CD cluster: 68%% quantile = %.2f m", cdcluster_distance_68p), "l");
     leg_distance->Draw();
