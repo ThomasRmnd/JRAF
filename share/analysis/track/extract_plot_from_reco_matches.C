@@ -446,9 +446,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     std::vector<double> r2_bin_edge = {0.0, 6.0, 8.5, 10.4, 12.0, 13.4, 14.7, 15.9, 17.0, 18.0, 19.0};
     int n_bins = r2_bin_edge.size() - 1;
     std::vector<std::vector<double>> angle_r2_bin_content(n_bins);
-    TH1D* h_angle_r2 = new TH1D("h_angle_r2", "h_angle_r2", n_bins, r2_bin_edge.data());
+    TH1D* h_angle_r2 = new TH1D("h_angle_r2", "h_angle_r2", n_bins, r2_bin_edge.front(), r2_bin_edge.back());
     std::vector<std::vector<double>> distance_r2_bin_counts(n_bins);
-    TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", n_bins, r2_bin_edge.data());
+    TH1D* h_distance_r2 = new TH1D("h_distance_r2", "h_distance_r2", n_bins, r2_bin_edge.front(), r2_bin_edge.back());
 
     for (std::size_t k = 0ul; k < angles.size(); ++k) {
         double r2 = clippingness[k] * clippingness[k];
