@@ -617,8 +617,8 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_cdwp_zenith->Scale(1.0 / h_cdwp_zenith->Integral());
     h_cdwp_azimuth->Scale(1.0 / h_cdwp_azimuth->Integral());
 
-    TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
-    c_zenith->cd();
+    TCanvas* c_zenith_comp_with_tt = new TCanvas("c_zenith_comp_with_tt", "c_zenith_comp_with_tt", 1000, 1000);
+    c_zenith_comp_with_tt->cd();
 
     h_cdwp_zenith->SetStats(0);
     h_cdwp_zenith->GetXaxis()->SetTitle("cos(#theta_{d})");
@@ -633,13 +633,13 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_cdwp_zenith->SetMarkerStyle(kFullCircle);
     h_cdwp_zenith->Draw("HIST");
 
-    c_zenith->SetTickx();
-    c_zenith->SetTicky();
-    c_zenith->SetGrid();
-    c_zenith->Update();
+    c_zenith_comp_with_tt->SetTickx();
+    c_zenith_comp_with_tt->SetTicky();
+    c_zenith_comp_with_tt->SetGrid();
+    c_zenith_comp_with_tt->Update();
 
-    TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
-    c_azimuth->cd();
+    TCanvas* c_azimuth_comp_with_tt = new TCanvas("c_azimuth_comp_with_tt", "c_azimuth_comp_with_tt", 1000, 1000);
+    c_azimuth_comp_with_tt->cd();
 
     h_cdwp_azimuth->SetStats(0);
     h_cdwp_azimuth->GetXaxis()->SetTitle("#phi_{d}");
@@ -654,10 +654,10 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_cdwp_azimuth->SetMarkerStyle(kFullCircle);
     h_cdwp_azimuth->Draw("HIST");
 
-    c_azimuth->SetTickx();
-    c_azimuth->SetTicky();
-    c_azimuth->SetGrid();
-    c_azimuth->Update();
+    c_azimuth_comp_with_tt->SetTickx();
+    c_azimuth_comp_with_tt->SetTicky();
+    c_azimuth_comp_with_tt->SetGrid();
+    c_azimuth_comp_with_tt->Update();
 
 #else
 
