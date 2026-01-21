@@ -7,6 +7,7 @@
 
 #include <TCanvas.h>
 #include <TFile.h>
+#include <TGraph.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TLatex.h>
@@ -343,8 +344,6 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     // std::unordered_map<int, TH1D*> map_angle_run;
     // std::unordered_map<int, TH1D*> map_distance_run;
-    TH1D* h_angle_run_summry = new TH1D("h_angle_run_summary", "h_angle_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
-    TH1D* h_distance_run_summry = new TH1D("h_distance_run_summary", "h_distance_run_summary", max_run - min_run + 1, min_run - 0.5, max_run + 0.5);
     std::unordered_map<int, std::vector<double>> map_angle_run_values;
     std::unordered_map<int, std::vector<double>> map_distance_run_values;
     std::unordered_map<int, int> map_angle_run_counts;
@@ -365,14 +364,6 @@ void extract_plot_from_reco_matches(const char* filename) {
         map_distance_run_values[run_ids[k]].push_back(distances[k]);
         ++(map_angle_run_counts[run_ids[k]]);
         ++(map_distance_run_counts[run_ids[k]]);
-    }
-    for (auto& [run_id, values] : map_angle_run_values) {
-        std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
-        h_angle_run_summry->SetBinContent(run_id - min_run + 1, values[values.size() * 682 / 1000]);
-    }
-    for (auto& [run_id, values] : map_distance_run_values) {
-        std::nth_element(values.begin(), values.begin() + values.size() * 682 / 1000, values.end());
-        h_distance_run_summry->SetBinContent(run_id - min_run + 1, values[values.size() * 682 / 1000]);
     }
 
     std::cout << h_angle->Integral(0, 20) << '/' << h_angle->Integral(0, 50) << '\n';
@@ -442,6 +433,26 @@ void extract_plot_from_reco_matches(const char* filename) {
         h->SetLineColorAlpha(color, alpha);
     };
 
+    auto make_quantile_graph = [](
+        const std::unordered_map<int, std::vector<double>>& run_values,
+        double quantile = 0.682
+    ) {
+        TGraph* g = new TGraph();
+        int ip = 0;
+
+        for (const auto& [run, values] : run_values) {
+            if (values.empty()) continue;
+            std::vector<double> v = values;  // copy (nth_element mutates)
+            std::size_t idx = static_cast<std::size_t>(quantile * v.size());
+            std::nth_element(v.begin(), v.begin() + idx, v.end());
+            g->SetPoint(ip++, run, v[idx]);
+        }
+        return g;
+    };
+
+    TGraph* g_angle_run = make_quantile_graph(map_angle_run_values, 0.682);
+    TGraph* g_distance_run = make_quantile_graph(map_distance_run_values, 0.682);
+
     TCanvas* c_run_summary = new TCanvas("c_run_summary", "Run summary", 1000, 1000);
     c_run_summary->cd();
     
@@ -458,40 +469,36 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     pad_top->cd();
 
-    h_angle_run_summry->SetStats(0);
-    h_angle_run_summry->SetTitle("");
-    h_angle_run_summry->SetMarkerStyle(kFullCircle);
-    h_angle_run_summry->SetMarkerSize(1.25);
-    h_angle_run_summry->SetLineStyle(kDashed);
-    h_angle_run_summry->SetLineWidth(1);
-    h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
-    h_angle_run_summry->GetYaxis()->CenterTitle(true);
-    h_angle_run_summry->GetYaxis()->SetTitleOffset(1.0);
-    h_angle_run_summry->GetYaxis()->SetTitleSize(0.06);
-    h_angle_run_summry->GetXaxis()->SetLabelSize(0);
-    h_angle_run_summry->GetXaxis()->SetTitle("");
-    h_angle_run_summry->SetBinErrorOption(TH1::kPoisson);
-    h_angle_run_summry->Draw("PL");
+    g_angle_run->SetMarkerStyle(kFullCircle);
+    g_angle_run->SetMarkerSize(1.1);
+    g_angle_run->SetMarkerColor(kBlack);
+    g_angle_run->SetLineStyle(kDashed);
+    g_angle_run->SetLineWidth(1);
+    g_angle_run->SetLineColor(kBlue);
+    g_angle_run->GetXaxis()->SetTitle("");
+    g_angle_run->GetXaxis()->SetLabelSize(0);
+    g_angle_run->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
+    g_angle_run->GetYaxis()->CenterTitle(true);
+    g_angle_run->GetYaxis()->SetTitleOffset(1.0);
+    g_angle_run->Draw("APL");
 
     pad_top->SetTickx();
     pad_top->SetTicky();
 
     pad_bottom->cd();
 
-    h_distance_run_summry->SetStats(0);
-    h_distance_run_summry->SetTitle("");
-    h_distance_run_summry->SetMarkerStyle(kFullCircle);
-    h_distance_run_summry->SetMarkerSize(1.25);
-    h_distance_run_summry->SetLineStyle(kDashed);
-    h_distance_run_summry->SetLineWidth(1);
-    h_distance_run_summry->GetXaxis()->SetTitle("Run ID");
-    h_distance_run_summry->GetXaxis()->CenterTitle(true);
-    h_distance_run_summry->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
-    h_distance_run_summry->GetYaxis()->CenterTitle(true);
-    h_distance_run_summry->GetYaxis()->SetTitleOffset(1.0);
-    h_distance_run_summry->GetYaxis()->SetTitleSize(0.06);
-    h_distance_run_summry->SetBinErrorOption(TH1::kPoisson);
-    h_distance_run_summry->Draw("PL");
+    g_distance_run->SetMarkerStyle(kFullCircle);
+    g_distance_run->SetMarkerSize(1.1);
+    g_distance_run->SetMarkerColor(kBlack);
+    g_distance_run->SetLineStyle(kDashed);
+    g_distance_run->SetLineWidth(1);
+    g_distance_run->SetLineColor(kBlue);
+    g_distance_run->GetXaxis()->SetTitle("Run ID");
+    g_distance_run->GetXaxis()->CenterTitle(true);
+    g_distance_run->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
+    g_distance_run->GetYaxis()->CenterTitle(true);
+    g_distance_run->GetYaxis()->SetTitleOffset(1.0);
+    g_distance_run->Draw("APL");
 
     pad_bottom->SetTickx();
     pad_bottom->SetTicky();
