@@ -488,7 +488,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_angle_r2->GetXaxis()->CenterTitle(kTRUE);
     h_angle_r2->GetYaxis()->SetTitle("68% quantile of #alpha (deg)");
     h_angle_r2->GetYaxis()->CenterTitle(kTRUE);
-    h_angle_r2->GetYaxis()->SetTitleOffset(1.5);
+    h_angle_r2->GetYaxis()->SetTitleOffset(1.25);
     h_angle_r2->Draw("E P");
     c_angle_r2->SetTickx();
     c_angle_r2->SetTicky();
@@ -507,7 +507,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_distance_r2->GetXaxis()->CenterTitle(kTRUE);
     h_distance_r2->GetYaxis()->SetTitle("68% quantile d_{mid} (m)");
     h_distance_r2->GetYaxis()->CenterTitle(kTRUE);
-    h_distance_r2->GetYaxis()->SetTitleOffset(1.5);
+    h_distance_r2->GetYaxis()->SetTitleOffset(1.25);
     h_distance_r2->Draw("E P");
     c_distance_r2->SetTickx();
     c_distance_r2->SetTicky();
