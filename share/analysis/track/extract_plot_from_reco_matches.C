@@ -128,17 +128,32 @@ void extract_plot_from_reco_matches(const char* filename) {
         if (k % 1000 == 0) std::cout << "\rEntries: " << k << " / " << tree->GetEntries();
         tree->GetEntry(k);
 
+        std::unordered_map<std::string, std::size_t> method_count = {
+            {"CdWpTtChi2", 0ul},
+            {"CdClassify", 0ul}
+        };
+        std::size_t j = 0ul;
+        std::size_t j_cdclassify = 0ul;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
-            if ((*method)[i] != "CdWpTtChi2") continue;
-            ipos.SetXYZ((*iposx)[i], (*iposy)[i], (*iposz)[i]);
-            fpos.SetXYZ((*fposx)[i], (*fposy)[i], (*fposz)[i]);
-            pos_cdwp = ipos;
-            dir_cdwp = (fpos - ipos).Unit();
-            h_zenith->Fill(-dir_cdwp.CosTheta());
-            h_azimuth->Fill(180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
-            h_clippingness->Fill(dir_cdwp.Cross(-pos_cdwp).Mag() / 1000.0);
-        
+            ++(method_count[(*method)[i]]);
+            if ((*method)[i] == "CdWpTtChi2") j = i;
+            else if ((*method)[i] == "CdClassify") j_cdclassify = i;
         }
+        if (method_count["CdClassify"] != 1ul || method_count["CdWpTtChi2"] != 1ul) continue;
+
+        TVector3 ipos_cdclassify((*iposx)[j_cdclassify], (*iposy)[j_cdclassify], (*iposz)[j_cdclassify]);
+        TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
+
+        // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+
+        ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
+        fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
+        pos_cdwp = ipos;
+        dir_cdwp = (fpos - ipos).Unit();
+
+        h_zenith->Fill(-dir_cdwp.CosTheta());
+        h_azimuth->Fill(180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
+        h_clippingness->Fill(dir_cdwp.Cross(-pos_cdwp).Mag() / 1000.0);
 
         if (NTotPoints == 0) continue;
         if (NTracks != 1) continue;
@@ -162,30 +177,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         double clipness = dir_tt.Cross(pos_tt).Mag() / 1000.0;
         if (clipness > 17.7) continue;
-
-        std::unordered_map<std::string, std::size_t> method_count = {
-            {"CdWpTtChi2", 0ul},
-            {"CdClassify", 0ul}
-        };
-        std::size_t j = 0ul;
-        std::size_t j_cdclassify = 0ul;
-        for (std::size_t i = 0ul; i < method->size(); ++i) {
-            ++(method_count[(*method)[i]]);
-            if ((*method)[i] == "CdWpTtChi2") j = i;
-            else if ((*method)[i] == "CdClassify") j_cdclassify = i;
-        }
-        if (method_count["CdClassify"] != 1ul || method_count["CdWpTtChi2"] != 1ul) continue;
-
-        TVector3 ipos_cdclassify((*iposx)[j_cdclassify], (*iposy)[j_cdclassify], (*iposz)[j_cdclassify]);
-        TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
-
-        // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
         // if (clipness < 16.0 && fpos_cdclassify.Mag() > 40000.0) continue; // stopping
-
-        ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
-        fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
-        pos_cdwp = ipos;
-        dir_cdwp = (fpos - ipos).Unit();
 
         run_ids.push_back(run_id);
         angles.push_back(dir_tt.Angle(dir_cdwp) * 180.0 / M_PI);
