@@ -459,9 +459,15 @@ void extract_plot_from_reco_matches(const char* filename) {
     pad_top->cd();
 
     h_angle_run_summry->SetStats(0);
+    h_angle_run_summry->SetTitle("");
+    h_angle_run_summry->SetMarkerStyle(kFullCircle);
+    h_angle_run_summry->SetMarkerSize(2.0);
+    h_angle_run_summry->SetLineStyle(kDashed);
+    h_angle_run_summry->SetLineWidth(1);
     h_angle_run_summry->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
     h_angle_run_summry->GetYaxis()->CenterTitle(true);
     h_angle_run_summry->GetYaxis()->SetTitleOffset(1.5);
+    h_angle_run_summry->GetYaxis()->SetTitleSize(0.06);
     h_angle_run_summry->GetXaxis()->SetLabelSize(0);
     h_angle_run_summry->GetXaxis()->SetTitle("");
     h_angle_run_summry->Draw("HIST");
@@ -472,12 +478,17 @@ void extract_plot_from_reco_matches(const char* filename) {
     pad_bottom->cd();
 
     h_distance_run_summry->SetStats(0);
+    h_distance_run_summry->SetTitle("");
+    h_distance_run_summry->SetMarkerStyle(kFullCircle);
+    h_distance_run_summry->SetMarkerSize(2.0);
+    h_distance_run_summry->SetLineStyle(kDashed);
+    h_distance_run_summry->SetLineWidth(1);
     h_distance_run_summry->GetXaxis()->SetTitle("Run ID");
     h_distance_run_summry->GetXaxis()->CenterTitle(true);
     h_distance_run_summry->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
     h_distance_run_summry->GetYaxis()->CenterTitle(true);
     h_distance_run_summry->GetYaxis()->SetTitleOffset(1.5);
-
+    h_distance_run_summry->GetYaxis()->SetTitleSize(0.06);
     h_distance_run_summry->Draw("HIST");
 
     pad_bottom->SetTickx();
