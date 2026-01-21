@@ -227,6 +227,21 @@ void extract_plot_from_reco_matches(const char* filename) {
     int min_run = *std::min_element(run_ids.begin(), run_ids.end());
     int max_run = *std::max_element(run_ids.begin(), run_ids.end());
 
+    std::vector<double> simu_zenith_content = {
+        0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 
+        0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 
+        0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 
+        0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0001, 0.0005, 
+        0.0009, 0.0017, 0.0027, 0.0046, 0.0061, 0.0085, 0.0112, 0.0135, 0.0167, 0.0201, 
+        0.0241, 0.0277, 0.0329, 0.0351, 0.0399, 0.0462, 0.0513, 0.0575, 0.0620, 0.0640, 
+        0.0678, 0.0728, 0.0762, 0.0825, 0.0885, 0.0842
+    };
+
+    TH1D* h_simu_zenith = new TH1D("h_simu_zenith", "h_simu_zenith", 66, -1.0, 1.0);
+    for (std::size_t k = 0ul; k < simu_zenith_content.size(); ++k) {
+        h_simu_zenith->SetBinContent(k + 1, simu_zenith_content[k]);
+    }
+
     TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
     c_zenith->cd();
     h_zenith->Scale(1.0 / h_zenith->Integral());
@@ -243,7 +258,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->GetYaxis()->SetTitle("Normalized entries");
     h_zenith->GetYaxis()->CenterTitle(kTRUE);
     h_zenith->GetYaxis()->SetTitleOffset(1.5);
-    h_zenith->Draw();
+    h_zenith->Draw("E1");
+    h_simu_zenith->SetLineColor(kBlue);
+    h_simu_zenith->SetLineStyle(kSolid);
+    h_simu_zenith->SetLineWidth(3);
+    h_simu_zenith->Draw("HIST SAME");
     c_zenith->Update();
 
     std::vector<double> simu_azimuth_content = {
