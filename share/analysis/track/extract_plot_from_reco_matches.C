@@ -247,7 +247,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_zenith->cd();
     
     h_zenith->Scale(1.0 / h_zenith->Integral());
-    h_zenith->SetMinimum(0.0);
+    h_zenith->SetMinimum(0.001);
     h_zenith->SetStats(0);
     h_zenith->SetLineStyle(kSolid);
     h_zenith->SetLineWidth(3);
@@ -268,8 +268,6 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_simu_zenith->Draw("HIST SAME");
     
     TLegend* leg_zenith = new TLegend(0.15, 0.75, 0.4, 0.85);
-    leg_zenith->SetBorderSize(0);
-    leg_zenith->SetFillColor(0);
     leg_zenith->AddEntry(h_simu_zenith, "JUNO MC", "l");
     leg_zenith->AddEntry(h_zenith, "Joint #chi^2", "l");
     leg_zenith->Draw();
@@ -298,7 +296,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_azimuth->cd();
     
     h_azimuth->Scale(1.0 / h_azimuth->Integral());
-    h_azimuth->SetMinimum(0.0);
+    h_azimuth->SetMinimum(0.001);
     h_azimuth->SetStats(0);
     h_azimuth->SetLineStyle(kSolid);
     h_azimuth->SetLineWidth(3);
@@ -314,8 +312,6 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_simu_azimuth->Draw("HIST SAME");
 
     TLegend* leg_azimuth = new TLegend(0.6, 0.15, 0.85, 0.25);
-    leg_azimuth->SetBorderSize(0);
-    leg_azimuth->SetFillColor(0);
     leg_azimuth->AddEntry(h_simu_azimuth, "JUNO MC", "l");
     leg_azimuth->AddEntry(h_azimuth, "Joint #chi^2", "l");
     leg_azimuth->Draw();
