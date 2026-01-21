@@ -313,7 +313,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_simu_azimuth->SetLineWidth(3);
     h_simu_azimuth->Draw("HIST SAME");
 
-    TLegend* leg_azimuth = new TLegend(0.6, 0.15, 0.85, 0.35);
+    TLegend* leg_azimuth = new TLegend(0.6, 0.15, 0.85, 0.25);
     leg_azimuth->SetBorderSize(0);
     leg_azimuth->SetFillColor(0);
     leg_azimuth->AddEntry(h_simu_azimuth, "JUNO MC", "l");
