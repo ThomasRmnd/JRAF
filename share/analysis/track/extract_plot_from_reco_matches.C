@@ -464,14 +464,33 @@ void extract_plot_from_reco_matches(const char* filename) {
         distance_r2_bin_counts[j].push_back(distances[k]);
     }
     for (int i = 0; i < nbins; ++i) {
-        std::cout << angle_r2_bin_content[i].size() << ' ' << distance_r2_bin_counts[i].size() << '\n';
         h_angle_r2->SetBinContent(i + 1, get_quantile_68(angle_r2_bin_content[i]));
-        h_angle_r2->SetBinError(i + 1, 0.00001);
         h_distance_r2->SetBinContent(i + 1, get_quantile_68(distance_r2_bin_counts[i]));
-        h_distance_r2->SetBinError(i + 1, 0.00001);
         double bin_edge = std::sqrt(i * r2_max / nbins);
         h_angle_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
         h_distance_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
+    }
+    for (int i = 0; i < nbins; ++i) {
+        if (angle_r2_bin_content[i].empty()) continue;
+        int nchunks = 10;
+        std::size_t chunk_size = angle_r2_bin_content[i].size() / nchunks;
+        if (chunk_size > 10) {
+            std::vector<double> chunk_quantiles;
+            for (int c = 0; c < nchunks; ++c) {
+                std::vector<double>::const_iterator start = angle_r2_bin_content[i].begin() + (c * chunk_size);
+                std::vector<double>::const_iterator end = (c == nchunks - 1) ? angle_r2_bin_content[i].end() : start + chunk_size;
+                std::vector<double> chunk_data(start, end);
+                chunk_quantiles.push_back(get_quantile_68(chunk_data));
+            }
+            double sum = 0, sq_sum = 0;
+            for(double q : chunk_quantiles) { 
+                sum += q; 
+                sq_sum += q * q; 
+            }
+            double stdev = std::sqrt((sq_sum / nchunks) - (sum / nchunks) * (sum / nchunks));
+            double err = stdev / std::sqrt(nchunks);
+            h_angle_r2->SetBinError(i + 1, err);
+        }
     }
     h_angle_r2->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
     h_distance_r2->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
