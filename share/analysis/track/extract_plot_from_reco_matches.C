@@ -492,6 +492,8 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     pad_top->SetTickx();
     pad_top->SetTicky();
+    pad_top->SetGrid();
+    pad_top->Update();
 
     pad_bottom->cd();
 
@@ -520,6 +522,8 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     pad_bottom->SetTickx();
     pad_bottom->SetTicky();
+    pad_bottom->SetGrid();
+    pad_bottom->Update();
 
     c_run_summary->Update();
 
