@@ -601,10 +601,12 @@ void extract_plot_from_reco_matches(const char* filename) {
 
     TH1D* h_cdwp_zenith = new TH1D("h_cdwp_zenith", "h_cdwp_zenith", 100, -1.0, 1.0);
     TH1D* h_cdwp_azimuth = new TH1D("h_cdwp_azimuth", "h_cdwp_azimuth", 100, 0.0, 360.0);
+    TH2D* h_cdwp_zenith_clippingness = new TH2D("h_cdwp_zenith_clippingness", "h_cdwp_zenith_clippingness", 100, -1.0, 1.0, 100, 0.0, 20.0);
 
     for (std::size_t k = 0ul; k < zenith_cdwp_v.size(); ++k) {
         h_cdwp_zenith->Fill(zenith_cdwp_v[k]);
         h_cdwp_azimuth->Fill(azimuth_cdwp_v[k]);
+        h_cdwp_zenith_clippingness->Fill(zenith_cdwp_v[k], clippingness[k]);
     }
     h_cdwp_zenith->Scale(1.0 / h_cdwp_zenith->Integral());
     h_cdwp_azimuth->Scale(1.0 / h_cdwp_azimuth->Integral());
@@ -650,6 +652,22 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_azimuth_comp_with_tt->SetTicky();
     c_azimuth_comp_with_tt->SetGrid();
     c_azimuth_comp_with_tt->Update();
+
+    TCanvas* c_zenith_clippingness = new TCanvas("c_zenith_clippingness", "c_zenith_clippingness", 1000, 1000);
+    c_zenith_clippingness->cd();
+
+    h_cdwp_zenith_clippingness->SetStats(0);
+    h_cdwp_zenith_clippingness->GetXaxis()->SetTitle("cos(#theta_{d})");
+    h_cdwp_zenith_clippingness->GetXaxis()->CenterTitle(kTRUE);
+    h_cdwp_zenith_clippingness->GetYaxis()->SetTitle("L (m)");
+    h_cdwp_zenith_clippingness->GetYaxis()->CenterTitle(kTRUE);
+    h_cdwp_zenith_clippingness->GetYaxis()->SetTitleOffset(1.5);
+    h_cdwp_zenith_clippingness->Draw("COLZ");
+
+    c_zenith_clippingness->SetTickx();
+    c_zenith_clippingness->SetTicky();
+    c_zenith_clippingness->SetGrid();
+    c_zenith_clippingness->Update();
 
 #else
 
