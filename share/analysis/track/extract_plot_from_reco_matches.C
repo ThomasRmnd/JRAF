@@ -304,6 +304,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetMarkerStyle(kFullCircle);
     h_azimuth->SetMarkerSize(1.00);
     h_azimuth->SetMarkerColor(kBlack);
+    h_azimuth->GetXaxis()->SetTitle("#phi_{z})");
+    h_azimuth->GetXaxis()->CenterTitle(kTRUE);
+    h_azimuth->GetYaxis()->SetTitle("Normalized entries");
+    h_azimuth->GetYaxis()->CenterTitle(kTRUE);
+    h_azimuth->GetYaxis()->SetTitleOffset(1.5);
     h_azimuth->Draw("E");
     
     h_simu_azimuth->SetLineColor(kBlue);
