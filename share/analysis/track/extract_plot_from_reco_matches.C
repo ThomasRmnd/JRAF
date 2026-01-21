@@ -466,7 +466,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     for (int i = 0; i < nbins; ++i) {
         std::cout << angle_r2_bin_content[i].size() << ' ' << distance_r2_bin_counts[i].size() << '\n';
         h_angle_r2->SetBinContent(i + 1, get_quantile_68(angle_r2_bin_content[i]));
+        h_angle_r2->SetBinError(i + 1, 0.00001);
         h_distance_r2->SetBinContent(i + 1, get_quantile_68(distance_r2_bin_counts[i]));
+        h_distance_r2->SetBinError(i + 1, 0.00001);
         double bin_edge = std::sqrt(i * r2_max / nbins);
         h_angle_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
         h_distance_r2->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
