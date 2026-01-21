@@ -124,7 +124,6 @@ run_hadd() {
 #==============================
 main() {
     parse_args "$@"
-    validate_inputs
 
     log INFO "Searching runs in range [$LOWER_BOUND, $UPPER_BOUND]"
     log INFO "Directory: $BASE_OUTPUT_DIR"
