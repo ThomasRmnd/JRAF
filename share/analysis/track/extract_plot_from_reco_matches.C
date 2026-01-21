@@ -477,7 +477,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     g_angle_run->SetLineColor(kBlue);
     g_angle_run->GetXaxis()->SetTitle("");
     g_angle_run->GetXaxis()->SetLabelSize(0);
-    g_angle_run->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
+    g_angle_run->GetYaxis()->SetTitle("68% quantile of #alpha (deg)");
     g_angle_run->GetYaxis()->CenterTitle(true);
     g_angle_run->GetYaxis()->SetTitleOffset(0.75);
     g_angle_run->GetYaxis()->SetTitleSize(0.06);
@@ -505,16 +505,17 @@ void extract_plot_from_reco_matches(const char* filename) {
     g_distance_run->SetLineColor(kBlue);
     g_distance_run->GetXaxis()->SetTitle("Run ID");
     g_distance_run->GetXaxis()->CenterTitle(true);
+    g_distance_run->GetXaxis()->SetTitleOffset(0.95);
     g_distance_run->GetXaxis()->SetTitleSize(0.06);
     g_distance_run->GetXaxis()->SetLabelSize(0.06);
-    g_distance_run->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
+    g_distance_run->GetYaxis()->SetTitle("68% quantile d_{mid} (m)");
     g_distance_run->GetYaxis()->CenterTitle(true);
     g_distance_run->GetYaxis()->SetTitleOffset(0.75);
     g_distance_run->GetYaxis()->SetTitleSize(0.06);
     g_distance_run->GetYaxis()->SetLabelSize(0.06);
     g_distance_run->Draw("APL");
 
-    TLine* line_distance_run_68p = new TLine(g_distance_run->GetXaxis()->GetXmin(), angles[angles.size() * 682 / 1000], g_distance_run->GetXaxis()->GetXmax(), angles[angles.size() * 682 / 1000]);
+    TLine* line_distance_run_68p = new TLine(g_distance_run->GetXaxis()->GetXmin(), distances[distances.size() * 682 / 1000], g_distance_run->GetXaxis()->GetXmax(), distances[distances.size() * 682 / 1000]);
     line_distance_run_68p->SetLineStyle(kDotted);
     line_distance_run_68p->SetLineWidth(3);
     line_distance_run_68p->SetLineColor(kRed);
