@@ -470,17 +470,25 @@ void extract_plot_from_reco_matches(const char* filename) {
     pad_top->cd();
 
     g_angle_run->SetMarkerStyle(kFullCircle);
-    g_angle_run->SetMarkerSize(1.1);
+    g_angle_run->SetMarkerSize(1.25);
     g_angle_run->SetMarkerColor(kBlack);
     g_angle_run->SetLineStyle(kDashed);
-    g_angle_run->SetLineWidth(1);
+    g_angle_run->SetLineWidth(2);
     g_angle_run->SetLineColor(kBlue);
     g_angle_run->GetXaxis()->SetTitle("");
     g_angle_run->GetXaxis()->SetLabelSize(0);
     g_angle_run->GetYaxis()->SetTitle("#alpha (deg) at 68% percentile");
     g_angle_run->GetYaxis()->CenterTitle(true);
-    g_angle_run->GetYaxis()->SetTitleOffset(1.0);
+    g_angle_run->GetYaxis()->SetTitleOffset(0.75);
+    g_angle_run->GetYaxis()->SetTitleSize(0.06);
+    g_angle_run->GetYaxis()->SetLabelSize(0.06);
     g_angle_run->Draw("APL");
+
+    TLine* line_angle_run_68p = new TLine(min_run - 0.5, angles[angles.size() * 682 / 1000], max_run + 0.5, angles[angles.size() * 682 / 1000]);
+    line_angle_run_68p->SetLineStyle(kDotted);
+    line_angle_run_68p->SetLineWidth(2);
+    line_angle_run_68p->SetLineColor(kRed);
+    line_angle_run_68p->Draw("SAME");
 
     pad_top->SetTickx();
     pad_top->SetTicky();
@@ -488,17 +496,27 @@ void extract_plot_from_reco_matches(const char* filename) {
     pad_bottom->cd();
 
     g_distance_run->SetMarkerStyle(kFullCircle);
-    g_distance_run->SetMarkerSize(1.1);
+    g_distance_run->SetMarkerSize(1.25);
     g_distance_run->SetMarkerColor(kBlack);
     g_distance_run->SetLineStyle(kDashed);
-    g_distance_run->SetLineWidth(1);
+    g_distance_run->SetLineWidth(2);
     g_distance_run->SetLineColor(kBlue);
     g_distance_run->GetXaxis()->SetTitle("Run ID");
     g_distance_run->GetXaxis()->CenterTitle(true);
+    g_distance_run->GetXaxis()->SetTitleSize(0.06);
+    g_distance_run->GetXaxis()->SetLabelSize(0.06);
     g_distance_run->GetYaxis()->SetTitle("d_{mid} (m) at 68% percentile");
     g_distance_run->GetYaxis()->CenterTitle(true);
-    g_distance_run->GetYaxis()->SetTitleOffset(1.0);
+    g_distance_run->GetYaxis()->SetTitleOffset(0.75);
+    g_distance_run->GetYaxis()->SetTitleSize(0.06);
+    g_distance_run->GetYaxis()->SetLabelSize(0.06);
     g_distance_run->Draw("APL");
+
+    TLine* line_distance_run_68p = new TLine(min_run - 0.5, angles[angles.size() * 682 / 1000], max_run + 0.5, angles[angles.size() * 682 / 1000]);
+    line_distance_run_68p->SetLineStyle(kDotted);
+    line_distance_run_68p->SetLineWidth(2);
+    line_distance_run_68p->SetLineColor(kRed);
+    line_distance_run_68p->Draw("SAME");
 
     pad_bottom->SetTickx();
     pad_bottom->SetTicky();
