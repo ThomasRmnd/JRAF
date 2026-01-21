@@ -247,7 +247,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_zenith->cd();
     
     h_zenith->Scale(1.0 / h_zenith->Integral());
-    h_zenith->SetMinimum(0.001);
+    h_zenith->SetMinimum(0.00001);
     h_zenith->SetStats(0);
     h_zenith->SetLineStyle(kSolid);
     h_zenith->SetLineWidth(3);
@@ -296,7 +296,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_azimuth->cd();
     
     h_azimuth->Scale(1.0 / h_azimuth->Integral());
-    h_azimuth->SetMinimum(0.001);
+    h_azimuth->SetMinimum(0.00001);
     h_azimuth->SetStats(0);
     h_azimuth->SetLineStyle(kSolid);
     h_azimuth->SetLineWidth(3);
