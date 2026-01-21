@@ -424,10 +424,12 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_wpcluster_distance->Scale(1.0 / h_wpcluster_distance->Integral());
     h_cdcluster_distance->Scale(1.0 / h_cdcluster_distance->Integral());
 
-    std::nth_element(angles.begin(), angles.begin() + angles.size() * 682 / 1000, angles.end());
-    std::nth_element(distances.begin(), distances.begin() + distances.size() * 682 / 1000, distances.end());
-    std::cout << "68.2% angle: " << angles[angles.size() * 682 / 1000] << ", size: " << angles.size() << '\n';
-    std::cout << "68.2% distance: " << distances[distances.size() * 682 / 1000] << ", size: " << distances.size() << '\n';
+    std::vector<double> angles_68p = angles;
+    std::vector<double> distances_68p = distances;
+    std::nth_element(angles_68p.begin(), angles_68p.begin() + angles_68p.size() * 682 / 1000, angles_68p.end());
+    std::nth_element(distances_68p.begin(), distances_68p.begin() + distances_68p.size() * 682 / 1000, distances_68p.end());
+    std::cout << "68.2% angle: " << angles_68p[angles_68p.size() * 682 / 1000] << ", size: " << angles_68p.size() << '\n';
+    std::cout << "68.2% distance: " << distances_68p[distances_68p.size() * 682 / 1000] << ", size: " << distances_68p.size() << '\n';
 
     auto set_style = [](TH1* h, Style_t style, int width, Color_t color, float alpha = 1.0) {
         h->SetFillStyle(3004);       // transparent fill pattern
@@ -436,11 +438,12 @@ void extract_plot_from_reco_matches(const char* filename) {
         h->SetLineColorAlpha(color, alpha);
     };
 
-    auto get_quantile_68 = [](std::vector<double>& v) {
-        if (v.empty()) return 0.0;
-        std::size_t idx = static_cast<std::size_t>(0.682 * v.size());
-        std::nth_element(v.begin(), v.begin() + idx, v.end());
-        return v[idx];
+    auto get_quantile_68 = [](const std::vector<double>& v) {
+        std::vector<double> vc = v;
+        if (vc.empty()) return 0.0;
+        std::size_t idx = static_cast<std::size_t>(0.682 * vc.size());
+        std::nth_element(vc.begin(), vc.begin() + idx, vc.end());
+        return vc[idx];
     };
     
     double r2_max = 18.0 * 18.0;
@@ -504,7 +507,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         for (const auto& [run, values] : run_values) {
             if (values.empty()) continue;
-            std::vector<double> v = values;  // copy (nth_element mutates)
+            std::vector<double> v = values;
             std::size_t idx = static_cast<std::size_t>(quantile * v.size());
             std::nth_element(v.begin(), v.begin() + idx, v.end());
             g->SetPoint(ip, run, v[idx]);
