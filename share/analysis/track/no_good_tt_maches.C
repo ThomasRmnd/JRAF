@@ -69,6 +69,29 @@ inline TTimeStamp operator+(const TTimeStamp& lhs, const TTimeStamp& rhs) {
     return TTimeStamp(lhs.GetSec() + rhs.GetSec(), lhs.GetNanoSec() + rhs.GetNanoSec());
 }
 
+TPaveStats* modifyPaveStats(TH1D* h, double xmin, double ymin, double xmax, double ymax, StatOpt statopt, FitOpt fitopt) {
+    TPaveStats* st = (TPaveStats*)h->FindObject("stats");
+    st->SetOptStat(ToROOTOpt(statopt));
+    st->SetOptFit(ToROOTOpt(fitopt));
+    st->SetX1NDC(xmin);
+    st->SetX2NDC(xmax);
+    st->SetY1NDC(ymin);
+    st->SetY2NDC(ymax);
+    return st;
+}
+
+void formatAxisTitle(TAxis* axis, const char* title, bool center, double offset) {
+    axis->SetTitle(title);
+    axis->CenterTitle(center);
+    axis->SetTitleOffset(offset);
+}
+
+void formatHistogramTitle(TH1D* h, const char* title, const char* xtitle, bool xcenter, double xoffset, const char* ytitle, bool ycenter, double yoffset) {
+    h->SetTitle(title);
+    formatAxisTitle(h->GetXaxis(), xtitle, xcenter, xoffset);
+    formatAxisTitle(h->GetYaxis(), ytitle, ycenter, yoffset);
+}
+
 void no_good_tt_maches(const char* filename) {
     TFile* file = TFile::Open(filename, "READ");
     if (!file) {
@@ -270,13 +293,7 @@ void no_good_tt_maches(const char* filename) {
 
     c_cdwp_muon_rate->Update();
 
-    TPaveStats* st_cdwp_muon_rate = (TPaveStats*)h_cdwp_muon_rate->FindObject("stats");
-    st_cdwp_muon_rate->SetOptStat(ToROOTOpt(StatOpt::Entries | StatOpt::Mean | StatOpt::RMS));
-    st_cdwp_muon_rate->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_muon_rate->SetX1NDC(0.5);
-    st_cdwp_muon_rate->SetX2NDC(0.85);
-    st_cdwp_muon_rate->SetY1NDC(0.5);
-    st_cdwp_muon_rate->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_muon_rate, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_muon_rate->Modified();
     c_cdwp_muon_rate->Update();
@@ -311,13 +328,7 @@ void no_good_tt_maches(const char* filename) {
 
     c_cdwp_tt_3pts_muon_rate->Update();
 
-    TPaveStats* st_cdwp_tt_3pts_muon_rate = (TPaveStats*)h_cdwp_tt_3pts_muon_rate->FindObject("stats");
-    st_cdwp_tt_3pts_muon_rate->SetOptStat(ToROOTOpt(StatOpt::Entries | StatOpt::Mean | StatOpt::RMS));
-    st_cdwp_tt_3pts_muon_rate->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_tt_3pts_muon_rate->SetX1NDC(0.5);
-    st_cdwp_tt_3pts_muon_rate->SetX2NDC(0.85);
-    st_cdwp_tt_3pts_muon_rate->SetY1NDC(0.5);
-    st_cdwp_tt_3pts_muon_rate->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_3pts_muon_rate, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_tt_3pts_muon_rate->Modified();
     c_cdwp_tt_3pts_muon_rate->Update();
@@ -352,13 +363,7 @@ void no_good_tt_maches(const char* filename) {
 
     c_cdwp_tt_2pts_muon_rate->Update();
 
-    TPaveStats* st_cdwp_tt_2pts_muon_rate = (TPaveStats*)h_cdwp_tt_2pts_muon_rate->FindObject("stats");
-    st_cdwp_tt_2pts_muon_rate->SetOptStat(ToROOTOpt(StatOpt::Entries | StatOpt::Mean | StatOpt::RMS));
-    st_cdwp_tt_2pts_muon_rate->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_tt_2pts_muon_rate->SetX1NDC(0.5);
-    st_cdwp_tt_2pts_muon_rate->SetX2NDC(0.85);
-    st_cdwp_tt_2pts_muon_rate->SetY1NDC(0.5);
-    st_cdwp_tt_2pts_muon_rate->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_2pts_muon_rate, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_tt_2pts_muon_rate->Modified();
     c_cdwp_tt_2pts_muon_rate->Update();
@@ -393,13 +398,7 @@ void no_good_tt_maches(const char* filename) {
 
     c_cdwp_no_tt_rate->Update();
 
-    TPaveStats* st_cdwp_no_tt_rate = (TPaveStats*)h_cdwp_no_tt_rate->FindObject("stats");
-    st_cdwp_no_tt_rate->SetOptStat(ToROOTOpt(StatOpt::Entries | StatOpt::Mean | StatOpt::RMS));
-    st_cdwp_no_tt_rate->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_no_tt_rate->SetX1NDC(0.5);
-    st_cdwp_no_tt_rate->SetX2NDC(0.85);
-    st_cdwp_no_tt_rate->SetY1NDC(0.5);
-    st_cdwp_no_tt_rate->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_no_tt_rate, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_no_tt_rate->Modified();
     c_cdwp_no_tt_rate->Update();
@@ -1074,14 +1073,10 @@ void no_good_tt_maches(const char* filename) {
 
     style(h_y_pt_1trk_3pts, kRed+1, kSolid, 3);
     style(h_y_pt_1trk_2pts, kViolet-3, kDashed, 3);
+    formatHistogramTitle(h_y_pt_1trk_3pts, "Point Y - 3 vs 2 points", "y (m)", true, 1.0, "Entries", true, 1.25);
 
     h_y_pt_1trk_3pts->SetStats(0);
     h_y_pt_1trk_3pts->SetMinimum(0.1);
-    h_y_pt_1trk_3pts->GetXaxis()->SetTitle("y (m)");
-    h_y_pt_1trk_3pts->GetXaxis()->CenterTitle(kTRUE);
-    h_y_pt_1trk_3pts->GetYaxis()->SetTitle("Entries");
-    h_y_pt_1trk_3pts->GetYaxis()->CenterTitle(kTRUE);
-    h_y_pt_1trk_3pts->GetYaxis()->SetTitleOffset(1.25);
     h_y_pt_1trk_3pts->Draw("HIST");
     h_y_pt_1trk_2pts->Draw("HIST SAME");
 
@@ -1343,12 +1338,7 @@ void no_good_tt_maches(const char* filename) {
     c_dist_cdwp_tt_3pts->SetLogy();
     c_dist_cdwp_tt_3pts->Update();
 
-    TPaveStats* st_cdwp_tt_3pts_distance = (TPaveStats*)h_cdwp_tt_3pts_distance->FindObject("stats");
-    st_cdwp_tt_3pts_distance->SetOptStat(ToROOTOpt(StatOpt::Entries | StatOpt::Mean | StatOpt::RMS | StatOpt::Underflow | StatOpt::Overflow));
-    st_cdwp_tt_3pts_distance->SetX1NDC(0.5);
-    st_cdwp_tt_3pts_distance->SetX2NDC(0.85);
-    st_cdwp_tt_3pts_distance->SetY1NDC(0.70);
-    st_cdwp_tt_3pts_distance->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_3pts_distance, 0.5, 0.7, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS | StatOpt::Underflow | StatOpt::Overflow, FitOpt::None);
 
     c_dist_cdwp_tt_3pts->Modified();
     c_dist_cdwp_tt_3pts->Update();
@@ -1389,12 +1379,7 @@ void no_good_tt_maches(const char* filename) {
     c_dist_cdwp_tt_2pts->SetLogy();
     c_dist_cdwp_tt_2pts->Update();
 
-    TPaveStats* st_cdwp_tt_2pts_distance = (TPaveStats*)h_cdwp_tt_2pts_distance->FindObject("stats");
-    st_cdwp_tt_2pts_distance->SetOptStat(ToROOTOpt(StatOpt::Entries | StatOpt::Mean | StatOpt::RMS | StatOpt::Underflow | StatOpt::Overflow));
-    st_cdwp_tt_2pts_distance->SetX1NDC(0.5);
-    st_cdwp_tt_2pts_distance->SetX2NDC(0.85);
-    st_cdwp_tt_2pts_distance->SetY1NDC(0.70);
-    st_cdwp_tt_2pts_distance->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_2pts_distance, 0.5, 0.7, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS | StatOpt::Underflow | StatOpt::Overflow, FitOpt::None);
 
     c_dist_cdwp_tt_2pts->Modified();
     c_dist_cdwp_tt_2pts->Update();
@@ -1528,13 +1513,7 @@ void no_good_tt_maches(const char* filename) {
     c_cdwp_tt_3pts_x_diff->SetLogy();
     c_cdwp_tt_3pts_x_diff->Update();
 
-    TPaveStats* st_cdwp_tt_3pts_x_diff = (TPaveStats*)h_cdwp_tt_3pts_x_diff->FindObject("stats");
-    st_cdwp_tt_3pts_x_diff->SetOptStat(ToROOTOpt(StatOpt::None));
-    st_cdwp_tt_3pts_x_diff->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_tt_3pts_x_diff->SetX1NDC(0.55);
-    st_cdwp_tt_3pts_x_diff->SetX2NDC(0.85);
-    st_cdwp_tt_3pts_x_diff->SetY1NDC(0.65);
-    st_cdwp_tt_3pts_x_diff->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_3pts_x_diff, 0.55, 0.65, 0.85, 0.85, StatOpt::None, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_tt_3pts_x_diff->Modified();
     c_cdwp_tt_3pts_x_diff->Update();
@@ -1588,13 +1567,7 @@ void no_good_tt_maches(const char* filename) {
     c_cdwp_tt_3pts_y_diff->SetLogy();
     c_cdwp_tt_3pts_y_diff->Update();
 
-     TPaveStats* st_cdwp_tt_3pts_y_diff = (TPaveStats*)h_cdwp_tt_3pts_y_diff->FindObject("stats");
-    st_cdwp_tt_3pts_y_diff->SetOptStat(ToROOTOpt(StatOpt::None));
-    st_cdwp_tt_3pts_y_diff->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_tt_3pts_y_diff->SetX1NDC(0.55);
-    st_cdwp_tt_3pts_y_diff->SetX2NDC(0.85);
-    st_cdwp_tt_3pts_y_diff->SetY1NDC(0.65);
-    st_cdwp_tt_3pts_y_diff->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_3pts_y_diff, 0.55, 0.65, 0.85, 0.85, StatOpt::None, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_tt_3pts_y_diff->Modified();
     c_cdwp_tt_3pts_y_diff->Update();
@@ -1648,13 +1621,7 @@ void no_good_tt_maches(const char* filename) {
     c_cdwp_tt_2pts_x_diff->SetLogy();
     c_cdwp_tt_2pts_x_diff->Update();
 
-    TPaveStats* st_cdwp_tt_2pts_x_diff = (TPaveStats*)h_cdwp_tt_2pts_x_diff->FindObject("stats");
-    st_cdwp_tt_2pts_x_diff->SetOptStat(ToROOTOpt(StatOpt::None));
-    st_cdwp_tt_2pts_x_diff->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_tt_2pts_x_diff->SetX1NDC(0.55);
-    st_cdwp_tt_2pts_x_diff->SetX2NDC(0.85);
-    st_cdwp_tt_2pts_x_diff->SetY1NDC(0.65);
-    st_cdwp_tt_2pts_x_diff->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_2pts_x_diff, 0.55, 0.65, 0.85, 0.85, StatOpt::None, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_tt_2pts_x_diff->Modified();
     c_cdwp_tt_2pts_x_diff->Update();
@@ -1708,13 +1675,7 @@ void no_good_tt_maches(const char* filename) {
     c_cdwp_tt_2pts_y_diff->SetLogy();
     c_cdwp_tt_2pts_y_diff->Update();
 
-    TPaveStats* st_cdwp_tt_2pts_y_diff = (TPaveStats*)h_cdwp_tt_2pts_y_diff->FindObject("stats");
-    st_cdwp_tt_2pts_y_diff->SetOptStat(ToROOTOpt(StatOpt::None));
-    st_cdwp_tt_2pts_y_diff->SetOptFit(ToROOTOpt(FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors));
-    st_cdwp_tt_2pts_y_diff->SetX1NDC(0.55);
-    st_cdwp_tt_2pts_y_diff->SetX2NDC(0.85);
-    st_cdwp_tt_2pts_y_diff->SetY1NDC(0.65);
-    st_cdwp_tt_2pts_y_diff->SetY2NDC(0.85);
+    modifyPaveStats(h_cdwp_tt_2pts_y_diff, 0.55, 0.65, 0.85, 0.85, StatOpt::None, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
 
     c_cdwp_tt_2pts_y_diff->Modified();
     c_cdwp_tt_2pts_y_diff->Update();
