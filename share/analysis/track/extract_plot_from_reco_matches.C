@@ -240,11 +240,12 @@ void extract_plot_from_reco_matches(const char* filename) {
     // TCanvas* c_z_pt = new TCanvas("c_z_pt", "c_z_pt", 1000, 1000);
     // c_z_pt->cd();
     // h_z_pt->Draw();
-    // c_z_pt->Update();
+    // c_z_pt->Update();    
 
     TCanvas* c_zenith = new TCanvas("c_zenith", "c_zenith", 1000, 1000);
     c_zenith->cd();
     h_zenith->Scale(1.0 / h_zenith->Integral());
+    h_zenith->SetMinimum(0.0);
     h_zenith->SetStats(0);
     h_zenith->SetLineStyle(kSolid);
     h_zenith->SetLineWidth(3);
@@ -260,9 +261,25 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->Draw();
     c_zenith->Update();
 
+    std::vector<double> simu_azimuth_content = {
+        0.0231, 0.0232, 0.0232, 0.0220, 0.0218, 0.0204, 0.0194, 0.0214, 0.0198, 0.0192, 
+        0.0176, 0.0174, 0.0184, 0.0183, 0.0195, 0.0207, 0.0209, 0.0212, 0.0204, 0.0186, 
+        0.0180, 0.0173, 0.0152, 0.0165, 0.0171, 0.0169, 0.0160, 0.0155, 0.0147, 0.0150, 
+        0.0154, 0.0152, 0.0147, 0.0130, 0.0136, 0.0131, 0.0130, 0.0128, 0.0129, 0.0135, 
+        0.0142, 0.0151, 0.0162, 0.0166, 0.0156, 0.0149, 0.0147, 0.0134, 0.0141, 0.0144, 
+        0.0166, 0.0182, 0.0193, 0.0209, 0.0216, 0.0218, 0.0229
+    };
+
+    TH1D* h_simu_azimuth = new TH1D("h_simu_azimuth", "h_simu_azimuth", 57, 0.0, 360.0);
+    for (std::size_t k = 0ul; k < simu_azimuth_content.size(); ++k) {
+        h_simu_azimuth->SetBinContent(k + 1, simu_azimuth_content[k]);
+    }
+    h_simu_azimuth->Scale(1.0 / h_simu_azimuth->Integral());
+
     TCanvas* c_azimuth = new TCanvas("c_azimuth", "c_azimuth", 1000, 1000);
     c_azimuth->cd();
     h_azimuth->Scale(1.0 / h_azimuth->Integral());
+    h_azimuth->SetMinimum(0.0);
     h_azimuth->SetStats(0);
     h_azimuth->SetLineStyle(kSolid);
     h_azimuth->SetLineWidth(3);
@@ -270,7 +287,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetMarkerStyle(kFullCircle);
     h_azimuth->SetMarkerSize(1.5);
     h_azimuth->SetMarkerColor(kBlack);
-    h_azimuth->Draw();
+    h_azimuth->Draw("E1");
+    h_simu_azimuth->SetLineColor(kBlue);
+    h_simu_azimuth->SetLineStyle(kSolid);
+    h_simu_azimuth->SetLineWidth(3);
+    h_simu_azimuth->Draw("HIST SAME");
     c_azimuth->Update();
 
     TCanvas* c_zenith_azimuth = new TCanvas("c_zenith_azimuth", "c_zenith_azimuth", 1000, 1000);
