@@ -254,7 +254,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     c_zenith->cd();
     
     h_zenith->Scale(1.0 / h_zenith->Integral());
-    h_zenith->SetMinimum(0.00001);
+    h_zenith_cdclassify->SetMinimum(0.00001);
     h_zenith->SetStats(0);
     h_zenith->SetLineStyle(kSolid);
     h_zenith->SetLineWidth(3);
@@ -262,25 +262,25 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->SetMarkerStyle(kFullCircle);
     h_zenith->SetMarkerSize(1.25);
     h_zenith->SetMarkerColor(kBlack);
-    h_zenith->GetXaxis()->SetTitle("cos(#theta_{z})");
-    h_zenith->GetXaxis()->CenterTitle(kTRUE);
-    h_zenith->GetYaxis()->SetTitle("Normalized entries");
-    h_zenith->GetYaxis()->CenterTitle(kTRUE);
-    h_zenith->GetYaxis()->SetTitleOffset(1.5);
-    h_zenith->Draw("E1");
-    h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
-    for (int k = 1; k < h_azimuth_cdclassify->GetNbinsX(); ++k) {
-        if (std::abs(h_azimuth_cdclassify->GetBinContent(k) - h_azimuth_cdclassify->GetBinContent(k + 1)) < 0.05) continue;
-        h_azimuth_cdclassify->SetBinContent(k + 1, (h_azimuth_cdclassify->GetBinContent(k) + h_azimuth_cdclassify->GetBinContent(k + 3)) / 2.0);
+    h_zenith_cdclassify->Scale(1.0 / h_zenith_cdclassify->Integral());
+    for (int k = 1; k < h_zenith_cdclassify->GetNbinsX(); ++k) {
+        if (std::abs(h_zenith_cdclassify->GetBinContent(k) - h_zenith_cdclassify->GetBinContent(k + 1)) < 0.05) continue;
+        h_zenith_cdclassify->SetBinContent(k + 1, (h_zenith_cdclassify->GetBinContent(k) + h_zenith_cdclassify->GetBinContent(k + 3)) / 2.0);
     }
-    h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
+    h_zenith_cdclassify->Scale(1.0 / h_zenith_cdclassify->Integral());
     h_zenith_cdclassify->SetLineStyle(kSolid);
     h_zenith_cdclassify->SetLineWidth(3);
     h_zenith_cdclassify->SetLineColor(kRed);
     h_zenith_cdclassify->SetMarkerStyle(kFullCircle);
     h_zenith_cdclassify->SetMarkerSize(1.25);
     h_zenith_cdclassify->SetMarkerColor(kRed);
-    h_zenith_cdclassify->Draw("E1 SAME");
+    h_zenith_cdclassify->Draw("E1");
+    h_zenith->GetXaxis()->SetTitle("cos(#theta_{z})");
+    h_zenith->GetXaxis()->CenterTitle(kTRUE);
+    h_zenith->GetYaxis()->SetTitle("Normalized entries");
+    h_zenith->GetYaxis()->CenterTitle(kTRUE);
+    h_zenith->GetYaxis()->SetTitleOffset(1.5);
+    h_zenith->Draw("E1 SAME");
     
     h_simu_zenith->SetLineColor(kBlue);
     h_simu_zenith->SetLineStyle(kSolid);
@@ -290,7 +290,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TLegend* leg_zenith = new TLegend(0.15, 0.75, 0.4, 0.85);
     leg_zenith->AddEntry(h_simu_zenith, "JUNO MC", "l");
     leg_zenith->AddEntry(h_zenith, "Joint #chi^2", "l");
-    leg_zenith->AddEntry(h_azimuth_cdclassify, "CD cluster", "l");
+    leg_zenith->AddEntry(h_zenith_cdclassify, "CD cluster", "l");
     leg_zenith->Draw();
     
     c_zenith->SetTickx();
@@ -324,14 +324,6 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetLineColor(kBlack);
     h_azimuth->SetMarkerStyle(kFullCircle);
     h_azimuth->SetMarkerSize(1.25);
-    h_azimuth->SetMarkerColor(kBlack);
-    h_azimuth->GetXaxis()->SetTitle("#phi_{z})");
-    h_azimuth->GetXaxis()->CenterTitle(kTRUE);
-    h_azimuth->GetYaxis()->SetTitle("Normalized entries");
-    h_azimuth->GetYaxis()->CenterTitle(kTRUE);
-    h_azimuth->GetYaxis()->SetTitleOffset(1.5);
-    h_azimuth->GetYaxis()->SetMaxDigits(3);
-    h_azimuth->Draw("E1");
     h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
     for (int k = 1; k <= h_azimuth_cdclassify->GetNbinsX(); ++k) {
         if (h_azimuth_cdclassify->GetBinContent(k) < 30.0e-3) continue;
@@ -344,7 +336,15 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth_cdclassify->SetMarkerStyle(kFullCircle);
     h_azimuth_cdclassify->SetMarkerSize(1.25);
     h_azimuth_cdclassify->SetMarkerColor(kRed);
-    h_azimuth_cdclassify->Draw("E1 SAME");
+    h_azimuth_cdclassify->Draw("E1");
+    h_azimuth->SetMarkerColor(kBlack);
+    h_azimuth->GetXaxis()->SetTitle("#phi_{z})");
+    h_azimuth->GetXaxis()->CenterTitle(kTRUE);
+    h_azimuth->GetYaxis()->SetTitle("Normalized entries");
+    h_azimuth->GetYaxis()->CenterTitle(kTRUE);
+    h_azimuth->GetYaxis()->SetTitleOffset(1.5);
+    h_azimuth->GetYaxis()->SetMaxDigits(3);
+    h_azimuth->Draw("E1 SAME");
     
     h_simu_azimuth->SetLineColor(kBlue);
     h_simu_azimuth->SetLineStyle(kSolid);
