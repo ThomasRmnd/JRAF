@@ -208,7 +208,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         //         std::cout << sec << ' ' << nsec << ' ' << run_id << '\n';
         // }
 
-        if (angles.back() >= 10.0 || distances.back() >= 2.5 || zenith_cdwp_v.back() < 0.0) {
+        if (run_id == 9789 && (angles.back() >= 10.0 || distances.back() >= 2.5 || zenith_cdwp_v.back() < 0.0)) {
                 std::cout << sec << ' ' << nsec << ' ' << run_id << ' ' << k << ' ' << pos_cdwp.Theta() << ' ' << pos_cdwp.Phi() << ' ' << dir_cdwp.Theta() << ' ' << dir_cdwp.Phi() << ' ' << angles.back() << ' ' << distances.back() << ' ' << zenith_cdwp_v.back() << '\n';
         }
 
