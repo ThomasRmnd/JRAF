@@ -201,13 +201,6 @@ void extract_plot_from_reco_matches(const char* filename) {
         // double rectangle_first_bottom = 15.5;
         // double rectangle_first_top = 18.0;
 
-        // if (sec == 1756517667 && nsec == 3720088) {
-        //     std::cout << "x: " << pos_cdwp.X() << ", y: " << pos_cdwp.Y() << ", z: " << pos_cdwp.Z() << '\n';
-        //     std::cout << "theta: " << pos_cdwp.Theta() << ", phi: " << pos_cdwp.Phi() << '\n';
-        //     std::cout << "dx: " << dir_cdwp.X() << ", dy: " << dir_cdwp.Y() << ", dz: " << dir_cdwp.Z() << '\n';
-        //     std::cout << "theta: " << dir_cdwp.Theta() << ", phi: " << dir_cdwp.Phi() << '\n';
-        // }
-
         // if (
         //     rectangle_first_left <= angles.back() && angles.back() <= rectangle_first_right &&
         //     rectangle_first_bottom <= distances.back() && distances.back() <= rectangle_first_top
@@ -215,11 +208,9 @@ void extract_plot_from_reco_matches(const char* filename) {
         //         std::cout << sec << ' ' << nsec << ' ' << run_id << '\n';
         // }
 
-        // if (
-        //     angles.back() >= 10.0 || distances.back() >= 2
-        // ) {
-        //         std::cout << sec << ' ' << nsec << ' ' << run_id << ' ' << k << ' ' << pos_cdwp.Theta() << ' ' << pos_cdwp.Phi() << ' ' << dir_cdwp.Theta() << ' ' << dir_cdwp.Phi() << '\n';
-        // }
+        if (angles.back() >= 10.0 || distances.back() >= 2.5 || zenith_cdwp_v.back() < 0.0) {
+                std::cout << sec << ' ' << nsec << ' ' << run_id << ' ' << k << ' ' << pos_cdwp.Theta() << ' ' << pos_cdwp.Phi() << ' ' << dir_cdwp.Theta() << ' ' << dir_cdwp.Phi() << ' ' << angles.back() << ' ' << distances.back() << ' ' << zenith_cdwp_v.back() << '\n';
+        }
 
         // if (angles.back() > 3.0 || distances.back() > 1.0) {
         //     std::cout << TTimeStamp{sec, nsec} << ", angle: " << angles.back() << ", distance: " << distances.back() 
