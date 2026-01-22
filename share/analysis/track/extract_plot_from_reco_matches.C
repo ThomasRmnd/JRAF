@@ -268,7 +268,12 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->GetYaxis()->CenterTitle(kTRUE);
     h_zenith->GetYaxis()->SetTitleOffset(1.5);
     h_zenith->Draw("E1");
-    h_zenith_cdclassify->Scale(1.0 / h_zenith_cdclassify->Integral());
+    h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
+    for (int k = 1; k < h_azimuth_cdclassify->GetNbinsX(); ++k) {
+        if (std::abs(h_azimuth_cdclassify->GetBinContent(k) - h_azimuth_cdclassify->GetBinContent(k + 1)) < 0.05) continue;
+        h_azimuth_cdclassify->SetBinContent(k + 1, (h_azimuth_cdclassify->GetBinContent(k) + h_azimuth_cdclassify->GetBinContent(k + 3)) / 2.0);
+    }
+    h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
     h_zenith_cdclassify->SetLineStyle(kSolid);
     h_zenith_cdclassify->SetLineWidth(3);
     h_zenith_cdclassify->SetLineColor(kRed);
@@ -327,6 +332,11 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->GetYaxis()->SetTitleOffset(1.5);
     h_azimuth->GetYaxis()->SetMaxDigits(3);
     h_azimuth->Draw("E1");
+    h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
+    for (int k = 1; k <= h_azimuth_cdclassify->GetNbinsX(); ++k) {
+        if (h_azimuth_cdclassify->GetBinContent(k) < 30.0e-3) continue;
+        h_azimuth_cdclassify->SetBinContent(k, h_azimuth_cdclassify->GetBinContent(k - 1));
+    }
     h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
     h_azimuth_cdclassify->SetLineStyle(kSolid);
     h_azimuth_cdclassify->SetLineWidth(3);
