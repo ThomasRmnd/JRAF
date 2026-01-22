@@ -268,13 +268,14 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->GetYaxis()->CenterTitle(kTRUE);
     h_zenith->GetYaxis()->SetTitleOffset(1.5);
     h_zenith->Draw("E1");
+    h_zenith_cdclassify->Scale(1.0 / h_zenith_cdclassify->Integral());
     h_zenith_cdclassify->SetLineStyle(kSolid);
     h_zenith_cdclassify->SetLineWidth(3);
     h_zenith_cdclassify->SetLineColor(kRed);
     h_zenith_cdclassify->SetMarkerStyle(kFullCircle);
     h_zenith_cdclassify->SetMarkerSize(1.25);
     h_zenith_cdclassify->SetMarkerColor(kRed);
-    h_zenith->Draw("E1");
+    h_zenith_cdclassify->Draw("E1 SAME");
     
     h_simu_zenith->SetLineColor(kBlue);
     h_simu_zenith->SetLineStyle(kSolid);
@@ -326,6 +327,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->GetYaxis()->SetTitleOffset(1.5);
     h_azimuth->GetYaxis()->SetMaxDigits(3);
     h_azimuth->Draw("E1");
+    h_azimuth_cdclassify->Scale(1.0 / h_azimuth_cdclassify->Integral());
     h_azimuth_cdclassify->SetLineStyle(kSolid);
     h_azimuth_cdclassify->SetLineWidth(3);
     h_azimuth_cdclassify->SetLineColor(kRed);
