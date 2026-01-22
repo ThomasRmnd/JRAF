@@ -109,7 +109,9 @@ void extract_plot_from_reco_matches(const char* filename) {
     std::cout << "[INFO] Number of entries: " << tree->GetEntries() << '\n';
 
     TH1D* h_zenith = new TH1D("h_zenith", "h_zenith", 66, -1.0, 1.0);
+    TH1D* h_zenith_cdclassify = new TH1D("h_zenith_cdclassify", "h_zenith_cdclassify", 66, -1.0, 1.0);
     TH1D* h_azimuth = new TH1D("h_azimuth", "h_azimuth", 57, 0.0, 360.0);
+    TH1D* h_azimuth_cdclassify = new TH1D("h_azimuth_cdclassify", "h_azimuth_cdclassify", 57, 0.0, 360.0);
     TH2D* h_zenith_azimuth = new TH2D("h_zenith_azimuth", "h_zenith_azimuth", 100, -1.0, 1.0, 100, 0.0, 360.0);
 
     auto layer_id = [&](double z) {
@@ -142,6 +144,7 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         TVector3 ipos_cdclassify((*iposx)[j_cdclassify], (*iposy)[j_cdclassify], (*iposz)[j_cdclassify]);
         TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
+        TVector3 dir_cdclassify = (fpos_cdclassify - ipos_cdclassify).Unit();
 
         // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
@@ -151,7 +154,9 @@ void extract_plot_from_reco_matches(const char* filename) {
         dir_cdwp = (fpos - ipos).Unit();
 
         h_zenith->Fill(-dir_cdwp.CosTheta());
+        h_zenith_cdclassify->Fill(-dir_cdclassify.CosTheta());
         h_azimuth->Fill(180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
+        h_azimuth_cdclassify->Fill(180.0 / M_PI * (dir_cdclassify.Phi() > 0.0 ? dir_cdclassify.Phi() : dir_cdclassify.Phi() + 2.0 * M_PI));
         h_zenith_azimuth->Fill(-dir_cdwp.CosTheta(), 180.0 / M_PI * (dir_cdwp.Phi() > 0.0 ? dir_cdwp.Phi() : dir_cdwp.Phi() + 2.0 * M_PI));
 
         if (NTotPoints == 0) continue;
@@ -255,14 +260,21 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_zenith->SetLineWidth(3);
     h_zenith->SetLineColor(kBlack);
     h_zenith->SetMarkerStyle(kFullCircle);
-    h_zenith->SetMarkerSize(1.00);
+    h_zenith->SetMarkerSize(1.25);
     h_zenith->SetMarkerColor(kBlack);
     h_zenith->GetXaxis()->SetTitle("cos(#theta_{z})");
     h_zenith->GetXaxis()->CenterTitle(kTRUE);
     h_zenith->GetYaxis()->SetTitle("Normalized entries");
     h_zenith->GetYaxis()->CenterTitle(kTRUE);
     h_zenith->GetYaxis()->SetTitleOffset(1.5);
-    h_zenith->Draw("E");
+    h_zenith->Draw("E1");
+    h_zenith_cdclassify->SetLineStyle(kSolid);
+    h_zenith_cdclassify->SetLineWidth(3);
+    h_zenith_cdclassify->SetLineColor(kRed);
+    h_zenith_cdclassify->SetMarkerStyle(kFullCircle);
+    h_zenith_cdclassify->SetMarkerSize(1.25);
+    h_zenith_cdclassify->SetMarkerColor(kRed);
+    h_zenith->Draw("E1");
     
     h_simu_zenith->SetLineColor(kBlue);
     h_simu_zenith->SetLineStyle(kSolid);
@@ -272,6 +284,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TLegend* leg_zenith = new TLegend(0.15, 0.75, 0.4, 0.85);
     leg_zenith->AddEntry(h_simu_zenith, "JUNO MC", "l");
     leg_zenith->AddEntry(h_zenith, "Joint #chi^2", "l");
+    leg_zenith->AddEntry(h_azimuth_cdclassify, "CD cluster", "l");
     leg_zenith->Draw();
     
     c_zenith->SetTickx();
@@ -304,7 +317,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->SetLineWidth(3);
     h_azimuth->SetLineColor(kBlack);
     h_azimuth->SetMarkerStyle(kFullCircle);
-    h_azimuth->SetMarkerSize(1.00);
+    h_azimuth->SetMarkerSize(1.25);
     h_azimuth->SetMarkerColor(kBlack);
     h_azimuth->GetXaxis()->SetTitle("#phi_{z})");
     h_azimuth->GetXaxis()->CenterTitle(kTRUE);
@@ -312,16 +325,24 @@ void extract_plot_from_reco_matches(const char* filename) {
     h_azimuth->GetYaxis()->CenterTitle(kTRUE);
     h_azimuth->GetYaxis()->SetTitleOffset(1.5);
     h_azimuth->GetYaxis()->SetMaxDigits(3);
-    h_azimuth->Draw("E");
+    h_azimuth->Draw("E1");
+    h_azimuth_cdclassify->SetLineStyle(kSolid);
+    h_azimuth_cdclassify->SetLineWidth(3);
+    h_azimuth_cdclassify->SetLineColor(kRed);
+    h_azimuth_cdclassify->SetMarkerStyle(kFullCircle);
+    h_azimuth_cdclassify->SetMarkerSize(1.25);
+    h_azimuth_cdclassify->SetMarkerColor(kRed);
+    h_azimuth_cdclassify->Draw("E1 SAME");
     
     h_simu_azimuth->SetLineColor(kBlue);
     h_simu_azimuth->SetLineStyle(kSolid);
     h_simu_azimuth->SetLineWidth(3);
     h_simu_azimuth->Draw("HIST SAME");
 
-    TLegend* leg_azimuth = new TLegend(0.6, 0.15, 0.85, 0.25);
+    TLegend* leg_azimuth = new TLegend(0.6, 0.15, 0.85, 0.30);
     leg_azimuth->AddEntry(h_simu_azimuth, "JUNO MC", "l");
     leg_azimuth->AddEntry(h_azimuth, "Joint #chi^2", "l");
+    leg_azimuth->AddEntry(h_azimuth_cdclassify, "CD cluster", "l");
     leg_azimuth->Draw();
     
     c_azimuth->SetTickx();
