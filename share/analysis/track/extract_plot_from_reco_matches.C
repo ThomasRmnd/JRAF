@@ -146,7 +146,7 @@ void extract_plot_from_reco_matches(const char* filename) {
         TVector3 fpos_cdclassify((*fposx)[j_cdclassify], (*fposy)[j_cdclassify], (*fposz)[j_cdclassify]);
         TVector3 dir_cdclassify = (fpos_cdclassify - ipos_cdclassify).Unit();
 
-        // if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
+        if (fpos_cdclassify.Mag() > 40000.0) continue; // stopping
 
         ipos.SetXYZ((*iposx)[j], (*iposy)[j], (*iposz)[j]);
         fpos.SetXYZ((*fposx)[j], (*fposy)[j], (*fposz)[j]);
@@ -452,8 +452,10 @@ void extract_plot_from_reco_matches(const char* filename) {
     std::vector<double> distances_68p = distances;
     std::nth_element(angles_68p.begin(), angles_68p.begin() + angles_68p.size() * 682 / 1000, angles_68p.end());
     std::nth_element(distances_68p.begin(), distances_68p.begin() + distances_68p.size() * 682 / 1000, distances_68p.end());
-    std::cout << "68.2% angle: " << angles_68p[angles_68p.size() * 682 / 1000] << ", size: " << angles_68p.size() << '\n';
-    std::cout << "68.2% distance: " << distances_68p[distances_68p.size() * 682 / 1000] << ", size: " << distances_68p.size() << '\n';
+    double angle_68p = angles_68p[angles_68p.size() * 682 / 1000];
+    double distance_68p = distances_68p[distances_68p.size() * 682 / 1000];
+    std::cout << "68.2% angle: " << angle_68p << ", size: " << angles_68p.size() << '\n';
+    std::cout << "68.2% distance: " << distance_68p << ", size: " << distances_68p.size() << '\n';
 
     auto set_style = [](TH1* h, Style_t style, int width, Color_t color, float alpha = 1.0) {
         h->SetFillStyle(3004);       // transparent fill pattern
@@ -623,7 +625,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     g_angle_run->GetYaxis()->SetLabelSize(0.06);
     g_angle_run->Draw("APL");
 
-    TLine* line_angle_run_68p = new TLine(g_angle_run->GetXaxis()->GetXmin(), angles[angles.size() * 682 / 1000], g_angle_run->GetXaxis()->GetXmax(), angles[angles.size() * 682 / 1000]);
+    TLine* line_angle_run_68p = new TLine(g_angle_run->GetXaxis()->GetXmin(),angle_68p, g_angle_run->GetXaxis()->GetXmax(), angle_68p);
     line_angle_run_68p->SetLineStyle(kDotted);
     line_angle_run_68p->SetLineWidth(3);
     line_angle_run_68p->SetLineColor(kRed);
@@ -654,7 +656,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     g_distance_run->GetYaxis()->SetLabelSize(0.06);
     g_distance_run->Draw("APL");
 
-    TLine* line_distance_run_68p = new TLine(g_distance_run->GetXaxis()->GetXmin(), distances[distances.size() * 682 / 1000], g_distance_run->GetXaxis()->GetXmax(), distances[distances.size() * 682 / 1000]);
+    TLine* line_distance_run_68p = new TLine(g_distance_run->GetXaxis()->GetXmin(), distance_68p, g_distance_run->GetXaxis()->GetXmax(), distance_68p);
     line_distance_run_68p->SetLineStyle(kDotted);
     line_distance_run_68p->SetLineWidth(3);
     line_distance_run_68p->SetLineColor(kRed);
@@ -702,7 +704,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TLine* line_ml_angle_68p = construct_68p_line(ml_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kRed);
     TLine* line_wpcluster_angle_68p = construct_68p_line(wpcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kViolet);
     TLine* line_cdcluster_angle_68p = construct_68p_line(cdcluster_angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kGreen+2);
-    TLine* line_cdwptt_angle_68p = construct_68p_line(angles[angles.size() * 682 / 1000], 0.0, h_angle->GetMaximum(), kDotted, 4, kBlack);
+    TLine* line_cdwptt_angle_68p = construct_68p_line(angle_68p, 0.0, h_angle->GetMaximum(), kDotted, 4, kBlack);
     line_sftm_angle_68p->Draw("SAME");
     line_ml_angle_68p->Draw("SAME");
     line_wpcluster_angle_68p->Draw("SAME");
@@ -710,7 +712,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdwptt_angle_68p->Draw("SAME");
 
     TLegend* leg_angle = new TLegend(0.45, 0.65, 0.85, 0.85);
-    leg_angle->AddEntry(h_angle, Form("Joint #chi^2: 68%% quantile = %.2f #circ", angles[angles.size() * 682 / 1000]), "l");
+    leg_angle->AddEntry(h_angle, Form("Joint #chi^2: 68%% quantile = %.2f #circ", angle_68p), "l");
     leg_angle->AddEntry(h_sftm_angle, Form("SFTM: 68%% quantile = %.2f #circ", sftm_angle_68p), "l");
     leg_angle->AddEntry(h_ml_angle, Form("EDWIN: 68%% quantile = %.2f #circ", ml_angle_68p), "l");
     leg_angle->AddEntry(h_wpcluster_angle, Form("WP cluster: 68%% quantile = %.2f #circ", wpcluster_angle_68p), "l");
@@ -766,7 +768,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     TLine* line_ml_distance_68p = construct_68p_line(ml_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kRed);
     TLine* line_wpcluster_distance_68p = construct_68p_line(wpcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kViolet);
     TLine* line_cdcluster_distance_68p = construct_68p_line(cdcluster_distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kGreen+2);
-    TLine* line_cdwptt_distance_68p = construct_68p_line(distances[distances.size() * 682 / 1000], 0.0, h_distance->GetMaximum(), kDotted, 4, kBlack);
+    TLine* line_cdwptt_distance_68p = construct_68p_line(distance_68p, 0.0, h_distance->GetMaximum(), kDotted, 4, kBlack);
     line_sftm_distance_68p->Draw("SAME");
     line_ml_distance_68p->Draw("SAME");
     line_wpcluster_distance_68p->Draw("SAME");
@@ -774,7 +776,7 @@ void extract_plot_from_reco_matches(const char* filename) {
     line_cdwptt_distance_68p->Draw("SAME");
 
     TLegend* leg_distance = new TLegend(0.45, 0.65, 0.85, 0.85);
-    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68%% quantile = %.2f m", distances[distances.size() * 682 / 1000]), "l");
+    leg_distance->AddEntry(h_distance, Form("Joint #chi^2: 68%% quantile = %.2f m", distance_68p), "l");
     leg_distance->AddEntry(h_sftm_distance, Form("SFTM: 68%% quantile = %.2f m", sftm_distance_68p), "l");
     leg_distance->AddEntry(h_ml_distance, Form("EDWIN: 68%% quantile = %.2f m", ml_distance_68p), "l");
     leg_distance->AddEntry(h_wpcluster_distance, Form("WP cluster: 68%% quantile = %.2f m", wpcluster_distance_68p), "l");

@@ -270,6 +270,8 @@ main() {
     parse_args "$@"
     load_file_lists
 
+    source ${SOURCE_JUNOSW_PATH}
+
     input_file="${RTRAW_LIST[$PROC_ID]}"
     input_filename=$(basename "${input_file}")
 
@@ -289,10 +291,6 @@ main() {
 
     indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
-
-    source ${SOURCE_JUNOSW_PATH}
-    log INFO "Environment loaded (TUTORIALROOT=${TUTORIALROOT})"
-    log INFO "Temporary directory: ${TEMPDIR}"
 
     input_files=()
     input_correlation_files=()
