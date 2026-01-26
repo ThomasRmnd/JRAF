@@ -168,6 +168,51 @@ struct VetoTimeSaver {
 
 };
 
+struct MuonInfoSaver {
+
+    TTree* tree = nullptr;
+
+    int run_id = 0;
+    time_t sec = 0l;
+    int nsec = 0;
+    float totq_cd;
+    float totq_wp;
+    unsigned char det = 0;
+
+    bool init() {
+        tree = new TTree("MuonInfo", "MuonInfo");
+        if (!tree) {
+            LogError << "Cannot create MuonInfo TTree\n";
+            return false;
+        }
+        tree->Branch("run_id", &run_id);
+        tree->Branch("sec", &sec);
+        tree->Branch("nsec", &nsec);
+        tree->Branch("totq_cd", &totq_cd);
+        tree->Branch("totq_wp", &totq_wp);
+        tree->Branch("det", &det);
+        return true;
+    }
+
+    bool add(int run_id_, const TimeStamp& ts_, float totq_cd_, float totq_wp_, const track::loc& loc_) {
+        run_id = run_id_;
+        sec = ts_.GetSec();
+        nsec = ts_.GetNanoSec();
+        totq_cd = totq_cd_;
+        totq_wp = totq_wp_;
+        det = static_cast<unsigned char>(loc_);
+        tree->Fill();
+        return true;
+    }
+
+    bool write() {
+        if (!tree) return false;
+        tree->Write();
+        return true;
+    }
+
+};
+
 struct ContextFileTracker {
 
     std::string prevctx;
@@ -590,6 +635,7 @@ private:
     TFile* m_file;
     DAQTimeSaver m_daqTimeSaver;
     VetoTimeSaver m_vetoTimeSaver;
+    MuonInfoSaver m_muonInfoSaver;
     std::vector<std::string> m_methods;
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 

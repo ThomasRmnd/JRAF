@@ -24,6 +24,7 @@ protected:
 
     std::string m_name;
     TTree* m_tree = nullptr;
+    TTree* m_tree_cutflow = nullptr;
 
     std::string m_method;
     MethodSelection m_method_sel;

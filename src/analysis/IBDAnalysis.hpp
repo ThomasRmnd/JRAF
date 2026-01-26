@@ -88,6 +88,14 @@ private:
     std::vector<int> nsec_mu;
     std::vector<double> quality_mu;
 
+    // Cut flow
+    std::size_t m_fvp_cut = 0ul;
+    std::size_t m_ep_cut = 0ul;
+    std::size_t m_neup_cut = 0ul;
+    std::size_t m_fvd_cut = 0ul;
+    std::size_t m_ed_cut = 0ul;
+    std::size_t m_corr_cut = 0ul;
+    std::size_t m_neud_cut = 0ul;
 
 };
 

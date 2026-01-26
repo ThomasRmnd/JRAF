@@ -14,6 +14,11 @@ bool Analysis::initialize() {
         std::cout << "[ERROR] Could not create the TTree for Analysis " << m_name << '\n';
         return false;
     }
+    m_tree_cutflow = new TTree((m_name + "__CutFlow").c_str(), (m_name + "__CutFlow").c_str());
+    if (!m_tree_cutflow) {
+        std::cout << "[ERROR] Could not create the TTree for CutFlow of Analysis " << m_name << '\n';
+        return false;
+    }
 
     m_tree->Branch("posx_p", &posx_p);
     m_tree->Branch("posy_p", &posy_p);
@@ -63,6 +68,10 @@ const std::string& Analysis::method() const {
 bool Analysis::write() {
     if (m_tree) {
         m_tree->Write();
+    }
+    if (m_tree_cutflow) {
+        m_tree_cutflow->Fill();
+        m_tree_cutflow->Write();
     }
     return true;
 }

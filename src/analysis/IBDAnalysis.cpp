@@ -69,6 +69,14 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("nsec_mu", &nsec_mu);
     m_tree->Branch("quality_mu", &quality_mu);
 
+    m_tree_cutflow->Branch("fvp_cut", &m_fvp_cut);
+    m_tree_cutflow->Branch("ep_cut", &m_ep_cut);
+    m_tree_cutflow->Branch("neup_cut", &m_neup_cut);
+    m_tree_cutflow->Branch("fvd_cut", &m_fvd_cut);
+    m_tree_cutflow->Branch("ed_cut", &m_ed_cut);
+    m_tree_cutflow->Branch("corr_cut", &m_corr_cut);
+    m_tree_cutflow->Branch("neud_cut", &m_neud_cut);
+
     return true;
 }
 
@@ -109,15 +117,13 @@ void IBDAnalysis::process(const EventContext::View& events) {
         LogInfo << prompt << '\n';
         if (!fiducial_vol_cut.isIn(prompt)) {
             LogInfo << "Prompt not in fiducial volume\n";
+            ++m_fvp_cut;
             continue;
         }
-        // if (chimney_cut.isIn(prompt)) {
-        //     LogInfo << "Prompt is a chimney\n";
-        //     continue;
-        // }
 
         if (!prompt_energy_cut.isIn(prompt)) {
             LogInfo << "Prompt not in energy range\n";
+            ++m_ep_cut;
             continue;
         }
 
@@ -129,6 +135,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
         }
         if (is_vetoed) {
             LogInfo << "Prompt is muon vetoed\n";
+            ++m_neup_cut;
             continue;
         }
 
@@ -138,20 +145,19 @@ void IBDAnalysis::process(const EventContext::View& events) {
             LogInfo << delayed << '\n';
             if (!fiducial_vol_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in fiducial volume\n";
+                ++m_fvd_cut;
                 continue;
             }
-            // if (chimney_cut.isIn(delayed)) {
-            //     LogInfo << "Delayed is a chimney\n";
-            //     continue;
-            // }
 
             if (!delayed_energy_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in energy range\n";
+                ++m_ed_cut;
                 continue;
             }
 
             if (!correlation_cut.isIn(delayed)) {
                 LogInfo << "Delayed not correlated\n";
+                ++m_corr_cut;
                 continue;
             }
 
@@ -163,6 +169,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
             }
             if (is_vetoed) {
                 LogInfo << "Delayed is muon vetoed\n";
+                ++m_neud_cut;
                 continue;
             }
 

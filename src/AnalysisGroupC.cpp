@@ -105,6 +105,7 @@ bool AnalysisGroupC::initAnalyses() {
 
     if (!m_daqTimeSaver.init()) return false;
     if (!m_vetoTimeSaver.init()) return false;
+    if (!m_muonInfoSaver.init()) return false;
 
     m_methods = std::vector<std::string>{/* "Oec", */ "OMILREC", "MixedPhase", "OMILREC_JVtx" /* "JVertex" */};
 
@@ -384,6 +385,7 @@ bool AnalysisGroupC::execute() {
             m_wp_last_muon = curts;
             is_possibly_cd_muon = true;
             is_possibly_wp_muon = true;
+            m_muonInfoSaver.add(runId, curts, static_cast<float>(calib.totq), static_cast<float>(totq_wp), track::loc::cd | track::loc::wp);
         }
         else if (
             calib.totq < m_cd_muon_totq_thold && 
@@ -392,6 +394,7 @@ bool AnalysisGroupC::execute() {
         ) {
             m_wp_last_muon = curts;
             is_possibly_wp_muon = true;
+            m_muonInfoSaver.add(runId, curts, 0.0, static_cast<float>(totq_wp), track::loc::wp);
         }
         else if (
             calib.totq >= m_cd_muon_totq_thold && 
@@ -400,6 +403,7 @@ bool AnalysisGroupC::execute() {
         ) {
             m_cd_last_muon = curts;
             is_possibly_cd_muon = true;
+            m_muonInfoSaver.add(runId, curts, static_cast<float>(calib.totq), 0.0, track::loc::cd);
         }
 
         LogInfo << "Is possibly CD muon: " << is_possibly_cd_muon << ", is possibly WP muon: " << is_possibly_wp_muon << '\n';
@@ -562,6 +566,7 @@ bool AnalysisGroupC::finalize() {
     m_file->cd();
     if (!m_daqTimeSaver.write()) return false;
     if (!m_vetoTimeSaver.write()) return false;
+    if (!m_muonInfoSaver.write()) return false;
     for (std::shared_ptr<Analysis>& ana : m_analyses) {
         if (!ana->write()) return false;
     }
