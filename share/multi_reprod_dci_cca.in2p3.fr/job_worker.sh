@@ -232,14 +232,14 @@ rtraw_to_reprod_filename() {
 
     local run stream run_bucket run_group
 
-    if [[ "$fpath" =~ /eos/juno/rtraw/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
+    if [[ "$fpath" =~ /juno/rtraw/([0-9]{4})/([0-9]{4})/RUN\.([0-9]+)\. ]]; then
         run="${BASH_REMATCH[3]}"
         bucket_val=$(( (10#$run / 1000) * 1000 ))
         group_val=$(( (10#$run / 100) * 100 ))
         run_bucket=$(printf "%08d" "$bucket_val")
         run_group=$(printf "%08d" "$group_val")
 
-    elif [[ "$fpath" =~ /eos/juno/juno-rtraw/([^/]+)/([^/]+)/([0-9]+)/([0-9]+)/([0-9]+)/RUN\.([0-9]+)\. ]]; then
+    elif [[ "$fpath" =~ /juno/juno-rtraw/([^/]+)/([^/]+)/([0-9]+)/([0-9]+)/([0-9]+)/RUN\.([0-9]+)\. ]]; then
         run="${BASH_REMATCH[6]}"
         stream="${BASH_REMATCH[2]}"
         run_bucket="${BASH_REMATCH[3]}"

@@ -173,16 +173,6 @@ void extract_plot_from_reco_matches(const char* filename) {
 
         if (layers_hit.size() < 3) continue; // at least 3 different layers
 
-        // remove track where chimney layers were triggered
-        if (
-            (layers_hit.find(3) != layers_hit.end()) || 
-            (layers_hit.find(4) != layers_hit.end()) || 
-            (layers_hit.find(5) != layers_hit.end())
-        ) {
-            std::cout << "Layers 3, 4 or 5 were hit\n";
-            continue;
-        }
-
         pos_tt.SetXYZ(Coeff0[0], Coeff1[0], Coeff2[0] + cdwp_tt_coordinate_offset);
         dir_tt.SetXYZ(Coeff3[0], Coeff4[0], Coeff5[0]);
         dir_tt = dir_tt.Unit();
