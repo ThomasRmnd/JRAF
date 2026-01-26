@@ -278,13 +278,15 @@ class RunListFetcher(Module):
     
     def register_options(self, parser: argparse.ArgumentParser):
         parser.add_argument("--xrootd-url", type=str, default=None, help="XRootD server URL")
-        parser.add_argument("--good-run-list", type=str, default="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt", help="Path to the good-run-list file")
         parser.add_argument("--lower-run", type=int, default=None, help="Process only runs newer")
         parser.add_argument("--upper-run", type=int, default=None, help="Process only runs older")
 
     def init(self, args: argparse.Namespace) -> bool:
         self.xrootd = args.xrootd_url
-        self.good_run_list = args.good_run_list
+        if args.campaign == "ReProd25C":
+            self.good_run_list = "/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
+        elif args.campaign == "ReProd25D":
+            self.good_run_list = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good_v0.0.txt"
         self.lower = args.lower_run
         self.upper = args.upper_run
         return True
