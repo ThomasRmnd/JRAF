@@ -16,39 +16,86 @@
 #include "analysis/cosmo_rate_analysis.hpp"
 #include "analysis/cosmo_shape_analysis.hpp"
 
-void daq_time(const std::string& filename) {
-    TChain* chain = new TChain("DAQTree");
-    if (!chain) {
-        std::cerr << "Cannot create TChain DAQTree\n";
+struct DAQ {
+    int run_id;
+    time_t sec;
+    int nsec;
+};
+
+struct Veto {
+    int run_id;
+    time_t sec;
+    int nsec;
+    unsigned char veto_type;
+    time_t veto_sec;
+    int veto_nsec;
+};
+
+struct veto_info {
+    int run_id;
+    unsigned char veto_type;
+    time_t veto_sec;
+    int veto_nsec;
+};
+
+void daq(const std::string& filename) {
+    TChain* chain_daq = new TChain("DAQ");
+    TChain* chain_veto = new TChain("Veto");
+    if (!chain_daq || !chain_veto) {
+        std::cerr << "Cannot create TChain DAQ or Veto\n";
         return;
     }
-    chain->Add(filename.c_str());
-    time_t daq_sec;
-    int daq_nsec;
-    time_t muveto_sec;
-    int muveto_nsec;
-    chain->SetBranchAddress("daq_sec", &daq_sec);
-    chain->SetBranchAddress("daq_nsec", &daq_nsec);
-    chain->SetBranchAddress("muveto_sec", &muveto_sec);
-    chain->SetBranchAddress("muveto_nsec", &muveto_nsec);
-    timestamp tot_ts, tot_ts_mu;
-    for (int k = 0; k < chain->GetEntries(); ++k) {
-        chain->GetEntry(k);
-        timestamp ts{daq_sec, daq_nsec};
-        timestamp ts_mu{muveto_sec, muveto_nsec};
+    
+    chain_daq->Add(filename.c_str());
+    DAQ daq;
+    chain_daq->SetBranchAddress("run_id", &daq.run_id);
+    chain_daq->SetBranchAddress("sec", &daq.sec);
+    chain_daq->SetBranchAddress("nsec", &daq.nsec);
+    std::map<int, timestamp> daq_map;
+    timestamp tot_ts;
+
+    chain_veto->Add(filename.c_str());
+    Veto veto;
+    chain_veto->SetBranchAddress("run_id", &veto.run_id);
+    chain_veto->SetBranchAddress("sec", &veto.sec);
+    chain_veto->SetBranchAddress("nsec", &veto.nsec);
+    chain_veto->SetBranchAddress("veto_type", &veto.veto_type);
+    chain_veto->SetBranchAddress("veto_sec", &veto.veto_sec);
+    chain_veto->SetBranchAddress("veto_nsec", &veto.veto_nsec);
+    std::map<timestamp, veto_info> veto_map;
+    std::map<int, std::map<unsigned char, std::size_t>> veto_type_per_run_map;
+
+    for (long k = 0; k < chain_daq->GetEntries(); ++k) {
+        chain_daq->GetEntry(k);
+        timestamp ts{daq.sec, daq.nsec};
+        daq_map[daq.run_id] += ts;
         tot_ts += ts;
-        tot_ts_mu += ts_mu;
     }
+
+    for (long k = 0; k < chain_veto->GetEntries(); ++k) {
+        chain_veto->GetEntry(k);
+        timestamp ts{veto.sec, veto.nsec};
+        veto_map[ts] = {veto.run_id, veto.veto_type, veto.veto_sec, veto.veto_nsec};
+    }
+
+    for (std::map<timestamp, veto_info>::iterator it = veto_map.begin(); it != veto_map.end(); ++it) {
+        veto_type_per_run_map[it->second.run_id][it->second.veto_type] += 1;
+    }
+    
     std::cout << "Total DAQ time: " << tot_ts << '\n';
-    std::cout << "Total MuVeto time: " << tot_ts_mu << '\n';
     double tot_seconds = timestamp_to_double(tot_ts);
-    double tot_seconds_mu = timestamp_to_double(tot_ts_mu);
     std::cout << "Total DAQ time in days: " << tot_seconds / (3600.0 * 24.0) << '\n';
-    std::cout << "Total MuVeto time in days: " << tot_seconds_mu / (3600.0 * 24.0) << '\n';
+
+    for (std::map<int, std::map<unsigned char, std::size_t>>::iterator it = veto_type_per_run_map.begin(); it != veto_type_per_run_map.end(); ++it) {
+        std::cout << "Run: " << it->first << '\n';
+        for (std::map<unsigned char, std::size_t>::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
+            std::cout << "  Veto type: " << static_cast<int>(jt->first) << ", count: " << jt->second << '\n';
+        }
+    }
 }
 
 int root_main(const std::string& filepath, const std::string& suffix) {
-    daq_time(filepath);
+    daq(filepath);
 
     analysis_registry registry;
     analysis_manager manager(registry);
@@ -64,6 +111,9 @@ int root_main(const std::string& filepath, const std::string& suffix) {
 
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_cdclassify(new cosmo_shape_analysis("cosmo_shape_analysis_cdclassify", filepath, suffix, "CdClassify", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
     if (!registry.book(cosmo_shape_analysis_before_after_cdclassify)) return 1;
+
+    std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_tt(new cosmo_shape_analysis("cosmo_shape_analysis_tt", filepath, suffix, "Tt", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
+    if (!registry.book(cosmo_shape_analysis_before_after_tt)) return 1;
     
     if (!manager.run()) return 1;
 
