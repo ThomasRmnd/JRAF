@@ -156,7 +156,7 @@ do_hadd() {
     local run_bucket=$(printf "%08d" "$bucket_val")
     local run_group=$(printf "%08d" "$group_val")
 
-    local base_dir="${BASE_OUTPUT_DIR}/${run_bucket}"
+    local base_dir="${OUTPUT_DIR_BASE}/${run_bucket}"
 
     local group_candidates=($(find "$base_dir" -maxdepth 1 -type d -regex ".*/${run_group}\(_v[0-9]+\)?$" | sort))
 
