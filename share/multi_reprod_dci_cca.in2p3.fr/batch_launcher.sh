@@ -35,7 +35,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
-RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good.txt"
+RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good_v0.0.txt"
 
 RANGE_BEFORE_11266=100
 RANGE_AFTER_11266=20
