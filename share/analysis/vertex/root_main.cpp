@@ -78,13 +78,30 @@ void daq(const std::string& filename) {
         veto_map[ts] = {veto.run_id, veto.veto_type, veto.veto_sec, veto.veto_nsec};
     }
 
+    timestamp prev_mu_ts;
+    TH1D* h_mu_tot_rate = new TH1D("h_mu_tot_rate", "h_mu_tot_rate", 100, 0.0, 5.0);
     for (std::map<timestamp, veto_info>::iterator it = veto_map.begin(); it != veto_map.end(); ++it) {
         veto_type_per_run_map[it->second.run_id][it->second.veto_type] += 1;
+        if (prev_mu_ts == timestamp{0, 0}) {
+            prev_mu_ts = it->first;
+            continue;
+        }
+        h_mu_tot_rate->Fill(timestamp_to_double(it->first - prev_mu_ts));
+        prev_mu_ts = it->first;
     }
     
     std::cout << "Total DAQ time: " << tot_ts << '\n';
     double tot_seconds = timestamp_to_double(tot_ts);
     std::cout << "Total DAQ time in days: " << tot_seconds / (3600.0 * 24.0) << '\n';
+
+    TCanvas* c_mu_tot_rate = new TCanvas("c_mu_tot_rate", "c_mu_tot_rate", 1000, 1000);
+    c_mu_tot_rate->cd();
+    h_mu_tot_rate->Draw("HIST");
+    c_mu_tot_rate->SetLogy();
+    c_mu_tot_rate->SetGrid();
+    c_mu_tot_rate->SetTickx();
+    c_mu_tot_rate->SetTicky();
+    c_mu_tot_rate->Update();
 
     for (std::map<int, std::map<unsigned char, std::size_t>>::iterator it = veto_type_per_run_map.begin(); it != veto_type_per_run_map.end(); ++it) {
         std::cout << "Run: " << it->first << '\n';

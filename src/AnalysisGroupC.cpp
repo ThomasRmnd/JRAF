@@ -472,6 +472,8 @@ bool AnalysisGroupC::execute() {
     auto t_after_load = clock::now();
     // DEBUG --- Timing
 
+    m_daqTimeSaver.add(m_tsEvt, runId);
+
     if (m_begOfJobVetoTrkr.check(m_iEvt)) {
         if (!m_vetoTimeSaver.create(m_tsEvt, VetoType::BeginningOfJob, runId)) {
             LogError << "Failed to create veto time saver for beginning of job\n";
