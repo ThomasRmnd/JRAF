@@ -89,13 +89,16 @@ private:
     std::vector<double> quality_mu;
 
     // Cut flow
-    std::size_t m_fvp_cut = 0ul;
-    std::size_t m_ep_cut = 0ul;
-    std::size_t m_neup_cut = 0ul;
-    std::size_t m_fvd_cut = 0ul;
-    std::size_t m_ed_cut = 0ul;
-    std::size_t m_corr_cut = 0ul;
-    std::size_t m_neud_cut = 0ul;
+    std::size_t cf_prompt_total = 0ul;
+    std::size_t cf_prompt_fv = 0ul;
+    std::size_t cf_prompt_energy = 0ul;
+    std::size_t cf_prompt_muon = 0ul;
+    std::size_t cf_pair_total = 0ul;
+    std::size_t cf_pair_delayed_fv = 0ul;
+    std::size_t cf_pair_delayed_energy = 0ul;
+    std::size_t cf_pair_corr = 0ul;
+    std::size_t cf_pair_delayed_muon = 0ul;
+    std::size_t cf_ibd_final = 0ul;
 
 };
 

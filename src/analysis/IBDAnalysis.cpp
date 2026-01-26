@@ -69,13 +69,16 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("nsec_mu", &nsec_mu);
     m_tree->Branch("quality_mu", &quality_mu);
 
-    m_tree_cutflow->Branch("fvp_cut", &m_fvp_cut);
-    m_tree_cutflow->Branch("ep_cut", &m_ep_cut);
-    m_tree_cutflow->Branch("neup_cut", &m_neup_cut);
-    m_tree_cutflow->Branch("fvd_cut", &m_fvd_cut);
-    m_tree_cutflow->Branch("ed_cut", &m_ed_cut);
-    m_tree_cutflow->Branch("corr_cut", &m_corr_cut);
-    m_tree_cutflow->Branch("neud_cut", &m_neud_cut);
+    m_tree_cutflow->Branch("cf_prompt_total", &cf_prompt_total);
+    m_tree_cutflow->Branch("cf_prompt_fv", &cf_prompt_fv);
+    m_tree_cutflow->Branch("cf_prompt_energy", &cf_prompt_energy);
+    m_tree_cutflow->Branch("cf_prompt_muon", &cf_prompt_muon);
+    m_tree_cutflow->Branch("cf_pair_total", &cf_pair_total);
+    m_tree_cutflow->Branch("cf_pair_delayed_fv", &cf_pair_delayed_fv);
+    m_tree_cutflow->Branch("cf_pair_delayed_energy", &cf_pair_delayed_energy);
+    m_tree_cutflow->Branch("cf_pair_corr", &cf_pair_corr);
+    m_tree_cutflow->Branch("cf_pair_delayed_muon", &cf_pair_delayed_muon);
+    m_tree_cutflow->Branch("cf_ibd_final", &cf_ibd_final);
 
     return true;
 }
@@ -115,17 +118,19 @@ void IBDAnalysis::process(const EventContext::View& events) {
 
     for (const vertex& prompt : events.current()) {
         LogInfo << prompt << '\n';
+        ++cf_prompt_total;
+        
         if (!fiducial_vol_cut.isIn(prompt)) {
             LogInfo << "Prompt not in fiducial volume\n";
-            ++m_fvp_cut;
             continue;
         }
+        ++cf_prompt_fv;
 
         if (!prompt_energy_cut.isIn(prompt)) {
             LogInfo << "Prompt not in energy range\n";
-            ++m_ep_cut;
             continue;
         }
+        ++cf_prompt_energy;
 
         bool is_vetoed = false;
         for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
@@ -135,31 +140,33 @@ void IBDAnalysis::process(const EventContext::View& events) {
         }
         if (is_vetoed) {
             LogInfo << "Prompt is muon vetoed\n";
-            ++m_neup_cut;
             continue;
         }
+        ++cf_prompt_muon;
 
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
 
         for (const vertex& delayed : events.after()) {
             LogInfo << delayed << '\n';
+            ++cf_pair_total;
+
             if (!fiducial_vol_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in fiducial volume\n";
-                ++m_fvd_cut;
                 continue;
             }
+            ++cf_pair_delayed_fv;
 
             if (!delayed_energy_cut.isIn(delayed)) {
                 LogInfo << "Delayed not in energy range\n";
-                ++m_ed_cut;
                 continue;
             }
+            ++cf_pair_delayed_energy;
 
             if (!correlation_cut.isIn(delayed)) {
                 LogInfo << "Delayed not correlated\n";
-                ++m_corr_cut;
                 continue;
             }
+            ++cf_pair_corr;
 
             is_vetoed = false;
             for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
@@ -169,9 +176,11 @@ void IBDAnalysis::process(const EventContext::View& events) {
             }
             if (is_vetoed) {
                 LogInfo << "Delayed is muon vetoed\n";
-                ++m_neud_cut;
                 continue;
             }
+            ++cf_pair_delayed_muon;
+
+            ++cf_ibd_final;
 
             ibd_info cand(prompt, delayed);
             LogInfo << "IBD event detected!\n";
