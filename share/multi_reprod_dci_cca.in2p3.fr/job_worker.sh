@@ -25,6 +25,12 @@ XRD_URL_CNAF="root://xrootd-archive.cr.cnaf.infn.it:1095/"
 XRD_BASEPATH_EOS="/eos"
 XRD_BASEPATH_CNAF="/production/storm/dirac"
 
+OUTPUT_SUFFIX_NORMAL="output.normal.root"
+OUTPUT_SUFFIX_REPROD25A="output.reprod25a.root"
+OUTPUT_SUFFIX_REPROD25B="output.reprod25b.root"
+OUTPUT_SUFFIX_REPROD25C="output.reprod25c.root"
+OUTPUT_SUFFIX_REPROD25D="output.reprod25d.root"
+
 #==============================
 # Global Flags
 #==============================
@@ -60,6 +66,8 @@ parse_args() {
         exit 1
     fi
 
+    SITE="$1"; shift
+    CAMPAIGN="$1"; shift
     RUN_NUMBER="$1"; shift
     LIST_BASE="$1"; shift
     RANGE_START="$1"; shift
@@ -79,6 +87,53 @@ parse_args() {
         esac
         shift
     done
+
+    case "${SITE}" in
+        EOS)
+            XRD_URL="${XRD_URL_EOS}"
+            XRD_BASEPATH="${XRD_BASEPATH_EOS}"
+            ;;
+        CNAF)
+            XRD_URL="${XRD_URL_CNAF}"
+            XRD_BASEPATH="${XRD_BASEPATH_CNAF}"
+            PROXY_PATH="/sps/juno/jdeandre/rtraw_ThomasRaymond/.cert_traymond_juno_user"
+            if [[ ! -f "${PROXY_PATH}" ]]; then
+                log ERROR "X.509 proxy does not exist: ${PROXY_PATH}"
+                exit 1
+            fi
+            if [[ ! -r "${PROXY_PATH}" ]]; then
+                log ERROR "X.509 proxy not readable: ${PROXY_PATH}"
+                exit 1
+            fi
+            export X509_USER_PROXY="${PROXY_PATH}"
+            ;;
+        *)
+            log ERROR "Invalid site argument: ${SITE} (expected {EOS|CNAF})"
+            exit 1
+            ;;
+    esac
+
+    case "${CAMPAIGN}" in
+        Normal)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_NORMAL}"
+            ;;
+        ReProd25A)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25A}"
+            ;;
+        ReProd25B)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25B}"
+            ;;
+        ReProd25C)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25C}"
+            ;;
+        ReProd25D)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25D}"
+            ;;
+        *)
+            log ERROR "Invalid campaign argument: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C})"
+            exit 1
+            ;;
+    esac
 }
 
 #==============================
@@ -160,13 +215,13 @@ resolve_input_paths() {
         year="${timestamp:0:4}"
         month="${timestamp:4:2}"
         day="${timestamp:6:2}"
-        tt_reco_filepath="${XRD_URL_CNAF}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${year}/${month}${day}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${year}/${month}${day}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 
     elif (( RUN_NUMBER >= 10176 && RUN_NUMBER <= 10479 )); then
-        tt_reco_filepath="${XRD_URL_CNAF}/production/storm/dirac/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/user/j/jpandre_1/tt_data_auto/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 
     elif (( RUN_NUMBER >= 10480 )); then
-        tt_reco_filepath="${XRD_URL_CNAF}/production/storm/dirac/juno/juno-reprod/TT25A/J25.4.3-patched/user_rec/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
+        tt_reco_filepath="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/TT25A/J25.4.3-patched/user_rec/${run_bucket}/${run_group}/${RUN_NUMBER}/RUN.${RUN_NUMBER}.*.EDM.user.root"
 
     else
         log ERROR "No TT reco path rule defined for run ${RUN_NUMBER}"
@@ -212,7 +267,7 @@ check_output_existence() {
         exit 1
     fi
     
-    local output_filename="RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.reprod25c.cca.root"
+    local output_filename="RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.${OUTPUT_SUFFIX}"
     local output_file="${output_path}/${output_filename}"
     
     if [[ -f "${output_file}" ]]; then
@@ -259,10 +314,10 @@ rtraw_to_reprod_filename() {
 
     local output_reprod_filename="${fname/.rtraw/.esd}"
 
-    local base_dir="/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}"
+    local base_dir="${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}"
 
     local candidate_groups
-    candidate_groups=$(xrdfs "${XRD_URL_CNAF}" ls "${base_dir}" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
+    candidate_groups=$(xrdfs "${XRD_URL}" ls "${base_dir}" 2>/dev/null | grep -E "/${run_group}(_v[0-9]+)?/?$" | sort)
 
     if [[ -z "${candidate_groups}" ]]; then
         log ERROR "No run_group (${run_group}) directory found under ${base_dir}" >&2
@@ -272,7 +327,7 @@ rtraw_to_reprod_filename() {
     local selected_group
     selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
 
-    local reprod_path="${XRD_URL_CNAF}/production/storm/dirac/juno/juno-reprod/ReProd25C/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    local reprod_path="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
 
     echo "$reprod_path"
 }
