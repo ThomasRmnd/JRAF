@@ -88,7 +88,6 @@ public:
         // =============h_e_p_copy===============================================================================
 
         gStyle->SetCanvasPreferGL(kTRUE);
-    
         h_e_p->SetStats(false);
         pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 2, .color = kAzure - 4});
         pimp_my_marker(h_e_p, MarkerConfig{.style = kFullCircle, .size = 1., .color = kAzure - 4});
@@ -101,9 +100,8 @@ public:
         TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
         h_e_p_copy->SetStats(false);
         pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
-        pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9});
+        pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9, .alpha = 0.0});
         TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
-        c_e_p->SetSupportGL(kTRUE);
         h_e_p->Draw("E SAME");
         c_e_p->SetTickx();
         c_e_p->SetTicky();
