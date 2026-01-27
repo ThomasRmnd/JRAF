@@ -86,6 +86,8 @@ public:
         // Prompt energy
         // =============h_e_p_copy===============================================================================
 
+        gStyle->SetCanvasPreferGL(kTRUE);
+    
         h_e_p->SetStats(false);
         pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kAzure - 2});
         pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 406, .maxdigits = 3});
