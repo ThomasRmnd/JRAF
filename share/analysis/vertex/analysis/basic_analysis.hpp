@@ -84,7 +84,7 @@ public:
 
         // ============================================================================================
         // Prompt energy
-        // ============================================================================================
+        // =============h_e_p_copy===============================================================================
 
         h_e_p->SetStats(false);
         pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kAzure - 2});
@@ -96,7 +96,7 @@ public:
         h_e_p->GetYaxis()->CenterTitle(true);
         TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
         h_e_p_copy->SetStats(false);
-        pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 4, .alpha = 0.1});
+        pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9});
         pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 4});
         TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
         h_e_p->Draw("E SAME");
