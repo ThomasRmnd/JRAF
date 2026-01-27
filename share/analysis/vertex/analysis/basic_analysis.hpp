@@ -85,70 +85,82 @@ public:
         // ============================================================================================
         // Prompt energy
         // ============================================================================================
-
-        TCanvas* c_e_p = new TCanvas("c_e_p", "Prompt energy", 1000, 1000);
-        c_e_p->cd();
-
-        pimp_my_line(h_e_p, kSolid, 3, kBlue, 1.0);
+        
+        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.maxdigits = 3});
-        pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3});
-        h_e_p->Draw();
-
-        c_e_p->Update();
+        pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
+        h_e_p->GetXaxis()->CenterTitle(true);
+        pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        pimp_my_name(h_e_p->GetYaxis(), NameConfig{.title = "Entries"});
+        h_e_p->GetYaxis()->CenterTitle(true);
+        TCanvas* c_e_p = plot_basic(h_e_p, "HIST");
 
         // ============================================================================================
         // Delayed energy
         // ============================================================================================
-
-        TCanvas* c_e_d = new TCanvas("c_e_d", "Delayed energy", 1000, 1000);
-        c_e_d->cd();
-
-        pimp_my_line(h_e_d, kSolid, 3, kBlue, 1.0);
-        h_e_d->Draw();
-
-        c_e_d->Update();
+        
+        pimp_my_line(h_e_d, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
+        pimp_my_axis(h_e_d->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_name(h_e_d->GetXaxis(), NameConfig{.title = "E_{d} (MeV)"});
+        h_e_d->GetXaxis()->CenterTitle(true);
+        pimp_my_axis(h_e_d->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        pimp_my_name(h_e_d->GetYaxis(), NameConfig{.title = "Entries"});
+        h_e_d->GetYaxis()->CenterTitle(true);
+        TCanvas* c_e_d = plot_basic(h_e_d, "HIST");
 
         // ============================================================================================
         // Prompt-Delayed time difference
         // ============================================================================================
 
-        TCanvas* c_dt = new TCanvas("c_dt", "Prompt-Delayed time difference", 1000, 1000);
-        c_dt->cd();
-
-        h_dt->SetLineWidth(3);
-        h_dt->SetLineStyle(kSolid);
-        h_dt->SetLineColorAlpha(kBlue, 1.0);
-
-        h_dt->Draw();
-    
+        pimp_my_line(h_dt, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
+        pimp_my_axis(h_dt->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_name(h_dt->GetXaxis(), NameConfig{.title = "#Delta t (ms)"});
+        h_dt->GetXaxis()->CenterTitle(true);
+        pimp_my_axis(h_dt->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        pimp_my_name(h_dt->GetYaxis(), NameConfig{.title = "Entries"});
+        h_dt->GetYaxis()->CenterTitle(true);
+        TCanvas* c_dt = plot_basic(h_dt, "HIST");
+        TPaveStats* ps_dt = change_stats(h_dt, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
+        c_dt->Modified();
         c_dt->Update();
 
         // ============================================================================================
         // Prompt-Delayed distance
         // ============================================================================================
 
-        TCanvas* c_dr = new TCanvas("c_dr", "Prompt-Delayed distance", 1000, 1000);
-        c_dr->cd();
-        h_dr->Draw();
-        c_dr->Update();
+        pimp_my_line(h_dr, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
+        pimp_my_axis(h_dr->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_name(h_dr->GetXaxis(), NameConfig{.title = "d_{p-d} (mm)"});
+        h_dr->GetXaxis()->CenterTitle(true);
+        pimp_my_axis(h_dr->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        pimp_my_name(h_dr->GetYaxis(), NameConfig{.title = "Entries"});
+        h_dr->GetYaxis()->CenterTitle(true);
+        TCanvas* c_dr = plot_basic(h_dr, "HIST");
 
         // ============================================================================================
         // Prompt vertex position
         // ============================================================================================
-
-        TCanvas* c_rho_z_p = new TCanvas("c_rho_z_p", "Prompt vertex distribution", 1000, 1000);
-        c_rho_z_p->cd();
-        h_rho_z_p->Draw();
-        c_rho_z_p->Update();
+        
+        pimp_my_axis(h_rho_z_p->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_name(h_rho_z_p->GetXaxis(), NameConfig{.title = "#rho (mm)"});
+        h_rho_z_p->GetXaxis()->CenterTitle(true);
+        pimp_my_axis(h_rho_z_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        pimp_my_name(h_rho_z_p->GetYaxis(), NameConfig{.title = "z (mm)"});
+        h_rho_z_p->GetYaxis()->CenterTitle(true);
+        TCanvas* c_rho_z_p = plot_basic(h_rho_z_p, "COLZ");
 
         // ============================================================================================
         // Delayed vertex position
         // ============================================================================================
 
-        TCanvas* c_rho_z_d = new TCanvas("c_rho_z_d", "Delayed vertex distribution", 1000, 1000);
-        c_rho_z_d->cd();
-        h_rho_z_d->Draw();
-        c_rho_z_d->Update();
+        pimp_my_axis(h_rho_z_d->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_name(h_rho_z_d->GetXaxis(), NameConfig{.title = "#rho (mm)"});
+        h_rho_z_d->GetXaxis()->CenterTitle(true);
+        pimp_my_axis(h_rho_z_d->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        pimp_my_name(h_rho_z_d->GetYaxis(), NameConfig{.title = "z (mm)"});
+        h_rho_z_d->GetYaxis()->CenterTitle(true);
+        TCanvas* c_rho_z_d = plot_basic(h_rho_z_d, "COLZ");
+    
     }
 
 protected:

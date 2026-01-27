@@ -142,6 +142,19 @@ TH1D* make_normal_prompt_energy_plot(const std::string& name, const std::string&
     return h;
 }
 
+TH1D* make_normal_prompt_energy_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
+    double xmin = 0.7;
+    double xmax = 12.0;
+    double width = 0.20;
+    int nbins = std::round((xmax - xmin) / width) + 1;
+    std::vector<double> bins = np::linspace(xmin, xmax, nbins);
+    TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
+    for (const ibd& i : ibds) {
+        h->Fill(i.prompt.e);
+    }
+    return h;
+}
+
 TH1D* make_delayed_energy_plot(const std::string& name, const std::string& title, const std::vector<cosmogenic>& cosmos) {
     double xmin = 2.0;
     double xmax = 2.5;
@@ -284,15 +297,32 @@ TH2D* make_delayed_spatial_plot(const std::string& name, const std::string& titl
     return h;
 }
 
-void pimp_my_name(TNamed* n, const char* name, const char* title) {
-    n->SetName(name);
-    n->SetTitle(title);
+struct NameConfig {
+
+    const char* name = "";
+    const char* title = "";
+
+};
+
+void pimp_my_name(TNamed* n, const NameConfig& config) {
+    n->SetName(config.name);
+    n->SetTitle(config.title);
 }
 
-void pimp_my_line(TAttLine* l, Style_t linestyle, Width_t linewidth, Color_t linecolor, Float_t linealpha) {
-    l->SetLineStyle(linestyle);
-    l->SetLineWidth(linewidth);
-    l->SetLineColorAlpha(linecolor, linealpha);
+struct LineConfig {
+
+    Style_t style = kSolid;
+    Width_t width = 1.0;
+    Color_t color = kBlack;
+    Float_t alpha = 1.0;
+
+
+};
+
+void pimp_my_line(TAttLine* l, const LineConfig& config) {
+    l->SetLineStyle(config.style);
+    l->SetLineWidth(config.width);
+    l->SetLineColorAlpha(config.color, config.alpha);
 }
 
 struct AxisConfig {
