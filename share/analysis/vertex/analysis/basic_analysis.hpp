@@ -90,8 +90,8 @@ public:
         gStyle->SetCanvasPreferGL(kTRUE);
     
         h_e_p->SetStats(false);
-        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 2, .color = kAzure - 2});
-        pimp_my_marker(h_e_p, MarkerConfig{.style = kFullCircle, .size = 1., .color = kAzure - 2});
+        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 2, .color = kAzure - 4});
+        pimp_my_marker(h_e_p, MarkerConfig{.style = kFullCircle, .size = 1., .color = kAzure - 4});
         pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 406, .maxdigits = 3});
         pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
         h_e_p->GetXaxis()->CenterTitle(true);
