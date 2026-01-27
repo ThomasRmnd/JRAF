@@ -114,7 +114,6 @@ public:
         // Prompt-Delayed time difference
         // ============================================================================================
 
-        h_dt->SetStats(false);
         pimp_my_line(h_dt, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_dt->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_dt->GetXaxis(), NameConfig{.title = "#Delta t (ms)"});
