@@ -7,6 +7,7 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TStyle.h>
 
 #include "analysis/analysis.hpp"
 #include "utils/plot.hpp"
@@ -89,7 +90,8 @@ public:
         gStyle->SetCanvasPreferGL(kTRUE);
     
         h_e_p->SetStats(false);
-        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kAzure - 2});
+        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 2, .color = kAzure - 2});
+        pimp_my_marker(h_e_p, MarkerConfig{.style = kFullCircle, .color = kAzure - 2, .size = 1.});
         pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 406, .maxdigits = 3});
         pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
         h_e_p->GetXaxis()->CenterTitle(true);
@@ -99,7 +101,7 @@ public:
         TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
         h_e_p_copy->SetStats(false);
         pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
-        pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 4});
+        pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9});
         TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
         h_e_p->Draw("E SAME");
         c_e_p->Update();

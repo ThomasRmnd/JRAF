@@ -338,6 +338,21 @@ void pimp_my_fill(TAttFill* f, const FillConfig& config) {
     f->SetFillColorAlpha(config.color, config.alpha);
 }
 
+struct MarkerConfig {
+
+    Style_t style = kDot;
+    Size_t size = 1;
+    Color_t color = kBlack;
+    Float_t alpha = 1.0;
+
+};
+
+void pimp_my_marker(TAttMarker* m, const MarkerConfig& config) {
+    m->SetMarkerStyle(config.style);
+    m->SetMarkerSize(config.size);
+    m->SetMarkerColorAlpha(config.color, config.alpha);
+}
+
 struct AxisConfig {
 
     struct Label {
