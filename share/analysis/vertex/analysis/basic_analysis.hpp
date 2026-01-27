@@ -85,29 +85,39 @@ public:
 
         // ============================================================================================
         // Prompt energy
-        // =============h_e_p_copy===============================================================================
+        // ============================================================================================
 
-        gStyle->SetCanvasPreferGL(kTRUE);
         h_e_p->SetStats(false);
-        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 2, .color = kAzure - 4});
-        pimp_my_marker(h_e_p, MarkerConfig{.style = kFullCircle, .size = 1., .color = kAzure - 4});
-        pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 406, .maxdigits = 3});
-        pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
+        pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
+        pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 405, .maxdigits = 3});
+        pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{d} (MeV)"});
         h_e_p->GetXaxis()->CenterTitle(true);
         pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
         pimp_my_name(h_e_p->GetYaxis(), NameConfig{.title = "Entries"});
         h_e_p->GetYaxis()->CenterTitle(true);
-        TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
-        h_e_p_copy->SetStats(false);
-        pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
-        pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9, .alpha = 0.0});
-        h_e_p_copy->SetMaximum(h_e_p->GetBinContent(h_e_p->GetMaximumBin()) + h_e_p->GetBinError(h_e_p->GetMaximumBin()));
-        h_e_p_copy->SetAxisRange(0.0, 12.5, "X");
-        TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
-        h_e_p->Draw("E SAME");
-        c_e_p->SetTickx();
-        c_e_p->SetTicky();
-        c_e_p->Update();
+        TCanvas* c_e_p = plot_basic(h_e_p, "HIST");
+
+        // gStyle->SetCanvasPreferGL(kTRUE);
+        // h_e_p->SetStats(false);
+        // pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 2, .color = kAzure - 4});
+        // pimp_my_marker(h_e_p, MarkerConfig{.style = kFullCircle, .size = 1., .color = kAzure - 4});
+        // pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 406, .maxdigits = 3});
+        // pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
+        // h_e_p->GetXaxis()->CenterTitle(true);
+        // pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
+        // pimp_my_name(h_e_p->GetYaxis(), NameConfig{.title = "Entries"});
+        // h_e_p->GetYaxis()->CenterTitle(true);
+        // TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
+        // h_e_p_copy->SetStats(false);
+        // pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
+        // pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9, .alpha = 0.0});
+        // h_e_p_copy->SetMaximum(h_e_p->GetBinContent(h_e_p->GetMaximumBin()) + h_e_p->GetBinError(h_e_p->GetMaximumBin()));
+        // h_e_p_copy->SetAxisRange(0.0, 12.5, "X");
+        // TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
+        // h_e_p->Draw("E SAME");
+        // c_e_p->SetTickx();
+        // c_e_p->SetTicky();
+        // c_e_p->Update();
 
         // ============================================================================================
         // Delayed energy
