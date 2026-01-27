@@ -101,6 +101,8 @@ public:
         h_e_p_copy->SetStats(false);
         pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
         pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9, .alpha = 0.0});
+        h_e_p_copy->GetXaxis()->SetRangeUser(0.0, 12.5);
+        h_e_p_copy->SetMaximum(h_e_p->GetMaximum() * 1.2);
         TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
         h_e_p->Draw("E SAME");
         c_e_p->SetTickx();
