@@ -116,7 +116,7 @@ public:
 
         h_dt->SetStats(false);
         pimp_my_line(h_dt, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        pimp_my_axis(h_dt->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_axis(h_dt->GetXaxis(), AxisConfig{.ndivisions = 350, .maxdigits = 3});
         pimp_my_name(h_dt->GetXaxis(), NameConfig{.title = "#Delta t (ms)"});
         h_dt->GetXaxis()->CenterTitle(true);
         pimp_my_axis(h_dt->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
