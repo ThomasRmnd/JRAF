@@ -372,6 +372,10 @@ void pimp_my_axis(TAttAxis* a, const AxisConfig& config) {
     a->SetTickSize(config.tick.size);
 }
 
+struct PaveConfig {
+
+};
+
 TPaveStats* change_stats(TH1D* h, double xmin, double ymin, double xmax, double ymax, StatOpt statopt, FitOpt fitopt) {
     TPaveStats* st = (TPaveStats*)h->FindObject("stats");
     if (statopt == StatOpt::None && fitopt == FitOpt::None) {
@@ -385,6 +389,17 @@ TPaveStats* change_stats(TH1D* h, double xmin, double ymin, double xmax, double 
     st->SetY1NDC(ymin);
     st->SetY2NDC(ymax);
     return st;
+}
+
+TF1* create_exponential_decay_function(TH1D* h, double xmin, double xmax) {
+    double constant_term = h->GetBinContent(h->GetNbinsX());
+    double exponential_term = h->GetMaximum() - constant_term;
+    double decay_term = h->GetRMS();
+    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * exp(-x / [1]) + [2]", xmin, xmax);
+    f->SetParameter(0, exponential_term);
+    f->SetParameter(1, decay_term);
+    f->SetParameter(2, constant_term);
+    return f;
 }
 
 TCanvas* plot_basic(TH1D* h, const char* options = "") {

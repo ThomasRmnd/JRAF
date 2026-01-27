@@ -114,6 +114,7 @@ public:
         // Prompt-Delayed time difference
         // ============================================================================================
 
+        h_dt->SetStats(false);
         pimp_my_line(h_dt, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_dt->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_dt->GetXaxis(), NameConfig{.title = "#Delta t (ms)"});
@@ -121,10 +122,30 @@ public:
         pimp_my_axis(h_dt->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
         pimp_my_name(h_dt->GetYaxis(), NameConfig{.title = "Entries"});
         h_dt->GetYaxis()->CenterTitle(true);
+        TF1* f_dt = create_exponential_decay_function(h_dt, 0.05, 1.0);
+        TFitResultPtr fres_dt = h_dt->Fit(f_dt, "R");
+        // Write the fit result in a text box with written:
+        // Fit: A * exp(-x / \tau) + c
+        // A = [...] +/- [...]
+        // \tau = [...] +/- [...] us
+        // c = [...] +/- [...]
+        TPaveText* pt_dt = new TPaveText(0.5, 0.5, 0.85, 0.85, "NDC");
+        const double A      = f_dt->GetParameter(0);
+        const double Aerr   = f_dt->GetParError(0);
+        const double tau    = f_dt->GetParameter(1);
+        const double tauerr = f_dt->GetParError(1);
+        const double c      = f_dt->GetParameter(2);
+        const double cerr   = f_dt->GetParError(2);
+        pt_dt->SetFillStyle(0);
+        pt_dt->SetBorderSize(0);
+        pt_dt->SetTextAlign(12);
+        pt_dt->SetTextFont(42);
+        pt_dt->SetTextSize(0.035);
+        pt_dt->AddText("#bf{Fit:} A #times e^{-x/#tau} + c");
+        pt_dt->AddText(Form("A = %.3g #pm %.3g", A, Aerr));
+        pt_dt->AddText(Form("#tau = %.3g #pm %.3g ms", tau, tauerr));
+        pt_dt->AddText(Form("c = %.3g #pm %.3g", c, cerr));
         TCanvas* c_dt = plot_basic(h_dt, "HIST");
-        TPaveStats* ps_dt = change_stats(h_dt, 0.5, 0.5, 0.85, 0.85, StatOpt::Entries | StatOpt::Mean | StatOpt::RMS, FitOpt::Proba | FitOpt::Chi2NDF | FitOpt::AllParams | FitOpt::Errors);
-        c_dt->Modified();
-        c_dt->Update();
 
         // ============================================================================================
         // Prompt-Delayed distance
