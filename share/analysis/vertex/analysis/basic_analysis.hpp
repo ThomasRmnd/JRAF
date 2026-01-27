@@ -141,9 +141,9 @@ public:
         pt_dt->SetTextAlign(12);
         pt_dt->SetTextFont(42);
         pt_dt->SetTextSize(0.035);
-        pt_dt->AddText("#bf{Fit:} A #times e^{-x/#tau} + c");
+        pt_dt->AddText("#bf{Fit:} A #upoint exp(-x / #tau) + c");
         pt_dt->AddText(Form("A = %.3g #pm %.3g", A, Aerr));
-        pt_dt->AddText(Form("#tau = %.3g #pm %.3g ms", tau, tauerr));
+        pt_dt->AddText(Form("#tau = %.3g #pm %.3g #mus", tau, tauerr));
         pt_dt->AddText(Form("c = %.3g #pm %.3g", c, cerr));
         TCanvas* c_dt = plot_basic(h_dt, "HIST");
         f_dt->Draw("SAME");
