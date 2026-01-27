@@ -88,7 +88,7 @@ public:
 
         h_e_p->SetStats(false);
         pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 360, .maxdigits = 3});
         pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
         h_e_p->GetXaxis()->CenterTitle(true);
         pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
@@ -102,7 +102,7 @@ public:
         
         h_e_d->SetStats(false);
         pimp_my_line(h_e_d, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        pimp_my_axis(h_e_d->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_axis(h_e_d->GetXaxis(), AxisConfig{.ndivisions = 350, .maxdigits = 3});
         pimp_my_name(h_e_d->GetXaxis(), NameConfig{.title = "E_{d} (MeV)"});
         h_e_d->GetXaxis()->CenterTitle(true);
         pimp_my_axis(h_e_d->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
