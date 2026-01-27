@@ -302,7 +302,7 @@ struct AxisConfig {
         Float_t size = 0.04;
         Float_t offset = 0.005;
         Color_t color = kBlack;
-        Float_t alpha = 1.0;)
+        Float_t alpha = 1.0;
     };
 
     struct Title {
