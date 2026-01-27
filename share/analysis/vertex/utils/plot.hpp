@@ -328,7 +328,7 @@ void pimp_my_line(TAttLine* l, const LineConfig& config) {
 struct AxisConfig {
 
     struct Label {
-        Style_t font = 62;
+        Style_t font = 42;
         Float_t size = 0.04;
         Float_t offset = 0.005;
         Color_t color = kBlack;
@@ -336,7 +336,7 @@ struct AxisConfig {
     };
 
     struct Title {
-        Style_t font = 62;
+        Style_t font = 42;
         Float_t size = 0.04;
         Float_t offset = 1.0;
         Color_t color = kBlack;
