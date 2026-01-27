@@ -155,6 +155,19 @@ TH1D* make_delayed_energy_plot(const std::string& name, const std::string& title
     return h;
 }
 
+TH1D* make_delayed_energy_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
+    double xmin = 2.0;
+    double xmax = 2.5;
+    double width = 0.02;
+    int nbins = std::round((xmax - xmin) / width) + 1;
+    std::vector<double> bins = np::linspace(xmin, xmax, nbins);
+    TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
+    for (const ibd& i : ibds) {
+        h->Fill(i.delayed.e);
+    }
+    return h;
+}
+
 TH1D* make_prompt_delayed_time_plot(const std::string& name, const std::string& title, const std::vector<cosmogenic>& cosmos) {
     double xmin = 0.0;
     double xmax = 1.0;
@@ -168,6 +181,19 @@ TH1D* make_prompt_delayed_time_plot(const std::string& name, const std::string& 
     return h;
 }
 
+TH1D* make_prompt_delayed_time_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
+    double xmin = 0.0;
+    double xmax = 1.0;
+    double width = 0.025;
+    int nbins = std::round((xmax - xmin) / width) + 1;
+    std::vector<double> bins = np::linspace(xmin, xmax, nbins);
+    TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
+    for (const ibd& i : ibds) {
+        h->Fill(timestamp_to_double(i.delayed.ts - i.prompt.ts) * 1000.0);
+    }
+    return h;
+}
+
 TH1D* make_prompt_delayed_distance_plot(const std::string& name, const std::string& title, const std::vector<cosmogenic>& cosmos) {
     double xmin = 0.0;
     double xmax = 1.5;
@@ -177,6 +203,19 @@ TH1D* make_prompt_delayed_distance_plot(const std::string& name, const std::stri
     TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
     for (const cosmogenic& c : cosmos) {
         h->Fill(mag(c.delayed.pos - c.prompt.pos));
+    }
+    return h;
+}
+
+TH1D* make_prompt_delayed_distance_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
+    double xmin = 0.0;
+    double xmax = 1.5;
+    double width = 0.05;
+    int nbins = std::round((xmax - xmin) / width) + 1;
+    std::vector<double> bins = np::linspace(xmin, xmax, nbins);
+    TH1D* h = new TH1D(name.c_str(), title.c_str(), bins.size() - 1, bins.data());
+    for (const ibd& i : ibds) {
+        h->Fill(mag(i.delayed.pos - i.prompt.pos));
     }
     return h;
 }
@@ -197,6 +236,22 @@ TH2D* make_prompt_spatial_plot(const std::string& name, const std::string& title
     return h;
 }
 
+TH2D* make_prompt_spatial_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
+    double xmin = 0.0;
+    double xmax = 17.7 * 17.7;
+    int xnbins = 51;
+    double ymin = -20.0;
+    double ymax = 20.0;
+    int ynbins = 51;
+    std::vector<double> xbins = np::linspace(xmin, xmax, xnbins);
+    std::vector<double> ybins = np::linspace(ymin, ymax, ynbins);
+    TH2D* h = new TH2D(name.c_str(), title.c_str(), xbins.size() - 1, xbins.data(), ybins.size() - 1, ybins.data());
+    for (const ibd& i : ibds) {
+        h->Fill((i.prompt.pos.x * i.prompt.pos.x + i.prompt.pos.y * i.prompt.pos.y) / 1.0e6, i.prompt.pos.z / 1000.0);
+    }
+    return h;
+}
+
 TH2D* make_delayed_spatial_plot(const std::string& name, const std::string& title, const std::vector<cosmogenic>& cosmos) {
     double xmin = 0.0;
     double xmax = 17.7 * 17.7;
@@ -213,10 +268,78 @@ TH2D* make_delayed_spatial_plot(const std::string& name, const std::string& titl
     return h;
 }
 
-void pimp_my_histogram(TH1D* h, Style_t linestyle, Width_t linewidth, Color_t linecolor, Float_t linealpha) {
-    h->SetLineStyle(linestyle);
-    h->SetLineWidth(linewidth);
-    h->SetLineColorAlpha(linecolor, linealpha);
+TH2D* make_delayed_spatial_plot(const std::string& name, const std::string& title, const std::vector<ibd>& ibds) {
+    double xmin = 0.0;
+    double xmax = 17.7 * 17.7;
+    int xnbins = 51;
+    double ymin = -20.0;
+    double ymax = 20.0;
+    int ynbins = 51;
+    std::vector<double> xbins = np::linspace(xmin, xmax, xnbins);
+    std::vector<double> ybins = np::linspace(ymin, ymax, ynbins);
+    TH2D* h = new TH2D(name.c_str(), title.c_str(), xbins.size() - 1, xbins.data(), ybins.size() - 1, ybins.data());
+    for (const ibd& i : ibds) {
+        h->Fill((i.delayed.pos.x * i.delayed.pos.x + i.delayed.pos.y * i.delayed.pos.y) / 1.0e6, i.delayed.pos.z / 1000.0);
+    }
+    return h;
+}
+
+void pimp_my_name(TNamed* n, const char* name, const char* title) {
+    n->SetName(name);
+    n->SetTitle(title);
+}
+
+void pimp_my_line(TAttLine* l, Style_t linestyle, Width_t linewidth, Color_t linecolor, Float_t linealpha) {
+    l->SetLineStyle(linestyle);
+    l->SetLineWidth(linewidth);
+    l->SetLineColorAlpha(linecolor, linealpha);
+}
+
+struct AxisConfig {
+
+    struct Label {
+        Style_t font = 62;
+        Float_t size = 0.04;
+        Float_t offset = 0.005;
+        Color_t color = kBlack;
+        Float_t alpha = 1.0;)
+    };
+
+    struct Title {
+        Style_t font = 62;
+        Float_t size = 0.04;
+        Float_t offset = 1.0;
+        Color_t color = kBlack;
+    };
+
+    struct Tick {
+        Float_t length = 0.03;
+        Float_t size = 0.03;
+    };
+
+    Color_t color = kBlack;
+    Int_t ndivisions = 510;
+    Int_t maxdigits = 5;
+    Label label;
+    Title title;
+    Tick tick;
+
+};
+
+void pimp_my_axis(TAttAxis* a, const AxisConfig& config) {
+    a->SetAxisColor(config.color);
+    a->SetNdivisions(config.ndivisions);
+    a->SetMaxDigits(config.maxdigits);
+    a->SetLabelFont(config.label.font);
+    a->SetLabelSize(config.label.size);
+    a->SetLabelOffset(config.label.offset);
+    a->SetLabelColor(config.label.color);
+    a->SetTitleFont(config.title.font);
+    a->SetTitleSize(config.title.size);
+    a->SetTitleOffset(config.title.offset);
+    a->SetTitleColor(config.title.color);
+    a->SetTickLength(config.tick.length);
+    a->SetTickSize(config.tick.size);
 }
 
 TPaveStats* change_stats(TH1D* h, double xmin, double ymin, double xmax, double ymax, StatOpt statopt, FitOpt fitopt) {

@@ -11,24 +11,6 @@
 #include "analysis/analysis.hpp"
 #include "utils/plot.hpp"
 
-struct VanessaIBD {
-
-    int run_id;
-
-    timestamp ts_p;
-    double e_p;
-    double totq_p;
-
-    timestamp ts_d;
-    double e_d;
-    double totq_d;
-
-};
-
-inline bool operator<(const VanessaIBD& lhs, const VanessaIBD& rhs) {
-    return lhs.ts_p < rhs.ts_p;
-}
-
 class basic_analysis : public analysis_base {
 
 public:
@@ -92,103 +74,13 @@ public:
         for (std::set<ibd>::const_iterator it = m_ibds.begin(); it != m_ibds.end(); ++it) {
             ibds.push_back(*it);
         }
-
-        TFile* vanessa_file = TFile::Open("/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/summary/ReProd25C/IBD_all_reprodC.root", "READ");
-        TTree* vanessa_tree = vanessa_file->Get<TTree>("events");
-        std::set<VanessaIBD> vanessa_ibds_ordered;
-        double run_id;
-        double t_p, t_d;
-        double e_p, e_d;
-        double totq_p, totq_d;
-        vanessa_tree->SetBranchAddress("run_number", &run_id);
-        vanessa_tree->SetBranchAddress("time_p_ns", &t_p);
-        vanessa_tree->SetBranchAddress("time_d_ns", &t_d);
-        vanessa_tree->SetBranchAddress("energy_p_omilrec", &e_p);
-        vanessa_tree->SetBranchAddress("energy_d_omilrec", &e_d);
-        vanessa_tree->SetBranchAddress("NPE_p", &totq_p);
-        vanessa_tree->SetBranchAddress("NPE_d", &totq_d);
-        for (long k = 0l; k < vanessa_tree->GetEntries(); ++k) {
-            vanessa_tree->GetEntry(k);
-            time_t sec_p = static_cast<time_t>(t_p / 1.0e9);
-            int nsec_p = static_cast<int>(t_p - static_cast<double>(sec_p) * 1.0e9);
-            time_t sec_d = static_cast<time_t>(t_d / 1.0e9);
-            int nsec_d = static_cast<int>(t_d - static_cast<double>(sec_d) * 1.0e9);
-            VanessaIBD vanessa_ibd;
-            vanessa_ibd.run_id = run_id;
-            vanessa_ibd.ts_p = timestamp{sec_p, nsec_p};
-            vanessa_ibd.e_p = e_p;
-            vanessa_ibd.totq_p = totq_p;
-            vanessa_ibd.ts_d = timestamp{sec_d, nsec_d};
-            vanessa_ibd.e_d = e_d;
-            vanessa_ibd.totq_d = totq_d;
-            vanessa_ibds_ordered.insert(vanessa_ibd);
-        }
-        std::vector<VanessaIBD> vanessa_ibds;
-        vanessa_ibds.reserve(vanessa_ibds_ordered.size());
-        for (std::set<VanessaIBD>::const_iterator it = vanessa_ibds_ordered.begin(); it != vanessa_ibds_ordered.end(); ++it) {
-            vanessa_ibds.push_back(*it);
-        }
-        
-        // double e_p_min = 0.7;
-        // double e_p_max = 12.0;
-        // double e_p_width = 0.20;
-        // int e_p_nbin = std::round((e_p_max - e_p_min) / e_p_width) + 1;
-        // std::vector<double> e_p_bins = np::linspace(e_p_min, e_p_max, e_p_nbin);
-        std::vector<double> e_p_bins = create_custom_e_p_bins();
-        TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy", e_p_bins.size() - 1, e_p_bins.data());
-        TH1D* h_e_p_vanessa = new TH1D("h_e_p_vanessa", "Prompt energy (Vanessa)", e_p_bins.size() - 1, e_p_bins.data());
-
-        double e_d_min = 2.0;
-        double e_d_max = 2.5;
-        double e_d_width = 0.02;
-        int e_d_nbin = std::round((e_d_max - e_d_min) / e_d_width) + 1;
-        std::vector<double> e_d_bins = np::linspace(e_d_min, e_d_max, e_d_nbin);
-        TH1D* h_e_d = new TH1D("h_e_d", "Delayed energy", e_d_bins.size() - 1, e_d_bins.data());
-        TH1D* h_e_d_vanessa = new TH1D("h_e_d_vanessa", "Delayed energy (Vanessa)", e_d_bins.size() - 1, e_d_bins.data());
-
-        double e_dt_min = 0.0;
-        double e_dt_max = 1.0;
-        double e_dt_width = 0.025;
-        int e_dt_nbin = std::round((e_dt_max - e_dt_min) / e_dt_width) + 1;
-        std::vector<double> e_dt_bins = np::linspace(e_dt_min, e_dt_max, e_dt_nbin);
-        TH1D* h_dt = new TH1D("h_dt", "Prompt-Delayed time difference", e_dt_bins.size() - 1, e_dt_bins.data());
-        TH1D* h_dt_vanessa = new TH1D("h_dt_vanessa", "Prompt-Delayed time difference (Vanessa)", e_dt_bins.size() - 1, e_dt_bins.data());
-
-        double e_dr_min = 0.0;
-        double e_dr_max = 1.5;
-        double e_dr_width = 0.05;
-        int e_dr_nbin = std::round((e_dr_max - e_dr_min) / e_dr_width) + 1;
-        std::vector<double> e_dr_bins = np::linspace(e_dr_min, e_dr_max, e_dr_nbin);
-        TH1D* h_dr = new TH1D("h_dr", "Prompt-Delayed distance", e_dr_bins.size() - 1, e_dr_bins.data());
-
-        double rho_min = 0.0;
-        double rho_max = 17.7 * 17.7;
-        int rho_nbin = 51;
-        double z_min = -20.0;
-        double z_max = 20.0;
-        int z_nbin = 51;
-        std::vector<double> rho_bins = np::linspace(rho_min, rho_max, rho_nbin);
-        std::vector<double> z_bins = np::linspace(z_min, z_max, z_nbin);
-        TH2D* h_rho_z_p = new TH2D("h_rho_z_p", "Prompt vertex distribution", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
-        TH2D* h_rho_z_d = new TH2D("h_rho_z_d", "Delayed vertex distribution", rho_bins.size() - 1, rho_bins.data(), z_bins.size() - 1, z_bins.data());
-
-        for (const ibd& v : ibds) {
-            h_e_p->Fill(v.prompt.e);
-            h_e_d->Fill(v.delayed.e);
-            h_dt->Fill(timestamp_to_double(v.delayed.ts - v.prompt.ts) * 1000.0);
-            h_dr->Fill(mag(v.delayed.pos - v.prompt.pos) / 1000.0);
-            h_rho_z_p->Fill((v.prompt.pos.x * v.prompt.pos.x + v.prompt.pos.y * v.prompt.pos.y) / 1.0e6, v.prompt.pos.z / 1000.0);
-            h_rho_z_d->Fill((v.delayed.pos.x * v.delayed.pos.x + v.delayed.pos.y * v.delayed.pos.y) / 1.0e6, v.delayed.pos.z / 1000.0);
-        }
-        
-        for (const VanessaIBD& ibd : vanessa_ibds) {
-            h_e_p_vanessa->Fill(ibd.e_p);
-            h_e_d_vanessa->Fill(ibd.e_d);
-            h_dt_vanessa->Fill(timestamp_to_double(ibd.ts_d - ibd.ts_p) * 1000.0);
-            // h_dr_vanessa->Fill((ibd.delayed.pos - ibd.prompt.pos).Mag() / 1000.0);
-            // h_rho_z_p_vanessa->Fill((ibd.prompt.pos.X() * ibd.prompt.pos.X() + ibd.prompt.pos.Y() * ibd.prompt.pos.Y()) / 1.0e6, ibd.prompt.pos.Z() / 1000.0);
-            // h_rho_z_d_vanessa->Fill((ibd.delayed.pos.X() * ibd.delayed.pos.X() + ibd.delayed.pos.Y() * ibd.delayed.pos.Y()) / 1.0e6, ibd.delayed.pos.Z() / 1000.0);
-        }
+    
+        TH1D* h_e_p = make_prompt_energy_plot("h_e_p", "Prompt energy", ibds);
+        TH1D* h_e_d = make_delayed_energy_plot("h_e_d", "Delayed energy", ibds);
+        TH1D* h_dt = make_prompt_delayed_time_plot("h_dt", "Prompt-Delayed time difference", ibds);
+        TH1D* h_dr = make_prompt_delayed_distance_plot("h_dr", "Prompt-Delayed distance", ibds);
+        TH2D* h_rho_z_p = make_prompt_spatial_plot("h_rho_z_p", "Prompt vertex distribution", ibds);
+        TH2D* h_rho_z_d = make_delayed_spatial_plot("h_rho_z_d", "Delayed vertex distribution", ibds);
 
         // ============================================================================================
         // Prompt energy
@@ -197,16 +89,10 @@ public:
         TCanvas* c_e_p = new TCanvas("c_e_p", "Prompt energy", 1000, 1000);
         c_e_p->cd();
 
-        h_e_p->SetLineWidth(3);
-        h_e_p->SetLineStyle(kSolid);
-        h_e_p->SetLineColorAlpha(kBlue, 1.0);
-
-        h_e_p_vanessa->SetLineStyle(3);
-        h_e_p_vanessa->SetLineStyle(kSolid);
-        h_e_p_vanessa->SetLineColorAlpha(kRed, 1.0);
-
+        pimp_my_line(h_e_p, kSolid, 3, kBlue, 1.0);
+        pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.maxdigits = 3});
+        pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3});
         h_e_p->Draw();
-        h_e_p_vanessa->Draw("SAME");
 
         c_e_p->Update();
 
@@ -217,16 +103,8 @@ public:
         TCanvas* c_e_d = new TCanvas("c_e_d", "Delayed energy", 1000, 1000);
         c_e_d->cd();
 
-        h_e_d->SetLineWidth(3);
-        h_e_d->SetLineStyle(kSolid);
-        h_e_d->SetLineColorAlpha(kBlue, 1.0);
-
-        h_e_d_vanessa->SetLineStyle(3);
-        h_e_d_vanessa->SetLineStyle(kSolid);
-        h_e_d_vanessa->SetLineColorAlpha(kRed, 1.0);
-
+        pimp_my_line(h_e_d, kSolid, 3, kBlue, 1.0);
         h_e_d->Draw();
-        h_e_d_vanessa->Draw("SAME");
 
         c_e_d->Update();
 
@@ -241,12 +119,7 @@ public:
         h_dt->SetLineStyle(kSolid);
         h_dt->SetLineColorAlpha(kBlue, 1.0);
 
-        h_dt_vanessa->SetLineWidth(3);
-        h_dt_vanessa->SetLineStyle(kSolid);
-        h_dt_vanessa->SetLineColorAlpha(kRed, 1.0);
-
         h_dt->Draw();
-        h_dt_vanessa->Draw("SAME");
     
         c_dt->Update();
 
