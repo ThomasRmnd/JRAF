@@ -48,7 +48,6 @@ public:
         m_dt_neu2d.clear();
         m_is_sig.clear();
 
-        std::size_t nb_neutron_veto = 0ul;
         for (std::size_t k = 0ul; k < m_nav->e_n.size(); ++k) {
             if (m_nav->e_n[k] < 1.5 || 20.0 < m_nav->e_n[k]) continue;
             timestamp ts_n{m_nav->sec_n[k], m_nav->nsec_n[k]};

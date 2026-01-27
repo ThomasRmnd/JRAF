@@ -16,6 +16,7 @@
 #include "analysis/cosmo_rate_analysis.hpp"
 #include "analysis/cosmo_shape_analysis.hpp"
 #include "analysis/cosmo_shape_neutron_analysis.hpp"
+#include "analysis/ibd_muon_veto_analysis.hpp"
 
 struct DAQ {
     int run_id;
@@ -120,6 +121,9 @@ int root_main(const std::string& filepath, const std::string& suffix) {
 
     std::shared_ptr<analysis_base> main_analysis(new ibd_analysis("ibd_analysis", filepath, suffix));
     if (!registry.book(main_analysis)) return 1;
+
+    std::shared_ptr<analysis_base> ibd_with_muon_veto_analysis(new ibd_muon_veto_analysis("ibd_muon_veto_analysis", filepath, suffix, "CdWpTtChi2", timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0));
+    if (!registry.book(ibd_with_muon_veto_analysis)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_rate_with_neutron_analysis(new cosmo_rate_analysis("cosmo_rate_analysis", filepath, suffix));
     // if (!registry.book(cosmo_rate_with_neutron_analysis)) return 1;
