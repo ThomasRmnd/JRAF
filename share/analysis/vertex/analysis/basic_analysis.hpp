@@ -101,12 +101,15 @@ public:
         h_e_p_copy->SetStats(false);
         pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
         pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9, .alpha = 0.0});
-        h_e_p_copy->GetXaxis()->SetRangeUser(0.0, 12.5);
-        h_e_p_copy->SetMaximum(h_e_p->GetMaximum() * 1.2);
+        h_e_p_copy->SetMaximum(h_e_p->GetBinContent(h_e_p->GetMaximumBin()) + h_e_p->GetBinError(h_e_p->GetMaximumBin()));
         TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
         h_e_p->Draw("E SAME");
         c_e_p->SetTickx();
         c_e_p->SetTicky();
+        c_e_p->Update();
+        h_e_p_copy->GetXaxis()->SetLimits(0.0, 12.5);
+        h_e_p_copy->GetXaxis()->SetRangeUser(0.0, 12.5);
+        c_e_p->Modified();
         c_e_p->Update();
 
         // ============================================================================================
