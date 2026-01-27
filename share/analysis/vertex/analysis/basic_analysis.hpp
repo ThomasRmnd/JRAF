@@ -87,7 +87,6 @@ public:
         // ============================================================================================
 
         h_e_p->SetStats(false);
-        pimp_my_fill(h_e_p, FillConfig{.style = 1001, .color = kAzure - 4});
         pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kAzure - 2});
         pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.ndivisions = 406, .maxdigits = 3});
         pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
@@ -96,6 +95,11 @@ public:
         pimp_my_name(h_e_p->GetYaxis(), NameConfig{.title = "Entries"});
         h_e_p->GetYaxis()->CenterTitle(true);
         TCanvas* c_e_p = plot_basic(h_e_p, "E");
+        TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
+        pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 4});
+        pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 4});
+        h_e_p_copy->Draw("HIST SAME");
+        c_e_p->Update();
 
         // ============================================================================================
         // Delayed energy
