@@ -103,7 +103,10 @@ public:
         pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 9, .alpha = 0.1});
         pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 9});
         TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
+        c_e_p->SetSupportGL(kTRUE);
         h_e_p->Draw("E SAME");
+        c_e_p->SetTickx();
+        c_e_p->SetTicky();
         c_e_p->Update();
 
         // ============================================================================================

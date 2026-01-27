@@ -434,9 +434,6 @@ TCanvas* plot_basic(TH1D* h, const char* options = "") {
     TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), h->GetTitle(), 1000, 1000);
     c->cd();
     h->Draw(options);
-    c->SetTickx();
-    c->SetTicky();
-    c->SetGrid();
     c->Update();
     return c;
 }
