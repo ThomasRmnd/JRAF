@@ -132,7 +132,7 @@ int root_main(const std::string& filepath, const std::string& suffix) {
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_tt(new cosmo_shape_analysis("cosmo_shape_analysis_tt", filepath, suffix, "Tt", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
     if (!registry.book(cosmo_shape_analysis_before_after_tt)) return 1;
     
-    // if (!manager.run()) return 1;
+    if (!manager.run()) return 1;
 
     return 0;
 }
