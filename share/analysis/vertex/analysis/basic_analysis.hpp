@@ -129,7 +129,7 @@ public:
         // A = [...] +/- [...]
         // \tau = [...] +/- [...] us
         // c = [...] +/- [...]
-        TPaveText* pt_dt = new TPaveText(0.5, 0.5, 0.85, 0.85, "NDC");
+        TPaveText* pt_dt = new TPaveText(0.5, 0.65, 0.85, 0.85, "NDC");
         const double A      = f_dt->GetParameter(0);
         const double Aerr   = f_dt->GetParError(0);
         const double tau    = f_dt->GetParameter(1);
