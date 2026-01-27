@@ -15,6 +15,7 @@
 #include "analysis/basic_analysis.hpp"
 #include "analysis/cosmo_rate_analysis.hpp"
 #include "analysis/cosmo_shape_analysis.hpp"
+#include "analysis/cosmo_shape_neutron_analysis.hpp"
 
 struct DAQ {
     int run_id;
@@ -131,6 +132,9 @@ int root_main(const std::string& filepath, const std::string& suffix) {
 
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_tt(new cosmo_shape_analysis("cosmo_shape_analysis_tt", filepath, suffix, "Tt", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
     // if (!registry.book(cosmo_shape_analysis_before_after_tt)) return 1;
+
+    std::shared_ptr<analysis_base> cosmo_shape_with_neutron_analysis(new cosmo_shape_neutron_analysis("cosmo_shape_neutron_analysis", filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 4000.0));
+    if (!registry.book(cosmo_shape_with_neutron_analysis)) return 1;
     
     if (!manager.run()) return 1;
 
