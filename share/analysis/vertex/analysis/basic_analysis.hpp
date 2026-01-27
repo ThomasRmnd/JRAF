@@ -85,7 +85,8 @@ public:
         // ============================================================================================
         // Prompt energy
         // ============================================================================================
-        
+
+        h_e_p->SetStats(false);
         pimp_my_line(h_e_p, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_e_p->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_e_p->GetXaxis(), NameConfig{.title = "E_{p} (MeV)"});
@@ -99,6 +100,7 @@ public:
         // Delayed energy
         // ============================================================================================
         
+        h_e_d->SetStats(false);
         pimp_my_line(h_e_d, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_e_d->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_e_d->GetXaxis(), NameConfig{.title = "E_{d} (MeV)"});
@@ -112,6 +114,7 @@ public:
         // Prompt-Delayed time difference
         // ============================================================================================
 
+        h_dt->SetStats(false);
         pimp_my_line(h_dt, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_dt->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_dt->GetXaxis(), NameConfig{.title = "#Delta t (ms)"});
@@ -128,6 +131,7 @@ public:
         // Prompt-Delayed distance
         // ============================================================================================
 
+        h_dr->SetStats(false);
         pimp_my_line(h_dr, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
         pimp_my_axis(h_dr->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_dr->GetXaxis(), NameConfig{.title = "d_{p-d} (mm)"});
@@ -140,7 +144,8 @@ public:
         // ============================================================================================
         // Prompt vertex position
         // ============================================================================================
-        
+
+        h_rho_z_p->SetStats(false);
         pimp_my_axis(h_rho_z_p->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_rho_z_p->GetXaxis(), NameConfig{.title = "#rho (mm)"});
         h_rho_z_p->GetXaxis()->CenterTitle(true);
@@ -153,6 +158,7 @@ public:
         // Delayed vertex position
         // ============================================================================================
 
+        h_rho_z_d->SetStats(false);
         pimp_my_axis(h_rho_z_d->GetXaxis(), AxisConfig{.maxdigits = 3});
         pimp_my_name(h_rho_z_d->GetXaxis(), NameConfig{.title = "#rho (mm)"});
         h_rho_z_d->GetXaxis()->CenterTitle(true);

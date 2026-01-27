@@ -374,6 +374,10 @@ void pimp_my_axis(TAttAxis* a, const AxisConfig& config) {
 
 TPaveStats* change_stats(TH1D* h, double xmin, double ymin, double xmax, double ymax, StatOpt statopt, FitOpt fitopt) {
     TPaveStats* st = (TPaveStats*)h->FindObject("stats");
+    if (statopt == StatOpt::None && fitopt == FitOpt::None) {
+        h->SetStats(false);
+        return nullptr;
+    }
     st->SetOptStat(to_root_opt(statopt));
     st->SetOptFit(to_root_opt(fitopt));
     st->SetX1NDC(xmin);
@@ -387,6 +391,9 @@ TCanvas* plot_basic(TH1D* h, const char* options = "") {
     TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), h->GetTitle(), 1000, 1000);
     c->cd();
     h->Draw(options);
+    c->SetTickx();
+    c->SetTicky();
+    c->SetGrid();
     c->Update();
     return c;
 }
@@ -428,6 +435,10 @@ TCanvas* plot_multiple(const std::string& name, const std::string& title, std::i
     }
     
     leg->Draw();
+
+    c->SetTickx();
+    c->SetTicky();
+    c->SetGrid();
     c->Update();
     return c;
 }
@@ -436,6 +447,9 @@ TCanvas* plot_basic(TH2D* h, const char* options = "") {
     TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), h->GetTitle(), 1000, 1000);
     c->cd();
     h->Draw(options);
+    c->SetTickx();
+    c->SetTicky();
+    c->SetGrid();
     c->Update();
     return c;
 }
