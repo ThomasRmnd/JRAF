@@ -145,7 +145,10 @@ public:
         pt_dt->AddText(Form("A = %.3g #pm %.3g", A, Aerr));
         pt_dt->AddText(Form("#tau = %.3g #pm %.3g ms", tau, tauerr));
         pt_dt->AddText(Form("c = %.3g #pm %.3g", c, cerr));
+        pt_dt->Draw();
         TCanvas* c_dt = plot_basic(h_dt, "HIST");
+        f_dt->Draw("SAME");
+        c_dt->Update();
 
         // ============================================================================================
         // Prompt-Delayed distance
