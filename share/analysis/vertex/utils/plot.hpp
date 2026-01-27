@@ -358,7 +358,7 @@ struct AxisConfig {
 
 void pimp_my_axis(TAttAxis* a, const AxisConfig& config) {
     a->SetAxisColor(config.color);
-    a->SetNdivisions(config.ndivisions);
+    a->SetNdivisions(config.ndivisions, true);
     a->SetMaxDigits(config.maxdigits);
     a->SetLabelFont(config.label.font);
     a->SetLabelSize(config.label.size);
