@@ -95,7 +95,7 @@ public:
         pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
         pimp_my_name(h_e_p->GetYaxis(), NameConfig{.title = "Entries"});
         h_e_p->GetYaxis()->CenterTitle(true);
-        TCanvas* c_e_p = plot_basic(h_e_p, "E");
+        TCanvas* c_e_p = plot_basic(h_e_p, "E2");
 
         // ============================================================================================
         // Delayed energy
