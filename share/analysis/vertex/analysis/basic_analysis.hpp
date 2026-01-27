@@ -94,11 +94,12 @@ public:
         pimp_my_axis(h_e_p->GetYaxis(), AxisConfig{.maxdigits = 3, .title = {.offset = 1.25}});
         pimp_my_name(h_e_p->GetYaxis(), NameConfig{.title = "Entries"});
         h_e_p->GetYaxis()->CenterTitle(true);
-        TCanvas* c_e_p = plot_basic(h_e_p, "E");
         TH1D* h_e_p_copy = (TH1D*)h_e_p->Clone();
+        h_e_p_copy->SetStats(false);
         pimp_my_fill(h_e_p_copy, FillConfig{.style = 1001, .color = kAzure - 4});
         pimp_my_line(h_e_p_copy, LineConfig{.style = kSolid, .width = 0, .color = kAzure - 4});
-        h_e_p_copy->Draw("HIST SAME");
+        TCanvas* c_e_p = plot_basic(h_e_p_copy, "HIST");
+        h_e_p->Draw("E SAME");
         c_e_p->Update();
 
         // ============================================================================================
