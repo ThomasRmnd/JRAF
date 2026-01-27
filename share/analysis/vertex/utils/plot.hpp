@@ -325,6 +325,19 @@ void pimp_my_line(TAttLine* l, const LineConfig& config) {
     l->SetLineColorAlpha(config.color, config.alpha);
 }
 
+struct FillConfig {
+
+    Style_t style;
+    Color_t color;
+    Float_t alpha;
+
+};
+
+void pimp_my_fill(TAttFill* f, const FillConfig& config) {
+    f->SetFillStyle(config.style);
+    f->SetFillColorAlpha(config.color, config.alpha);
+}
+
 struct AxisConfig {
 
     struct Label {
