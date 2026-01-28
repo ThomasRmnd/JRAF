@@ -430,6 +430,17 @@ TF1* create_exponential_decay_function(TH1D* h, double xmin, double xmax) {
     return f;
 }
 
+TF1* create_gaussian_function(TH1D* h, double xmin, double xmax) {
+    double integral = h->Integral(h->FindBin(xmin), h->FindBin(xmax));
+    double mean = h->GetMean();
+    double sigma = h->GetRMS();
+    TF1* f = new TF1(Form("f_%s", h->GetName()), "gaus", xmin, xmax);
+    f->SetParameter(0, integral);
+    f->SetParameter(1, mean);
+    f->SetParameter(2, sigma);
+    return f;
+}
+
 TCanvas* plot_basic(TH1D* h, const char* options = "") {
     TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), h->GetTitle(), 1000, 1000);
     c->cd();

@@ -18,6 +18,7 @@ public:
     virtual bool selection() = 0;
     virtual bool process() = 0;
     
+    virtual bool save() = 0;
     virtual void result() = 0;
 
 protected:
@@ -60,8 +61,8 @@ public:
 
     bool run() {
         if (m_reg.m_registry.empty()) {
-            std::cout << "Analysis registry is empty. Exiting run\n";
-            return false;
+            std::cout << "WARNING: Analysis registry is empty. Exiting run\n";
+            return true;
         }
         
         std::cout << "\n--- Starting Analysis Loop Over " << m_reg.m_registry.size() << " Data Groups ---\n";
@@ -88,12 +89,39 @@ public:
                 }
             }
 
-            for (const auto& analysis : analyses) {
-                analysis->result();
-            }
             std::cout << "[Group End] Finished processing group\n";
         }
         std::cout << "\n--- All Analysis Groups Finished ---\n";
+        return true;
+    }
+
+    bool result() {
+        if (m_reg.m_registry.empty()) {
+            std::cout << "WARNING: Analysis registry is empty. Exiting result\n";
+            return true;
+        }
+
+        for (auto const& [nav, analyses] : m_reg.m_registry) {
+            for (const auto& analysis : analyses) {
+                analysis->result();
+            }
+        }
+
+        return true;
+    }
+
+    bool save() {
+        if (m_reg.m_registry.empty()) {
+            std::cout << "WARNING: Analysis registry is empty. Exiting result\n";
+            return true;
+        }
+
+        for (auto const& [nav, analyses] : m_reg.m_registry) {
+            for (const auto& analysis : analyses) {
+                analysis->save();
+            }
+        }
+
         return true;
     }
 

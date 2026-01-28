@@ -94,6 +94,10 @@ public:
         return true;
     }
 
+    bool save() override {
+        return true; // TODO: implement the save method
+    }
+
     void result() override {
         std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
         int max_number_neutron = 100;

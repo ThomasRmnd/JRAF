@@ -16,6 +16,7 @@
 #include "analysis/cosmo_rate_analysis.hpp"
 #include "analysis/cosmo_shape_analysis.hpp"
 #include "analysis/cosmo_shape_neutron_analysis.hpp"
+#include "analysis/ibd_analysis.hpp"
 #include "analysis/ibd_muon_veto_analysis.hpp"
 
 struct DAQ {
@@ -141,6 +142,8 @@ int root_main(const std::string& filepath, const std::string& suffix) {
     if (!registry.book(cosmo_shape_with_neutron_analysis)) return 1;
     
     if (!manager.run()) return 1;
+    // if (!manager.result()) return 1;
+    if (!manager.save()) return 1;
 
     return 0;
 }
