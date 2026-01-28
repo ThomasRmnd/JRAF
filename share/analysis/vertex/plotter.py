@@ -13,17 +13,18 @@ def parse_args():
 def nmo_analysis_bins():
     edges = np.array([0.7, 1.0, 6.6, 7.4, 7.7, 8.1, 8.6, 9.4, 12.0])
     nbins = np.array([1, 56, 4, 1, 1, 1, 1, 1])
-    bins = np.array([])
-    for k in range(len(bins)):
+    bins = []
+
+    for k in range(len(nbins)):
         start = edges[k]
-        end = edges[k+1]
+        end = edges[k + 1]
         nbin = nbins[k]
-        if k == 0:
-            bins = np.linspace(start, end, nbin)
-        else:
-            bins = np.append(bins, np.linspace(start, end, nbin))
-    return bins
-        
+        segment = np.linspace(start, end, nbin + 1)
+        if k > 0:
+            segment = segment[1:]
+        bins.append(segment)
+
+    return np.concatenate(bins)  
 
 def ibd_analysis_plot(filepath: str):
     file = uproot.open(filepath)
