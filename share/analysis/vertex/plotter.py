@@ -46,7 +46,7 @@ def ibd_analysis_plot(filepath: str):
     centers = 0.5 * (edges[1:] + edges[:-1])
     widths = edges[1:] - edges[:-1]
 
-    fig, ax = plt.subplots(figsize=(6, 7))
+    fig, ax = plt.subplots(figsize=(7, 6))
 
     ax.fill_between(edges[:-1], hist, step="post", color="#eff3ff")
     ax.errorbar(centers, hist, yerr=err, xerr=widths / 2, fmt="o", color="#648fff", markersize=4, capsize=0, linewidth=1)
@@ -58,7 +58,7 @@ def ibd_analysis_plot(filepath: str):
     for spine in ax.spines.values():
         spine.set_linewidth(1.2)
 
-    ax.set_xlim(bins[0], bins[-1])
+    ax.set_xlim(0.0, 12.5)
     ax.set_ylim(bottom=0)
 
     plt.tight_layout()
