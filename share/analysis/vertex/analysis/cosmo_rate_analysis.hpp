@@ -1,11 +1,10 @@
 #ifndef ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
 #define ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
 
-#include <TF1.h>
 #include <TFitResult.h>
-#include <TPaveStats.h>
 
 #include "analysis/basic_analysis.hpp"
+#include "utils/plot.hpp"
 
 class cosmo_rate_analysis : public basic_analysis {
 

@@ -4,6 +4,7 @@
 #include <TLegend.h>
 
 #include "analysis/basic_analysis.hpp"
+#include "utils/plot.hpp"
 
 class cosmo_shape_analysis : public basic_analysis {
 
