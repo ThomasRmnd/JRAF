@@ -25,22 +25,63 @@ def nmo_analysis_bins():
     return bins
         
 
-def ibd_analysis_plot(filepath : str):
+def ibd_analysis_plot(filepath: str):
     file = uproot.open(filepath)
     tree = file["events"]
+
     branches = [
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
         "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d"
     ]
     data = tree.arrays(branches, library="np")
 
-    print(f"Loaded{len(data['posx_p'])} events in {filepath}")
+    print(f"Loaded {len(data['posx_p'])} events in {filepath}")
 
-    fig_e_p, ax_e_p = plt.subplots(nrows=1, ncols=1, figsize=(10, 10))
-    hist_e_p,edges_e_p = np.histogram(data["e_p"], bins=nmo_analysis_bins())
-    histerr_e_p = np.sqrt(hist_e_p)
-    ax_e_p.errorbar(edges_e_p[:-1], hist_e_p, yerr=histerr_e_p, fmt="o")
+    # Histogram
+    bins = nmo_analysis_bins()
+    hist, edges = np.histogram(data["e_p"], bins=bins)
+    err = np.sqrt(hist)
+
+    centers = 0.5 * (edges[1:] + edges[:-1])
+    widths = edges[1:] - edges[:-1]
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Filled step histogram
+    ax.step(edges[:-1], hist, where="post", color="#4C72B0", linewidth=1.5)
+    ax.fill_between(
+        edges[:-1],
+        hist,
+        step="post",
+        alpha=0.15,
+        color="#4C72B0"
+    )
+
+    ax.errorbar(
+        centers,
+        hist,
+        yerr=err,
+        xerr=widths / 2,
+        fmt="o",
+        color="#4C72B0",
+        markersize=4,
+        capsize=0,
+        linewidth=1
+    )
+
+    ax.set_xlabel("Prompt Energy [MeV]")
+    ax.set_ylabel("Entries")
+
+    ax.tick_params(direction="in", which="both", top=True, right=True)
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.2)
+
+    ax.set_xlim(bins[0], bins[-1])
+    ax.set_ylim(bottom=0)
+
+    plt.tight_layout()
     plt.show()
+
 
 if __name__ == "__main__":
     args = parse_args()
