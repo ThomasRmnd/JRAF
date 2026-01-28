@@ -48,7 +48,7 @@ def ibd_analysis_plot(filepath: str):
 
     fig, ax = plt.subplots(figsize=(6, 7))
 
-    ax.fill_between(edges, hist, step="post", color="#eff3ff")
+    ax.fill_between(edges[:-1], hist, step="post", color="#eff3ff")
     ax.errorbar(centers, hist, yerr=err, xerr=widths / 2, fmt="o", color="#648fff", markersize=4, capsize=0, linewidth=1)
 
     ax.set_xlabel("Prompt Energy [MeV]")
