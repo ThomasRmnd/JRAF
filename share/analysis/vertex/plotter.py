@@ -103,7 +103,7 @@ def ibd_analysis_plot(filepath: str):
         zorder=3
     )
 
-    ax.set_xlabel(r"$E_{p} (MeV)")
+    ax.set_xlabel(r"$E_{p}$ (MeV)")
     ax.set_ylabel(r"Entries")
 
     ax.tick_params(direction="in", which="both", top=True, right=True)
