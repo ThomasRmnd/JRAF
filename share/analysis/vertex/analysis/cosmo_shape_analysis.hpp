@@ -96,8 +96,8 @@ public:
             std::cerr << "Cannot open file " << m_name << ".root for writing\n";
             return false;
         }
-        TTree* t_bkg = new TTree("background", "Cosmogenic depleted region");
-        TTree* t_sig = new TTree("signal", "Cosmogenic enriched region");
+        TTree* t_bkg = new TTree("background_events", "Cosmogenic depleted region");
+        TTree* t_sig = new TTree("signal_events", "Cosmogenic enriched region");
         if (!t_bkg || !t_sig) {
             std::cerr << "Cannot create tree background or signal\n";
             return false;
