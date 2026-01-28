@@ -48,7 +48,7 @@ def ibd_analysis_plot(filepath: str):
 
     fig, ax = plt.subplots(figsize=(7, 6))
 
-    ax.fill_between(edges, np.r_(hist, hist[-1]), step="post", color="#eff3ff", zorder=1)
+    ax.fill_between(edges, np.r_[hist, hist[-1]], step="post", color="#eff3ff", zorder=1)
     ax.errorbar(
         centers, 
         hist, 
