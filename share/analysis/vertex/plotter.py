@@ -9,7 +9,11 @@ def set_latex_style():
     mpl.rcParams.update({
         "text.usetex": False, 
         "font.family": "serif", 
-        "font.serif": ["Computer Modern Serif"], 
+        "font.serif": [
+            "Computer Modern Roman",
+            "CMU Serif",
+            "DejaVu Serif",
+        ],
         "mathtext.fontset": "cm", 
 
         "font.size": 14, 
