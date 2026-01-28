@@ -7,7 +7,7 @@ import uproot
 
 def set_latex_style():
     mpl.rcParams.update({
-        "text.usetex": True, 
+        "text.usetex": False, 
         "font.family": "serif", 
         "font.serif": ["Computer Modern Serif"], 
         "mathtext.fontset": "cm", 
