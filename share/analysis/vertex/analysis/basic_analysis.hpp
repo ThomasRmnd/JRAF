@@ -34,6 +34,4 @@ protected:
 
 };
 
-using ibd_analysis = basic_analysis;
-
 #endif // ANALYSIS_BASIC_ANALYSIS_HPP_
