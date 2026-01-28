@@ -57,9 +57,9 @@ def ibd_analysis_plot(filepath: str):
         fmt="o", 
         color="#648fff", 
         markersize=4.5, 
-        markeredgewidth=1.2,
+        # markeredgewidth=1.2,
         linewidth=1.2,
-        # elinewidth=1.2, 
+        elinewidth=1.2, 
         capsize=2, 
         zorder=3
     )
