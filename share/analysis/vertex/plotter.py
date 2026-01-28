@@ -27,7 +27,7 @@ def nmo_analysis_bins():
 
 def ibd_analysis_plot(filepath : str):
     file = uproot.open(filepath)
-    tree = file["Events"]
+    tree = file["events"]
     branches = [
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
         "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d"
