@@ -1,8 +1,47 @@
 import argparse
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import uproot
+
+def set_latex_style():
+    mpl.rcParams.update({
+        "text.usetex": True, 
+        "font.family": "serif", 
+        "font.serif": ["Computer Modern Serif"], 
+        "mathtext.fontset": "cm", 
+
+        "font.size": 14, 
+        "axes.labelsize": 16, 
+        "axes.titlesize": 16, 
+        "xtick.labelsize": 13, 
+        "ytick.labelsize": 13, 
+        "legend.fontsize": 13, 
+
+        "axes.linewidth": 1.2, 
+        "xtick.direction": "in", 
+        "ytick.direction": "in", 
+        "xtick.major.size": 6,
+        "ytick.major.size": 6,
+        "xtick.minor.size": 3,
+        "ytick.minor.size": 3,
+        "xtick.major.width": 1.2,
+        "ytick.major.width": 1.2,
+        "xtick.minor.width": 1.0,
+        "ytick.minor.width": 1.0,
+        "xtick.top": True,
+        "ytick.right": True,
+
+        "legend.frameon": False,
+
+        "figure.figsize": (8, 6),
+        "figure.dpi": 120,
+
+        "savefig.bbox": "tight",
+        "savefig.dpi": 300,
+
+    })
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -80,6 +119,7 @@ def ibd_analysis_plot(filepath: str):
 
 if __name__ == "__main__":
     args = parse_args()
+    set_latex_style()
     if args.ibd_analysis:
         for filepath in args.ibd_analysis:
             ibd_analysis_plot(filepath)
