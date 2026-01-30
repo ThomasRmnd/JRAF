@@ -38,7 +38,7 @@ public:
     }
 
     bool process() override {
-        ibd v{m_nav->prompt, m_nav->delayed};
+        ibd v{m_nav->run_id, m_nav->prompt, m_nav->delayed};
 
         std::vector<physical_muon> phy_mu;
         std::vector<muon_data_association> muon_data;
