@@ -171,7 +171,7 @@ void daq(const std::string& filename) {
     }
     int run_id;
     timestamp earliest_ts, latest_ts;
-    t_run_info->Branch("run_id", &daq.run_id);
+    t_run_info->Branch("run_id", &run_id);
     t_run_info->Branch("earliest_sec", &earliest_ts.sec);
     t_run_info->Branch("earliest_nsec", &earliest_ts.nsec);
     t_run_info->Branch("latest_sec", &latest_ts.sec);
