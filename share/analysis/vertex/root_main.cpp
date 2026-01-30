@@ -169,6 +169,7 @@ void daq(const std::string& filename) {
         std::cerr << "Cannot create tree run_info\n";
         return;
     }
+    int run_id;
     timestamp earliest_ts, latest_ts;
     t_run_info->Branch("run_id", &daq.run_id);
     t_run_info->Branch("earliest_sec", &earliest_ts.sec);
@@ -176,6 +177,7 @@ void daq(const std::string& filename) {
     t_run_info->Branch("latest_sec", &latest_ts.sec);
     t_run_info->Branch("latest_nsec", &latest_ts.nsec);
     for (std::map<int, timestamp>::iterator it = run_earliest_ts.begin(); it != run_earliest_ts.end(); ++it) {
+        run_id = it->first;
         earliest_ts = it->second;
         latest_ts = run_latest_ts[it->first];
         t_run_info->Fill();
