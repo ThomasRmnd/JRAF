@@ -28,33 +28,39 @@ public:
         m_chain->branch("posy_p", prompt.pos.y);
         m_chain->branch("posz_p", prompt.pos.z);
         m_chain->branch("e_p", prompt.e);
-        m_chain->branch("totq_p", prompt.q);
         m_chain->branch("sec_p", prompt.ts.sec);
         m_chain->branch("nsec_p", prompt.ts.nsec);
 
+        m_chain->branch("totq_p", meta_prompt.totq);
         m_chain->branch("meanq_p", meta_prompt.meanq);
         m_chain->branch("stdq_p", meta_prompt.stdq);
         m_chain->branch("minq_p", meta_prompt.minq);
         m_chain->branch("maxq_p", meta_prompt.maxq);
-        m_chain->branch("nhit_p", meta_prompt.nhit); // npmt
         m_chain->branch("meant_p", meta_prompt.meant);
         m_chain->branch("stdt_p", meta_prompt.stdt);
+        m_chain->branch("npmt_p", meta_prompt.npmt);
+        m_chain->branch("nhit_p", meta_prompt.nhit);
+        m_chain->branch("meanhit_p", meta_prompt.meanhit);
+        m_chain->branch("stdhit_p", meta_prompt.stdhit);
 
         m_chain->branch("posx_d", delayed.pos.x);
         m_chain->branch("posy_d", delayed.pos.y);
         m_chain->branch("posz_d", delayed.pos.z);
         m_chain->branch("e_d", delayed.e);
-        m_chain->branch("totq_d", delayed.q);
         m_chain->branch("sec_d", delayed.ts.sec);
         m_chain->branch("nsec_d", delayed.ts.nsec);
 
+        m_chain->branch("totq_d", meta_delayed.totq);
         m_chain->branch("meanq_d", meta_delayed.meanq);
         m_chain->branch("stdq_d", meta_delayed.stdq);
         m_chain->branch("minq_d", meta_delayed.minq);
         m_chain->branch("maxq_d", meta_delayed.maxq);
-        m_chain->branch("nhit_d", meta_delayed.nhit); // npmt
         m_chain->branch("meant_d", meta_delayed.meant);
         m_chain->branch("stdt_d", meta_delayed.stdt);
+        m_chain->branch("npmt_d", meta_delayed.npmt);
+        m_chain->branch("nhit_d", meta_delayed.nhit);
+        m_chain->branch("meanhit_d", meta_delayed.meanhit);
+        m_chain->branch("stdhit_d", meta_delayed.stdhit);
     }
 
     virtual ~navigator_base() = default;
@@ -92,18 +98,40 @@ public:
         m_chain->branch("posy_n", posy_n.data());
         m_chain->branch("posz_n", posz_n.data());
         m_chain->branch("e_n", e_n.data());
-        m_chain->branch("totq_n", totq_n.data());
         m_chain->branch("sec_n", sec_n.data());
         m_chain->branch("nsec_n", nsec_n.data());
+
+        m_chain->branch("totq_n", totq_n.data());
+        m_chain->branch("meanq_n", meanq_n.data());
+        m_chain->branch("stdq_n", stdq_n.data());
+        m_chain->branch("minq_n", minq_n.data());
+        m_chain->branch("maxq_n", maxq_n.data());
+        m_chain->branch("meant_n", meant_n.data());
+        m_chain->branch("stdt_n", stdt_n.data());
+        m_chain->branch("npmt_n", npmt_n.data());
+        m_chain->branch("nhit_n", nhit_n.data());
+        m_chain->branch("meanhit_n", meanhit_n.data());
+        m_chain->branch("stdhit_n", stdhit_n.data());
 
         m_chain->branch("posx_mult", posx_mult.data());
         m_chain->branch("posy_mult", posy_mult.data());
         m_chain->branch("posz_mult", posz_mult.data());
         m_chain->branch("e_mult", e_mult.data());
-        m_chain->branch("totq_mult", totq_mult.data());
         m_chain->branch("sec_mult", sec_mult.data());
         m_chain->branch("nsec_mult", nsec_mult.data());
         m_chain->branch("mult_type", mult_type.data());
+
+        m_chain->branch("totq_mult", totq_mult);
+        m_chain->branch("meanq_mult", meanq_mult);
+        m_chain->branch("stdq_mult", stdq_mult);
+        m_chain->branch("minq_mult", minq_mult);
+        m_chain->branch("maxq_mult", maxq_mult);
+        m_chain->branch("meant_mult", meant_mult);
+        m_chain->branch("stdt_mult", stdt_mult);
+        m_chain->branch("npmt_mult", npmt_mult);
+        m_chain->branch("nhit_mult", nhit_mult);
+        m_chain->branch("meanhit_mult", meanhit_mult);
+        m_chain->branch("stdhit_mult", stdhit_mult);
 
         m_chain->branch("method_mu", method_mu.data());
         m_chain->branch("loc_mu", loc_mu.data());
@@ -125,18 +153,40 @@ public:
     vector_reader<double> posy_n;
     vector_reader<double> posz_n;
     vector_reader<double> e_n;
-    vector_reader<double> totq_n;
     vector_reader<time_t> sec_n;
     vector_reader<int> nsec_n;
+
+    vector_reader<double> totq_n;
+    vector_reader<double> meanq_n;
+    vector_reader<double> stdq_n;
+    vector_reader<double> minq_n;
+    vector_reader<double> maxq_n;
+    vector_reader<double> meant_n;
+    vector_reader<double> stdt_n;
+    vector_reader<std::size_t> npmt_n;
+    vector_reader<std::size_t> nhit_n;
+    vector_reader<double> meanhit_n;
+    vector_reader<double> stdhit_n;
 
     vector_reader<double> posx_mult;
     vector_reader<double> posy_mult;
     vector_reader<double> posz_mult;
     vector_reader<double> e_mult;
-    vector_reader<double> totq_mult;
     vector_reader<time_t> sec_mult;
     vector_reader<int> nsec_mult;
     vector_reader<int> mult_type;
+
+    vector_reader<double> totq_mult;
+    vector_reader<double> meanq_mult;
+    vector_reader<double> stdq_mult;
+    vector_reader<double> minq_mult;
+    vector_reader<double> maxq_mult;
+    vector_reader<double> meant_mult;
+    vector_reader<double> stdt_mult;
+    vector_reader<std::size_t> npmt_mult;
+    vector_reader<std::size_t> nhit_mult;
+    vector_reader<double> meanhit_mult;
+    vector_reader<double> stdhit_mult;
 
     vector_reader<std::string> method_mu;
     vector_reader<int> loc_mu;

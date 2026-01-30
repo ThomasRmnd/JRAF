@@ -10,8 +10,8 @@ struct vertex {
 
     vec3 pos;
     double e;
-    double q;
     timestamp ts;
+    int run_id;
 
 };
 
@@ -21,7 +21,7 @@ inline bool operator<(const vertex& lhs, const vertex& rhs) {
 
 inline std::ostream& operator<<(std::ostream& os, const vertex& v) {
     // return os << "Pos = " << v.pos << ", E = " << v.e << ", Q = " << v.q << ", Time = " << v.ts;
-    return os << "E = " << v.e << ", Q = " << v.q << ", Time = " << v.ts;
+    return os << "E = " << v.e << ", Time = " << v.ts;
 }
 
 struct ibd {
@@ -52,13 +52,17 @@ inline bool operator<(const cosmogenic& lhs, const cosmogenic& rhs) {
 
 struct vertex_metadata {
 
+    double totq;
     double meanq;
     double stdq;
     double minq;
     double maxq;
-    std::size_t nhit; // npmt
     double meant;
     double stdt;
+    std::size_t npmt;
+    std::size_t nhit;
+    double meanhit;
+    double stdhit;
 
 };
 

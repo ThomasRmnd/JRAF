@@ -82,6 +82,8 @@ void daq(const std::string& filename) {
     }
 
     timestamp prev_mu_ts;
+    int min_run_id = daq_map.size() ? daq_map.begin()->first : 0;
+    int max_run_id = daq_map.size() ? (--daq_map.end())->first : 0;
     TH1D* h_mu_tot_rate = new TH1D("h_mu_tot_rate", "h_mu_tot_rate", 100, 0.0, 5.0);
     for (std::map<timestamp, veto_info>::iterator it = veto_map.begin(); it != veto_map.end(); ++it) {
         veto_type_per_run_map[it->second.run_id][it->second.veto_type] += 1;
@@ -106,15 +108,47 @@ void daq(const std::string& filename) {
     c_mu_tot_rate->SetTicky();
     c_mu_tot_rate->Update();
 
+    TH1D* h_beg_veto_per_run = new TH1D("h_beg_veto_per_run", "h_beg_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
+    TH1D* h_hdr_veto_per_run = new TH1D("h_hdr_veto_per_run", "h_hdr_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
+    TH1D* h_gap_veto_per_run = new TH1D("h_gap_veto_per_run", "h_gap_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
+    TH1D* h_mu_veto_per_run = new TH1D("h_mu_veto_per_run", "h_mu_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
     for (std::map<int, std::map<unsigned char, std::size_t>>::iterator it = veto_type_per_run_map.begin(); it != veto_type_per_run_map.end(); ++it) {
-        std::cout << "Run: " << it->first << '\n';
         for (std::map<unsigned char, std::size_t>::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
-            std::cout << "  Veto type: " << static_cast<int>(jt->first) << ", count: " << jt->second << '\n';
+            if (jt->first == 1) {
+                h_beg_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
+            }
+            else if (jt->first == 2) {
+                h_hdr_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
+            }
+            else if (jt->first == 3) {
+                h_gap_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
+            }
+            else if (jt->first == 4) {
+                h_mu_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
+            }
         }
     }
+
+    TCanvas* c_veto_per_run = new TCanvas("c_veto_per_run", "c_veto_per_run", 1000, 1000);
+    c_veto_per_run->cd();
+    h_beg_veto_per_run->SetStats(false);
+    h_beg_veto_per_run->SetMaximum(std::max({h_beg_veto_per_run->GetMaximum(), h_hdr_veto_per_run->GetMaximum(), h_gap_veto_per_run->GetMaximum(), h_mu_veto_per_run->GetMaximum()}));
+    h_beg_veto_per_run->GetXaxis()->SetTitle("Run ID");
+    h_beg_veto_per_run->GetYaxis()->SetTitle("Entries");
+    h_beg_veto_per_run->Draw("HIST");
+    h_hdr_veto_per_run->Draw("SAME");
+    h_gap_veto_per_run->Draw("SAME");
+    h_mu_veto_per_run->Draw("SAME");
+    c_veto_per_run->SetLogy();
+    c_veto_per_run->SetGrid();
+    c_veto_per_run->SetTickx();
+    c_veto_per_run->SetTicky();
+    c_veto_per_run->Update();
 }
 
-int root_main(const std::string& filepath, const std::string& suffix) {
+int root_main(const std::string& filepath) {
+    std::string suffix = "__OMILREC_JVtx";
+
     daq(filepath);
 
     analysis_registry registry;
@@ -123,7 +157,7 @@ int root_main(const std::string& filepath, const std::string& suffix) {
     std::shared_ptr<analysis_base> main_analysis(new ibd_analysis("ibd_analysis", filepath, suffix));
     if (!registry.book(main_analysis)) return 1;
 
-    std::shared_ptr<analysis_base> ibd_with_muon_veto_analysis(new ibd_muon_veto_analysis("ibd_muon_veto_analysis", filepath, suffix, "CdWpTtChi2", timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0));
+    std::shared_ptr<analysis_base> ibd_with_muon_veto_analysis(new ibd_muon_veto_analysis("ibd_muon_veto_analysis_cdwpttchi2", filepath, suffix, "CdWpTtChi2", timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0));
     if (!registry.book(ibd_with_muon_veto_analysis)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_rate_with_neutron_analysis(new cosmo_rate_analysis("cosmo_rate_analysis", filepath, suffix));

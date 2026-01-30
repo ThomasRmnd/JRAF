@@ -20,6 +20,8 @@ bool Analysis::initialize() {
         return false;
     }
 
+    m_tree->Branch("run_id", &run_id);
+
     m_tree->Branch("posx_p", &posx_p);
     m_tree->Branch("posy_p", &posy_p);
     m_tree->Branch("posz_p", &posz_p);
