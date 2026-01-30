@@ -75,10 +75,20 @@ void daq(const std::string& filename) {
         tot_ts += ts;
     }
 
+    std::map<int, timestamp> run_earliest_ts;
+    std::map<int, timestamp> run_latest_ts;
     for (long k = 0; k < chain_veto->GetEntries(); ++k) {
         chain_veto->GetEntry(k);
         timestamp ts{veto.sec, veto.nsec};
         veto_map[ts] = {veto.run_id, veto.veto_type, veto.veto_sec, veto.veto_nsec};
+        if (run_earliest_ts.find(veto.run_id) == run_earliest_ts.end()) {
+            run_earliest_ts[veto.run_id] = ts;
+            run_latest_ts[veto.run_id] = ts;
+        }
+        else {
+            run_earliest_ts[veto.run_id] = std::min(run_earliest_ts[veto.run_id], ts);
+            run_latest_ts[veto.run_id] = std::max(run_latest_ts[veto.run_id], ts);
+        }
     }
 
     timestamp prev_mu_ts;
@@ -148,6 +158,31 @@ void daq(const std::string& filename) {
     c_veto_per_run->SetTickx();
     c_veto_per_run->SetTicky();
     c_veto_per_run->Update();
+
+    TFile* file_run_info = TFile::Open("run_info.root", "RECREATE");
+    if (!file_run_info) {
+        std::cerr << "Cannot open file run_info.root for writing\n";
+        return;
+    }
+    TTree* t_run_info = new TTree("run_info", "run_info");
+    if (!t_run_info) {
+        std::cerr << "Cannot create tree run_info\n";
+        return;
+    }
+    timestamp earliest_ts, latest_ts;
+    t_run_info->Branch("run_id", &daq.run_id);
+    t_run_info->Branch("earliest_sec", &earliest_ts.sec);
+    t_run_info->Branch("earliest_nsec", &earliest_ts.nsec);
+    t_run_info->Branch("latest_sec", &latest_ts.sec);
+    t_run_info->Branch("latest_nsec", &latest_ts.nsec);
+    for (std::map<int, timestamp>::iterator it = run_earliest_ts.begin(); it != run_earliest_ts.end(); ++it) {
+        earliest_ts = it->second;
+        latest_ts = run_latest_ts[it->first];
+        t_run_info->Fill();
+    }
+    file_run_info->cd();
+    t_run_info->Write();
+    file_run_info->Close();
 }
 
 int root_main(const std::string& filepath) {
