@@ -38,8 +38,8 @@ struct MuonInfo {
     int run_id;
     time_t sec;
     int nsec;
-    double totq_cd;
-    double totq_wp;
+    float totq_cd;
+    float totq_wp;
     unsigned char det;
 };
 
