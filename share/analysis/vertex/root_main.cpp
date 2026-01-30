@@ -135,9 +135,13 @@ void daq(const std::string& filename) {
     h_beg_veto_per_run->SetMaximum(std::max({h_beg_veto_per_run->GetMaximum(), h_hdr_veto_per_run->GetMaximum(), h_gap_veto_per_run->GetMaximum(), h_mu_veto_per_run->GetMaximum()}));
     h_beg_veto_per_run->GetXaxis()->SetTitle("Run ID");
     h_beg_veto_per_run->GetYaxis()->SetTitle("Entries");
+    h_beg_veto_per_run->SetLineColor(kBlue);
     h_beg_veto_per_run->Draw("HIST");
+    h_hdr_veto_per_run->SetLineColor(kRed);
     h_hdr_veto_per_run->Draw("SAME");
+    h_gap_veto_per_run->SetLineColor(kGreen);
     h_gap_veto_per_run->Draw("SAME");
+    h_mu_veto_per_run->SetLineColor(kBlack);
     h_mu_veto_per_run->Draw("SAME");
     c_veto_per_run->SetLogy();
     c_veto_per_run->SetGrid();

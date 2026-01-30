@@ -121,17 +121,17 @@ public:
         m_chain->branch("nsec_mult", nsec_mult.data());
         m_chain->branch("mult_type", mult_type.data());
 
-        m_chain->branch("totq_mult", totq_mult);
-        m_chain->branch("meanq_mult", meanq_mult);
-        m_chain->branch("stdq_mult", stdq_mult);
-        m_chain->branch("minq_mult", minq_mult);
-        m_chain->branch("maxq_mult", maxq_mult);
-        m_chain->branch("meant_mult", meant_mult);
-        m_chain->branch("stdt_mult", stdt_mult);
-        m_chain->branch("npmt_mult", npmt_mult);
-        m_chain->branch("nhit_mult", nhit_mult);
-        m_chain->branch("meanhit_mult", meanhit_mult);
-        m_chain->branch("stdhit_mult", stdhit_mult);
+        m_chain->branch("totq_mult", totq_mult.data());
+        m_chain->branch("meanq_mult", meanq_mult.data());
+        m_chain->branch("stdq_mult", stdq_mult.data());
+        m_chain->branch("minq_mult", minq_mult.data());
+        m_chain->branch("maxq_mult", maxq_mult.data());
+        m_chain->branch("meant_mult", meant_mult.data());
+        m_chain->branch("stdt_mult", stdt_mult.data());
+        m_chain->branch("npmt_mult", npmt_mult.data());
+        m_chain->branch("nhit_mult", nhit_mult.data());
+        m_chain->branch("meanhit_mult", meanhit_mult.data());
+        m_chain->branch("stdhit_mult", stdhit_mult.data());
 
         m_chain->branch("method_mu", method_mu.data());
         m_chain->branch("loc_mu", loc_mu.data());
