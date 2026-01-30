@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -50,6 +51,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ibd-analysis", type=str, nargs="+", help="IBD analysis filepath")
     parser.add_argument("--cosmo-shape-analysis", type=str, nargs="+", help="Cosmo shape analysis filepath")
+    parser.add_argument("--run-info", type=str, help="Run info filepath")
     return parser.parse_args()
 
 def nmo_analysis_bins():
@@ -80,8 +82,28 @@ class timestamp:
     def __sub__(self, other) -> "timestamp":
         return timestamp(self.sec - other.sec, self.nsec - other.nsec)
     
+    def __lt__(self, other) -> bool:
+        return self.sec < other.sec or (self.sec == other.sec and self.nsec < other.nsec)
+    
+    def __le__(self, other) -> bool:
+        return self.sec < other.sec or (self.sec == other.sec and self.nsec <= other.nsec)
+    
+    def __gt__(self, other) -> bool:
+        return self.sec > other.sec or (self.sec == other.sec and self.nsec > other.nsec)
+    
+    def __ge__(self, other) -> bool:
+        return self.sec > other.sec or (self.sec == other.sec and self.nsec >= other.nsec)
+
+    def __eq__(self, other) -> bool:
+        return self.sec == other.sec and self.nsec == other.nsec
+
+    def __ne__(self, other) -> bool:
+        return self.sec != other.sec or self.nsec != other.nsec
+    
     def __str__(self) -> str:
-        return "%d-%09d" % (self.sec, self.nsec)
+        dt = datetime.fromtimestamp(self.sec)
+        date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return f"{date_str}.{self.nsec:09d}"
     
     def to_sec(self) -> float:
         return self.sec + self.nsec / 1e9
@@ -505,13 +527,66 @@ def ibd_analysis_plot(filepath: str, **meta):
 
     plt.show()
 
+def ibd_rate_plot(filepath: str, run_info_filepath: str):
+    file = uproot.open(filepath)
+    tree = file["events"]
+
+    branches = [
+        "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
+        "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d"
+    ]
+    data = tree.arrays(branches, library="np")
+
+    file = uproot.open(run_info_filepath)
+    tree = file["run_info"]
+    branches = ["run_id", "earliest_sec", "earliest_nsec", "latest_sec", "latest_nsec"]
+    run_info = tree.arrays(branches, library="np")
+    earliest_ts = np.array([timestamp(sec, nsec) for sec, nsec in zip(run_info["earliest_sec"], run_info["earliest_nsec"])])
+    latest_ts = np.array([timestamp(sec, nsec) for sec, nsec in zip(run_info["latest_sec"], run_info["latest_nsec"])])
+    duration = latest_ts - earliest_ts
+
+    run_id = []
+    for i in range(len(data["posx_p"])):
+        for j in range(len(earliest_ts)):
+            if earliest_ts[j] <= timestamp(data["sec_p"][i], data["nsec_p"][i]) <= latest_ts[j]:
+                run_id.append(run_info["run_id"][j])
+                break
+    
+    data["run_id"] = np.array(run_id)
+
+    per_run_nevents = []
+    for run in run_info["run_id"]:
+        mask = data["run_id"] == run
+        ts_p = np.array([timestamp(sec, nsec) for sec, nsec in zip(data["sec_p"][mask], data["nsec_p"][mask])])
+        per_run_nevents.append(len(ts_p))
+
+    per_run_ibd_rate = []
+    per_run_ibd_rate_err = []
+    for run, nevents, dur in zip(run_info["run_id"], per_run_nevents, duration):
+        ibd_rate = nevents / (dur.to_sec() / 3600.0 / 24.0)
+        per_run_ibd_rate.append(ibd_rate)
+        per_run_ibd_rate_err.append(np.sqrt(nevents) / (dur.to_sec() / 3600.0 / 24.0))
+
+    Ntot = np.sum(per_run_nevents)
+    duration_sec = np.array([d.to_sec() for d in duration])
+    durtot = np.sum(duration_sec) / 3600.0 / 24.0
+    print(f"Total ({Ntot} events): rate = {Ntot / durtot:.3f} +- {np.sqrt(Ntot) / durtot:.3f} events/day")
+
+    # for run, nevents, rate, err in zip(run_info["run_id"], per_run_nevents, per_run_ibd_rate, per_run_ibd_rate_err):
+    #     print(f"RUN {run} ({nevents} events): rate = {rate:.3f} +- {err:.3f} events/day")
+
+    plt.figure()
+    plt.errorbar(run_info["run_id"], per_run_ibd_rate, yerr=per_run_ibd_rate_err, fmt="o")
+    plt.show()
+
 if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
-    if args.ibd_analysis:
-        for filepath in args.ibd_analysis:
-            ibd_analysis_plot(filepath) # , reprod="ReProd25D", min_run=11049, max_run=12135)
-    if args.cosmo_shape_analysis:
-        for filepath in args.cosmo_shape_analysis:
-            cosmo_shape_analysis_plot(filepath)
-
+    # if args.ibd_analysis:
+    #     for filepath in args.ibd_analysis:
+    #         ibd_analysis_plot(filepath) # , reprod="ReProd25D", min_run=11049, max_run=12135)
+    # if args.cosmo_shape_analysis:
+    #     for filepath in args.cosmo_shape_analysis:
+    #         cosmo_shape_analysis_plot(filepath)
+    if args.run_info:
+        ibd_rate_plot(args.ibd_analysis[0], args.run_info)

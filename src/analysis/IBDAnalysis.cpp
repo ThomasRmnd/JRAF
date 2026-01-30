@@ -69,6 +69,7 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("nsec_mu", &nsec_mu);
     m_tree->Branch("quality_mu", &quality_mu);
 
+    m_tree_cutflow->Branch("run_id", &run_id);
     m_tree_cutflow->Branch("cf_prompt_total", &cf_prompt_total);
     m_tree_cutflow->Branch("cf_prompt_fv", &cf_prompt_fv);
     m_tree_cutflow->Branch("cf_prompt_energy", &cf_prompt_energy);
