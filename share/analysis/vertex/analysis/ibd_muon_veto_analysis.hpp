@@ -85,7 +85,7 @@ public:
     }
 
     bool process() override {
-        m_ibds.insert({m_nav->prompt, m_nav->delayed});
+        m_ibds.insert({m_nav->run_id, m_nav->prompt, m_nav->delayed});
         return true;
     }
 

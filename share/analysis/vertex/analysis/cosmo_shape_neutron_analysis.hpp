@@ -81,10 +81,10 @@ public:
         for (std::size_t k = 0ul; k < m_is_sig.size(); ++k) {
             // cosmo has members dlat_mu2p, dt_mu2p, etc. but we will use them as d_neu2p, dt_neu2p, etc. 
             if (m_is_sig[k]) {
-                m_cosmos_sig.insert({m_nav->prompt, m_nav->delayed, m_d_neu2p[k], m_d_neu2d[k], m_dt_neu2p[k], m_dt_neu2d[k]});
+                m_cosmos_sig.insert({m_nav->run_id, m_nav->prompt, m_nav->delayed, m_d_neu2p[k], m_d_neu2d[k], m_dt_neu2p[k], m_dt_neu2d[k]});
             }
             else {
-                m_cosmos_bkg.insert({m_nav->prompt, m_nav->delayed, m_d_neu2p[k], m_d_neu2d[k], m_dt_neu2p[k], m_dt_neu2d[k]});
+                m_cosmos_bkg.insert({m_nav->run_id, m_nav->prompt, m_nav->delayed, m_d_neu2p[k], m_d_neu2d[k], m_dt_neu2p[k], m_dt_neu2d[k]});
             }
         }
         return true;

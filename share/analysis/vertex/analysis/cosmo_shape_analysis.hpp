@@ -81,10 +81,10 @@ public:
     bool process() override {
         for (std::size_t k = 0ul; k < m_is_sig.size(); ++k) {
             if (m_is_sig[k]) {
-                m_cosmos_sig.insert({m_nav->prompt, m_nav->delayed, m_dlat_mu2p[k], m_dlat_mu2d[k], m_dt_mu2p[k], m_dt_mu2d[k]});
+                m_cosmos_sig.insert({m_nav->run_id, m_nav->prompt, m_nav->delayed, m_dlat_mu2p[k], m_dlat_mu2d[k], m_dt_mu2p[k], m_dt_mu2d[k]});
             }
             else {
-                m_cosmos_bkg.insert({m_nav->prompt, m_nav->delayed, m_dlat_mu2p[k], m_dlat_mu2d[k], m_dt_mu2p[k], m_dt_mu2d[k]});
+                m_cosmos_bkg.insert({m_nav->run_id, m_nav->prompt, m_nav->delayed, m_dlat_mu2p[k], m_dlat_mu2d[k], m_dt_mu2p[k], m_dt_mu2d[k]});
             }
         }
         return true;

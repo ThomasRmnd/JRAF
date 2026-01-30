@@ -11,7 +11,6 @@ struct vertex {
     vec3 pos;
     double e;
     timestamp ts;
-    int run_id;
 
 };
 
@@ -26,6 +25,7 @@ inline std::ostream& operator<<(std::ostream& os, const vertex& v) {
 
 struct ibd {
 
+    int run_id;
     vertex prompt;
     vertex delayed;
 
@@ -37,6 +37,7 @@ inline bool operator<(const ibd& lhs, const ibd& rhs) {
 
 struct cosmogenic {
 
+    int run_id;
     vertex prompt;
     vertex delayed;
     double dlat_mu2p;

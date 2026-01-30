@@ -57,7 +57,7 @@ public:
     }
 
     bool process() override {
-        m_ibds.insert({m_nav->prompt, m_nav->delayed});
+        m_ibds.insert({m_nav->run_id, m_nav->prompt, m_nav->delayed});
         return true;
     }
 
@@ -91,7 +91,7 @@ public:
         t->Branch("e_d", &e_d);
 
         for (std::set<ibd>::const_iterator it = m_ibds.begin(); it != m_ibds.end(); ++it) {
-            run_id = it->prompt.run_id;
+            run_id = it->run_id;
             pos_p = it->prompt.pos;
             pos_d = it->delayed.pos;
             ts_p = it->prompt.ts;

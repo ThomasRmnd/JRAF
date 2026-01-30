@@ -34,18 +34,21 @@ struct Veto {
     int veto_nsec;
 };
 
-struct veto_info {
+struct MuonInfo {
     int run_id;
-    unsigned char veto_type;
-    time_t veto_sec;
-    int veto_nsec;
+    time_t sec;
+    int nsec;
+    double totq_cd;
+    double totq_wp;
+    unsigned char det;
 };
 
-void daq(const std::string& filename) {
+void save_meta_info(const std::string& filename) {
     TChain* chain_daq = new TChain("DAQ");
     TChain* chain_veto = new TChain("Veto");
-    if (!chain_daq || !chain_veto) {
-        std::cerr << "Cannot create TChain DAQ or Veto\n";
+    TChain* chain_muon = new TChain("MuonInfo");
+    if (!chain_daq || !chain_veto || !chain_muon) {
+        std::cerr << "Cannot create TChain DAQ or Veto or MuonInfo\n";
         return;
     }
     
@@ -54,8 +57,6 @@ void daq(const std::string& filename) {
     chain_daq->SetBranchAddress("run_id", &daq.run_id);
     chain_daq->SetBranchAddress("sec", &daq.sec);
     chain_daq->SetBranchAddress("nsec", &daq.nsec);
-    std::map<int, timestamp> daq_map;
-    timestamp tot_ts;
 
     chain_veto->Add(filename.c_str());
     Veto veto;
@@ -65,132 +66,54 @@ void daq(const std::string& filename) {
     chain_veto->SetBranchAddress("veto_type", &veto.veto_type);
     chain_veto->SetBranchAddress("veto_sec", &veto.veto_sec);
     chain_veto->SetBranchAddress("veto_nsec", &veto.veto_nsec);
-    std::map<timestamp, veto_info> veto_map;
-    std::map<int, std::map<unsigned char, std::size_t>> veto_type_per_run_map;
 
-    for (long k = 0; k < chain_daq->GetEntries(); ++k) {
-        chain_daq->GetEntry(k);
-        timestamp ts{daq.sec, daq.nsec};
-        daq_map[daq.run_id] += ts;
-        tot_ts += ts;
-    }
+    chain_muon->Add(filename.c_str());
+    MuonInfo muon;
+    chain_muon->SetBranchAddress("run_id", &muon.run_id);
+    chain_muon->SetBranchAddress("sec", &muon.sec);
+    chain_muon->SetBranchAddress("nsec", &muon.nsec);
+    chain_muon->SetBranchAddress("totq_cd", &muon.totq_cd);
+    chain_muon->SetBranchAddress("totq_wp", &muon.totq_wp);
+    chain_muon->SetBranchAddress("det", &muon.det);
 
-    std::map<int, timestamp> run_earliest_ts;
-    std::map<int, timestamp> run_latest_ts;
-    for (long k = 0; k < chain_veto->GetEntries(); ++k) {
-        chain_veto->GetEntry(k);
-        timestamp ts{veto.sec, veto.nsec};
-        veto_map[ts] = {veto.run_id, veto.veto_type, veto.veto_sec, veto.veto_nsec};
-        if (run_earliest_ts.find(veto.run_id) == run_earliest_ts.end()) {
-            run_earliest_ts[veto.run_id] = ts;
-            run_latest_ts[veto.run_id] = ts;
-        }
-        else {
-            run_earliest_ts[veto.run_id] = std::min(run_earliest_ts[veto.run_id], ts);
-            run_latest_ts[veto.run_id] = std::max(run_latest_ts[veto.run_id], ts);
-        }
-    }
-
-    timestamp prev_mu_ts;
-    int min_run_id = daq_map.size() ? daq_map.begin()->first : 0;
-    int max_run_id = daq_map.size() ? (--daq_map.end())->first : 0;
-    TH1D* h_mu_tot_rate = new TH1D("h_mu_tot_rate", "h_mu_tot_rate", 100, 0.0, 5.0);
-    for (std::map<timestamp, veto_info>::iterator it = veto_map.begin(); it != veto_map.end(); ++it) {
-        veto_type_per_run_map[it->second.run_id][it->second.veto_type] += 1;
-        if (prev_mu_ts == timestamp{0, 0}) {
-            prev_mu_ts = it->first;
-            continue;
-        }
-        h_mu_tot_rate->Fill(timestamp_to_double(it->first - prev_mu_ts));
-        prev_mu_ts = it->first;
-    }
-    
-    std::cout << "Total DAQ time: " << tot_ts << '\n';
-    double tot_seconds = timestamp_to_double(tot_ts);
-    std::cout << "Total DAQ time in days: " << tot_seconds / (3600.0 * 24.0) << '\n';
-
-    TCanvas* c_mu_tot_rate = new TCanvas("c_mu_tot_rate", "c_mu_tot_rate", 1000, 1000);
-    c_mu_tot_rate->cd();
-    h_mu_tot_rate->Draw("HIST");
-    c_mu_tot_rate->SetLogy();
-    c_mu_tot_rate->SetGrid();
-    c_mu_tot_rate->SetTickx();
-    c_mu_tot_rate->SetTicky();
-    c_mu_tot_rate->Update();
-
-    TH1D* h_beg_veto_per_run = new TH1D("h_beg_veto_per_run", "h_beg_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
-    TH1D* h_hdr_veto_per_run = new TH1D("h_hdr_veto_per_run", "h_hdr_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
-    TH1D* h_gap_veto_per_run = new TH1D("h_gap_veto_per_run", "h_gap_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
-    TH1D* h_mu_veto_per_run = new TH1D("h_mu_veto_per_run", "h_mu_veto_per_run", max_run_id - min_run_id + 1, min_run_id, max_run_id);
-    for (std::map<int, std::map<unsigned char, std::size_t>>::iterator it = veto_type_per_run_map.begin(); it != veto_type_per_run_map.end(); ++it) {
-        for (std::map<unsigned char, std::size_t>::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
-            if (jt->first == 1) {
-                h_beg_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
-            }
-            else if (jt->first == 2) {
-                h_hdr_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
-            }
-            else if (jt->first == 3) {
-                h_gap_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
-            }
-            else if (jt->first == 4) {
-                h_mu_veto_per_run->SetBinContent(it->first - min_run_id + 1, jt->second);
-            }
-        }
-    }
-
-    TCanvas* c_veto_per_run = new TCanvas("c_veto_per_run", "c_veto_per_run", 1000, 1000);
-    c_veto_per_run->cd();
-    h_beg_veto_per_run->SetStats(false);
-    h_beg_veto_per_run->SetMaximum(std::max({h_beg_veto_per_run->GetMaximum(), h_hdr_veto_per_run->GetMaximum(), h_gap_veto_per_run->GetMaximum(), h_mu_veto_per_run->GetMaximum()}));
-    h_beg_veto_per_run->GetXaxis()->SetTitle("Run ID");
-    h_beg_veto_per_run->GetYaxis()->SetTitle("Entries");
-    h_beg_veto_per_run->SetLineColor(kBlue);
-    h_beg_veto_per_run->Draw("HIST");
-    h_hdr_veto_per_run->SetLineColor(kRed);
-    h_hdr_veto_per_run->Draw("SAME");
-    h_gap_veto_per_run->SetLineColor(kGreen);
-    h_gap_veto_per_run->Draw("SAME");
-    h_mu_veto_per_run->SetLineColor(kBlack);
-    h_mu_veto_per_run->Draw("SAME");
-    c_veto_per_run->SetLogy();
-    c_veto_per_run->SetGrid();
-    c_veto_per_run->SetTickx();
-    c_veto_per_run->SetTicky();
-    c_veto_per_run->Update();
-
-    TFile* file_run_info = TFile::Open("run_info.root", "RECREATE");
-    if (!file_run_info) {
+    TFile* f_run_info = TFile::Open("run_info.root", "RECREATE");
+    if (!f_run_info) {
         std::cerr << "Cannot open file run_info.root for writing\n";
         return;
     }
-    TTree* t_run_info = new TTree("run_info", "run_info");
-    if (!t_run_info) {
-        std::cerr << "Cannot create tree run_info\n";
-        return;
+    f_run_info->cd();
+
+    TTree* out_daq = chain_daq->CloneTree(0);
+    for (Long64_t i = 0; i < chain_daq->GetEntries(); ++i) {
+        chain_daq->GetEntry(i);
+        out_daq->Fill();
     }
-    int run_id;
-    timestamp earliest_ts, latest_ts;
-    t_run_info->Branch("run_id", &run_id);
-    t_run_info->Branch("earliest_sec", &earliest_ts.sec);
-    t_run_info->Branch("earliest_nsec", &earliest_ts.nsec);
-    t_run_info->Branch("latest_sec", &latest_ts.sec);
-    t_run_info->Branch("latest_nsec", &latest_ts.nsec);
-    for (std::map<int, timestamp>::iterator it = run_earliest_ts.begin(); it != run_earliest_ts.end(); ++it) {
-        run_id = it->first;
-        earliest_ts = it->second;
-        latest_ts = run_latest_ts[it->first];
-        t_run_info->Fill();
+    out_daq->Write();
+
+    TTree* out_veto = chain_veto->CloneTree(0);
+    for (Long64_t i = 0; i < chain_veto->GetEntries(); ++i) {
+        chain_veto->GetEntry(i);
+        out_veto->Fill();
     }
-    file_run_info->cd();
-    t_run_info->Write();
-    file_run_info->Close();
+    out_veto->Write();
+
+    TTree* out_muon = chain_muon->CloneTree(0);
+    for (Long64_t i = 0; i < chain_muon->GetEntries(); ++i) {
+        chain_muon->GetEntry(i);
+        out_muon->Fill();
+    }
+    out_muon->Write();
+
+    f_run_info->Write(); 
+    f_run_info->Close();
+    
+    std::cout << "Successfully saved meta info to run_info.root" << std::endl;
 }
 
 int root_main(const std::string& filepath) {
     std::string suffix = "__OMILREC_JVtx";
 
-    daq(filepath);
+    save_meta_info(filepath);
 
     analysis_registry registry;
     analysis_manager manager(registry);

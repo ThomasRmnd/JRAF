@@ -22,7 +22,7 @@ public:
             return;
         }
 
-        // m_chain->branch("run_id", run_id);
+        m_chain->branch("run_id", run_id);
 
         m_chain->branch("posx_p", prompt.pos.x);
         m_chain->branch("posy_p", prompt.pos.y);
