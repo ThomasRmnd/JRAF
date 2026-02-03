@@ -60,7 +60,7 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
                 found_tt = true;
             }
             else if ((*method)[i] == "CdClassify") {
-                ++n_cdclassify
+                ++n_cdclassify;
             }
         }
         if (!found_cdwptt || !found_tt) continue;
