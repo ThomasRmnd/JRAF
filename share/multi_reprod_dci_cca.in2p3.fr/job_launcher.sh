@@ -36,7 +36,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 
 TIME_WINDOW=("-2.0" "2.0")
-LOG_LEVEL=3
+LOG_LEVEL=4
 
 #==============================
 # Usage & Argument Parsing

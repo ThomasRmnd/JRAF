@@ -62,10 +62,16 @@ struct BigGapsVetoTracker {
     bool is_cd_initialized = false;
     bool is_wp_initialized = false;
 
+    JM::CdLpmtCalibHeader* cd_lpmt_calib_hdr = nullptr;
+    JM::WpCalibHeader* wp_calib_hdr = nullptr;
+
     bool check(JM::EvtNavigator* nav) {
         TimeStamp ts{nav->TimeStamp().GetTimeSpec()};
-        JM::EvtNavigator::DetectorType det = nav->getDetectorType();
-        if (det == JM::EvtNavigator::DetectorType::CD) {
+        
+        cd_lpmt_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);
+        wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(nav);
+        
+        if (cd_lpmt_calib_hdr) {
             if (!is_cd_initialized) {
                 last_cd_ts = ts;
                 is_cd_initialized = true;
@@ -75,7 +81,7 @@ struct BigGapsVetoTracker {
             last_cd_ts = ts;
             return diff > cd_thold;
         }
-        else if (det == JM::EvtNavigator::DetectorType::WP) {
+        else if (wp_calib_hdr) {
             if (!is_wp_initialized) {
                 last_wp_ts = ts;
                 is_wp_initialized = true;
