@@ -110,22 +110,27 @@ int fast_muon_rate_estimation(const char* filepath) {
             h_time_to_previous_muon_cd->Fill(ts - prvts_cd);
             prvts_cd = ts;
         }
+        bool has_seen_cdwpttchi2 = false, has_seen_cdclassify = false, has_seen_wpclassify = false, has_seen_tt = false;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
-            if ((*method)[i] == "CdWpTtChi2") {
+            if ((*method)[i] == "CdWpTtChi2" && !has_seen_cdwpttchi2) {
                 h_time_to_previous_muon_cdwpttchi2->Fill(ts - prvts_cdwpttchi2);
                 prvts_cdwpttchi2 = ts;
+                has_seen_cdwpttchi2 = true;
             }
-            else if ((*method)[i] == "CdClassify") {
+            else if ((*method)[i] == "CdClassify" && !has_seen_cdclassify) {
                 h_time_to_previous_muon_cdclassify->Fill(ts - prvts_cdclassify);
                 prvts_cdclassify = ts;
+                has_seen_cdclassify = true;
             }
-            else if ((*method)[i] == "WpBasic") {
+            else if ((*method)[i] == "WpBasic" && !has_seen_wpclassify) {
                 h_time_to_previous_muon_wpclassify->Fill(ts - prvts_wpclassify);
                 prvts_wpclassify = ts;
+                has_seen_wpclassify = true;
             }
-            else if ((*method)[i] == "Tt") {
+            else if ((*method)[i] == "Tt" && !has_seen_tt) {
                 h_time_to_previous_muon_tt->Fill(ts - prvts_tt);
                 prvts_tt = ts;
+                has_seen_tt = true;
             }
         }
                 
