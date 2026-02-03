@@ -549,7 +549,7 @@ private:
 
     double m_cd_muon_totq_thold = 10000.0;
     double m_cd_only_muon_totq_thold = 30000.0;
-    double m_wp_muon_totq_thold = 400.0;
+    double m_wp_muon_totq_thold = 600.0;
     TimeStamp m_cd_afterpulse_thold{0, 50000};
     TimeStamp m_wp_afterpulse_thold{0, 4000};
     TimeStamp m_cd_last_muon{0, 0};

@@ -429,10 +429,10 @@ bool AnalysisGroupC::execute() {
                 if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
                 LogInfo << "Current detector: " << bufwrap.curEvt()->getDetectorType() << ", other detector: " << it->get()->getDetectorType() << '\n';
                 if (is_possibly_cd_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::CD) {
-                    JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt());
+                    JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(it->get());
                     addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
                     LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
-                    JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(bufwrap.curEvt(), "/Event/CdTrackRecClassify");
+                    JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(it->get(), "/Event/CdTrackRecClassify");
                     addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
                     LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
                     RecTrks rtrks;
@@ -443,10 +443,10 @@ bool AnalysisGroupC::execute() {
                     LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
                 }
                 if (is_possibly_wp_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::WP) {
-                    JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
+                    JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(it->get());
                     addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
                     LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
-                    JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt(), "/Event/WpTrackRecClassify");
+                    JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(it->get(), "/Event/WpTrackRecClassify");
                     addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
                     // TODO NOT FOR NOW: Add track saver for WpClassify
                 }
