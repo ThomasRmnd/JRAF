@@ -49,17 +49,22 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         tree->GetEntry(k);
         bool found_cdwptt = false, found_tt = false;
         std::size_t k_cdwptt = 0ul, k_tt = 0ul;
+        std::size_t n_cdclassify = 0ul;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "CdWpTtChi2") {
                 k_cdwptt = i;
                 found_cdwptt = true;
             }
-            if ((*method)[i] == "Tt") {
+            else if ((*method)[i] == "Tt") {
                 k_tt = i;
                 found_tt = true;
             }
+            else if ((*method)[i] == "CdClassify") {
+                ++n_cdclassify
+            }
         }
         if (!found_cdwptt || !found_tt) continue;
+        if (n_cdclassify != 1) continue;
         TVector3 ipos_cdwptt((*iposx)[k_cdwptt], (*iposy)[k_cdwptt], (*iposz)[k_cdwptt]);
         TVector3 ipos_tt((*iposx)[k_tt], (*iposy)[k_tt], (*iposz)[k_tt]);
         TVector3 fpos_cdwptt((*fposx)[k_cdwptt], (*fposy)[k_cdwptt], (*fposz)[k_cdwptt]);
