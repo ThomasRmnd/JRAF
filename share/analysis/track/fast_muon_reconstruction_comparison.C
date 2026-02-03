@@ -4,7 +4,7 @@
 #include <TTimeStamp.h>
 #include <TTree.h>
 
-int fast_muon_rate_estimation(const char* filepath) {
+int fast_muon_reconstruction_comparison(const char* filepath) {
     TFile* file = TFile::Open(filepath, "READ");
     if (!file) {
         std::cerr << "Cannot open file " << filepath << '\n';
