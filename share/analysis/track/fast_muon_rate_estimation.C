@@ -92,11 +92,7 @@ int fast_muon_rate_estimation(const char* filepath) {
         tree->GetEntry(k);
         TTimeStamp ts{sec, nsec};
         if (totq_cd > 0.0 && totq_wp > 0.0) {
-            h_time_to_previous_muon_cd->Fill(ts - prvts_cd);
-            h_time_to_previous_muon_wp->Fill(ts - prvts_wp);
             h_time_to_previous_muon->Fill(ts - prvts);
-            prvts_cd = ts;
-            prvts_wp = ts;
             prvts = ts;
         }
         else if (totq_cd <= 0.0 && totq_wp > 0.0) {
