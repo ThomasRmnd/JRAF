@@ -139,7 +139,5 @@ int fast_muon_rate_estimation(const char* filepath) {
     if (int res = fit_and_plot_rate(h_time_to_previous_muon_wpclassify)) return res;
     if (int res = fit_and_plot_rate(h_time_to_previous_muon_tt)) return res;
 
-    file->Close();
-
     return 0;
 }
