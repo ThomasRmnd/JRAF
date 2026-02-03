@@ -73,9 +73,7 @@ struct BigGapsVetoTracker {
             }
             TimeStamp diff = ts - last_cd_ts;
             last_cd_ts = ts;
-            if (diff > cd_thold) {
-                return true;
-            }
+            return diff > cd_thold;
         }
         else if (det == JM::EvtNavigator::DetectorType::WP) {
             if (!is_wp_initialized) {
@@ -85,9 +83,7 @@ struct BigGapsVetoTracker {
             }
             TimeStamp diff = ts - last_wp_ts;
             last_wp_ts = ts;
-            if (diff > wp_thold) {
-                return true;
-            }
+            return diff > wp_thold;
         }
         return false;
     }

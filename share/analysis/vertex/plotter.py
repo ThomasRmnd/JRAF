@@ -923,8 +923,8 @@ if __name__ == "__main__":
     # if args.ibd_analysis:
     #     for filepath in args.ibd_analysis:
     #         ibd_analysis_plot(filepath) # , reprod="ReProd25D", min_run=11049, max_run=12135)
-    if args.cosmo_shape_analysis:
-        for filepath in args.cosmo_shape_analysis:
-             cosmo_shape_analysis_plot(filepath)
-    # if args.run_info:
-    #     analyze_run_info(args.run_info)
+    # if args.cosmo_shape_analysis:
+    #     for filepath in args.cosmo_shape_analysis:
+    #          cosmo_shape_analysis_plot(filepath)
+    if args.run_info:
+        analyze_run_info(args.run_info)

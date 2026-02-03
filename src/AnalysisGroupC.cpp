@@ -410,7 +410,7 @@ bool AnalysisGroupC::execute() {
             evt->totq_wp = totq_wp;
         }
         else if (
-            calib.totq >= m_cd_muon_totq_thold && 
+            calib.totq >= m_cd_only_muon_totq_thold && 
             totq_wp < m_wp_muon_totq_thold &&
             curts - (m_cd_last_muon > m_wp_last_muon ? m_cd_last_muon : m_wp_last_muon) > TimeStamp{0, 2000000}
         ) {
