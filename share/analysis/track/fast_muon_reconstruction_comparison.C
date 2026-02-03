@@ -84,6 +84,7 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         TVector3 dir_tt = (fpos_tt - ipos_tt).Unit();
         TVector3 mpos_cdwptt = (ipos_cdwptt + fpos_cdwptt) * 0.5;
         TVector3 mpos_tt = (ipos_tt + fpos_tt) * 0.5;
+        if (mpos_tt.Mag() > 17700.0) continue;
         double angle = dir_cdwptt.Angle(dir_tt);
         double distance = (mpos_cdwptt - mpos_tt).Mag();
         h_angle->Fill(angle * 180.0 / TMath::Pi());
