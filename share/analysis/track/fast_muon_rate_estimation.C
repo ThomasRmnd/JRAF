@@ -86,7 +86,14 @@ int fast_muon_rate_estimation(const char* filepath) {
     TH1D* h_time_to_previous_muon_wp = new TH1D("h_time_to_previous_muon_wp", "Time to previous muon in WP; #Delta t (s); Entries;", 100, 0.0, 2.0);
     TH1D* h_time_to_previous_muon = new TH1D("h_time_to_previous_muon", "Time to previous muon; #Delta t (s); Entries;", 100, 0.0, 2.0);
 
-    TTimeStamp prvts_cd{0, 0}, prvts_wp{0, 0}, prvts{0, 0};
+    TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 2.0);
+    TH1D* h_time_to_previous_muon_cdclassify = new TH1D("h_time_to_previous_muon_cdclassify", "Time to previous muon for CdClassify; #Delta t (s); Entries;", 100, 0.0, 2.0);
+    TH1D* h_time_to_previous_muon_wpclassify = new TH1D("h_time_to_previous_muon_wpclassify", "Time to previous muon for WpClassify; #Delta t (s); Entries;", 100, 0.0, 2.0);
+    TH1D* h_time_to_previous_muon_tt = new TH1D("h_time_to_previous_muon_tt", "Time to previous muon for Tt; #Delta t (s); Entries;", 100, 0.0, 2.0);
+
+
+
+    TTimeStamp prvts_cd{0, 0}, prvts_wp{0, 0}, prvts{0, 0}, prvts_cdwpttchi2{0, 0}, prvts_cdclassify{0, 0}, prvts_wpclassify{0, 0}, prvts_tt{0, 0};
     long nentries = tree->GetEntries();
     for (long k = 0l; k < nentries; ++k) {
         tree->GetEntry(k);
@@ -103,11 +110,36 @@ int fast_muon_rate_estimation(const char* filepath) {
             h_time_to_previous_muon_cd->Fill(ts - prvts_cd);
             prvts_cd = ts;
         }
+        for (std::size_t i = 0ul; i < method->size(); ++i) {
+            if ((*method)[i] == "CdWpTtChi2") {
+                h_time_to_previous_muon_cdwpttchi2->Fill(ts - prvts_cdwpttchi2);
+                prvts_cdwpttchi2 = ts;
+            }
+            else if ((*method)[i] == "CdClassify") {
+                h_time_to_previous_muon_cdclassify->Fill(ts - prvts_cdclassify);
+                prvts_cdclassify = ts;
+            }
+            else if ((*method)[i] == "WpBasic") {
+                h_time_to_previous_muon_wpclassify->Fill(ts - prvts_wpclassify);
+                prvts_wpclassify = ts;
+            }
+            else if ((*method)[i] == "Tt") {
+                h_time_to_previous_muon_tt->Fill(ts - prvts_tt);
+                prvts_tt = ts;
+            }
+        }
+                
     }
 
     if (int res = fit_and_plot_rate(h_time_to_previous_muon_cd)) return res;
     if (int res = fit_and_plot_rate(h_time_to_previous_muon_wp)) return res;
     if (int res = fit_and_plot_rate(h_time_to_previous_muon)) return res;
+    if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
+    if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdclassify)) return res;
+    if (int res = fit_and_plot_rate(h_time_to_previous_muon_wpclassify)) return res;
+    if (int res = fit_and_plot_rate(h_time_to_previous_muon_tt)) return res;
+
+    file->Close();
 
     return 0;
 }
