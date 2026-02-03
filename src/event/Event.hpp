@@ -18,8 +18,9 @@ public:
     bool load(JM::EvtNavigator* nav);
 
     int run_id;
-    int event_id;
     TimeStamp ts;
+    double totq_cd;
+    double totq_wp;
 
     std::vector<track> tracks;
     std::vector<vertex> vertices;

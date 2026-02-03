@@ -2,9 +2,13 @@ import argparse
 from datetime import datetime
 
 import matplotlib as mpl
+from matplotlib.colors import LogNorm
+from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import numpy as np
+import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
 import uproot
@@ -112,12 +116,9 @@ class timestamp:
         return self.sec * 1e9 + self.nsec
 
     def _normalize(self):
-        while self.nsec >= 1e9:
-            self.nsec -= 1e9
-            self.sec += 1
-        while self.nsec < 0:
-            self.nsec += 1e9
-            self.sec -= 1
+        carry = self.nsec // 1e9
+        self.sec += carry
+        self.nsec %= 1e9
 
 class BasePlotter:
     def __init__(self, xlabel="", ylabel="", xlim=None, ylim=(0, None)):
@@ -133,8 +134,6 @@ class BasePlotter:
         ax.xaxis.set_minor_locator(AutoMinorLocator(5))
         ax.yaxis.set_minor_locator(AutoMinorLocator(5))
         ax.tick_params(direction="in", which="both", top=True, right=True)
-        for spine in ax.spines.values():
-            spine.set_linewidth(1.2)
         if self.xlim: ax.set_xlim(self.xlim)
         if self.ylim: ax.set_ylim(bottom=self.ylim[0], top=self.ylim[1])
 
@@ -353,7 +352,7 @@ class PromptDelayedDistancePlotter(Histogram1DPlotter):
             xlabel=r"$\Delta r_{p-d}$ (m)", ylabel="Entries", xlim=(0, 1.55)
         )
 
-class SpatialDistributionLikePlotter:
+class SpatialDistributionPlotter:
     def __init__(self):
         self.xbins = np.linspace(0.0 * 0.0, 17.7 * 17.7, 51)
         self.ybins = np.linspace(-17.7, 17.7, 51)
@@ -394,8 +393,6 @@ class SpatialDistributionLikePlotter:
         ax.xaxis.set_minor_locator(AutoMinorLocator(5))
         ax.yaxis.set_minor_locator(AutoMinorLocator(5))
         ax.tick_params(direction="in", which="both", top=True, right=True)
-        for spine in ax.spines.values():
-            spine.set_linewidth(1.2)
 
         cbar = fig.colorbar(h[3], ax=ax)
         cbar.set_label(r"Entries")
@@ -411,6 +408,128 @@ class SpatialDistributionLikePlotter:
         ax.set_ylim(-17.8, 17.8)
 
         fig.tight_layout()
+        fig.show()
+
+class MuonVetoDistributionPlotter:
+    def __init__(self):
+        pass
+
+    def plot(self, dt : np.ndarray, dlat : np.ndarray, xbins : np.ndarray, ybins : np.ndarray, xlabel = None, ylabel = None, fit_ignore_first_bin = True):
+        h, xedges, yedges = np.histogram2d(dt, dlat / 1e3, bins=(xbins, ybins))
+
+        fig= plt.figure(figsize=(7, 6))
+        gs = GridSpec(
+            2, 2,
+            width_ratios=[4, 1.2],
+            height_ratios=[1.2, 4],
+            hspace=0.1,
+            wspace=0.1
+        )
+
+        ax_main  = fig.add_subplot(gs[1, 0])
+        ax_top   = fig.add_subplot(gs[0, 0], sharex=ax_main)
+        ax_right = fig.add_subplot(gs[1, 1], sharey=ax_main)
+        ax_cbar  = fig.add_subplot(gs[0, 1])
+
+        # Main axis
+
+        H = ax_main.hist2d(dt, dlat / 1e3, bins=(xbins, ybins), cmin=1.0, cmap="jet")
+
+        ax_main.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
+        ax_main.set_ylabel(r"$d_{\mu-p}$ (m)")
+
+        ax_main.minorticks_on()
+        ax_main.xaxis.set_minor_locator(AutoMinorLocator(5))
+        ax_main.yaxis.set_minor_locator(AutoMinorLocator(5))
+        ax_main.tick_params(direction="in", which="both", top=True, right=True)
+
+        proj_x = h.sum(axis=1)
+        proj_y = h.sum(axis=0)
+
+        centers_x = 0.5 * (xedges[:-1] + xedges[1:])
+        centers_y = 0.5 * (yedges[:-1] + yedges[1:])
+
+        # Top axis
+
+        if fit_ignore_first_bin:
+            mask = np.logical_and(proj_x > 0, centers_x > 0.05)
+        else:
+            mask = proj_x > 0
+        x_fit = centers_x[mask]
+        y_fit = proj_x[mask]
+        y_err = np.sqrt(y_fit)
+
+        exp_decay_cste = lambda x, A, tau, c: A * np.exp(-x / tau) + c
+
+        A0 = y_fit[0]
+        tau0 = np.std(np.repeat(x_fit, y_fit.astype(int)))
+        c0 = y_fit[-1]
+        p0 = [A0, tau0, c0]
+
+        popt, pcov = curve_fit(exp_decay_cste, x_fit, y_fit, p0=p0, sigma=y_err, absolute_sigma=True)
+        A, tau, c = popt
+        A_err, tau_err, c_err = np.sqrt(np.diag(pcov))
+
+        residuals = y_fit - exp_decay_cste(x_fit, *popt)
+        chisq = np.sum(residuals**2 / y_err**2)
+        ndf = len(y_fit) - len(popt)
+        prob = chi2.sf(chisq, ndf)
+
+        x_smooth = np.linspace(xedges[0], xedges[-1], 500)
+        y_smooth = exp_decay_cste(x_smooth, *popt)
+
+        ax_top.bar(centers_x, proj_x, width=np.diff(xedges), color="#90b4ff", edgecolor="#90b4ff")
+        ax_top.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
+        
+        fit_text = (
+            r"$P(\chi^2/\mathrm{ndf} = %.1f / %d) = %.3f$" "\n"
+            r"$A = %.2f \pm %.2f$" "\n"
+            r"$\tau = %.2f \pm %.2f~\mathrm{s}$" "\n"
+            r"$c = %.2f \pm %.2f$"
+        ) % (chisq, ndf, prob, A, A_err, tau, tau_err, c, c_err)
+
+        ax_top.text(
+            0.95, 0.95,
+            fit_text,
+            transform=ax_top.transAxes,
+            horizontalalignment="right",
+            verticalalignment="top",
+            fontsize=11
+        )
+
+        ax_top.set_ylabel("Entries")
+        ax_top.tick_params(axis="x", labelbottom=False, direction="in", which="both")
+
+        ax_top.tick_params(axis="y", direction="in")
+
+        ax_top.minorticks_on()
+
+        # Right axis
+
+        ax_right.barh(centers_y, proj_y, height=np.diff(yedges), color="#90b4ff", edgecolor="#90b4ff")
+
+        ax_right.set_xlabel("Entries")
+        ax_right.tick_params(axis="y", labelleft=False, direction="in", which="both")
+
+        ax_right.minorticks_on()
+
+        # Colorbar axis
+
+        cbar = fig.colorbar(H[3], cax=ax_cbar, orientation="horizontal")
+        cbar.set_label("Entries", labelpad=6)
+        cbar.ax.xaxis.set_label_position("top")
+        cbar.ax.xaxis.tick_top()
+
+        cbar.ax.minorticks_on()
+        cbar.ax.tick_params(direction="in")
+
+        pos = ax_cbar.get_position()
+        ax_cbar.set_position([pos.x0, pos.y0 + pos.height * 0.2, pos.width, pos.height * 0.2])
+
+        for ax in [ax_main, ax_top, ax_right]:
+            for spine in ax.spines.values():
+                spine.set_linewidth(1.2)
+
         fig.show()
 
 def cosmo_shape_analysis_plot(filepath: str, **meta):
@@ -473,11 +592,19 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     distance_plotter.add(distance_bkg, linecolor="#ff6464", label="Cosmogenic depleted region")
     distance_plotter.plot()
 
-    spatial_plotter = SpatialDistributionLikePlotter()
+    spatial_plotter = SpatialDistributionPlotter()
     spatial_plotter.plot(rho_p_bkg, z_p_bkg, r"$\rho_{p}$ (m)", r"$z_{p}$ (m)")
     spatial_plotter.plot(rho_d_bkg, z_d_bkg, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
     spatial_plotter.plot(rho_p_sig, z_p_sig, r"$\rho_{p}$ (m)", r"$z_{p}$ (m)")
     spatial_plotter.plot(rho_d_sig, z_d_sig, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
+
+    xbins_bkg = np.linspace(-1.2, 0.0, 51)
+    xbins_sig = np.linspace(0.0, 1.2, 51)
+    ybins = np.linspace(0.0, 3.0, 51)
+
+    muon_veto_plotter = MuonVetoDistributionPlotter()
+    muon_veto_plotter.plot(data_sig["dt_mu2p"], data_sig["dlat_mu2p"], xbins_sig, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=True)
+    muon_veto_plotter.plot(data_bkg["dt_mu2p"], data_bkg["dlat_mu2p"], xbins_bkg, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=False)
 
     plt.show()
 
@@ -521,62 +648,273 @@ def ibd_analysis_plot(filepath: str, **meta):
     distance_plotter.add(distance, linecolor="#000000", fillcolor="#e5e5e5")
     distance_plotter.plot()
 
-    spatial_plotter = SpatialDistributionLikePlotter()
+    spatial_plotter = SpatialDistributionPlotter()
     spatial_plotter.plot(rho_p, z_p, r"$\rho_{p}$ (m)", r"$z_{p}$ (m)")
     spatial_plotter.plot(rho_d, z_d, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
 
     plt.show()
 
-def ibd_rate_plot(filepath: str, run_info_filepath: str):
+def analyze_run_info(filepath: str):
     file = uproot.open(filepath)
-    tree = file["events"]
 
-    branches = [
-        "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
-        "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d"
-    ]
-    data = tree.arrays(branches, library="np")
+    tree_daq = file["DAQ"]
+    tree_veto = file["Veto"]
+    tree_muon = file["MuonInfo"]
 
-    file = uproot.open(run_info_filepath)
-    tree = file["run_info"]
-    branches = ["run_id", "earliest_sec", "earliest_nsec", "latest_sec", "latest_nsec"]
-    run_info = tree.arrays(branches, library="np")
-    earliest_ts = np.array([timestamp(sec, nsec) for sec, nsec in zip(run_info["earliest_sec"], run_info["earliest_nsec"])])
-    latest_ts = np.array([timestamp(sec, nsec) for sec, nsec in zip(run_info["latest_sec"], run_info["latest_nsec"])])
-    duration = latest_ts - earliest_ts
+    branches_daq = ["run_id", "sec", "nsec"]
+    branches_veto = ["run_id", "sec", "nsec", "veto_type", "veto_sec", "veto_nsec"]
+    branches_muon = ["run_id", "sec", "nsec", "totq_cd", "totq_wp", "det"]
 
-    run_id = []
-    for i in range(len(data["posx_p"])):
-        for j in range(len(earliest_ts)):
-            if earliest_ts[j] <= timestamp(data["sec_p"][i], data["nsec_p"][i]) <= latest_ts[j]:
-                run_id.append(run_info["run_id"][j])
-                break
+    data_daq = tree_daq.arrays(branches_daq, library="np")
+    data_veto = tree_veto.arrays(branches_veto, library="np")
+    data_muon = tree_muon.arrays(branches_muon, library="np")
+
+    run_ids = data_daq["run_id"]
+    unique_run_ids = np.unique(run_ids)
+
+    min_run = 9789 # run_ids.min()
+    max_run = run_ids.max()
+    all_runs = np.arange(min_run, max_run + 1)
+    daq_hours = np.zeros_like(all_runs, dtype=float)
+    veto_hours = {
+        1: np.zeros_like(all_runs, dtype=float), # Beginning of a job
+        2: np.zeros_like(all_runs, dtype=float), # Missing headers
+        3: np.zeros_like(all_runs, dtype=float), # Big gaps
+        4: np.zeros_like(all_runs, dtype=float) # Muons
+    }
+
+    daq_per_run = {}
+    for run_id, sec, nsec in zip(data_daq["run_id"], data_daq["sec"], data_daq["nsec"]):
+        ts = timestamp(sec, nsec)
+        if run_id not in daq_per_run:
+            daq_per_run[run_id] = ts
+        else:
+            daq_per_run[run_id] += ts
+
+    for run_id in run_ids:
+        if run_id in daq_per_run:
+            daq_hours[run_id - min_run] = daq_per_run[run_id].to_sec() / 3600.0
+        else:
+            daq_hours[run_id - min_run] = 0.0
+
+    df = tree_veto.arrays(branches_veto, library="pd")
+    aggregated = df.groupby(["run_id", "veto_type"])[["veto_sec", "veto_nsec"]].sum()
+    results = {}
+    for (run_id, v_type), row in aggregated.iterrows():
+        total_duration = timestamp(row["veto_sec"], row["veto_nsec"])
+        if run_id not in results:
+            results[run_id] = {}
+        results[run_id][v_type] = total_duration
+
+    for run, vetos in results.items():
+        for v_type, duration in vetos.items():
+            veto_hours[v_type][run - min_run] = duration.to_sec() / 3600.0
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    ax.bar(all_runs, daq_hours, width=1.0, align="center", color="#648fff")
+    ax.bar(all_runs, veto_hours[4], width=1.0, align="center", color="#ff6464")
+
+    ax.add_patch(
+        Rectangle(
+            (9789, 0), 11039 - 9789, ax.get_ylim()[1],
+            facecolor="#eadcff", edgecolor="none",
+            alpha=0.35, zorder=0
+        )
+    )
+
+    ax.text(
+        (9789 + 11039) / 2,
+        ax.get_ylim()[1] * 0.92,
+        "ReProd25C",
+        color="#5b2ca3",
+        ha="center",
+        va="top",
+        fontsize=13,
+        fontweight="bold"
+    )
+
+    ax.add_patch(
+        Rectangle(
+            (11049, 0), 12135 - 11049, ax.get_ylim()[1], 
+            facecolor="#dbe9ff", edgecolor="none",
+            alpha=0.35,
+            zorder=0
+        )
+    )
+
+    ax.text(
+        (11049 + 12135) / 2,
+        ax.get_ylim()[1] * 0.92,
+        "ReProd25D",
+        color="#1f4fa3",
+        ha="center",
+        va="top",
+        fontsize=13,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Run ID")
+    ax.set_ylabel("Livetime (hours)")
+
+    ax.minorticks_on()
+    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.tick_params(direction="in", which="both", top=True, right=True)
+
+    fig.tight_layout()
+    fig.show()
     
-    data["run_id"] = np.array(run_id)
+    # beg_per_run = {}
+    # end_per_run = {}
+    # for run_id, sec, nsec in zip(data_veto["run_id"], data_veto["sec"], data_veto["nsec"]):
+    #     ts = timestamp(sec, nsec)
+    #     if run_id not in beg_per_run:
+    #         beg_per_run[run_id] = ts
+    #         end_per_run[run_id] = ts
+    #     else:
+    #         beg_per_run[run_id] = min(beg_per_run[run_id], ts)
+    #         end_per_run[run_id] = max(end_per_run[run_id], ts)
 
-    per_run_nevents = []
-    for run in run_info["run_id"]:
-        mask = data["run_id"] == run
-        ts_p = np.array([timestamp(sec, nsec) for sec, nsec in zip(data["sec_p"][mask], data["nsec_p"][mask])])
-        per_run_nevents.append(len(ts_p))
-
-    per_run_ibd_rate = []
-    per_run_ibd_rate_err = []
-    for run, nevents, dur in zip(run_info["run_id"], per_run_nevents, duration):
-        ibd_rate = nevents / (dur.to_sec() / 3600.0 / 24.0)
-        per_run_ibd_rate.append(ibd_rate)
-        per_run_ibd_rate_err.append(np.sqrt(nevents) / (dur.to_sec() / 3600.0 / 24.0))
-
-    Ntot = np.sum(per_run_nevents)
-    duration_sec = np.array([d.to_sec() for d in duration])
-    durtot = np.sum(duration_sec) / 3600.0 / 24.0
-    print(f"Total ({Ntot} events): rate = {Ntot / durtot:.3f} +- {np.sqrt(Ntot) / durtot:.3f} events/day")
-
-    # for run, nevents, rate, err in zip(run_info["run_id"], per_run_nevents, per_run_ibd_rate, per_run_ibd_rate_err):
-    #     print(f"RUN {run} ({nevents} events): rate = {rate:.3f} +- {err:.3f} events/day")
+    mask_cd_only = data_muon["det"] == 1
+    mask_wp_only = data_muon["det"] == 2
+    mask_cd_wp = data_muon["det"] == 3
+    plt.figure()
+    plt.hist(data_muon["totq_cd"], bins=np.logspace(4.0, 9.0, 201), color="blue")
+    plt.hist(data_muon["totq_cd"][mask_cd_only], bins=np.logspace(4.0, 9.0, 201), color="red")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel(r"$Q_{CD}$")
+    plt.ylabel(r"Entries")
+    plt.figure()
+    plt.hist(data_muon["totq_wp"], bins=np.logspace(2.0, 7.0, 201), color="blue")
+    plt.hist(data_muon["totq_wp"][mask_wp_only], bins=np.logspace(2.0, 7.0, 201), color="red")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel(r"$Q_{WP}$")
+    plt.ylabel(r"Entries")
 
     plt.figure()
-    plt.errorbar(run_info["run_id"], per_run_ibd_rate, yerr=per_run_ibd_rate_err, fmt="o")
+    h = plt.hist2d(data_muon["totq_cd"][mask_cd_wp], data_muon["totq_wp"][mask_cd_wp], bins=(np.logspace(4.0, 9.0, 201), np.logspace(2.0, 7.0, 201)), cmap="jet", cmin=1.0, norm=LogNorm())
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel(r"$Q_{CD}$")
+    plt.ylabel(r"$Q_{WP}$")
+    cbar = plt.colorbar(h[3])
+    cbar.set_label(r"Entries")
+
+    plt.tight_layout()
+    plt.show()
+
+    ts_muon = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_muon["sec"], data_muon["nsec"])])
+    ts_muon_cd_wp = ts_muon[mask_cd_wp]
+    ts_muon_cd_only = ts_muon[mask_cd_only]
+    ts_muon_wp_only = ts_muon[mask_wp_only]
+
+    run_id_muon = data_muon["run_id"]
+    run_id_muon_cd_wp = run_id_muon[mask_cd_wp]
+    run_id_muon_cd_only = run_id_muon[mask_cd_only]
+    run_id_muon_wp_only = run_id_muon[mask_wp_only]
+
+    ts_prev_muon = np.roll(ts_muon, 1)
+    ts_prev_muon_cd_wp = np.roll(ts_muon_cd_wp, 1)
+    ts_prev_muon_cd_only = np.roll(ts_muon_cd_only, 1)
+    ts_prev_muon_wp_only = np.roll(ts_muon_wp_only, 1)
+
+    dt_muon = ts_muon - ts_prev_muon
+    dt_muon_cd_wp = ts_muon_cd_wp - ts_prev_muon_cd_wp
+    dt_muon_cd_only = ts_muon_cd_only - ts_prev_muon_cd_only
+    dt_muon_wp_only = ts_muon_wp_only - ts_prev_muon_wp_only
+
+    rate_function = lambda x, A, lam: A * np.exp(-lam * x)
+    rates_all = []
+    rates_cd_wp = []
+    rates_cd_only = []
+    rates_wp_only = []
+    rate_err_all = []
+    rate_err_cd_wp = []
+    rate_err_cd_only = []
+    rate_err_wp_only = []
+
+    bins = np.linspace(0.0, 2.0, 101)
+    centers = 0.5 * (bins[1:] + bins[:-1])
+
+    def fit_rate(dt : np.array):
+        if len(dt) < 10:
+            return 0.0, 0.0
+        
+        times = np.array([d.to_sec() for d in dt])
+        hist, _ = np.histogram(times, bins=bins)
+        err = np.sqrt(hist)
+        
+        mask = hist > 0
+        x_fit = centers[mask]
+        y_fit = hist[mask]
+        y_err = err[mask]
+
+        if len(x_fit) < 3:
+            return 0.0, 0.0
+
+        A0 = np.max(y_fit)
+        lam0 = 1.0 / np.std(times)
+
+        popt, pcov = curve_fit(rate_function, x_fit, y_fit, p0=[A0, lam0], sigma=y_err, absolute_sigma=True)
+        A, lam = popt
+        A_err, lam_err = np.sqrt(np.diag(pcov))
+        return lam, lam_err
+
+    for run in unique_run_ids:
+        print(f"Fitting run {run}")
+        run_id_mask = run_id_muon == run
+        dt_muon_run = dt_muon[run_id_mask]
+        lam, lam_err = fit_rate(dt_muon_run)
+        rates_all.append(lam)
+        rate_err_all.append(lam_err)
+
+        run_id_cd_wp_mask = run_id_muon_cd_wp == run
+        dt_muon_cd_wp_run = dt_muon_cd_wp[run_id_cd_wp_mask]
+        lam, lam_err = fit_rate(dt_muon_cd_wp_run)
+        rates_cd_wp.append(lam)
+        rate_err_cd_wp.append(lam_err)
+
+        run_id_cd_only_mask = run_id_muon_cd_only == run
+        dt_muon_cd_only_run = dt_muon_cd_only[run_id_cd_only_mask]
+        N_mu = len(dt_muon_cd_only_run)
+        livetime_sec = daq_per_run[run].to_sec()
+        lam = N_mu / livetime_sec
+        lam_err = np.sqrt(N_mu) / livetime_sec
+        rates_cd_only.append(lam)
+        rate_err_cd_only.append(lam_err)
+
+        run_id_wp_only_mask = run_id_muon_wp_only == run
+        dt_muon_wp_only_run = dt_muon_wp_only[run_id_wp_only_mask]
+        lam, lam_err = fit_rate(dt_muon_wp_only_run)
+        rates_wp_only.append(lam)
+        rate_err_wp_only.append(lam_err)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.errorbar(unique_run_ids, rates_all, yerr=rate_err_all, fmt="o", color="black", label="All", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
+
+    ax.errorbar(unique_run_ids, rates_cd_wp, yerr=rate_err_cd_wp, fmt="o", color="gold", label="CD+WP", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
+
+    ax.errorbar(unique_run_ids, rates_cd_only, yerr=rate_err_cd_only, fmt="o", color="green", label="CD only", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
+
+    ax.errorbar(unique_run_ids, rates_wp_only, yerr=rate_err_wp_only, fmt="o", color="blue", label="WP only", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
+
+    ax.set_xlabel("Run ID")
+    ax.set_ylabel(r"Muon Rate (Hz)")
+    ax.set_ylim(bottom=0.0, top=10.0)
+
+    ax.minorticks_on()
+    ax.tick_params(direction="in", which="both", top=True, right=True)
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.2)
+
+    ax.legend()
+    fig.tight_layout()
+    
     plt.show()
 
 if __name__ == "__main__":
@@ -585,8 +923,8 @@ if __name__ == "__main__":
     # if args.ibd_analysis:
     #     for filepath in args.ibd_analysis:
     #         ibd_analysis_plot(filepath) # , reprod="ReProd25D", min_run=11049, max_run=12135)
-    # if args.cosmo_shape_analysis:
-    #     for filepath in args.cosmo_shape_analysis:
-    #         cosmo_shape_analysis_plot(filepath)
-    if args.run_info:
-        ibd_rate_plot(args.ibd_analysis[0], args.run_info)
+    if args.cosmo_shape_analysis:
+        for filepath in args.cosmo_shape_analysis:
+             cosmo_shape_analysis_plot(filepath)
+    # if args.run_info:
+    #     analyze_run_info(args.run_info)

@@ -105,7 +105,6 @@ bool AnalysisGroupC::initAnalyses() {
 
     if (!m_daqTimeSaver.init()) return false;
     if (!m_vetoTimeSaver.init()) return false;
-    if (!m_muonInfoSaver.init()) return false;
 
     m_methods = std::vector<std::string>{/* "Oec", */ "OMILREC", "MixedPhase", "OMILREC_JVtx" /* "JVertex" */};
 
@@ -120,10 +119,10 @@ bool AnalysisGroupC::initAnalyses() {
     return true;
 }
 
-void AnalysisGroupC::addTrack(RecTrks& rec_tracks, const std::string& method, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks) {
+void AnalysisGroupC::addTrack(RecTrks& rec_tracks, const std::string& method, double totq_cd, double totq_wp, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks) {
     for (int k = 0; k < rec_tracks.size(); ++k) {
         tracks.push_back(track{
-            method, vec3{rec_tracks.getStart(k)}, vec3{rec_tracks.getEnd(k)}, rec_tracks.getNPE(k), ts, det, rec_tracks.getQuality(k)
+            method, vec3{rec_tracks.getStart(k)}, vec3{rec_tracks.getEnd(k)}, totq_cd, totq_wp, ts, det, rec_tracks.getQuality(k)
         });
     }
 }
@@ -156,7 +155,7 @@ void AnalysisGroupC::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& metho
         vec3 dir = unit(vec3{ttt_evt->Coeff3()[k], ttt_evt->Coeff4()[k], ttt_evt->Coeff5()[k]});
         vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
         tracks.push_back(track{
-            method, ipos, fpos, 0.0, ts, track::loc::tt, ttt_evt->Chi2()[k]
+            method, ipos, fpos, 0.0, 0.0, ts, track::loc::tt, ttt_evt->Chi2()[k]
         });
     }
 }
@@ -193,23 +192,32 @@ int AnalysisGroupC::getTtLayerId(double z) {
 void AnalysisGroupC::addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts) {
     if (!m_ttRecoFile.find(curts)) return;
     
-    if (m_ttRecoFile.NTracks < 1) {
-        LogInfo << "No TT events found\n";
+    if (m_ttRecoFile.NTracks != 1) {
+        LogInfo << "No info or bundle muons reconstructed by the TT\n";
         return;
     }
-    if (m_ttRecoFile.NTracks > 20) {
-        LogWarn << "More than 20 tracks reconstructed by the TT!\n";
+    if (m_ttRecoFile.NPoints[0] < 3) {
+        LogInfo << "Track has less than 3 points\n";
+        return;
+    }
+    std::unordered_set<int> layers_hit;
+    layers_hit.reserve(6);
+    for (int i = 0; i < m_ttRecoFile.NTotPoints; ++i) {
+        int lid = getTtLayerId(m_ttRecoFile.PointZ[i] + 26452.0);
+        if (lid < 0) continue;
+        layers_hit.insert(lid);
+    }
+    if (layers_hit.size() < 3) {
+        LogInfo << "Track is not in three different layers of the TT\n";
+        return;
     }
 
-    for (Int_t k = 0; k < std::min(m_ttRecoFile.NTracks, 20); ++k) {
-        if (m_ttRecoFile.NPoints[k] < 3) continue;
-        vec3 ipos{m_ttRecoFile.Coeff0[k], m_ttRecoFile.Coeff1[k], m_ttRecoFile.Coeff2[k] + 26452.0};
-        vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[k], m_ttRecoFile.Coeff4[k], m_ttRecoFile.Coeff5[k]});
-        vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
-        tracks.push_back(track{
-            "Tt", ipos, fpos, 0.0, curts, track::loc::tt, m_ttRecoFile.Chi2[k]
-        });
-    }
+    vec3 ipos{m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0] + 26452.0};
+    vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
+    vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
+    tracks.push_back(track{
+        "Tt", ipos, fpos, 0.0, 0.0, curts, track::loc::tt, m_ttRecoFile.Chi2[0]
+    });
 }
 
 void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
@@ -375,6 +383,9 @@ bool AnalysisGroupC::execute() {
         bool is_possibly_cd_muon = false;
         bool is_possibly_wp_muon = false;
 
+        evt->run_id = bufwrap.curEvt()->RunID();
+        evt->ts = curts;
+
         if (
             calib.totq >= m_cd_muon_totq_thold && 
             totq_wp >= m_wp_muon_totq_thold && 
@@ -385,7 +396,8 @@ bool AnalysisGroupC::execute() {
             m_wp_last_muon = curts;
             is_possibly_cd_muon = true;
             is_possibly_wp_muon = true;
-            m_muonInfoSaver.add(runId, curts, static_cast<float>(calib.totq), static_cast<float>(totq_wp), track::loc::cd | track::loc::wp);
+            evt->totq_cd = calib.totq;
+            evt->totq_wp = totq_wp;
         }
         else if (
             calib.totq < m_cd_muon_totq_thold && 
@@ -394,7 +406,8 @@ bool AnalysisGroupC::execute() {
         ) {
             m_wp_last_muon = curts;
             is_possibly_wp_muon = true;
-            m_muonInfoSaver.add(runId, curts, 0.0, static_cast<float>(totq_wp), track::loc::wp);
+            evt->totq_cd = 0.0;
+            evt->totq_wp = totq_wp;
         }
         else if (
             calib.totq >= m_cd_muon_totq_thold && 
@@ -403,13 +416,13 @@ bool AnalysisGroupC::execute() {
         ) {
             m_cd_last_muon = curts;
             is_possibly_cd_muon = true;
-            m_muonInfoSaver.add(runId, curts, static_cast<float>(calib.totq), 0.0, track::loc::cd);
+            evt->totq_cd = calib.totq;
+            evt->totq_wp = 0.0;
         }
 
         LogInfo << "Is possibly CD muon: " << is_possibly_cd_muon << ", is possibly WP muon: " << is_possibly_wp_muon << '\n';
 
         std::vector<track> tracks;
-        m_trkSaver.reset();
         if (is_possibly_cd_muon || is_possibly_wp_muon) {
             for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
                 TimeStamp otherts = it->get()->TimeStamp().GetTimeSpec();
@@ -426,10 +439,8 @@ bool AnalysisGroupC::execute() {
                     if (!m_recTool->reconstruct(&rtrks)) {
                         LogWarn << "Could not reconstruct the event with reconstruction tool\n";
                     }
-                    addTrack(rtrks, "CdWpTtChi2", curts, track::loc::cd, tracks);
+                    addTrack(rtrks, "CdWpTtChi2", calib.totq, totq_wp, curts, track::loc::cd, tracks);
                     LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
-                    m_trkSaver.add(rtrks, "CdWpTtChi2", bufwrap.curEvt()->RunID(), curts);
-                    m_trkSaver.add(classify_cdt_hdr, "CdClassify", bufwrap.curEvt()->RunID(), curts);
                 }
                 if (is_possibly_wp_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::WP) {
                     JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(bufwrap.curEvt());
@@ -440,13 +451,11 @@ bool AnalysisGroupC::execute() {
                     // TODO NOT FOR NOW: Add track saver for WpClassify
                 }
             }
+            addTtToTrack(tracks, curts);
             if (tracks.empty()) {
-                tracks.push_back(track{"CdBasic", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, 0.0, curts, track::loc::cd, -1.0});
+                tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib.totq, totq_wp, curts, track::loc::cd, -1.0});
             }
         }
-        m_trkSaver.fill();
-
-        addTtToTrack(tracks, curts);
 
         if (m_tsEvt <= curts) {
             addFeature(tracks, curts, runId);
@@ -502,6 +511,8 @@ bool AnalysisGroupC::execute() {
             return false;
         }
     }
+
+    m_trkSaver.fill(nav);
         
     if (m_vetoTimeSaver.inVeto(m_tsEvt)) return true;
 
@@ -566,7 +577,6 @@ bool AnalysisGroupC::finalize() {
     m_file->cd();
     if (!m_daqTimeSaver.write()) return false;
     if (!m_vetoTimeSaver.write()) return false;
-    if (!m_muonInfoSaver.write()) return false;
     for (std::shared_ptr<Analysis>& ana : m_analyses) {
         if (!ana->write()) return false;
     }

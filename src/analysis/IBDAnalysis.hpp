@@ -83,7 +83,8 @@ private:
     std::vector<double> dirx_mu;
     std::vector<double> diry_mu;
     std::vector<double> dirz_mu;
-    std::vector<double> totq_mu;
+    std::vector<double> totq_cd_mu;
+    std::vector<double> totq_wp_mu;
     std::vector<time_t> sec_mu;
     std::vector<int> nsec_mu;
     std::vector<double> quality_mu;

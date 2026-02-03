@@ -64,7 +64,8 @@ bool IBDAnalysis::initialize() {
     m_tree->Branch("dirx_mu", &dirx_mu);
     m_tree->Branch("diry_mu", &diry_mu);
     m_tree->Branch("dirz_mu", &dirz_mu);
-    m_tree->Branch("totq_mu", &totq_mu);
+    m_tree->Branch("totq_cd_mu", &totq_cd_mu);
+    m_tree->Branch("totq_wp_mu", &totq_wp_mu);
     m_tree->Branch("sec_mu", &sec_mu);
     m_tree->Branch("nsec_mu", &nsec_mu);
     m_tree->Branch("quality_mu", &quality_mu);
@@ -237,7 +238,8 @@ void IBDAnalysis::process(const EventContext::View& events) {
     dirx_mu.clear();
     diry_mu.clear();
     dirz_mu.clear();
-    totq_mu.clear();
+    totq_cd_mu.clear();
+    totq_wp_mu.clear();
     sec_mu.clear();
     nsec_mu.clear();
     quality_mu.clear();
@@ -252,7 +254,8 @@ void IBDAnalysis::process(const EventContext::View& events) {
         dirx_mu.push_back(dir.x);
         diry_mu.push_back(dir.y);
         dirz_mu.push_back(dir.z);
-        totq_mu.push_back(trk.totpe);
+        totq_cd_mu.push_back(trk.totq_cd);
+        totq_wp_mu.push_back(trk.totq_wp);
         sec_mu.push_back(trk.ts.GetSec());
         nsec_mu.push_back(trk.ts.GetNanoSec());
         quality_mu.push_back(trk.quality);

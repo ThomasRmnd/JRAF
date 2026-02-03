@@ -19,7 +19,6 @@ bool Event::load(JM::EvtNavigator* nav) {
         return false;
     }
     run_id = nav->RunID();
-    event_id = nav->EventID();
     ts = TimeStamp{nav->TimeStamp().GetTimeSpec()};
 
     JM::CdLpmtCalibHeader* calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(nav);

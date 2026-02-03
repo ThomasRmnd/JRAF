@@ -19,19 +19,20 @@ struct track {
     std::string method;
     vec3 ipos;
     vec3 fpos;
-    double totpe;
+    double totq_cd;
+    double totq_wp;
     TimeStamp ts;
     loc det;
     double quality;
 
     track(const std::string& method_, const JM::RecTrack& trk_, const TimeStamp& ts_, const loc& det_);
-    track(const std::string& method_, const vec3& ipos_, const vec3& fpos_, double totpe_, const TimeStamp& ts_, const loc& det_, double quality_);
+    track(const std::string& method_, const vec3& ipos_, const vec3& fpos_, double totq_cd_, double totq_wp_, const TimeStamp& ts_, const loc& det_, double quality_);
 
 };
 
 template<class _Char, class _Traits>
 std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& os, const track& trk) {
-    return os << "method: " << trk.method << ", ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totpe: " << trk.totpe << ", ts: " << trk.ts;
+    return os << "method: " << trk.method << ", ipos: " << trk.ipos << ", fpos: " << trk.fpos << ", totq_cd: " << trk.totpe << ", totq_wp: " << trk.totq_wp << ", ts: " << trk.ts;
 }
 
 inline track::loc operator|(const track::loc& lhs, const track::loc& rhs) {

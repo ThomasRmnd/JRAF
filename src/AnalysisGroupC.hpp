@@ -83,6 +83,12 @@ struct DAQTimeSaver {
 
 };
 
+struct VetoWindow {
+    TimeStamp start;
+    TimeStamp end;
+    VetoType type;
+};
+
 struct VetoTimeSaver {
 
     std::unordered_map<VetoType, TimeStamp> veto_map {
@@ -91,6 +97,8 @@ struct VetoTimeSaver {
         {VetoType::BigGaps, TimeStamp{1, 200000000}},
         {VetoType::Muon, TimeStamp{0, 5000000}}
     };
+
+    std::deque<VetoWindow> active_vetoes;
 
     TTree* tree = nullptr;
 
@@ -101,9 +109,6 @@ struct VetoTimeSaver {
     unsigned char veto_type = 0;
     time_t veto_sec = 0l;
     int veto_nsec = 0;
-
-    TimeStamp last_ts{0, 0};
-    TimeStamp veto_duration{0, 0};
 
     bool init() {
         tree = new TTree("Veto", "Veto");
@@ -125,15 +130,19 @@ struct VetoTimeSaver {
         if (it == veto_map.end()) {
             return false;
         }
+
+        TimeStamp duration = it->second;
+        VetoWindow window{ts, ts + duration, type};
+        active_vetoes.push_back(window);
+
         run_id = run;
         sec = ts.GetSec();
         nsec = ts.GetNanoSec();
         veto_type = static_cast<unsigned char>(it->first);
-        last_ts = ts;
-        veto_duration = it->second;
-        veto_sec = veto_duration.GetSec();
-        veto_nsec = veto_duration.GetNanoSec();
+        veto_sec = duration.GetSec();
+        veto_nsec = duration.GetNanoSec();
         tree->Fill();
+        
         return true;
     }
 
@@ -142,6 +151,7 @@ struct VetoTimeSaver {
         if (it == veto_map.end()) {
             return false;
         }
+        
         run_id = run;
         sec = ts.GetSec();
         nsec = ts.GetNanoSec();
@@ -149,60 +159,24 @@ struct VetoTimeSaver {
         veto_sec = it->second.GetSec();
         veto_nsec = it->second.GetNanoSec();
         tree->Fill();
+        
         return true;
     }
 
     bool inVeto(const TimeStamp& ts) {
-        TimeStamp diff = ts - last_ts;
-        if (diff < veto_duration) {
-            return true;
+        cleanupExpired(ts);
+        for (const VetoWindow& veto : active_vetoes) {
+            if (veto.start <= ts && ts < veto.end) {
+                return true;
+            }
         }
         return false;
     }
 
-    bool write() {
-        if (!tree) return false;
-        tree->Write();
-        return true;
-    }
-
-};
-
-struct MuonInfoSaver {
-
-    TTree* tree = nullptr;
-
-    int run_id = 0;
-    time_t sec = 0l;
-    int nsec = 0;
-    float totq_cd;
-    float totq_wp;
-    unsigned char det = 0;
-
-    bool init() {
-        tree = new TTree("MuonInfo", "MuonInfo");
-        if (!tree) {
-            LogError << "Cannot create MuonInfo TTree\n";
-            return false;
+    void cleanupExpired(const TimeStamp& ts) {
+        while (!active_vetoes.empty() && ts >= active_vetoes.front().end) {
+            active_vetoes.pop_front();
         }
-        tree->Branch("run_id", &run_id);
-        tree->Branch("sec", &sec);
-        tree->Branch("nsec", &nsec);
-        tree->Branch("totq_cd", &totq_cd);
-        tree->Branch("totq_wp", &totq_wp);
-        tree->Branch("det", &det);
-        return true;
-    }
-
-    bool add(int run_id_, const TimeStamp& ts_, float totq_cd_, float totq_wp_, const track::loc& loc_) {
-        run_id = run_id_;
-        sec = ts_.GetSec();
-        nsec = ts_.GetNanoSec();
-        totq_cd = totq_cd_;
-        totq_wp = totq_wp_;
-        det = static_cast<unsigned char>(loc_);
-        tree->Fill();
-        return true;
     }
 
     bool write() {
@@ -316,6 +290,8 @@ struct TrackSaver {
     int run_id = 0;
     time_t sec = 0l;
     int nsec = 0;
+    double totq_cd = 0.0;
+    double totq_wp = 0.0;
 
     std::vector<std::string> method;
     std::vector<unsigned char> det;
@@ -336,18 +312,28 @@ struct TrackSaver {
             return true;
         }
         tree = new TTree(treename.c_str(), treename.c_str());
+        if (!tree) {
+            LogError << "Cannot create track TTree\n";
+            return false;
+        }
+        
         tree->Branch("run_id", &run_id);
         tree->Branch("sec", &sec);
         tree->Branch("nsec", &nsec);
+        tree->Branch("totq_cd", &totq_cd);
+        tree->Branch("totq_wp", &totq_wp);
+        
         tree->Branch("method", &method);
         tree->Branch("det", &det);
         tree->Branch("quality", &quality);
+        
         tree->Branch("iposx", &iposx);
         tree->Branch("iposy", &iposy);
         tree->Branch("iposz", &iposz);
         tree->Branch("fposx", &fposx);
         tree->Branch("fposy", &fposy);
         tree->Branch("fposz", &fposz);
+        
         return true;
     }
 
@@ -355,6 +341,8 @@ struct TrackSaver {
         run_id = 0;
         sec = 0l;
         nsec = 0;
+        totq_cd = 0.0;
+        totq_wp = 0.0;
         method.clear();
         det.clear();
         quality.clear();
@@ -366,87 +354,29 @@ struct TrackSaver {
         fposz.clear();
     }
 
-    void add(RecTrks& trks_, const std::string& method_, int run_id_, const TimeStamp& ts_, const track::loc& force_loc = track::loc::none) {
-        run_id = run_id_;
-        sec = ts_.GetSec();
-        nsec = ts_.GetNanoSec();
-        for (int k = 0; k < trks_.size(); ++k) {
-            method.push_back(method_);
-            if (force_loc != track::loc::none) {
-                det.push_back(static_cast<unsigned char>(force_loc));
-            }
-            else {
-                det.push_back((trks_.isCdUsed(k) << 0) | (trks_.isWpUsed(k) << 1) | (trks_.isTtUsed(k) << 2));
-            }
-            quality.push_back(trks_.getQuality(k));
-            iposx.push_back(trks_.getStart(k).X());
-            iposy.push_back(trks_.getStart(k).Y());
-            iposz.push_back(trks_.getStart(k).Z());
-            fposx.push_back(trks_.getEnd(k).X());
-            fposy.push_back(trks_.getEnd(k).Y());
-            fposz.push_back(trks_.getEnd(k).Z());
+    void fill(JM::EvtNavigator* nav) {
+        if (!tree) return;
+        std::shared_ptr<Event> evt = EventCache::load(nav);
+        if (evt->tracks.empty()) return;
+        reset();
+        run_id = evt->run_id;
+        sec = evt->ts.GetSec();
+        nsec = evt->ts.GetNanoSec();
+        totq_cd = evt->totq_cd;
+        totq_wp = evt->totq_wp;
+        for (const track& t : evt->tracks) {
+            method.push_back(t.method);
+            det.push_back(static_cast<unsigned char>(t.det));
+            quality.push_back(t.quality);
+            iposx.push_back(t.ipos.x);
+            iposy.push_back(t.ipos.y);
+            iposz.push_back(t.ipos.z);
+            fposx.push_back(t.fpos.x);
+            fposy.push_back(t.fpos.y);
+            fposz.push_back(t.fpos.z);
         }
-    }
-    
-    void add(JM::CdTrackRecHeader* cdt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
-        if (!cdt_hdr || !cdt_hdr->event()) return;
-        const std::vector<JM::RecTrack*>& rec_tracks = cdt_hdr->event()->tracks();
-        run_id = run_id_;
-        sec = ts_.GetSec();
-        nsec = ts_.GetNanoSec();
-        for (JM::RecTrack* t : rec_tracks) {
-            method.push_back(method_);
-            det.push_back(0b001);
-            quality.push_back(t->quality());
-            iposx.push_back(t->start().x());
-            iposy.push_back(t->start().y());
-            iposz.push_back(t->start().z());
-            fposx.push_back(t->end().x());
-            fposy.push_back(t->end().y());
-            fposz.push_back(t->end().z());
-        }
-    }
-
-    void add(JM::WpRecHeader* wpt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
-        if (!wpt_hdr || !wpt_hdr->event()) return;
-        const std::vector<JM::RecTrack*>& rec_tracks = wpt_hdr->event()->tracks();
-        run_id = run_id_;
-        sec = ts_.GetSec();
-        nsec = ts_.GetNanoSec();
-        for (JM::RecTrack* t : rec_tracks) {
-            method.push_back(method_);
-            det.push_back(0b010);
-            quality.push_back(t->quality());
-            iposx.push_back(t->start().x());
-            iposy.push_back(t->start().y());
-            iposz.push_back(t->start().z());
-            fposx.push_back(t->end().x());
-            fposy.push_back(t->end().y());
-            fposz.push_back(t->end().z());
-        }
-    }
-
-    void add(JM::TtRecHeader* ttt_hdr, const std::string& method_, int run_id_, const TimeStamp& ts_) {
-        if (!ttt_hdr || !ttt_hdr->event()) return;
-        JM::TtRecEvt* ttt_evt = ttt_hdr->event();
-        for (int k = 0; k < ttt_evt->nTracks(); ++k) {
-            vec3 ipos{ttt_evt->Coeff0()[k], ttt_evt->Coeff1()[k], ttt_evt->Coeff2()[k]};
-            vec3 dir = unit(vec3{ttt_evt->Coeff3()[k], ttt_evt->Coeff4()[k], ttt_evt->Coeff5()[k]});
-            vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
-            method.push_back(method_);
-            det.push_back(0b100);
-            quality.push_back(ttt_evt->Chi2()[k]);
-            iposx.push_back(ipos.x);
-            iposy.push_back(ipos.y);
-            iposz.push_back(ipos.z);
-            fposx.push_back(fpos.x);
-            fposy.push_back(fpos.y);
-            fposz.push_back(fpos.z);
-        }
-    }
-
-    void fill() {
-        if (tree && !method.empty()) tree->Fill();
+        if (method.empty()) return;
+        tree->Fill();
     }
 
     bool save() {
@@ -635,7 +565,6 @@ private:
     TFile* m_file;
     DAQTimeSaver m_daqTimeSaver;
     VetoTimeSaver m_vetoTimeSaver;
-    MuonInfoSaver m_muonInfoSaver;
     std::vector<std::string> m_methods;
     std::vector<std::shared_ptr<Analysis>> m_analyses;
 
@@ -651,7 +580,7 @@ private:
     void addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts);
     void addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id);
 
-    void addTrack(RecTrks& rec_tracks, const std::string& method, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks);
+    void addTrack(RecTrks& rec_tracks, const std::string& method, double totq_cd, double totq_wp, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks);
     void addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
     void addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
     void addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
