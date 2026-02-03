@@ -18,8 +18,8 @@ int fit_and_plot_rate(TH1D* h) {
     h->SetLineWidth(3);
     h->GetXaxis()->SetMaxDigits(3);
     h->GetYaxis()->SetMaxDigits(3);
-    h->GetXaxis()->Center(true);
-    h->GetYaxis()->Center(true);
+    h->GetXaxis()->CenterTitle(true);
+    h->GetYaxis()->CenterTitle(true);
     h->GetYaxis()->SetTitleOffset(1.25);
     h->Draw();
     f->SetLineColor(kRed);
