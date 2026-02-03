@@ -105,6 +105,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
 
     std::vector<VertexCorrelationSelection> spa_neu_cut;
     for (const vertex& neu : events.vertices()) {
+        if (!prompt_energy_cut.isIn(neu)) continue;
         bool is_in_veto = false;
         for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
             if (!cut.isIn(neu)) continue;
@@ -112,8 +113,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
             break;
         }
         if (!is_in_veto) continue;
-        if (!prompt_energy_cut.isIn(neu)) continue;
-        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{-2000000000} /* TimeStamp{0, 0} */, TimeStamp{2000000000});
+        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{0, -2000000000} /* TimeStamp{0, 0} */, TimeStamp{0, 2000000000});
     }
 
     std::vector<ibd_info> ibds;
