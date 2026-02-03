@@ -41,6 +41,8 @@ int fit_and_plot_rate(TH1D* h) {
     c->SetTicky();
     c->SetGrid();
     c->Update();
+
+    return 0;
 }
 
 int fast_muon_rate_estimation(const char* filepath) {
