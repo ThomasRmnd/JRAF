@@ -4,6 +4,14 @@
 #include <TTimeStamp.h>
 #include <TTree.h>
 
+double get_quantile(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last, double quantile) {
+    if (first == last) return 0.0;
+    std::vector<double> v(first, last);
+    std::vector<double>::iterator position = v.begin() + quantile * v.size();
+    std::nth_element(v.begin(), position, v.end());
+    return *position;
+}
+
 int fast_muon_reconstruction_comparison(const char* filepath) {
     TFile* file = TFile::Open(filepath, "READ");
     if (!file) {
@@ -44,6 +52,9 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     TH1D* h_angle = new TH1D("h_angle", "Angle between tracks direction;#alpha (deg);Entries;", 25, 0.0, 5.0);
     TH1D* h_distance = new TH1D("h_distance", "Distance between tracks middle point;d_{mid} (m);Entries;", 25, 0.0, 2.0);
 
+    std::vector<double> angles;
+    std::vector<double> distances;
+
     long nentries = tree->GetEntries();
     for (long k = 0l; k < nentries; ++k) {
         tree->GetEntry(k);
@@ -77,7 +88,14 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         double distance = (mpos_cdwptt - mpos_tt).Mag();
         h_angle->Fill(angle * 180.0 / TMath::Pi());
         h_distance->Fill(distance / 1000.0);
+        angles.push_back(angle);
+        distances.push_back(distance);
     }
+
+    std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) * 180.0 / TMath::Pi() << '\n';
+    std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) * 180.0 / TMath::Pi() << '\n';
+    std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) / 1000.0 << '\n';
+    std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) / 1000.0 << '\n';
 
     TCanvas* c_angle = new TCanvas("c_angle", "Angle between tracks direction", 1000, 1000);
     c_angle->cd();
