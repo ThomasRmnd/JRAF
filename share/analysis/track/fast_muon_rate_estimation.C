@@ -65,7 +65,7 @@ int fast_muon_rate_estimation(const char* filepath) {
     std::vector<std::string> *method = nullptr;
     std::vector<unsigned char> *det = nullptr;
     std::vector<double> *quality = nullptr;
-    std::vector<double> *iposx = nullptr, *iposy = nullptr, *iposz = nullptr, 
+    std::vector<double> *iposx = nullptr, *iposy = nullptr, *iposz = nullptr; 
     std::vector<double> *fposx = nullptr, *fposy = nullptr, *fposz = nullptr;
     tree->SetBranchAddress("run_id", &run_id);
     tree->SetBranchAddress("sec", &sec);
