@@ -102,7 +102,7 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         TVector3 dir_tt = (fpos_tt - ipos_tt).Unit();
         TVector3 mpos_tt = (ipos_tt + fpos_tt) * 0.5;
 
-        // if (mpos_tt.Mag() > 17700.0) continue;
+        if (mpos_tt.Mag() > 17700.0) continue;
 
         for (const auto& [key, val] : track_method_map) {
             if (key == "Tt") continue;
