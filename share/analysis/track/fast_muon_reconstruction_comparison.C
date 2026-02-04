@@ -68,8 +68,8 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     tree->SetBranchAddress("run_id", &run_id);
     tree->SetBranchAddress("sec", &sec);
     tree->SetBranchAddress("nsec", &nsec);
-    tree->SetBranchAddress("totq_cd", &totq_cd);
-    tree->SetBranchAddress("totq_wp", &totq_wp);
+    // tree->SetBranchAddress("totq_cd", &totq_cd);
+    // tree->SetBranchAddress("totq_wp", &totq_wp);
     tree->SetBranchAddress("method", &method);
     tree->SetBranchAddress("det", &det);
     tree->SetBranchAddress("quality", &quality);
