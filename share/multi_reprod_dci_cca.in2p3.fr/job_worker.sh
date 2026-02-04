@@ -240,8 +240,8 @@ resolve_output_paths() {
         run_bucket="${BASH_REMATCH[3]}"
         run_group="${BASH_REMATCH[4]}"
         run_number="${BASH_REMATCH[5]}"
-        output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
-        reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis_newcode/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction_newcode/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
         # feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
     else
         log ERROR "Unrecognized ReProd path format: $input_reprod_file"

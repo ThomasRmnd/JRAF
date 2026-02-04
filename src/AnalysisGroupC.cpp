@@ -295,7 +295,7 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
 
     for (const PmtProp& pmt : m_pmtTable) {
         if (!pmt.used) continue;
-        if ( ( (pmt.type & PmtType::PMT_20INCH) != pmt.type ) && ( (pmt.type & PmtType::PMT_WP) != pmt.type ) ) continue;
+        if ( (pmt.loc != 1 && pmt.loc != 2) || pmt.type != Pmttype::_PMTINCH20 ) continue;
         m_featureSaver.id.push_back(pmt.pmtid);
         m_featureSaver.fht.push_back(pmt.fht);
         m_featureSaver.totq.push_back(pmt.q);
@@ -337,7 +337,8 @@ bool AnalysisGroupC::execute() {
 
         std::shared_ptr<Event> evt = std::make_shared<Event>();
 
-        if (!m_loader->load(&bufwrap)) return false;
+        LoadingResult loadres = m_loader->load(&bufwrap);
+        if (!loadres.ok) return false;
 
         TimeStamp curts{bufwrap.curEvt()->TimeStamp().GetTimeSpec()};
 
@@ -345,7 +346,7 @@ bool AnalysisGroupC::execute() {
         double totq_wp = 0.0;
         for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
             if (!it->used) continue;
-            if ( (it->type & PmtType::PMT_20INCH) == it->type ) {
+            if ( it->loc == 1 && it->type == Pmttype::_PMTINCH20 ) {
                 calib.totq += it->q;
                 calib.meant += it->fht;
                 ++calib.npmt;
@@ -353,7 +354,7 @@ bool AnalysisGroupC::execute() {
                 if (it->q < calib.minq) calib.minq = it->q;
                 if (it->q > calib.maxq) calib.maxq = it->q;
             }
-            else if ( (it->type & PmtType::PMT_WP) == it->type ) {
+            else if ( it->loc == 2 && it->type == Pmttype::_PMTINCH20 ) {
                 totq_wp += it->q;
             }
         }
@@ -367,7 +368,7 @@ bool AnalysisGroupC::execute() {
         double sqhit = 0.0;
         for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
             if (!it->used) continue;
-            if ( (it->type & PmtType::PMT_20INCH) != it->type ) continue;
+            if ( it->loc == 1 && it->type == Pmttype::_PMTINCH20 ) continue;
             sqq += (it->q - calib.meanq) * (it->q - calib.meanq);
             sqt += (it->fht - calib.meant) * (it->fht - calib.meant);
             sqhit += (static_cast<double>(it->hittime.size()) - calib.meanhit) * (static_cast<double>(it->hittime.size()) - calib.meanhit);
