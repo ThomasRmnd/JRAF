@@ -12,19 +12,29 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
     return *position;
 }
 
-void plot_metrics(TH1D* h) {
+void plot_metrics(std::vector<TH1D*> hists) {
+    std::vector<Color_t> colors = {kBlack, kGreen, kPurple};
     TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), "Metric", 1000, 1000);
     c->cd();
 
-    h->SetStats(0);
-    h->SetLineColor(kBlue);
-    h->SetLineWidth(3);
-    h->GetXaxis()->SetMaxDigits(3);
-    h->GetYaxis()->SetMaxDigits(3);
-    h->GetXaxis()->CenterTitle(true);
-    h->GetYaxis()->CenterTitle(true);
-    h->GetYaxis()->SetTitleOffset(1.25);
-    h->Draw();
+    for (std::size_t i = 0ul; i < hists.size(); ++i) {
+        TH1D* h = hists[i];
+        
+        h->SetStats(0);
+        h->SetLineColor(colors[i]);
+        h->SetLineWidth(3);
+        h->GetXaxis()->SetMaxDigits(3);
+        h->GetYaxis()->SetMaxDigits(3);
+        h->GetXaxis()->CenterTitle(true);
+        h->GetYaxis()->CenterTitle(true);
+        h->GetYaxis()->SetTitleOffset(1.25);
+        if (i == 0) {
+            h->Draw();
+        }
+        else {
+            h->Draw("SAME");
+        }
+    };
 
     c->SetTickx();
     c->SetTicky();
@@ -129,12 +139,8 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
     std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
-    plot_metrics(method_angle_map["CdWpTtChi2"]);
-    plot_metrics(method_angle_map["CdClassify"]);
-    plot_metrics(method_angle_map["WpBasic"]);
-    plot_metrics(method_distance_map["CdWpTtChi2"]);
-    plot_metrics(method_distance_map["CdClassify"]);
-    plot_metrics(method_distance_map["WpBasic"]);
+    plot_metrics(method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"]);
+    plot_metrics(method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"]);
 
     return 0;
 }
