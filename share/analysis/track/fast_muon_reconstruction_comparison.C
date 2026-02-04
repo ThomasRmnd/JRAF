@@ -105,6 +105,7 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         if (mpos_tt.Mag() > 17700.0) continue;
 
         for (const auto& [key, val] : track_method_map) {
+            if (key == "Tt") continue;
             for (std::vector<std::size_t>::const_iterator it = val.begin(); it != val.end(); ++it) {
                 TVector3 ipos_cdwptt((*iposx)[*it], (*iposy)[*it], (*iposz)[*it]);
                 TVector3 fpos_cdwptt((*fposx)[*it], (*fposy)[*it], (*fposz)[*it]);
