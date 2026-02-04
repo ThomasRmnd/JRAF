@@ -12,6 +12,26 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
     return *position;
 }
 
+void plot_metrics(TH1D* h) {
+    TCanvas* c = new TCanvas(Form("c_%s", h->GetName()), "Metric", 1000, 1000);
+    c->cd();
+
+    h->SetStats(0);
+    h->SetLineColor(kBlue);
+    h->SetLineWidth(3);
+    h->GetXaxis()->SetMaxDigits(3);
+    h->GetYaxis()->SetMaxDigits(3);
+    h->GetXaxis()->CenterTitle(true);
+    h->GetYaxis()->CenterTitle(true);
+    h->GetYaxis()->SetTitleOffset(1.25);
+    h->Draw();
+
+    c->SetTickx();
+    c->SetTicky();
+    c->SetGrid();
+    c->Update();
+}
+
 int fast_muon_reconstruction_comparison(const char* filepath) {
     TFile* file = TFile::Open(filepath, "READ");
     if (!file) {
@@ -49,8 +69,15 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     tree->SetBranchAddress("fposy", &fposy);
     tree->SetBranchAddress("fposz", &fposz);
 
-    TH1D* h_angle = new TH1D("h_angle", "Angle between tracks direction;#alpha (deg);Entries;", 25, 0.0, 5.0);
-    TH1D* h_distance = new TH1D("h_distance", "Distance between tracks middle point;d_{mid} (m);Entries;", 25, 0.0, 2.0);
+    std::map<std::string, TH1D*> method_angle_map;
+    std::map<std::string, TH1D*> method_distance_map;
+
+    method_angle_map["CdWpTtChi2"] = new TH1D("h_angle_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);#alpha (deg);Entries;", 25, 0.0, 5.0);
+    method_distance_map["CdWpTtChi2"] = new TH1D("h_distance_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);d_{mid} (m);Entries;", 25, 0.0, 2.0);
+    method_angle_map["CdClassify"] = new TH1D("h_angle_cdclassify", "Angle between tracks direction (CdClassify);#alpha (deg);Entries;", 25, 0.0, 5.0);
+    method_distance_map["CdClassify"] = new TH1D("h_distance_cdclassify", "Distance between tracks middle point (CdClassify);d_{mid} (m);Entries;", 25, 0.0, 2.0);
+    method_angle_map["WpBasic"] = new TH1D("h_angle_wpclassify", "Angle between tracks direction (WpClassify);#alpha (deg);Entries;", 25, 0.0, 5.0);
+    method_distance_map["WpBasic"] = new TH1D("h_distance_wpclassify", "Distance between tracks middle point (WpClassify);d_{mid} (m);Entries;", 25, 0.0, 2.0);
 
     std::vector<double> angles;
     std::vector<double> distances;
@@ -58,39 +85,41 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     long nentries = tree->GetEntries();
     for (long k = 0l; k < nentries; ++k) {
         tree->GetEntry(k);
-        bool found_cdwptt = false, found_tt = false;
-        std::size_t k_cdwptt = 0ul, k_tt = 0ul;
-        std::size_t n_cdclassify = 0ul;
+        std::map<std::string, std::vector<std::size_t>> track_method_map;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
-            if ((*method)[i] == "CdWpTtChi2") {
-                k_cdwptt = i;
-                found_cdwptt = true;
-            }
-            else if ((*method)[i] == "Tt") {
-                k_tt = i;
-                found_tt = true;
-            }
-            else if ((*method)[i] == "CdClassify") {
-                ++n_cdclassify;
+            track_method_map[(*method)[i]].push_back(i);
+        }
+        if (track_method_map.find("CdWpTtChi2") == track_method_map.end()) continue;
+        if (track_method_map.find("CdClassify") == track_method_map.end()) continue;
+        if (track_method_map.find("Tt") == track_method_map.end()) continue;
+
+        if (track_method_map["Tt"].size() != 1) continue;
+        if (track_method_map["CdClassify"].size() != 1) continue;
+
+        TVector3 ipos_tt((*iposx)[k_tt], (*iposy)[k_tt], (*iposz)[k_tt]);
+        TVector3 fpos_tt((*fposx)[k_tt], (*fposy)[k_tt], (*fposz)[k_tt]);
+        TVector3 dir_tt = (fpos_tt - ipos_tt).Unit();
+        TVector3 mpos_tt = (ipos_tt + fpos_tt) * 0.5;
+
+        if (mpos_tt.Mag() > 17700.0) continue;
+
+        for (const auto& [key, val] : track_method_map) {
+            for (std::vector<std::size_t>::const_iterator it = val.begin(); it != val.end(); ++it) {
+                TVector3 ipos_cdwptt((*iposx)[*it], (*iposy)[*it], (*iposz)[*it]);
+                TVector3 fpos_cdwptt((*fposx)[*it], (*fposy)[*it], (*fposz)[*it]);
+                TVector3 dir_cdwptt = (fpos_cdwptt - ipos_cdwptt).Unit();
+                TVector3 mpos_cdwptt = (ipos_cdwptt + fpos_cdwptt) * 0.5;
+
+                double angle = dir_cdwptt.Angle(dir_tt) * 180.0 / TMath::Pi();
+                double distance = (mpos_cdwptt - mpos_tt).Mag() / 1000.0;
+                method_angle_map[key]->Fill(angle);
+                method_distance_map[key]->Fill(distance);
+                if (key == "CdWpTtChi2") {
+                    angles.push_back(angle);
+                    distances.push_back(distance);
+                }
             }
         }
-        if (!found_cdwptt || !found_tt) continue;
-        if (n_cdclassify != 1) continue;
-        TVector3 ipos_cdwptt((*iposx)[k_cdwptt], (*iposy)[k_cdwptt], (*iposz)[k_cdwptt]);
-        TVector3 ipos_tt((*iposx)[k_tt], (*iposy)[k_tt], (*iposz)[k_tt]);
-        TVector3 fpos_cdwptt((*fposx)[k_cdwptt], (*fposy)[k_cdwptt], (*fposz)[k_cdwptt]);
-        TVector3 fpos_tt((*fposx)[k_tt], (*fposy)[k_tt], (*fposz)[k_tt]);
-        TVector3 dir_cdwptt = (fpos_cdwptt - ipos_cdwptt).Unit();
-        TVector3 dir_tt = (fpos_tt - ipos_tt).Unit();
-        TVector3 mpos_cdwptt = (ipos_cdwptt + fpos_cdwptt) * 0.5;
-        TVector3 mpos_tt = (ipos_tt + fpos_tt) * 0.5;
-        if (mpos_tt.Mag() > 17700.0) continue;
-        double angle = dir_cdwptt.Angle(dir_tt);
-        double distance = (mpos_cdwptt - mpos_tt).Mag();
-        h_angle->Fill(angle * 180.0 / TMath::Pi());
-        h_distance->Fill(distance / 1000.0);
-        angles.push_back(angle);
-        distances.push_back(distance);
     }
 
     std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) * 180.0 / TMath::Pi() << '\n';
@@ -98,41 +127,12 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) / 1000.0 << '\n';
     std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) / 1000.0 << '\n';
 
-    TCanvas* c_angle = new TCanvas("c_angle", "Angle between tracks direction", 1000, 1000);
-    c_angle->cd();
-
-    h_angle->SetStats(0);
-    h_angle->SetLineColor(kBlue);
-    h_angle->SetLineWidth(3);
-    h_angle->GetXaxis()->SetMaxDigits(3);
-    h_angle->GetYaxis()->SetMaxDigits(3);
-    h_angle->GetXaxis()->CenterTitle(true);
-    h_angle->GetYaxis()->CenterTitle(true);
-    h_angle->GetYaxis()->SetTitleOffset(1.25);
-    h_angle->Draw();
-
-    c_angle->SetTickx();
-    c_angle->SetTicky();
-    c_angle->SetGrid();
-    c_angle->Update();
-
-    TCanvas* c_distance = new TCanvas("c_distance", "Distance between tracks middle point", 1000, 1000);
-    c_distance->cd();
-
-    h_distance->SetStats(0);
-    h_distance->SetLineColor(kBlue);
-    h_distance->SetLineWidth(3);
-    h_distance->GetXaxis()->SetMaxDigits(3);
-    h_distance->GetYaxis()->SetMaxDigits(3);
-    h_distance->GetXaxis()->CenterTitle(true);
-    h_distance->GetYaxis()->CenterTitle(true);
-    h_distance->GetYaxis()->SetTitleOffset(1.25);
-    h_distance->Draw();
-
-    c_distance->SetTickx();
-    c_distance->SetTicky();
-    c_distance->SetGrid();
-    c_distance->Update();
+    plot_metrics(method_angle_map["CdWpTtChi2"]);
+    plot_metrics(method_angle_map["CdClassify"]);
+    plot_metrics(method_angle_map["WpClassify"]);
+    plot_metrics(method_distance_map["CdWpTtChi2"]);
+    plot_metrics(method_distance_map["CdClassify"]);
+    plot_metrics(method_distance_map["WpClassify"]);
 
     return 0;
 }
