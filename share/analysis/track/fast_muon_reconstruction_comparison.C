@@ -96,6 +96,7 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         if (track_method_map["Tt"].size() != 1) continue;
         if (track_method_map["CdClassify"].size() != 1) continue;
 
+        std::size_t k_tt = track_method_map["Tt"][0];
         TVector3 ipos_tt((*iposx)[k_tt], (*iposy)[k_tt], (*iposz)[k_tt]);
         TVector3 fpos_tt((*fposx)[k_tt], (*fposy)[k_tt], (*fposz)[k_tt]);
         TVector3 dir_tt = (fpos_tt - ipos_tt).Unit();
