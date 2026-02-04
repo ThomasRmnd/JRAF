@@ -107,13 +107,13 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         for (const auto& [key, val] : track_method_map) {
             if (key == "Tt") continue;
             for (std::vector<std::size_t>::const_iterator it = val.begin(); it != val.end(); ++it) {
-                TVector3 ipos_cdwptt((*iposx)[*it], (*iposy)[*it], (*iposz)[*it]);
-                TVector3 fpos_cdwptt((*fposx)[*it], (*fposy)[*it], (*fposz)[*it]);
-                TVector3 dir_cdwptt = (fpos_cdwptt - ipos_cdwptt).Unit();
-                TVector3 mpos_cdwptt = (ipos_cdwptt + fpos_cdwptt) * 0.5;
+                TVector3 ipos((*iposx)[*it], (*iposy)[*it], (*iposz)[*it]);
+                TVector3 fpos((*fposx)[*it], (*fposy)[*it], (*fposz)[*it]);
+                TVector3 dir = (fpos - ipos).Unit();
+                TVector3 mpos = (ipos + fpos) * 0.5;
 
-                double angle = dir_cdwptt.Angle(dir_tt) * 180.0 / TMath::Pi();
-                double distance = (mpos_cdwptt - mpos_tt).Mag() / 1000.0;
+                double angle = dir.Angle(dir_tt) * 180.0 / TMath::Pi();
+                double distance = (mpos - mpos_tt).Mag() / 1000.0;
                 method_angle_map[key]->Fill(angle);
                 method_distance_map[key]->Fill(distance);
                 if (key == "CdWpTtChi2") {
@@ -131,10 +131,10 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
 
     plot_metrics(method_angle_map["CdWpTtChi2"]);
     plot_metrics(method_angle_map["CdClassify"]);
-    plot_metrics(method_angle_map["WpClassify"]);
+    plot_metrics(method_angle_map["WpBasic"]);
     plot_metrics(method_distance_map["CdWpTtChi2"]);
     plot_metrics(method_distance_map["CdClassify"]);
-    plot_metrics(method_distance_map["WpClassify"]);
+    plot_metrics(method_distance_map["WpBasic"]);
 
     return 0;
 }
