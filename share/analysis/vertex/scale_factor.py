@@ -32,12 +32,26 @@ for i in range(ninputs):
     timestamps = []
     factors = []
     with open(args.input[i], 'r') as f:
+        next(f, None) 
+        
         for line in f:
-            timestamp, factor = line.strip().split(',')
-            timestamps.append(datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S'))
-            factors.append(float(factor))
+            parts = line.strip().split(',')
+            if len(parts) < 2: continue
+            
+            raw_ts, factor = parts
+            try:
+                if raw_ts.isdigit() or (raw_ts.replace('.', '', 1).isdigit()):
+                    ts_obj = datetime.fromtimestamp(float(raw_ts))
+                else:
+                    ts_obj = datetime.strptime(raw_ts, '%Y-%m-%d %H:%M:%S')
+                
+                timestamps.append(ts_obj)
+                factors.append(float(factor))
+            except ValueError as e:
+                print(f"Skipping malformed line: {line.strip()} ({e})")
 
-    ax.plot(timestamps, factors, color=colors[args.label[i]], label=args.label[i], linewidth=1.5)
+    plot_color = colors.get(args.label[i], "black")
+    ax.plot(timestamps, factors, color=plot_color, label=args.label[i], linewidth=1.5)
 
 ax.set_ylabel("Time Correction Factor", fontsize=12)
 ax.legend(loc='lower left', frameon=False)
