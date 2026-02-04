@@ -173,7 +173,7 @@ do_hadd() {
         return
     fi
 
-    local files=("$run_dir"/*.root)
+    local files=($(printf "%s\n" "$run_dir"/*.root | sort -V))
     local n_files=${#files[@]}
     if (( n_files == 0 )); then
         log WARN "No ROOT files to merge for run $run"
