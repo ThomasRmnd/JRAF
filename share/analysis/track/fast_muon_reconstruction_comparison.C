@@ -124,10 +124,10 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
         }
     }
 
-    std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) * 180.0 / TMath::Pi() << '\n';
-    std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) * 180.0 / TMath::Pi() << '\n';
-    std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) / 1000.0 << '\n';
-    std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) / 1000.0 << '\n';
+    std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) << '\n';
+    std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) << '\n';
+    std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
+    std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
     plot_metrics(method_angle_map["CdWpTtChi2"]);
     plot_metrics(method_angle_map["CdClassify"]);
