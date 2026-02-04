@@ -14,7 +14,7 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
 
 void plot_metrics(std::vector<TH1D*> hists) {
     if (hists.empty()) return;
-    std::vector<Color_t> colors = {kBlack, kGreen, kPurple};
+    std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet};
     TCanvas* c = new TCanvas(Form("c_%s", hists[0]->GetName()), "Metric", 1000, 1000);
     c->cd();
 
