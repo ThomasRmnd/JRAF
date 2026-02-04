@@ -375,7 +375,7 @@ main() {
     indices_to_process=($(printf "%s\n" "${indices_to_process[@]}" | sort -n))
     log INFO "Files to process: ${indices_to_process[*]}"
 
-    source /pbs/home/t/traymond/J25.6.1_Modified/git_junosw_J25_load.sh
+    source /pbs/home/t/traymond/J25.7.2/git_junosw_load_J25_7_2.sh
     log INFO "Environment loaded (TUTORIALROOT=${TUTORIALROOT})"
     log INFO "Temporary directory: ${TMPDIR}"
 
