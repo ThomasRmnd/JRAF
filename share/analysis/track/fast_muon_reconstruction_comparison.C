@@ -139,8 +139,8 @@ int fast_muon_reconstruction_comparison(const char* filepath) {
     std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
     std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
-    plot_metrics(method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"]);
-    plot_metrics(method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"]);
+    plot_metrics({method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"]});
+    plot_metrics({method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"]});
 
     return 0;
 }
