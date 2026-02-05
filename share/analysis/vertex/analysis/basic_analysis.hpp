@@ -2,6 +2,7 @@
 #define ANALYSIS_BASIC_ANALYSIS_HPP_
 
 #include "analysis/analysis.hpp"
+#include "utils/scale_factor.hpp"
 
 class basic_analysis : public analysis_base {
 
@@ -14,6 +15,10 @@ public:
         m_nav = navigator_manager::retrieve<basic_navigator>(filepath, treename);
         if (!m_nav->is_valid()) {
             std::cerr << "Cannot retrieve navigator of filepath " << filepath << " and treename " << treename << '\n';
+            return;
+        }
+        if (!m_gtc.load()) {
+            std::cerr << "Cannot load global time corrector\n";
             return;
         }
     }
@@ -31,6 +36,8 @@ public:
 protected:
 
     std::shared_ptr<basic_navigator> m_nav;
+
+    GlobalTimeCorrector m_gtc;
 
 };
 
