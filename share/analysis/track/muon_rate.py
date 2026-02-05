@@ -113,7 +113,6 @@ def calculate_muon_rate(filepath : str):
     ]
     data = tree.arrays(branches, library="np")
 
-    print(np.bitwise_and(data["det"], 1) == 1)
     print(np.array([np.any((arr & 1) == 1) for arr in data["det"]]))
 
     return True
