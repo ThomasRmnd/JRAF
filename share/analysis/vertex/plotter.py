@@ -138,12 +138,13 @@ class BasePlotter:
         if self.ylim: ax.set_ylim(bottom=self.ylim[0], top=self.ylim[1])
 
 class Histogram1DPlotter(BasePlotter):
-    def __init__(self, bins, **kwargs):
+    def __init__(self, bins, force_not_diff=False, **kwargs):
         super().__init__(**kwargs)
         self.bins = bins
         self.centers = 0.5 * (self.bins[1:] + self.bins[:-1])
         self.widths = self.bins[1:] - self.bins[:-1]
         self.datasets = []
+        self.force_not_diff = force_not_diff
 
     def add(self, data, linecolor, fillcolor=None, label=None):
         hist, _ = np.histogram(data, bins=self.bins)
@@ -160,7 +161,9 @@ class Histogram1DPlotter(BasePlotter):
         
         for d in self.datasets:
             self._draw_dataset(ax, d)
-        self._maybe_plot_diff(ax)
+        
+        if not self.force_not_diff:
+            self._maybe_plot_diff(ax)
 
         self.apply_style(ax)
         self._maybe_fit(ax)
@@ -172,7 +175,7 @@ class Histogram1DPlotter(BasePlotter):
         fig.show()
 
     def _draw_dataset(self, ax, d):
-        linestyle = ":" if len(self.datasets) == 2 else "-"
+        linestyle = ":" if len(self.datasets) == 2 and not self.force_not_diff else "-"
         if d["fillcolor"]:
             ax.fill_between(
                 self.bins, np.r_[d["hist"], d["hist"][-1]], 
@@ -212,18 +215,20 @@ class Histogram1DPlotter(BasePlotter):
         )
 
 class PromptEnergyPlotter(Histogram1DPlotter):
-    def __init__(self, binmode="nmo"):
+    def __init__(self, binmode="nmo", **kwargs):
         bins = nmo_analysis_bins() if binmode == "nmo" else np.linspace(0, 12, 51)
         super().__init__(
             bins=bins, 
-            xlabel=r"$E_{p}$ (MeV)", ylabel="Entries", xlim=(0, 12.5)
+            xlabel=r"$E_{p}$ (MeV)", ylabel="Entries", xlim=(0, 12.5),
+            **kwargs
         )
 
 class DelayedEnergyPlotter(Histogram1DPlotter):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             bins=np.linspace(2.0, 2.5, 51), 
-            xlabel=r"$E_{d}$ (MeV)", ylabel="Entries", xlim=(1.98, 2.52)
+            xlabel=r"$E_{d}$ (MeV)", ylabel="Entries", xlim=(1.98, 2.52),
+            **kwargs
         )
 
     def _maybe_fit(self, ax):
@@ -282,10 +287,11 @@ class DelayedEnergyPlotter(Histogram1DPlotter):
         )
 
 class PromptDelayedTimePlotter(Histogram1DPlotter):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             bins=np.linspace(0.0, 1.0, 51), 
-            xlabel=r"$\Delta t_{p-d}$ (ms)", ylabel="Entries", xlim=(0, 1.02)
+            xlabel=r"$\Delta t_{p-d}$ (ms)", ylabel="Entries", xlim=(0, 1.02),
+            **kwargs
         )
 
     def _maybe_fit(self, ax):
@@ -346,10 +352,11 @@ class PromptDelayedTimePlotter(Histogram1DPlotter):
         )
 
 class PromptDelayedDistancePlotter(Histogram1DPlotter):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             bins=np.linspace(0.0, 1.5, 51), 
-            xlabel=r"$\Delta r_{p-d}$ (m)", ylabel="Entries", xlim=(0, 1.55)
+            xlabel=r"$\Delta r_{p-d}$ (m)", ylabel="Entries", xlim=(0, 1.55),
+            **kwargs
         )
 
 class SpatialDistributionPlotter:
