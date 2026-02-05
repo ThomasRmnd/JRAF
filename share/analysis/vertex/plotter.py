@@ -475,7 +475,10 @@ class MuonVetoDistributionPlotter:
         ndf = len(y_fit) - len(popt)
         prob = chi2.sf(chisq, ndf)
 
-        x_smooth = np.linspace(xedges[0], xedges[-1], 500)
+        if fit_ignore_first_bin:
+            x_smooth = np.linspace(0.05, xedges[-1], 500)
+        else:
+            x_smooth = np.linspace(xedges[0], xedges[-1], 500)
         y_smooth = exp_decay_cste(x_smooth, *popt)
 
         ax_top.bar(centers_x, proj_x, width=np.diff(xedges), color="#90b4ff", edgecolor="#90b4ff")
@@ -489,7 +492,7 @@ class MuonVetoDistributionPlotter:
         ) % (chisq, ndf, prob, A, A_err, tau, tau_err, c, c_err)
 
         ax_top.text(
-            0.95, 0.95,
+            0.95, 0.85,
             fit_text,
             transform=ax_top.transAxes,
             horizontalalignment="right",
@@ -659,20 +662,17 @@ def analyze_run_info(filepath: str):
 
     tree_daq = file["DAQ"]
     tree_veto = file["Veto"]
-    tree_muon = file["MuonInfo"]
 
     branches_daq = ["run_id", "sec", "nsec"]
     branches_veto = ["run_id", "sec", "nsec", "veto_type", "veto_sec", "veto_nsec"]
-    branches_muon = ["run_id", "sec", "nsec", "totq_cd", "totq_wp", "det"]
 
     data_daq = tree_daq.arrays(branches_daq, library="np")
     data_veto = tree_veto.arrays(branches_veto, library="np")
-    data_muon = tree_muon.arrays(branches_muon, library="np")
 
     run_ids = data_daq["run_id"]
     unique_run_ids = np.unique(run_ids)
 
-    min_run = 9789 # run_ids.min()
+    min_run = run_ids.min()
     max_run = run_ids.max()
     all_runs = np.arange(min_run, max_run + 1)
     daq_hours = np.zeros_like(all_runs, dtype=float)
@@ -763,7 +763,7 @@ def analyze_run_info(filepath: str):
     ax.tick_params(direction="in", which="both", top=True, right=True)
 
     fig.tight_layout()
-    fig.show()
+    plt.show()
     
     # beg_per_run = {}
     # end_per_run = {}
@@ -776,147 +776,6 @@ def analyze_run_info(filepath: str):
     #         beg_per_run[run_id] = min(beg_per_run[run_id], ts)
     #         end_per_run[run_id] = max(end_per_run[run_id], ts)
 
-    mask_cd_only = data_muon["det"] == 1
-    mask_wp_only = data_muon["det"] == 2
-    mask_cd_wp = data_muon["det"] == 3
-    plt.figure()
-    plt.hist(data_muon["totq_cd"], bins=np.logspace(4.0, 9.0, 201), color="blue")
-    plt.hist(data_muon["totq_cd"][mask_cd_only], bins=np.logspace(4.0, 9.0, 201), color="red")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel(r"$Q_{CD}$")
-    plt.ylabel(r"Entries")
-    plt.figure()
-    plt.hist(data_muon["totq_wp"], bins=np.logspace(2.0, 7.0, 201), color="blue")
-    plt.hist(data_muon["totq_wp"][mask_wp_only], bins=np.logspace(2.0, 7.0, 201), color="red")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel(r"$Q_{WP}$")
-    plt.ylabel(r"Entries")
-
-    plt.figure()
-    h = plt.hist2d(data_muon["totq_cd"][mask_cd_wp], data_muon["totq_wp"][mask_cd_wp], bins=(np.logspace(4.0, 9.0, 201), np.logspace(2.0, 7.0, 201)), cmap="jet", cmin=1.0, norm=LogNorm())
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel(r"$Q_{CD}$")
-    plt.ylabel(r"$Q_{WP}$")
-    cbar = plt.colorbar(h[3])
-    cbar.set_label(r"Entries")
-
-    plt.tight_layout()
-    plt.show()
-
-    ts_muon = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_muon["sec"], data_muon["nsec"])])
-    ts_muon_cd_wp = ts_muon[mask_cd_wp]
-    ts_muon_cd_only = ts_muon[mask_cd_only]
-    ts_muon_wp_only = ts_muon[mask_wp_only]
-
-    run_id_muon = data_muon["run_id"]
-    run_id_muon_cd_wp = run_id_muon[mask_cd_wp]
-    run_id_muon_cd_only = run_id_muon[mask_cd_only]
-    run_id_muon_wp_only = run_id_muon[mask_wp_only]
-
-    ts_prev_muon = np.roll(ts_muon, 1)
-    ts_prev_muon_cd_wp = np.roll(ts_muon_cd_wp, 1)
-    ts_prev_muon_cd_only = np.roll(ts_muon_cd_only, 1)
-    ts_prev_muon_wp_only = np.roll(ts_muon_wp_only, 1)
-
-    dt_muon = ts_muon - ts_prev_muon
-    dt_muon_cd_wp = ts_muon_cd_wp - ts_prev_muon_cd_wp
-    dt_muon_cd_only = ts_muon_cd_only - ts_prev_muon_cd_only
-    dt_muon_wp_only = ts_muon_wp_only - ts_prev_muon_wp_only
-
-    rate_function = lambda x, A, lam: A * np.exp(-lam * x)
-    rates_all = []
-    rates_cd_wp = []
-    rates_cd_only = []
-    rates_wp_only = []
-    rate_err_all = []
-    rate_err_cd_wp = []
-    rate_err_cd_only = []
-    rate_err_wp_only = []
-
-    bins = np.linspace(0.0, 2.0, 101)
-    centers = 0.5 * (bins[1:] + bins[:-1])
-
-    def fit_rate(dt : np.array):
-        if len(dt) < 10:
-            return 0.0, 0.0
-        
-        times = np.array([d.to_sec() for d in dt])
-        hist, _ = np.histogram(times, bins=bins)
-        err = np.sqrt(hist)
-        
-        mask = hist > 0
-        x_fit = centers[mask]
-        y_fit = hist[mask]
-        y_err = err[mask]
-
-        if len(x_fit) < 3:
-            return 0.0, 0.0
-
-        A0 = np.max(y_fit)
-        lam0 = 1.0 / np.std(times)
-
-        popt, pcov = curve_fit(rate_function, x_fit, y_fit, p0=[A0, lam0], sigma=y_err, absolute_sigma=True)
-        A, lam = popt
-        A_err, lam_err = np.sqrt(np.diag(pcov))
-        return lam, lam_err
-
-    for run in unique_run_ids:
-        print(f"Fitting run {run}")
-        run_id_mask = run_id_muon == run
-        dt_muon_run = dt_muon[run_id_mask]
-        lam, lam_err = fit_rate(dt_muon_run)
-        rates_all.append(lam)
-        rate_err_all.append(lam_err)
-
-        run_id_cd_wp_mask = run_id_muon_cd_wp == run
-        dt_muon_cd_wp_run = dt_muon_cd_wp[run_id_cd_wp_mask]
-        lam, lam_err = fit_rate(dt_muon_cd_wp_run)
-        rates_cd_wp.append(lam)
-        rate_err_cd_wp.append(lam_err)
-
-        run_id_cd_only_mask = run_id_muon_cd_only == run
-        dt_muon_cd_only_run = dt_muon_cd_only[run_id_cd_only_mask]
-        N_mu = len(dt_muon_cd_only_run)
-        livetime_sec = daq_per_run[run].to_sec()
-        lam = N_mu / livetime_sec
-        lam_err = np.sqrt(N_mu) / livetime_sec
-        rates_cd_only.append(lam)
-        rate_err_cd_only.append(lam_err)
-
-        run_id_wp_only_mask = run_id_muon_wp_only == run
-        dt_muon_wp_only_run = dt_muon_wp_only[run_id_wp_only_mask]
-        lam, lam_err = fit_rate(dt_muon_wp_only_run)
-        rates_wp_only.append(lam)
-        rate_err_wp_only.append(lam_err)
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    ax.errorbar(unique_run_ids, rates_all, yerr=rate_err_all, fmt="o", color="black", label="All", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
-
-    ax.errorbar(unique_run_ids, rates_cd_wp, yerr=rate_err_cd_wp, fmt="o", color="gold", label="CD+WP", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
-
-    ax.errorbar(unique_run_ids, rates_cd_only, yerr=rate_err_cd_only, fmt="o", color="green", label="CD only", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
-
-    ax.errorbar(unique_run_ids, rates_wp_only, yerr=rate_err_wp_only, fmt="o", color="blue", label="WP only", markersize=5.5, markeredgecolor="black", markeredgewidth=1.2)
-
-    ax.set_xlabel("Run ID")
-    ax.set_ylabel(r"Muon Rate (Hz)")
-    ax.set_ylim(bottom=0.0, top=10.0)
-
-    ax.minorticks_on()
-    ax.tick_params(direction="in", which="both", top=True, right=True)
-
-    for spine in ax.spines.values():
-        spine.set_linewidth(1.2)
-
-    ax.legend()
-    fig.tight_layout()
-    
-    plt.show()
-
 if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
@@ -926,5 +785,5 @@ if __name__ == "__main__":
     if args.cosmo_shape_analysis:
         for filepath in args.cosmo_shape_analysis:
              cosmo_shape_analysis_plot(filepath)
-    # if args.run_info:
-    #     analyze_run_info(args.run_info)
+    if args.run_info:
+        analyze_run_info(args.run_info)
