@@ -132,6 +132,10 @@ def calculate_muon_rate(filepath : str):
     ts_diff_cd_only = np.diff(ts_cd_only)
     ts_diff_wp_only = np.diff(ts_wp_only)
 
+    ts_diff_cd_wp = np.array([ts.to_sec() for ts in ts_diff_cd_wp])
+    ts_diff_cd_only = np.array([ts.to_sec() for ts in ts_diff_cd_only])
+    ts_diff_wp_only = np.array([ts.to_sec() for ts in ts_diff_wp_only])
+
     fig, ax = plt.subplots(figsize=(7, 6))
 
     bins = np.linspace(0.0, 2.0, 51)
