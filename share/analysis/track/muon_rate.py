@@ -106,14 +106,18 @@ def calculate_muon_rate(filepath : str):
     file = uproot.open(filepath)
     tree = file["muons"]
     branches = [
-        "run_id", "sec", "nsec", "totq_cd", "totq_wp", 
+        "run_id", "sec", "nsec", # "totq_cd", "totq_wp", 
         "method", "det", "quality",
         "iposx", "iposy", "iposz", 
         "fposx", "fposy", "fposz"
     ]
     data = tree.arrays(branches, library="np")
 
-    mask_cd_wp = np.logical_and(data["totq_cd"] > 0.0, data["totq_wp"] > 0.0)
+    print(data["det"])
+
+    return True
+
+    mask_cd_wp = np.logical_and(data["det"] > 0.0, data["totq_wp"] > 0.0)
     mask_cd_only = np.logical_and(data["totq_cd"] > 0.0, data["totq_wp"] <= 0.0)
     mask_wp_only = np.logical_and(data["totq_cd"] <= 0.0, data["totq_wp"] > 0.0)
 
