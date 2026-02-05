@@ -15,7 +15,7 @@ import uproot
 
 def set_latex_style():
     mpl.rcParams.update({
-        "text.usetex": True, 
+        "text.usetex": False, # TODO: need to be changed for good plots
         "font.family": "serif", 
         "font.serif": ["Computer Modern Serif"], 
         "mathtext.fontset": "cm", 
@@ -102,7 +102,26 @@ class timestamp:
         self.sec += carry
         self.nsec %= 1e9
 
-def calculate_muon_rate(filepath : str):
+def exponential_decay(x, A, lam):
+    return A * np.exp(-lam * x)
+
+def fit_exponential_decay(x, y, yerr):
+    A0 = np.max(y)
+    lam0 = np.std(np.repeat(x, y.astype(int)))
+    p0 = [A0, lam0]
+
+    popt, pcov = curve_fit(exponential_decay, x, y, p0=p0, sigma=yerr, absolute_sigma=True)
+    A, lam = popt
+    A_err, lam_err = np.sqrt(np.diag(pcov))
+
+    y_model = exponential_decay(x, A, lam)
+    chisq = np.sum(((y_model - y) / yerr)**2)
+    ndf = len(y) - len(popt)
+    prob = chi2.sf(chisq, ndf)
+
+    return chisq, ndf, prob, A, lam, A_err, lam_err
+
+def calculate_muon_rate(filepath : str, plot=False):
     file = uproot.open(filepath)
     tree = file["muons"]
     branches = [
@@ -128,6 +147,15 @@ def calculate_muon_rate(filepath : str):
     ts_cd_only = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_cd_only["sec"], data_cd_only["nsec"])])
     ts_wp_only = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_wp_only["sec"], data_wp_only["nsec"])])
 
+    ts_min = ts_cd_wp.min()
+    ts_max = ts_cd_wp.max()
+    if ts_cd_only.size > 0:
+        ts_min = min(ts_min, ts_cd_only.min())
+        ts_max = max(ts_max, ts_cd_only.max())
+    if ts_wp_only.size > 0:
+        ts_min = min(ts_min, ts_wp_only.min())
+        ts_max = max(ts_max, ts_wp_only.max())
+
     ts_diff_cd_wp = np.diff(ts_cd_wp)
     ts_diff_cd_only = np.diff(ts_cd_only)
     ts_diff_wp_only = np.diff(ts_wp_only)
@@ -136,65 +164,105 @@ def calculate_muon_rate(filepath : str):
     ts_diff_cd_only = np.array([ts.to_sec() for ts in ts_diff_cd_only])
     ts_diff_wp_only = np.array([ts.to_sec() for ts in ts_diff_wp_only])
 
-    fig, ax = plt.subplots(figsize=(7, 6))
-
     bins = np.linspace(0.0, 2.0, 51)
     centers = 0.5 * (bins[1:] + bins[:-1])
     widths = bins[1:] - bins[:-1]
-    hist, _ = np.histogram(ts_diff_cd_wp, bins=bins)
-    err = np.sqrt(hist)
-
-    mask = hist > 0
-    x_fit = centers[mask]
-    y_fit = hist[mask]
-    yerr_fit = err[mask]
-
-    A0 = np.max(y_fit)
-    lam0 = x_fit[np.argmax(y_fit)]
-    p0 = [A0, lam0]
-
-    expdecay = lambda x, A, lam: A * np.exp(-lam * x)
-    popt, pcov = curve_fit(expdecay, x_fit, y_fit, p0=p0, sigma=yerr_fit, absolute_sigma=True)
-    A, lam = popt
-    A_err, lam_err = np.sqrt(np.diag(pcov))
-
-    y_model = expdecay(x_fit, A, lam)
-    chisq = np.sum(((y_model - y_fit) / yerr_fit)**2)
-    ndf = len(y_fit) - len(popt)
-    prob = chi2.sf(chisq, ndf)
-
-    linecolor="#000000"
-    fillcolor="#e5e5e5"
     
-    ax.fill_between(bins, np.r_[hist, hist[-1]], step="post", color=fillcolor, zorder=1)
-    ax.errorbar(centers, hist, yerr=err, xerr=widths/2, fmt="o", color=linecolor, markersize=4.5, zorder=3)
+    hist_cd_wp, _ = np.histogram(ts_diff_cd_wp, bins=bins)
+    err_cd_wp = np.sqrt(hist_cd_wp)
+    hist_cd_only, _ = np.histogram(ts_diff_cd_only, bins=bins)
+    err_cd_only = np.sqrt(hist_cd_only)
+    hist_wp_only, _ = np.histogram(ts_diff_wp_only, bins=bins)
+    err_wp_only = np.sqrt(hist_wp_only)
 
-    x_smooth = np.linspace(bins[0], bins[-1], 500)
-    y_smooth = expdecay(x_smooth, *popt)
+    ts_diffs = [ts_diff_cd_wp, ts_diff_cd_only, ts_diff_wp_only]
+    hists = [hist_cd_wp, hist_cd_only, hist_wp_only]
+    errs = [err_cd_wp, err_cd_only, err_wp_only]
+    rates = []
+    rates_err = []
+    for diff, h, e in zip(ts_diffs, hists, errs):
+        mask = h > 0
+        x_fit = centers[mask]
+        y_fit = h[mask]
+        yerr_fit = e[mask]
 
-    ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.6, color=linecolor, zorder=4)
-    text = (
-        r"$\chi^2/\mathrm{ndf} = %.1f / %d$" "\n"
-        r"$p = %.3f$" "\n\n"
-        r"$A = %.2f \pm %.2f$" "\n"
-        r"$Rate = %.2f \pm %.2f~\mathrm{Hz}$"
-    ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
-    ax.text(0.6, 0.9, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
+        if len(x_fit) < 2:
+            # number of counts divided by (ts_max - ts_min).to_sec()
+            rates.append(len(diff) / (ts_max - ts_min).to_sec())
+            rates_err.append(np.sqrt(len(diff)) / (ts_max - ts_min).to_sec())
+        else:
+            chisq, ndf, prob, A, lam, A_err, lam_err = fit_exponential_decay(x_fit, y_fit, yerr_fit)
+            rates.append(lam)
+            rates_err.append(lam_err)
 
-    ax.set_xlabel(r"$\Delta t_{mu}$ (s)")
+    if not plot:
+        return rates, rates_err
+
+    linecolors = ["#000000", "#648fff", "#ff6464"]
+    fillcolors = ["#e5e5e5", "#eff3ff", "#ffefef"]
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+
+    for h, e, lcolor, fcolor in zip(hists, errs, linecolors, fillcolors):
+        ax.fill_between(bins, np.r_[h, h[-1]], step="post", color=fcolor, zorder=1)
+        ax.errorbar(centers, h, yerr=e, xerr=widths/2, fmt="o", color=lcolor, markersize=4.5, zorder=3)
+
+        mask = h > 0
+        x_fit = centers[mask]
+        y_fit = h[mask]
+        yerr_fit = e[mask]
+
+        if len(x_fit) < 2:
+            continue
+
+        chisq, ndf, prob, A, lam, A_err, lam_err = fit_exponential_decay(x_fit, y_fit, yerr_fit)
+
+        x_smooth = np.linspace(bins[0], bins[-1], 500)
+        y_smooth = exponential_decay(x_smooth, A, lam)
+
+        ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.6, color=lcolor, zorder=4)
+        # text = (
+        #     r"$\chi^2/\mathrm{ndf} = %.1f / %d$" "\n"
+        #     r"$p = %.3f$" "\n\n"
+        #     r"$A = %.2f \pm %.2f$" "\n"
+        #     r"$\lambda = %.2f \pm %.2f~\mathrm{Hz}$"
+        # ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
+        # ax.text(0.6, 0.9, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
+
+    ax.set_xlabel(r"$\Delta t_{\mu}$ (s)")
     ax.set_ylabel(r"Entries")
     ax.minorticks_on()
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
     ax.tick_params(direction="in", which="both", top=True, right=True)
     ax.set_xlim(0.0, 2.0)
-    ax.set_ylim(bottom=0.0, top=None)
+    ax.set_yscale("log")
 
     fig.tight_layout()
-    fig.show()
+    plt.show()
+
+    return rates, rates_err
 
 if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
+    
+    rates_cd_wp = []
+    rates_cd_only = []
+    rates_wp_only = []
+    rates_err_cd_wp = []
+    rates_err_cd_only = []
+    rates_err_wp_only = []
+    
     for filepath in args.input:
-        calculate_muon_rate(filepath)
+        rates, rates_err = calculate_muon_rate(filepath, plot=False)
+        rates_cd_wp.append(rates[0])
+        rates_cd_only.append(rates[1])
+        rates_wp_only.append(rates[2])
+        rates_err_cd_wp.append(rates_err[0])
+        rates_err_cd_only.append(rates_err[1])
+        rates_err_wp_only.append(rates_err[2])
+
+    print(rates_cd_wp)
+    print(rates_cd_only)
+    print(rates_wp_only)
