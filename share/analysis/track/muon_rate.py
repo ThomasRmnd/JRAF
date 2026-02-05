@@ -113,13 +113,12 @@ def calculate_muon_rate(filepath : str):
     ]
     data = tree.arrays(branches, library="np")
 
-    print(np.array([np.any((arr & 1) == 1) for arr in data["det"]]))
+    mask_cd = np.array([np.any((arr & 1) == 1) for arr in data["det"]])
+    mask_wp = np.array([np.any((arr & 2) == 2) for arr in data["det"]])
 
-    return True
-
-    mask_cd_wp = np.logical_and(data["det"] > 0.0, data["totq_wp"] > 0.0)
-    mask_cd_only = np.logical_and(data["totq_cd"] > 0.0, data["totq_wp"] <= 0.0)
-    mask_wp_only = np.logical_and(data["totq_cd"] <= 0.0, data["totq_wp"] > 0.0)
+    mask_cd_wp = np.logical_and(mask_cd, mask_wp)
+    mask_cd_only = np.logical_and(mask_cd, np.logical_not(mask_wp))
+    mask_wp_only = np.logical_and(np.logical_not(mask_cd), mask_wp)
 
     data_cd_wp = data[mask_cd_wp]
     data_cd_only = data[mask_cd_only]
