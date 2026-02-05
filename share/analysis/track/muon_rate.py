@@ -177,7 +177,7 @@ def calculate_muon_rate(filepath : str):
         r"$\chi^2/\mathrm{ndf} = %.1f / %d$" "\n"
         r"$p = %.3f$" "\n\n"
         r"$A = %.2f \pm %.2f$" "\n"
-        r"$\lambda = %.2f \pm %.2f~\mathrm{Hz}$"
+        r"$Rate = %.2f \pm %.2f~\mathrm{Hz}$"
     ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
     ax.text(0.6, 0.9, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
 
