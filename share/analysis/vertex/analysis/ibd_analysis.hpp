@@ -27,8 +27,8 @@ public:
         double e_p = m_nav->prompt.e * m_gtc.interpolate(m_nav->prompt.ts);
         double e_d = m_nav->delayed.e * m_gtc.interpolate(m_nav->delayed.ts);
 
-        if (m_nav->prompt.e < 0.7 || 12.0 < m_nav->prompt.e) return false;
-        if (m_nav->delayed.e < 2.0 || 2.5 < m_nav->delayed.e) return false;
+        if (e_p < 0.7 || 12.0 < e_p) return false;
+        if (e_d < 2.0 || 2.5 < e_d) return false;
         if (mag(m_nav->prompt.pos) > 16500.0) return false;
         if (std::abs(m_nav->prompt.pos.z) > 15500.0 && std::sqrt(m_nav->prompt.pos.x * m_nav->prompt.pos.x + m_nav->prompt.pos.y * m_nav->prompt.pos.y) < 2000.0) return false;
         timestamp ts_diff = m_nav->delayed.ts - m_nav->prompt.ts;

@@ -34,20 +34,10 @@ struct Veto {
     int veto_nsec;
 };
 
-struct MuonInfo {
-    int run_id;
-    time_t sec;
-    int nsec;
-    float totq_cd;
-    float totq_wp;
-    unsigned char det;
-};
-
 void save_meta_info(const std::string& filename) {
     TChain* chain_daq = new TChain("DAQ");
     TChain* chain_veto = new TChain("Veto");
-    TChain* chain_muon = new TChain("MuonInfo");
-    if (!chain_daq || !chain_veto || !chain_muon) {
+    if (!chain_daq || !chain_veto) {
         std::cerr << "Cannot create TChain DAQ or Veto or MuonInfo\n";
         return;
     }
@@ -66,15 +56,6 @@ void save_meta_info(const std::string& filename) {
     chain_veto->SetBranchAddress("veto_type", &veto.veto_type);
     chain_veto->SetBranchAddress("veto_sec", &veto.veto_sec);
     chain_veto->SetBranchAddress("veto_nsec", &veto.veto_nsec);
-
-    chain_muon->Add(filename.c_str());
-    MuonInfo muon;
-    chain_muon->SetBranchAddress("run_id", &muon.run_id);
-    chain_muon->SetBranchAddress("sec", &muon.sec);
-    chain_muon->SetBranchAddress("nsec", &muon.nsec);
-    chain_muon->SetBranchAddress("totq_cd", &muon.totq_cd);
-    chain_muon->SetBranchAddress("totq_wp", &muon.totq_wp);
-    chain_muon->SetBranchAddress("det", &muon.det);
 
     TFile* f_run_info = TFile::Open("run_info.root", "RECREATE");
     if (!f_run_info) {
@@ -97,13 +78,6 @@ void save_meta_info(const std::string& filename) {
     }
     out_veto->Write();
 
-    TTree* out_muon = chain_muon->CloneTree(0);
-    for (Long64_t i = 0; i < chain_muon->GetEntries(); ++i) {
-        chain_muon->GetEntry(i);
-        out_muon->Fill();
-    }
-    out_muon->Write();
-
     f_run_info->Write(); 
     f_run_info->Close();
     
@@ -113,7 +87,7 @@ void save_meta_info(const std::string& filename) {
 int root_main(const std::string& filepath) {
     std::string suffix = "__OMILREC_JVtx";
 
-    // save_meta_info(filepath);
+    save_meta_info(filepath);
 
     analysis_registry registry;
     analysis_manager manager(registry);
@@ -131,10 +105,13 @@ int root_main(const std::string& filepath) {
     if (!registry.book(cosmo_shape_analysis_before_after_cdwpttchi2)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_cdclassify(new cosmo_shape_analysis("cosmo_shape_analysis_cdclassify", filepath, suffix, "CdClassify", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
-    // if (!registry.book(cosmo_shape_analysis_before_after_cdclassify)) return 1;
+    if (!registry.book(cosmo_shape_analysis_before_after_cdclassify)) return 1;
+
+    // std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_wpclassify(new cosmo_shape_analysis("cosmo_shape_analysis_wpclassify", filepath, suffix, "WpBasic", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
+    // if (!registry.book(cosmo_shape_analysis_before_after_wpclassify)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_shape_analysis_before_after_tt(new cosmo_shape_analysis("cosmo_shape_analysis_tt", filepath, suffix, "Tt", timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 3000.0));
-    // if (!registry.book(cosmo_shape_analysis_before_after_tt)) return 1;
+    if (!registry.book(cosmo_shape_analysis_before_after_tt)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_shape_with_neutron_analysis(new cosmo_shape_neutron_analysis("cosmo_shape_neutron_analysis", filepath, suffix, timestamp{0, 5000000}, timestamp{0, 1200000000}, timestamp{0, -1200000000}, timestamp{0, -5000000}, 4000.0));
     if (!registry.book(cosmo_shape_with_neutron_analysis)) return 1;
