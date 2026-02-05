@@ -150,16 +150,15 @@ def calculate_muon_rate(filepath : str):
     yerr_fit = err[mask]
 
     A0 = np.max(y_fit)
-    mu0 = x_fit[np.argmax(y_fit)]
-    sigma0 = np.std(np.repeat(x_fit, y_fit.astype(int)))
-    p0 = [A0, mu0, sigma0]
+    lam0 = x_fit[np.argmax(y_fit)]
+    p0 = [A0, lam0]
 
-    gaussian = lambda x, A, mu, sigma: A * np.exp(-(x - mu)**2 / (2 * sigma**2))
-    popt, pcov = curve_fit(gaussian, x_fit, y_fit, p0=p0, sigma=yerr_fit, absolute_sigma=True)
-    A, mu, sigma = popt
-    A_err, mu_err, sigma_err = np.sqrt(np.diag(pcov))
+    expdecay = lambda x, A, lam: A * np.exp(-lam * x)
+    popt, pcov = curve_fit(expdecay, x_fit, y_fit, p0=p0, sigma=yerr_fit, absolute_sigma=True)
+    A, lam = popt
+    A_err, lam_err = np.sqrt(np.diag(pcov))
 
-    y_model = gaussian(x_fit, A, mu, sigma)
+    y_model = expdecay(x_fit, A, lam)
     chisq = np.sum(((y_model - y_fit) / yerr_fit)**2)
     ndf = len(y_fit) - len(popt)
     prob = chi2.sf(chisq, ndf)
@@ -171,16 +170,15 @@ def calculate_muon_rate(filepath : str):
     ax.errorbar(centers, hist, yerr=err, xerr=widths/2, fmt="o", color=linecolor, markersize=4.5, zorder=3)
 
     x_smooth = np.linspace(bins[0], bins[-1], 500)
-    y_smooth = gaussian(x_smooth, *popt)
+    y_smooth = expdecay(x_smooth, *popt)
 
     ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.6, color=linecolor, zorder=4)
     text = (
         r"$\chi^2/\mathrm{ndf} = %.1f / %d$" "\n"
         r"$p = %.3f$" "\n\n"
         r"$A = %.2f \pm %.2f$" "\n"
-        r"$\mu = %.2f \pm %.2f~\mathrm{MeV}$" "\n"
-        r"$\sigma = %.2f \pm %.2f~\mathrm{MeV}$"
-    ) % (chisq, ndf, prob, A, A_err, mu, mu_err, sigma, sigma_err)
+        r"$\lambda = %.2f \pm %.2f~\mathrm{Hz}$"
+    ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
     ax.text(0.6, 0.9, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
 
     ax.set_xlabel(r"$\Delta t_{mu}$ (s)")
