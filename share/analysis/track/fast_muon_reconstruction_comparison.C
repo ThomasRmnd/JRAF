@@ -45,16 +45,15 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
 void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std::string, double>& quantiles) {
     if (hists.empty()) return;
     std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet, kBlue, kRed};
-    TCanvas* c = new TCanvas(Form("c_%s", hists[0]->GetName()), "Metric", 1000, 1000);
+    TCanvas* c = new TCanvas(Form("c_%s", hists.at("CdWpTtChi2")->GetName()), "Metric", 1000, 1000);
     c->cd();
 
     double max = 0.0;
-    for (std::size_t i = 0ul; i < hists.size(); ++i) {
-        TH1D* h = hists[i];
+    for (const auto& [method, h] : hists) {
         if (h->GetMaximum() > max) {
             max = h->GetMaximum();
         }
-        std::cout << "68.2% " << h->GetName() << ": " << quantiles[i] << '\n';
+        std::cout << "68.2% " << h->GetName() << ": " << quantiles.at(method) << '\n';
     }
 
     TLegend* leg = new TLegend(0.45, 0.65, 0.85, 0.85);
@@ -75,7 +74,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
             h->Draw();
         }
         else {
-            h->Draw("SAME")*
+            h->Draw("SAME");
         }
 
         TLine* line = new TLine(quantiles.at(method), 0.0, quantiles.at(method), max * 1.1);
