@@ -99,6 +99,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     chain->SetBranchAddress("zout", &zout);
 
     long nentries = chain->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
         tracks.insert(track{
@@ -144,6 +145,7 @@ std::set<track> open_edwin_user_chain(const char* path) {
     chain->SetBranchAddress("wp_totalPE", &wp_totalPE);
 
     long nentries = chain->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in EDWIN files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
         tracks.insert(track{
@@ -189,6 +191,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
     chain->SetBranchAddress("fposz", &fposz);
 
     long nentries = chain->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in joint reco files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
         bool has_tt_info = false;
