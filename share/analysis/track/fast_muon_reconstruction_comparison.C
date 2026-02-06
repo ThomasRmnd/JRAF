@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 
 #include <TFile.h>
@@ -77,14 +78,14 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     chain->Add(path);
     std::set<track> tracks;
 
-    Int32_t runID;
-    Int32_t eventID;
-    Int32_t fSec;
-    Int32_t fNanoSec;
-    Int32_t muonType;
-    Float32_t xin, yin, zin;
-    Float16_t xout, yout, zout;
-    Float32_t charge;
+    int runID;
+    int eventID;
+    int fSec;
+    int fNanoSec;
+    int muonType;
+    float xin, yin, zin;
+    float xout, yout, zout;
+    float charge;
     chain->SetBranchAddress("runID", &runID);
     chain->SetBranchAddress("eventID", &eventID);
     chain->SetBranchAddress("fSec", &fSec);
@@ -117,16 +118,16 @@ std::set<track> open_edwin_user_chain(const char* path) {
     chain->Add(path);
     std::set<track> tracks;
 
-    Int32_t run_number;
-    Int32_t cd_file;
-    Int32_t cd_time_s;
-    Int32_t cd_time_ns;
-    Float32_t cd_totalPE;
-    Float32_t enterX, enterY, enterZ;
-    Float16_t exitX, exitY, exitZ;
-    Int32_t wp_time_s;
-    Int32_t wp_time_ns;
-    Float32_t wp_totalPE;
+    int run_number;
+    int cd_file;
+    int cd_time_s;
+    int cd_time_ns;
+    float cd_totalPE;
+    float enterX, enterY, enterZ;
+    float exitX, exitY, exitZ;
+    int wp_time_s;
+    int wp_time_ns;
+    float wp_totalPE;
     chain->SetBranchAddress("run_number", &run_number);
     chain->SetBranchAddress("cd_file", &cd_file);
     chain->SetBranchAddress("cd_time_s", &cd_time_s);
