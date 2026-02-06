@@ -129,7 +129,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        // if (muonType != 0) continue; // SELECTION! only single
+        if (muonType != 0) continue; // SELECTION! only single
         tracks.insert(track{
             .run_id = runID,
             .ts = TTimeStamp(fSec, fNanoSec),
@@ -251,8 +251,8 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         }
         if (!has_tt_info) continue;
         // if (!is_in_acrylic) continue; // SELECTION!
-        // if (ntracks_cdclassify != 1 || stopping_cdclassify) continue; // SELECTION!
-        // if (ntracks_wpclassify != 1) continue; // SELECTION!
+        if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
+        if (ntracks_wpclassify != 1) continue; // SELECTION!
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
