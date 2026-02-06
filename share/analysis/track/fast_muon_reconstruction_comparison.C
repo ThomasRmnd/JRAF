@@ -59,7 +59,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
         if (h->GetMaximum() > max) {
             max = h->GetMaximum();
         }
-        std::cout << "68.2% " << h->GetName() << ": " << quantiles.at(method) << '\n';
+        std::cout << "68.2% " << h->GetName() << "(" << h->GetEntries() << " entries): " << quantiles.at(method) << '\n';
     }
 
     TLegend* leg = new TLegend(0.45, 0.65, 0.85, 0.85);
