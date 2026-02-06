@@ -354,18 +354,18 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     // std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
     std::vector<double> angle_quantiles = {
-        get_quantile(angles["CdWpTtChi2"].begin(), angles["CdWpTtChi2"].end(), 0.682),
-        get_quantile(angles["CdClassify"].begin(), angles["CdClassify"].end(), 0.682),
-        get_quantile(angles["WpBasic"].begin(), angles["WpBasic"].end(), 0.682),
-        get_quantile(angles["Amber_v5.5"].begin(), angles["Amber_v5.5"].end(), 0.682),
-        get_quantile(angles["Edwin"].begin(), angles["Edwin"].end(), 0.682)
+        get_quantile(method_angle_map["CdWpTtChi2"].begin(), method_angle_map["CdWpTtChi2"].end(), 0.682),
+        get_quantile(method_angle_map["CdClassify"].begin(), method_angle_map["CdClassify"].end(), 0.682),
+        get_quantile(method_angle_map["WpBasic"].begin(), method_angle_map["WpBasic"].end(), 0.682),
+        get_quantile(method_angle_map["Amber_v5.5"].begin(), method_angle_map["Amber_v5.5"].end(), 0.682),
+        get_quantile(method_angle_map["Edwin"].begin(), method_angle_map["Edwin"].end(), 0.682)
     };
     std::vector<double> distance_quantiles = {
-        get_quantile(distances["CdWpTtChi2"].begin(), distances["CdWpTtChi2"].end(), 0.682),
-        get_quantile(distances["CdClassify"].begin(), distances["CdClassify"].end(), 0.682),
-        get_quantile(distances["WpBasic"].begin(), distances["WpBasic"].end(), 0.682),
-        get_quantile(distances["Amber_v5.5"].begin(), distances["Amber_v5.5"].end(), 0.682),
-        get_quantile(distances["Edwin"].begin(), distances["Edwin"].end(), 0.682)
+        get_quantile(method_distance_map["CdWpTtChi2"].begin(), method_distance_map["CdWpTtChi2"].end(), 0.682),
+        get_quantile(method_distance_map["CdClassify"].begin(), method_distance_map["CdClassify"].end(), 0.682),
+        get_quantile(method_distance_map["WpBasic"].begin(), method_distance_map["WpBasic"].end(), 0.682),
+        get_quantile(method_distance_map["Amber_v5.5"].begin(), method_distance_map["Amber_v5.5"].end(), 0.682),
+        get_quantile(method_distance_map["Edwin"].begin(), method_distance_map["Edwin"].end(), 0.682)
     };
 
 
