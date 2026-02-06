@@ -354,18 +354,18 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     // std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
     std::vector<double> angle_quantiles = {
-        get_quantile(method_angle_map["CdWpTtChi2"].begin(), method_angle_map["CdWpTtChi2"].end(), 0.682),
-        get_quantile(method_angle_map["CdClassify"].begin(), method_angle_map["CdClassify"].end(), 0.682),
-        get_quantile(method_angle_map["WpBasic"].begin(), method_angle_map["WpBasic"].end(), 0.682),
-        get_quantile(method_angle_map["Amber_v5.5"].begin(), method_angle_map["Amber_v5.5"].end(), 0.682),
-        get_quantile(method_angle_map["Edwin"].begin(), method_angle_map["Edwin"].end(), 0.682)
+        get_quantile(angles.at("CdWpTtChi2").begin(), method_angle_map.at("CdWpTtChi2").end(), 0.682),
+        get_quantile(angles.at("CdClassify").begin(), method_angle_map.at("CdClassify").end(), 0.682),
+        get_quantile(angles.at("WpBasic").begin(), method_angle_map.at("WpBasic").end(), 0.682),
+        get_quantile(angles.at("Amber_v5.5").begin(), method_angle_map.at("Amber_v5.5").end(), 0.682),
+        get_quantile(angles.at("Edwin").begin(), method_angle_map.at("Edwin").end(), 0.682)
     };
     std::vector<double> distance_quantiles = {
-        get_quantile(method_distance_map["CdWpTtChi2"].begin(), method_distance_map["CdWpTtChi2"].end(), 0.682),
-        get_quantile(method_distance_map["CdClassify"].begin(), method_distance_map["CdClassify"].end(), 0.682),
-        get_quantile(method_distance_map["WpBasic"].begin(), method_distance_map["WpBasic"].end(), 0.682),
-        get_quantile(method_distance_map["Amber_v5.5"].begin(), method_distance_map["Amber_v5.5"].end(), 0.682),
-        get_quantile(method_distance_map["Edwin"].begin(), method_distance_map["Edwin"].end(), 0.682)
+        get_quantile(method_distance_map.at("CdWpTtChi2").begin(), method_distance_map.at("CdWpTtChi2").end(), 0.682),
+        get_quantile(method_distance_map.at("CdClassify").begin(), method_distance_map.at("CdClassify").end(), 0.682),
+        get_quantile(method_distance_map.at("WpBasic").begin(), method_distance_map.at("WpBasic").end(), 0.682),
+        get_quantile(method_distance_map.at("Amber_v5.5").begin(), method_distance_map.at("Amber_v5.5").end(), 0.682),
+        get_quantile(method_distance_map.at("Edwin").begin(), method_distance_map.at("Edwin").end(), 0.682)
     };
 
 
