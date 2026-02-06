@@ -78,13 +78,13 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
             h->Draw("SAME")*
         }
 
-        TLine* line = new TLine(quantiles[method], 0.0, quantiles[method], max * 1.1);
+        TLine* line = new TLine(quantiles.at(method), 0.0, quantiles.at(method), max * 1.1);
         line->SetLineStyle(2);
         line->SetLineWidth(3);
         line->SetLineColor(colors[0]);
         line->Draw();
 
-        leg->AddEntry(h, Form("%s: 68%% quantile = %.2f m", method.c_str(), quantiles[method]), "l");
+        leg->AddEntry(h, Form("%s: 68%% quantile = %.2f m", method.c_str(), quantiles.at(method)), "l");
     }
 
     c->SetTickx();
