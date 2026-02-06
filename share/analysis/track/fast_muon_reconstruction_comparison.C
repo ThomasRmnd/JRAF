@@ -42,7 +42,7 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
     return *position;
 }
 
-void plot_metrics(const std::vector<TH1D*>& hists, const std::vector<double>& quantiles) {
+void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std::string, double>& quantiles) {
     if (hists.empty()) return;
     std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet, kBlue, kRed};
     TCanvas* c = new TCanvas(Form("c_%s", hists[0]->GetName()), "Metric", 1000, 1000);
@@ -56,31 +56,36 @@ void plot_metrics(const std::vector<TH1D*>& hists, const std::vector<double>& qu
         }
         std::cout << "68.2% " << h->GetName() << ": " << quantiles[i] << '\n';
     }
-    hists[0]->SetMaximum(max * 1.1);
 
-    for (std::size_t i = 0ul; i < hists.size(); ++i) {
-        TH1D* h = hists[i];
-        
+    TLegend* leg = new TLegend(0.45, 0.65, 0.85, 0.85);
+
+    bool first = true;
+    for (const auto& [method, h] : hists) {
         h->SetStats(0);
-        h->SetLineColor(colors[i]);
+        h->SetLineColor(colors[0]);
         h->SetLineWidth(3);
         h->GetXaxis()->SetMaxDigits(3);
         h->GetYaxis()->SetMaxDigits(3);
         h->GetXaxis()->CenterTitle(true);
         h->GetYaxis()->CenterTitle(true);
         h->GetYaxis()->SetTitleOffset(1.25);
-        if (i == 0) {
+        if (first) {
+            first = false;
+            h->SetMaximum(max * 1.1);
             h->Draw();
         }
         else {
-            h->Draw("SAME");
+            h->Draw("SAME")*
         }
-        TLine* line = new TLine(quantiles[i], 0.0, quantiles[i], max * 1.1);
+
+        TLine* line = new TLine(quantiles[method], 0.0, quantiles[method], max * 1.1);
         line->SetLineStyle(2);
         line->SetLineWidth(3);
-        line->SetLineColor(colors[i]);
+        line->SetLineColor(colors[0]);
         line->Draw();
-    };
+
+        leg->AddEntry(h, Form("%s: 68%% quantile = %.2f m", method.c_str(), quantiles[method]), "l");
+    }
 
     c->SetTickx();
     c->SetTicky();
@@ -361,24 +366,18 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     // std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
     // std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
-    std::vector<double> angle_quantiles = {
-        get_quantile(angles.at("CdWpTtChi2").begin(), angles.at("CdWpTtChi2").end(), 0.682),
-        get_quantile(angles.at("CdClassify").begin(), angles.at("CdClassify").end(), 0.682),
-        get_quantile(angles.at("WpBasic").begin(), angles.at("WpBasic").end(), 0.682),
-        get_quantile(angles.at("Amber_v5.5").begin(), angles.at("Amber_v5.5").end(), 0.682),
-        get_quantile(angles.at("Edwin").begin(), angles.at("Edwin").end(), 0.682)
-    };
-    std::vector<double> distance_quantiles = {
-        get_quantile(distances.at("CdWpTtChi2").begin(), distances.at("CdWpTtChi2").end(), 0.682),
-        get_quantile(distances.at("CdClassify").begin(), distances.at("CdClassify").end(), 0.682),
-        get_quantile(distances.at("WpBasic").begin(), distances.at("WpBasic").end(), 0.682),
-        get_quantile(distances.at("Amber_v5.5").begin(), distances.at("Amber_v5.5").end(), 0.682),
-        get_quantile(distances.at("Edwin").begin(), distances.at("Edwin").end(), 0.682)
-    };
+    std::map<std::string, double> angle_quantiles;
+    for (const auto& [method, ang] : angles) {
+        angle_quantiles[method] = get_quantile(ang.begin(), ang.end(), 0.682);
+    }
+    std::map<std::string, double> distance_quantiles;
+    for (const auto& [method, dist] : distances) {
+        distance_quantiles[method] = get_quantile(dist.begin(), dist.end(), 0.682);
+    }
 
 
-    plot_metrics({method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"], method_angle_map["Amber_v5.5"], method_angle_map["Edwin"]}, angle_quantiles);
-    plot_metrics({method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"], method_distance_map["Amber_v5.5"], method_distance_map["Edwin"]}, distance_quantiles);
+    plot_metrics(method_angle_map, angle_quantiles);
+    plot_metrics(method_distance_map, distance_quantiles);
 
     return 0;
 }
