@@ -327,16 +327,20 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     std::map<std::string, TH1D*> method_angle_map;
     std::map<std::string, TH1D*> method_distance_map;
 
-    method_angle_map["CdWpTtChi2"] = new TH1D("h_angle_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);#alpha (deg);Entries;", 25, 0.0, 5.0);
-    method_distance_map["CdWpTtChi2"] = new TH1D("h_distance_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);d_{mid} (m);Entries;", 25, 0.0, 2.0);
-    method_angle_map["CdClassify"] = new TH1D("h_angle_cdclassify", "Angle between tracks direction (CdClassify);#alpha (deg);Entries;", 25, 0.0, 5.0);
-    method_distance_map["CdClassify"] = new TH1D("h_distance_cdclassify", "Distance between tracks middle point (CdClassify);d_{mid} (m);Entries;", 25, 0.0, 2.0);
-    method_angle_map["WpBasic"] = new TH1D("h_angle_wpclassify", "Angle between tracks direction (WpClassify);#alpha (deg);Entries;", 25, 0.0, 5.0);
-    method_distance_map["WpBasic"] = new TH1D("h_distance_wpclassify", "Distance between tracks middle point (WpClassify);d_{mid} (m);Entries;", 25, 0.0, 2.0);
-    method_angle_map["Amber_v5.5"] = new TH1D("h_angle_amber", "Angle between tracks direction (Amber);#alpha (deg);Entries;", 25, 0.0, 5.0);
-    method_distance_map["Amber_v5.5"] = new TH1D("h_distance_amber", "Distance between tracks middle point (Amber);d_{mid} (m);Entries;", 25, 0.0, 2.0);
-    method_angle_map["Edwin"] = new TH1D("h_angle_edwin", "Angle between tracks direction (Edwin);#alpha (deg);Entries;", 25, 0.0, 5.0);
-    method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", 25, 0.0, 2.0);
+    double xmin_angle = 0.0, xmax_angle = 90.0;
+    double xmin_distance = 0.0, xmax_distance = 20.0;
+    int nbins_angle = 25, nbins_distance = 25;
+
+    method_angle_map["CdWpTtChi2"] = new TH1D("h_angle_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+    method_distance_map["CdWpTtChi2"] = new TH1D("h_distance_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    method_angle_map["CdClassify"] = new TH1D("h_angle_cdclassify", "Angle between tracks direction (CdClassify);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+    method_distance_map["CdClassify"] = new TH1D("h_distance_cdclassify", "Distance between tracks middle point (CdClassify);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    method_angle_map["WpBasic"] = new TH1D("h_angle_wpclassify", "Angle between tracks direction (WpClassify);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+    method_distance_map["WpBasic"] = new TH1D("h_distance_wpclassify", "Distance between tracks middle point (WpClassify);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    method_angle_map["Amber_v5.5"] = new TH1D("h_angle_amber", "Angle between tracks direction (Amber);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+    method_distance_map["Amber_v5.5"] = new TH1D("h_distance_amber", "Distance between tracks middle point (Amber);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    method_angle_map["Edwin"] = new TH1D("h_angle_edwin", "Angle between tracks direction (Edwin);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+    method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
 
     for (const auto& [method, ang] : angles) {
         for (std::vector<double>::const_iterator it = ang.begin(); it != ang.end(); ++it) {
