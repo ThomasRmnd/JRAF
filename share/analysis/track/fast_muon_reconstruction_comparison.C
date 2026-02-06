@@ -319,7 +319,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     tracks["Amber_v5.5"] = open_amber_v5_5_user_chain(path_amber);
     tracks["Edwin"] = open_edwin_user_chain(path_edwin);
 
-    std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> correlations = compute_correlations(tracks);
+    // std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> correlations = compute_correlations(tracks);
+    std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> correlations = compute_global_correlations(tracks);
     const std::map<std::string, std::vector<double>>& angles = correlations.first;
     const std::map<std::string, std::vector<double>>& distances = correlations.second;
 
