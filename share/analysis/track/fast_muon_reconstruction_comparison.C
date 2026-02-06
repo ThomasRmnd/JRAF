@@ -91,7 +91,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
 
         leg->AddEntry(h, Form("%s: 68%% quantile = %.2f m", method.c_str(), quantiles.at(method)), "l");
     }
-    leg->SetTextSize(0.04);
+    leg->SetTextSize(0.02);
     leg->Draw();
 
     c->SetTickx();
