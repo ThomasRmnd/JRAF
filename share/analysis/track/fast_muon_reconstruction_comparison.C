@@ -44,7 +44,13 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
 
 void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std::string, double>& quantiles) {
     if (hists.empty()) return;
-    std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet, kBlue, kRed};
+    std::map<std::string, Color_t> colors = {
+        {"CdWpTtChi2", kBlack}, 
+        {"CdClassify", Green + 2}, 
+        {"WpBasic", kViolet}, 
+        {"Amber_v5.5", kBlue},
+        {"Edwin", kRed},
+    };
     TCanvas* c = new TCanvas(Form("c_%s", hists.at("CdWpTtChi2")->GetName()), "Metric", 1000, 1000);
     c->cd();
 
@@ -61,7 +67,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
     bool first = true;
     for (const auto& [method, h] : hists) {
         h->SetStats(0);
-        h->SetLineColor(colors[0]);
+        h->SetLineColor(colors[method]);
         h->SetLineWidth(3);
         h->GetXaxis()->SetMaxDigits(3);
         h->GetYaxis()->SetMaxDigits(3);
@@ -85,6 +91,8 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
 
         leg->AddEntry(h, Form("%s: 68%% quantile = %.2f m", method.c_str(), quantiles.at(method)), "l");
     }
+    leg->SetTextSize(0.04);
+    leg->Draw();
 
     c->SetTickx();
     c->SetTicky();
