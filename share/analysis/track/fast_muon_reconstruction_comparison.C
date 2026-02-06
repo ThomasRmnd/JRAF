@@ -129,7 +129,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        if (muonType != 0) continue; // only single
+        // if (muonType != 0) continue; // SELECTION! only single
         tracks.insert(track{
             .run_id = runID,
             .ts = TTimeStamp(fSec, fNanoSec),
@@ -223,16 +223,18 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
         bool has_tt_info = false;
+        bool is_in_acrylic = false;
         int ntracks_cdclassify = 0;
         bool stopping_cdclassify = false;
         int ntracks_wpclassify = 0;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "Tt") {
+                has_tt_info = true;
                 TVector3 ipos((*iposx)[i], (*iposy)[i], (*iposz)[i]);
                 TVector3 fpos((*fposx)[i], (*fposy)[i], (*fposz)[i]);
                 TVector3 dir = (fpos - ipos).Unit();
                 if (dir.Cross(-ipos).Mag() < 17700.0) {
-                    has_tt_info = true;
+                    is_in_acrylic = true;
                 }
             }
             if ((*method)[i] == "CdClassify") {
@@ -248,8 +250,9 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
             }
         }
         if (!has_tt_info) continue;
-        if (ntracks_cdclassify != 1 || stopping_cdclassify) continue;
-        if (ntracks_wpclassify != 1) continue;
+        // if (!is_in_acrylic) continue; // SELECTION!
+        // if (ntracks_cdclassify != 1 || stopping_cdclassify) continue; // SELECTION!
+        // if (ntracks_wpclassify != 1) continue; // SELECTION!
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
