@@ -244,7 +244,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
             std::set<track>::const_iterator it_tt = tt_tracks.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
 
             while (it_tt != track_set.end() && lower_bound_ts <= it_tt->ts && it_tt->ts <= upper_bound_ts) {
-                angles[method].push_back(ompute_angle_between_track(trk, *it_tt));
+                angles[method].push_back(compute_angle_between_track(trk, *it_tt));
                 distances[method].push_back(compute_distance_between_track(trk, *it_tt));
                 ++it_tt;
             }
@@ -287,7 +287,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
         }
 
         if (all_found) {
-            angles[method].push_back(ompute_angle_between_track(*it, tt_muon));
+            angles[method].push_back(compute_angle_between_track(*it, tt_muon));
             distances[method].push_back(compute_distance_between_track(*it, tt_muon));
         }
     }
