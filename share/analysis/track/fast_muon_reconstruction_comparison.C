@@ -226,7 +226,12 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         int ntracks_wpclassify = 0;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "Tt") {
-                has_tt_info = true;
+                TVector3 ipos((*iposx)[i], (*iposy)[i], (*iposz)[i]);
+                TVector3 fpos((*fposx)[i], (*fposy)[i], (*fposz)[i]);
+                TVector3 dir = (fpos - ipos).Unit();
+                if (dir.Cross(-ipos).Mag() < 17700.0) {
+                    has_tt_info = true;
+                }
             }
             if ((*method)[i] == "CdClassify") {
                 ++ntracks_cdclassify;
