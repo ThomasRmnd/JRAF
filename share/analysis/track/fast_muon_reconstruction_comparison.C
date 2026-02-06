@@ -59,7 +59,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
         if (h->GetMaximum() > max) {
             max = h->GetMaximum();
         }
-        std::cout << "68.2% " << h->GetName() << "(" << h->GetEntries() << " entries): " << quantiles.at(method) << '\n';
+        std::cout << "68.2% " << h->GetName() << " (" << h->GetEntries() << " entries): " << quantiles.at(method) << '\n';
     }
 
     TLegend* leg = new TLegend(0.45, 0.65, 0.85, 0.85);
@@ -224,6 +224,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         chain->GetEntry(k);
         bool has_tt_info = false;
         int ntracks_cdclassify = 0;
+        bool stopping_cdclassify = false;
         int ntracks_wpclassify = 0;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "Tt") {
@@ -236,13 +237,18 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
             }
             if ((*method)[i] == "CdClassify") {
                 ++ntracks_cdclassify;
+                TVector3 ipos((*iposx)[i], (*iposy)[i], (*iposz)[i]);
+                TVector3 fpos((*fposx)[i], (*fposy)[i], (*fposz)[i]);
+                if (fpos.Mag() > 40000.0) {
+                    stopping_cdclassify = true;
+                }
             }
             if ((*method)[i] == "WpBasic") {
                 ++ntracks_wpclassify;
             }
         }
         if (!has_tt_info) continue;
-        if (ntracks_cdclassify != 1) continue;
+        if (ntracks_cdclassify != 1 || stopping_cdclassify) continue;
         if (ntracks_wpclassify != 1) continue;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             tracks[(*method)[i]].insert(track{
