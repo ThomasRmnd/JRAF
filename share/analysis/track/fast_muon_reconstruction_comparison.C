@@ -42,7 +42,7 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
     return *position;
 }
 
-void plot_metrics(std::vector<TH1D*> hists) {
+void plot_metrics(const std::vector<TH1D*>& hists, const std::vector<double>& quantiles) {
     if (hists.empty()) return;
     std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet, kBlue, kRed};
     TCanvas* c = new TCanvas(Form("c_%s", hists[0]->GetName()), "Metric", 1000, 1000);
@@ -54,6 +54,7 @@ void plot_metrics(std::vector<TH1D*> hists) {
         if (h->GetMaximum() > max) {
             max = h->GetMaximum();
         }
+        std::cout << "68.2% " << h->GetName() << ": " << quantiles[i] << '\n';
     }
     hists[0]->SetMaximum(max * 1.1);
 
@@ -74,6 +75,11 @@ void plot_metrics(std::vector<TH1D*> hists) {
         else {
             h->Draw("SAME");
         }
+        TLine* line = new TLine(quantiles[i], 0.0, quantiles[i], h->GetMaximum());
+        line->SetLineStyle(2);
+        line->SetLineWidth(2);
+        line->SetLineColor(colors[i]);
+        line->Draw();
     };
 
     c->SetTickx();
@@ -347,8 +353,24 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     // std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
     // std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
-    plot_metrics({method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"], method_angle_map["Amber_v5.5"], method_angle_map["Edwin"]});
-    plot_metrics({method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"], method_distance_map["Amber_v5.5"], method_distance_map["Edwin"]});
+    std::vector<double> angle_quantiles = {
+        get_quantile(angles["CdWpTtChi2"].begin(), angles["CdWpTtChi2"].end(), 0.682),
+        get_quantile(angles["CdClassify"].begin(), angles["CdClassify"].end(), 0.682),
+        get_quantile(angles["WpBasic"].begin(), angles["WpBasic"].end(), 0.682),
+        get_quantile(angles["Amber_v5.5"].begin(), angles["Amber_v5.5"].end(), 0.682),
+        get_quantile(angles["Edwin"].begin(), angles["Edwin"].end(), 0.682)
+    };
+    std::vector<double> distance_quantiles = {
+        get_quantile(distances["CdWpTtChi2"].begin(), distances["CdWpTtChi2"].end(), 0.682),
+        get_quantile(distances["CdClassify"].begin(), distances["CdClassify"].end(), 0.682),
+        get_quantile(distances["WpBasic"].begin(), distances["WpBasic"].end(), 0.682),
+        get_quantile(distances["Amber_v5.5"].begin(), distances["Amber_v5.5"].end(), 0.682),
+        get_quantile(distances["Edwin"].begin(), distances["Edwin"].end(), 0.682)
+    };
+
+
+    plot_metrics({method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"], method_angle_map["Amber_v5.5"], method_angle_map["Edwin"]}, angle_quantiles);
+    plot_metrics({method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"], method_distance_map["Amber_v5.5"], method_distance_map["Edwin"]}, distance_quantiles);
 
     return 0;
 }

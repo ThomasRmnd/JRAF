@@ -41,35 +41,22 @@ int vanessa_file_analysis(const char* filepath) {
     std::vector<int> mu_type_all;
     std::vector<int> mu_Nneu_all;
     std::vector<int> mu_ntracks_all;
+    std::vector<double> mu_dist_track_all;
+    std::vector<double> mu_WP_PE_all;
+    std::vector<double> mu_CD_PE_all;
+    std::vector<double> dR;
+    std::vector<double> PE_p;
+    std::vector<double> PE_d;
+    std::vector<double> energy_p;
+    std::vector<double> energy_d;
+    std::vector<double> x_p;
+    std::vector<double> y_p;
+    std::vector<double> z_p;
+    std::vector<double> x_d;
+    std::vector<double> y_d;
+    std::vector<double> z_d;
 
 
-*Br   16 :mu_type_neu : mu_type_neu/I                                        *
-*Entries :    14857 : Total  Size=     513717 bytes  File Size  =     418787 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   17 :ntracks_neu : ntracks_neu/I                                        *
-*Entries :    14857 : Total  Size=     513717 bytes  File Size  =     418838 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   18 :Nneu_neu  : Nneu_neu/I                                             *
-*Entries :    14857 : Total  Size=     499665 bytes  File Size  =     405398 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   19 :dR_p_neu  : dR_p_neu/D                                             *
-*Entries :    14857 : Total  Size=     559101 bytes  File Size  =     465176 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   20 :dR_d_neu  : dR_d_neu/D                                             *
-*Entries :    14857 : Total  Size=     559101 bytes  File Size  =     465176 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   21 :mu_dt_all : vector<Long64_t>                                       *
-*Entries :    14857 : Total  Size=    1165787 bytes  File Size  =     899845 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.19     *
-*Br   22 :mu_type_all : vector<int>                                          *
-*Entries :    14857 : Total  Size=     937443 bytes  File Size  =     577232 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.46     *
-*Br   23 :mu_Nneu_all : vector<int>                                          *
-*Entries :    14857 : Total  Size=     937443 bytes  File Size  =     611130 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.38     *
-*Br   24 :mu_ntracks_all : vector<int>                                       *
-*Entries :    14857 : Total  Size=     951495 bytes  File Size  =     620069 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.38     *
 *Br   25 :mu_dist_track_all : vector<double>                                 *
 *Entries :    14857 : Total  Size=    1203259 bytes  File Size  =    1069751 *
 *Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.04     *
