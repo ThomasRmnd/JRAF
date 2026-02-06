@@ -46,7 +46,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
     if (hists.empty()) return;
     std::map<std::string, Color_t> colors = {
         {"CdWpTtChi2", kBlack}, 
-        {"CdClassify", Green + 2}, 
+        {"CdClassify", kGreen + 2}, 
         {"WpBasic", kViolet}, 
         {"Amber_v5.5", kBlue},
         {"Edwin", kRed},
