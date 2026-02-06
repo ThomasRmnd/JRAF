@@ -290,6 +290,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
             for (const auto& [method, muon] : coincident_map) {
                 angles[method].push_back(compute_angle_between_track(muon, tt_muon));
                 distances[method].push_back(compute_distance_between_track(muon, tt_muon));
+            }
         }
     }
     return std::make_pair(angles, distances);
