@@ -238,9 +238,8 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
         std::cout << "\n--- Correlating " << method << " with Tt ---" << std::endl;
 
         for (const track& trk : track_set) {
-            TTimeStamp lower_bound_ts, upper_bound_ts;
-            lower_bound_ts.Set(trk.ts.GetSec(), trk.ts.GetNanoSec() - 1000);
-            upper_bound_ts.Set(trk.ts.GetSec(), trk.ts.GetNanoSec() + 1000);
+            TTimeStamp lower_bound_ts(trk.ts.GetSec(), trk.ts.GetNanoSec() - 1000);
+            TTimeStamp upper_bound_ts(trk.ts.GetSec(), trk.ts.GetNanoSec() + 1000);
             
             std::set<track>::const_iterator it_tt = tt_tracks.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
 
@@ -271,9 +270,8 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
         for (const auto& [method, track_set] : tracks) {
             if (method == "Tt") continue;
             bool found_in_method = false;
-            TTimeStamp lower_bound_ts, upper_bound_ts;
-            lower_bound_ts.Set(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
-            upper_bound_ts.Set(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
+            TTimeStamp lower_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
+            TTimeStamp upper_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
             auto it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
             
             while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
