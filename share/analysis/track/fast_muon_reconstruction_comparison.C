@@ -222,7 +222,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
     return tracks;
 }
 
-std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>> compute_correlations(std::map<std::string, std::set<track>>& tracks) {
+std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> compute_correlations(std::map<std::string, std::set<track>>& tracks) {
     if (tracks.find("Tt") == tracks.end()) {
         std::cerr << "Error: Tt tracks not found in map.\n";
         return;
@@ -254,7 +254,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
     return std::make_pair(angles, distances);
 }
 
-std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks) {
+std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks) {
     if (tracks.find("Tt") == tracks.end()) {
         std::cerr << "Error: Tt tracks not found in map.\n";
         return;
