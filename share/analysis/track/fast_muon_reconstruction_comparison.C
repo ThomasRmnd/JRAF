@@ -44,7 +44,7 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
 
 void plot_metrics(std::vector<TH1D*> hists) {
     if (hists.empty()) return;
-    std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet};
+    std::vector<Color_t> colors = {kBlack, kGreen + 2, kViolet, kBlue, kRed};
     TCanvas* c = new TCanvas(Form("c_%s", hists[0]->GetName()), "Metric", 1000, 1000);
     c->cd();
 
@@ -338,8 +338,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     // std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
     // std::cout << "95.4% distance: " << get_quantile(distances.begin(), distances.end(), 0.954) << '\n';
 
-    plot_metrics({method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"]});
-    plot_metrics({method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"]});
+    plot_metrics({method_angle_map["CdWpTtChi2"], method_angle_map["CdClassify"], method_angle_map["WpBasic"], method_angle_map["Amber_v5.5"], method_angle_map["Edwin"]});
+    plot_metrics({method_distance_map["CdWpTtChi2"], method_distance_map["CdClassify"], method_distance_map["WpBasic"], method_distance_map["Amber_v5.5"], method_distance_map["Edwin"]});
 
     return 0;
 }
