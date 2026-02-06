@@ -101,7 +101,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     long nentries = chain->GetEntries();
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        tracks.push_back(track{
+        tracks.insert(track{
             .run_id = runID,
             .ts = TTimeStamp(fSec, fNanoSec),
             .totq_cd = 0.0,
@@ -146,7 +146,7 @@ std::set<track> open_edwin_user_chain(const char* path) {
     long nentries = chain->GetEntries();
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        tracks.push_back(track{
+        tracks.insert(track{
             .run_id = run_number,
             .ts = TTimeStamp(cd_time_s, cd_time_ns),
             .totq_cd = cd_totalPE,
@@ -209,7 +209,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         if (ntracks_cdclassify != 1) continue;
         if (ntracks_wpclassify != 1) continue;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
-            tracks[(*method)[i]].push_back(track{
+            tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
                 .ts = TTimeStamp(sec, nsec),
                 .totq_cd = totq_cd,
