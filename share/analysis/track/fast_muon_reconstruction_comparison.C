@@ -243,7 +243,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
             
             std::set<track>::const_iterator it_tt = tt_tracks.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
 
-            while (it != track_set.end() && lower_bound_ts <= it_tt->ts && it_tt->ts <= upper_bound_ts) {
+            while (it_tt != track_set.end() && lower_bound_ts <= it_tt->ts && it_tt->ts <= upper_bound_ts) {
                 angles[method].push_back(ompute_angle_between_track(trk, *it_tt));
                 distances[method].push_back(compute_distance_between_track(trk, *it_tt));
                 ++it_tt;
@@ -272,7 +272,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
             bool found_in_method = false;
             TTimeStamp lower_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
             TTimeStamp upper_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
-            auto it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
+            std::set<track>::const_iterator it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
             
             while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
                 coincident_map[method] = *it;
