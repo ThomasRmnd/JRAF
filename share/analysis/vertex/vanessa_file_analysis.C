@@ -55,50 +55,12 @@ int vanessa_file_analysis(const char* filepath) {
     std::vector<double> x_d;
     std::vector<double> y_d;
     std::vector<double> z_d;
+    std::vector<double> R_p;
+    std::vector<double> R_d;
+    std::vector<double> rho_p;
+    std::vector<double> rho_d;
 
 
-*Br   25 :mu_dist_track_all : vector<double>                                 *
-*Entries :    14857 : Total  Size=    1203259 bytes  File Size  =    1069751 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.04     *
-*Br   26 :mu_WP_PE_all : vector<double>                                      *
-*Entries :    14857 : Total  Size=    1179839 bytes  File Size  =     922391 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.18     *
-*Br   27 :mu_CD_PE_all : vector<double>                                      *
-*Entries :    14857 : Total  Size=    1179839 bytes  File Size  =     933145 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.16     *
-*Br   28 :dR        : dR/D                                                   *
-*Entries :    14857 : Total  Size=     530997 bytes  File Size  =     437096 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   29 :PE_p      : PE_p/D                                                 *
-*Entries :    14857 : Total  Size=     540365 bytes  File Size  =     446383 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   30 :PE_d      : PE_d/D                                                 *
-*Entries :    14857 : Total  Size=     540365 bytes  File Size  =     446295 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   31 :energy_p  : energy_p/D                                             *
-*Entries :    14857 : Total  Size=     559101 bytes  File Size  =     465148 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   32 :energy_d  : energy_d/D                                             *
-*Entries :    14857 : Total  Size=     559101 bytes  File Size  =     464956 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   33 :x_p       : x_p/D                                                  *
-*Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   34 :y_p       : y_p/D                                                  *
-*Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   35 :z_p       : z_p/D                                                  *
-*Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   36 :x_d       : x_d/D                                                  *
-*Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   37 :y_d       : y_d/D                                                  *
-*Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
-*Br   38 :z_d       : z_d/D                                                  *
-*Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
-*Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
 *Br   39 :R_p       : R_p/D                                                  *
 *Entries :    14857 : Total  Size=     535681 bytes  File Size  =     441776 *
 *Baskets :     4680 : Basket Size=      32000 bytes  Compression=   1.00     *
