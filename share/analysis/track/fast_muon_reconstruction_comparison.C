@@ -48,6 +48,15 @@ void plot_metrics(std::vector<TH1D*> hists) {
     TCanvas* c = new TCanvas(Form("c_%s", hists[0]->GetName()), "Metric", 1000, 1000);
     c->cd();
 
+    double max = 0.0;
+    for (std::size_t i = 0ul; i < hists.size(); ++i) {
+        TH1D* h = hists[i];
+        if (h->GetMaximum() > max) {
+            max = h->GetMaximum();
+        }
+    }
+    hists[0]->SetMaximum(max * 1.1);
+
     for (std::size_t i = 0ul; i < hists.size(); ++i) {
         TH1D* h = hists[i];
         
