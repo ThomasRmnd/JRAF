@@ -75,7 +75,7 @@ void plot_metrics(const std::vector<TH1D*>& hists, const std::vector<double>& qu
         else {
             h->Draw("SAME");
         }
-        TLine* line = new TLine(quantiles[i], 0.0, quantiles[i], 1.0);
+        TLine* line = new TLine(quantiles[i], 0.0, quantiles[i], max * 1.1);
         line->SetLineStyle(2);
         line->SetLineWidth(3);
         line->SetLineColor(colors[i]);
