@@ -225,7 +225,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
 std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> compute_correlations(std::map<std::string, std::set<track>>& tracks) {
     if (tracks.find("Tt") == tracks.end()) {
         std::cerr << "Error: Tt tracks not found in map.\n";
-        return;
+        return {};
     }
     const std::set<track>& tt_tracks = tracks["Tt"];
 
@@ -239,8 +239,8 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
 
         for (const track& trk : track_set) {
             TTimeStamp lower_bound_ts, upper_bound_ts;
-            lower_bound_ts.Set(trk.ts.GetSec(), trk.ts.GetNano() - 1000);
-            upper_bound_ts.Set(trk.ts.GetSec(), trk.ts.GetNano() + 1000);
+            lower_bound_ts.Set(trk.ts.GetSec(), trk.ts.GetNanoSec() - 1000);
+            upper_bound_ts.Set(trk.ts.GetSec(), trk.ts.GetNanoSec() + 1000);
             
             std::set<track>::const_iterator it_tt = tt_tracks.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
 
@@ -257,7 +257,7 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
 std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks) {
     if (tracks.find("Tt") == tracks.end()) {
         std::cerr << "Error: Tt tracks not found in map.\n";
-        return;
+        return {};
     }
     const std::set<track>& tt_tracks = tracks["Tt"];
 
@@ -272,8 +272,8 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
             if (method == "Tt") continue;
             bool found_in_method = false;
             TTimeStamp lower_bound_ts, upper_bound_ts;
-            lower_bound_ts.Set(tt_muon.ts.GetSec(), tt_muon.ts.GetNano() - 1000);
-            upper_bound_ts.Set(tt_muon.ts.GetSec(), tt_muon.ts.GetNano() + 1000);
+            lower_bound_ts.Set(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
+            upper_bound_ts.Set(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
             auto it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
             
             while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
