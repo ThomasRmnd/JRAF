@@ -129,6 +129,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
+        if (muonType != 0) continue; // only single
         tracks.insert(track{
             .run_id = runID,
             .ts = TTimeStamp(fSec, fNanoSec),
