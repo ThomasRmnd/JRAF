@@ -239,6 +239,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         int ntracks_cdclassify = 0;
         bool stopping_cdclassify = false;
         int ntracks_wpclassify = 0;
+        bool stopping_wpclassify = false;
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "Tt") {
                 has_tt_info = true;
@@ -259,12 +260,18 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
             }
             if ((*method)[i] == "WpBasic") {
                 ++ntracks_wpclassify;
+
+                TVector3 ipos((*iposx)[i], (*iposy)[i], (*iposz)[i]);
+                TVector3 fpos((*fposx)[i], (*fposy)[i], (*fposz)[i]);
+                if (fpos.Mag() > 40000.0) {
+                    stopping_wpclassify = true;
+                }
             }
         }
         if (!has_tt_info) continue;
         if (!is_in_acrylic) continue; // SELECTION!
         if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
-        if (ntracks_wpclassify != 1) continue; // SELECTION!
+        if (ntracks_wpclassify != 1 || stopping_wpclassify) continue; // SELECTION! || stopping_wpclassify
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
