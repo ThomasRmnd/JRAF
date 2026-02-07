@@ -126,19 +126,25 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     chain->SetBranchAddress("zout", &zout);
 
     long nentries = chain->GetEntries();
+    std::size_t nstoppins = 0ul;
     std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
         if (muonType != 0) continue; // SELECTION! only single
+        TVector3 fpos(xout, yout, zout);
+        if (fpos.Mag() > 40000.0) {
+            ++nstoppins;
+        }
         tracks.insert(track{
             .run_id = runID,
             .ts = TTimeStamp(fSec, fNanoSec),
             .totq_cd = 0.0,
             .totq_wp = charge,
             .ipos = TVector3(xin, yin, zin),
-            .fpos = TVector3(xout, yout, zout)
+            .fpos = fpos
         });
     }
+    std::cout << "Info: Number of stopping tracks for Amber: " << nstoppins << '\n';
     return tracks;
 }
 
@@ -173,18 +179,24 @@ std::set<track> open_edwin_user_chain(const char* path) {
     chain->SetBranchAddress("wp_totalPE", &wp_totalPE);
 
     long nentries = chain->GetEntries();
+    std::size_t nstoppins = 0ul;
     std::cout << "Info: Found " << nentries << " entries in EDWIN files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
+        TVector3 fpos(exitX, exitY, exitZ);
+        if (fpos.Mag() > 40000.0) {
+            ++nstoppins;
+        }
         tracks.insert(track{
             .run_id = run_number,
             .ts = TTimeStamp(cd_time_s, cd_time_ns),
             .totq_cd = cd_totalPE,
             .totq_wp = wp_totalPE,
             .ipos = TVector3(enterX, enterY, enterZ),
-            .fpos = TVector3(exitX, exitY, exitZ)
+            .fpos = fpos
         });
     }
+    std::cout << "Info: Number of stopping tracks for Edwin: " << nstoppins << '\n';
     return tracks;
 }
 
@@ -250,7 +262,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
             }
         }
         if (!has_tt_info) continue;
-        // if (!is_in_acrylic) continue; // SELECTION!
+        if (!is_in_acrylic) continue; // SELECTION!
         if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
         if (ntracks_wpclassify != 1) continue; // SELECTION!
         for (std::size_t i = 0ul; i < method->size(); ++i) {
