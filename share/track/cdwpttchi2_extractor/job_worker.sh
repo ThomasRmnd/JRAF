@@ -67,12 +67,11 @@ Process a single file identified by run and process ID.
 Arguments:
   <campaign>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
   <run_number>    Run number to process
-  <list-base>     Good list base path
 EOF
 }
 
 parse_args() {
-    if (( $# < 4 )); then
+    if (( $# < 3 )); then
         echo "ERROR: Missing arguments for CC-IN2P3" >&2
         usage >&2
         exit 1
