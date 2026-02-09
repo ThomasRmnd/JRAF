@@ -205,6 +205,49 @@ std::set<track> open_edwin_user_chain(const char* path) {
     return tracks;
 }
 
+std::set<track> open_cdwpttchi2_user_chain(const char* path) {
+    TChain* chain = new TChain("muons");
+    chain->Add(path);
+    std::set<track> tracks;
+
+    int run_id;
+    time_t sec;
+    int nsec;
+    double totq_cd;
+    double totq_wp;
+    double chi2;
+    double iposx, iposy, iposz;
+    double fposx, fposy, fposz;
+
+    chain->SetBranchAddress("run_id", &run_id);
+    chain->SetBranchAddress("sec", &sec);
+    chain->SetBranchAddress("nsec", &nsec);
+    chain->SetBranchAddress("totq_cd", &totq_cd);
+    chain->SetBranchAddress("totq_wp", &totq_wp);
+    chain->SetBranchAddress("chi2", &chi2);
+    chain->SetBranchAddress("iposx", &iposx);
+    chain->SetBranchAddress("iposy", &iposy);
+    chain->SetBranchAddress("iposz", &iposz);
+    chain->SetBranchAddress("fposx", &fposx);
+    chain->SetBranchAddress("fposy", &fposy);
+    chain->SetBranchAddress("fposz", &fposz);
+
+    long nentries = chain->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in CdWpTtChi2 files\n";
+    for (long k = 0l; k < nentries; ++k) {
+        chain->GetEntry(k);
+        tracks.insert(track{
+            .run_id = run_id,
+            .ts = TTimeStamp(sec, nsec),
+            .totq_cd = totq_cd,
+            .totq_wp = totq_wp,
+            .ipos = TVector3(iposx, iposy, iposz),
+            .fpos = TVector3(fposx, fposy, fposz)
+        });
+    }
+    return tracks;
+}
+
 std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* path) {
     TChain* chain = new TChain("muons");
     chain->Add(path);
@@ -278,6 +321,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         if (ntracks_cdclassify != 1 || stopping_cdclassify) continue; // SELECTION! || stopping_cdclassify
         if (ntracks_wpclassify != 1 || stopping_wpclassify) continue; // SELECTION! || stopping_wpclassify
         for (std::size_t i = 0ul; i < method->size(); ++i) {
+            if ((*method)[i] == "CdWpTtChi2") continue;
             tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
                 .ts = TTimeStamp(sec, nsec),
@@ -391,8 +435,9 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
     return performances;
 }
 
-int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_amber, const char* path_edwin) {
+int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
     std::map<std::string, std::set<track>> tracks = open_joint_reco_user_chain(path_joint);
+    tracks["CdWpTtChi2"] = open_cdwpttchi2_user_chain(path_cdwpttchi2);
     tracks["Amber_v5.5"] = open_amber_v5_5_user_chain(path_amber);
     tracks["Edwin"] = open_edwin_user_chain(path_edwin);
 
