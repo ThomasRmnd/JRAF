@@ -275,7 +275,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         }
         if (!has_tt_info) continue;
         if (!is_in_acrylic) continue; // SELECTION!
-        if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
+        if (ntracks_cdclassify != 1 || stopping_cdclassify) continue; // SELECTION! || stopping_cdclassify
         if (ntracks_wpclassify != 1 || stopping_wpclassify) continue; // SELECTION! || stopping_wpclassify
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             tracks[(*method)[i]].insert(track{
