@@ -1,8 +1,67 @@
 #include <string>
 #include <vector>
 
+#include <TCanvas.h>
 #include <TFile.h>
+#include <TH1D.h>
 #include <TTree.h>
+
+std::vector<double> generate_segment_boundaries(double start, double stop, int num_bins) {
+    if (num_bins <= 0) return {};
+    int num_points = num_bins + 1;
+    double expected_width = (stop - start) / num_bins;
+    
+    std::vector<double> segment;
+    segment.reserve(num_points);
+    segment.push_back(start); 
+
+    for (int i = 1; i < num_points; ++i) {
+        double boundary = start + i * expected_width;
+        
+        if (i == num_points - 1) {
+             segment.push_back(stop);
+        } else {
+             segment.push_back(boundary);
+        }
+    }
+    return segment;
+}
+
+std::vector<double> create_custom_e_p_bins() {
+
+    // double s1_start = 0.8;
+    // double s2_start = 0.94;
+    // double s3_start = 7.44;
+    // double s4_start = 7.8;
+    // double s5_start = 8.2;
+    // double stop = 12.0;
+
+    // int s1_bins = 1;
+    // int s2_bins = 325;
+    // int s3_bins = 9;
+    // int s4_bins = 4;
+    // int s5_bins = 1;
+    // int tot_bins = s1_bins + s2_bins + s3_bins + s4_bins + s5_bins;
+
+    double edges[] = {0.7, 1.0, 6.6, 7.4, 7.7, 8.1, 8.6, 9.4, 12.0};
+    int    bins[]  = {  1,  56,   4,   1,   1,   1,   1,   1};
+    
+    std::vector<double> e_p_bins;
+
+    for (std::size_t k = 0ul; k < 8ul; ++k) {
+        double start = edges[k];
+        double stop = edges[k + 1];
+        int nbins = bins[k];
+        std::vector<double> segment = generate_segment_boundaries(start, stop, nbins);
+        if (k == 0ul) {
+            e_p_bins.insert(e_p_bins.end(), segment.begin(), segment.end());
+        } else {
+            e_p_bins.insert(e_p_bins.end(), segment.begin() + 1, segment.end());
+        }
+    }
+    
+    return e_p_bins;
+}
 
 int vanessa_file_analysis(const char* filepath) {
     TFile* file = TFile::Open(filepath, "READ");
@@ -189,6 +248,27 @@ int vanessa_file_analysis(const char* filepath) {
     tree->SetBranchAddress("charge_ratio_d", &charge_ratio_d);
     tree->SetBranchAddress("hit_q_mean_d", &hit_q_mean_d);
     tree->SetBranchAddress("hit_q_std_d", &hit_q_std_d);
+
+    std::vector<double> e_p_bins = create_custom_e_p_bins();
+    TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy;E_{p} (MeV);Entries;", e_p_bins.size() - 1, e_p_bins.data());
+    for (long k = 0l; k < tree->GetEntries(); ++k) {
+        tree->GetEntry(k);
+        h_e_p->Fill(energy_p);
+    }
+
+    TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
+    c_e_p->cd();
+
+    h_e_p->GetXaxis()->CenterTitle(true);
+    h_e_p->GetYaxis()->CenterTitle(true);
+    h_e_p->GetXaxis()->SetTitleOffset(1.25);
+    h_e_p->SetLineWidth(2);
+    h_e_p->SetLineColor(kBlue);
+    h_e_p->Draw("HIST");
+
+    c_e_p->SetTickx();
+    c_e_p->SetTicky();
+    c_e_p->Update();
 
     return 0;
 }
