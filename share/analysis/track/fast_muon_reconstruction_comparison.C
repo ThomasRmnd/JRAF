@@ -398,18 +398,23 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
-    const std::map<std::string, std::vector<double>>& angles = correlations.first;
-    const std::map<std::string, std::vector<double>>& distances = correlations.second;
+    
+    std::map<std::string, std::vector<double>> angles;
+    std::map<std::string, std::vector<double>> distances;
+    for (const auto& [method, perf] : performances) {
+        angles[method] = extract_angles_from_performances(perf);
+        distances[method] = extract_distances_from_performances(perf);
+    }
 
     std::map<std::string, TH1D*> method_angle_map;
     std::map<std::string, TH1D*> method_distance_map;
 
-    // double xmin_angle = 0.0, xmax_angle = 180.0;
-    // double xmin_distance = 0.0, xmax_distance = 40.0;
-    // int nbins_angle = 200, nbins_distance = 200;
-    double xmin_angle = 0.0, xmax_angle = 5.0;
-    double xmin_distance = 0.0, xmax_distance = 2.0;
-    int nbins_angle = 50, nbins_distance = 50;
+    double xmin_angle = 0.0, xmax_angle = 180.0;
+    double xmin_distance = 0.0, xmax_distance = 40.0;
+    int nbins_angle = 200, nbins_distance = 200;
+    // double xmin_angle = 0.0, xmax_angle = 5.0;
+    // double xmin_distance = 0.0, xmax_distance = 2.0;
+    // int nbins_angle = 50, nbins_distance = 50;
 
     method_angle_map["CdWpTtChi2"] = new TH1D("h_angle_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
     method_distance_map["CdWpTtChi2"] = new TH1D("h_distance_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
@@ -446,6 +451,124 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     plot_metrics(method_angle_map, angle_quantiles);
     plot_metrics(method_distance_map, distance_quantiles);
+
+    double r2_min = 0.0 * 0.0, r2_max = 18.0 * 18.0;
+    int nbins = 9;
+    std::map<std::string, std::vector<std::vector<double>>> method_angle_r2_bin_content(nbins);
+    std::map<std::string, std::vector<std::vector<double>>> method_distance_r2_bin_content(nbins);
+
+    std::map<std::string, TH1D*> method_angle_r2_map;
+    method_angle_r2_map["CdWpTtChi2"] = new TH1D("h_angle_r2_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    method_angle_r2_map["CdClassify"] = new TH1D("h_angle_cdclassify", "Angle between tracks direction (CdClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    method_angle_r2_map["WpBasic"] = new TH1D("h_angle_wpclassify", "Angle between tracks direction (WpClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    method_angle_r2_map["Amber"] = new TH1D("h_angle_r2_amber", "Angle between tracks direction (Amber);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    method_angle_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Angle between tracks direction (Edwin);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    for (auto& [method, h] : method_angle_r2_map) {
+        h->GetXaxis()->SetNdivisions(nbins);
+    }
+
+    std::map<std::string, TH1D*> method_distance_r2_map;
+    method_distance_r2_map["CdWpTtChi2"] = new TH1D("h_angle_r2_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["CdClassify"] = new TH1D("h_angle_r2_cdclassify", "Distance between tracks middle point (CdClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["WpBasic"] = new TH1D("h_angle_r2_wpclassify", "Distance between tracks middle point (WpClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["Amber"] = new TH1D("h_angle_r2_amber", "Distance between tracks middle point (Amber);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    for (auto& [method, h] : method_distance_r2_map) {
+        h->GetXaxis()->SetNdivisions(nbins);
+    }
+
+    for (const auto& [method, perf] : performances) {
+        for (const MuonPerformance& mp : perf) {
+            double r2 = mp.clippingness * mp.clippingness;
+            if (r2 < r2_min || r2 > r2_max) continue
+            int bin = std::floor((r2 - r2_min) / (r2_max - r2_min) * nbins);
+            method_angle_r2_bin_content[method][bin].push_back(mp.angle);
+            method_distance_r2_bin_content[method][bin].push_back(mp.distance);
+        }
+        for (int i = 0; i < nbins; ++i) {
+            method_angle_r2_map[method]->SetBinContent(i + 1, get_quantile(method_angle_r2_bin_content[method][i].begin(), method_angle_r2_bin_content[method][i].end(), 0.682));
+            method_distance_r2_map[method]->SetBinContent(i + 1, get_quantile(method_distance_r2_bin_content[method][i].begin(), method_distance_r2_bin_content[method][i].end(), 0.682));
+            double edge = std::sqrt(i * (r2_max - r2_min) / nbins + r2_min);
+            method_angle_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
+            method_distance_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
+        }
+        method_angle_r2_map[method]->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
+        method_distance_r2_map[method]->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
+    }
+
+    std::map<std::string, Color_t> colors = {
+        {"CdWpTtChi2", kBlack}, 
+        {"CdClassify", kGreen + 2}, 
+        {"WpBasic", kViolet}, 
+        {"Amber_v5.5", kBlue},
+        {"Edwin", kRed},
+    };
+
+    TCanvas* c_angle_68p_r2 = new TCanvas("c_angle_68p_r2", "Angle 68% quantile", 1000, 1000);
+    c_angle_68p_r2->cd();
+
+    TLegend* leg_angle_68p_r2 = new TLegend(0.45, 0.65, 0.85, 0.85);
+    bool is_first_angle = true;
+
+    for (auto& [method, h] : method_angle_r2_map) {
+        h->SetStats(0);
+        h->SetMarkerStyle(kFullCircle);
+        h->SetMarkerSize(2.0);
+        h->SetMarkerColor(colors[method]);
+        h->SetLineWidth(2);
+        h->SetLineColor(colors[method]);
+        h->GetXaxis()->CenterTitle(true);
+        h->GetYaxis()->CenterTitle(true);
+        h->GetYaxis()->SetTitleOffset(1.25);
+        if (is_first_angle) {
+            is_first_angle = false;
+            h->Draw("P");
+        }
+        else {
+            h->Draw("P SAME");
+        }
+        leg_angle_68p_r2->AddEntry(h, Form("%s: 68%% quantile = %.2f", method.c_str(), angle_quantiles.at(method)), "p");
+    }
+    leg_angle_68p_r2->SetTextSize(0.02);
+    leg_angle_68p_r2->Draw();
+
+    c_angle_68p_r2->SetTickx();
+    c_angle_68p_r2->SetTicky();
+    c_angle_68p_r2->SetGrid();
+    c_angle_68p_r2->Update();
+
+    TCanvas* c_distance_68p_r2 = new TCanvas("c_distance_68p_r2", "Distance 68% quantile", 1000, 1000);
+    c_distance_68p_r2->cd();
+
+    TLegend* leg_distance_68p_r2 = new TLegend(0.45, 0.65, 0.85, 0.85);
+    bool is_first_distance = true;
+
+    for (auto& [method, h] : method_distance_r2_map) {
+        h->SetStats(0);
+        h->SetMarkerStyle(kFullCircle);
+        h->SetMarkerSize(2.0);
+        h->SetMarkerColor(colors[method]);
+        h->SetLineWidth(2);
+        h->SetLineColor(colors[method]);
+        h->GetXaxis()->CenterTitle(true);
+        h->GetYaxis()->CenterTitle(true);
+        h->GetYaxis()->SetTitleOffset(1.25);
+        if (is_first_distance) {
+            is_first_distance = false;
+            h->Draw("P");
+        }
+        else {
+            h->Draw("P SAME");
+        }
+        leg_distance_68p_r2->AddEntry(h, Form("%s: 68%% quantile = %.2f", method.c_str(), distance_quantiles.at(method)), "p");
+    }
+    leg_distance_68p_r2->SetTextSize(0.02);
+    leg_distance_68p_r2->Draw();
+
+    c_distance_68p_r2->SetTickx();
+    c_distance_68p_r2->SetTicky();
+    c_distance_68p_r2->SetGrid();
+    c_distance_68p_r2->Update();
 
     return 0;
 }
