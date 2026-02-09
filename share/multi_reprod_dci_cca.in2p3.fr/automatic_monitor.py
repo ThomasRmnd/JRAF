@@ -286,7 +286,7 @@ class RunListFetcher(Module):
         if args.campaign == "ReProd25C":
             self.good_run_list = "/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
         elif args.campaign == "ReProd25D":
-            self.good_run_list = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good_v0.0.txt"
+            self.good_run_list = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2/physics_good_v0.0.txt"
         self.lower = args.lower_run
         self.upper = args.upper_run
         return True
@@ -497,7 +497,7 @@ class JobLauncher(Module):
             if self.campaign == "ReProd25C":
                 list_base = "/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
             elif self.campaign == "ReProd25D":
-                list_base = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0"
+                list_base = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2"
             if not list_base:
                 raise ValueError(f"Unknown campaign: {self.campaign}")
             

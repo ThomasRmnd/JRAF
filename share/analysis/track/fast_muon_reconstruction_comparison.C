@@ -34,6 +34,11 @@ double compute_distance_between_track(const track& a, const track& b) {
     return (mpos_a - mpos_b).Mag() / 1000.0;
 }
 
+double compute_clippingness(const track& a) {
+    TVector3 dir = (a.fpos - a.ipos).Unit();
+    return dir.Cross(-a.ipos).Mag() / dir.Mag();
+}
+
 double get_quantile(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last, double quantile) {
     if (first == last) return 0.0;
     std::vector<double> v(first, last);
@@ -269,9 +274,9 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
             }
         }
         if (!has_tt_info) continue;
-        if (!is_in_acrylic) continue; // SELECTION!
-        if (ntracks_cdclassify != 1 || stopping_cdclassify) continue; // SELECTION! || stopping_cdclassify
-        if (ntracks_wpclassify != 1 || stopping_wpclassify) continue; // SELECTION! || stopping_wpclassify
+        // if (!is_in_acrylic) continue; // SELECTION!
+        if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
+        if (ntracks_wpclassify != 1) continue; // SELECTION! || stopping_wpclassify
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
@@ -286,15 +291,36 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
     return tracks;
 }
 
-std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> compute_correlations(std::map<std::string, std::set<track>>& tracks) {
+struct MuonPerformance {
+    double angle;
+    double distance;
+    double clippingness;
+};
+
+std::vector<double> extract_angles_from_performances(const std::vector<MuonPerformance>& perf) {
+    std::vector<double> angles;
+    for (const MuonPerformance& mp : perf) {
+        angles.push_back(mp.angle);
+    }
+    return angles;
+}
+
+std::vector<double> extract_distances_from_performances(const std::vector<MuonPerformance>& perf) {
+    std::vector<double> distances;
+    for (const MuonPerformance& mp : perf) {
+        distances.push_back(mp.distance);
+    }
+    return distances;
+}
+
+std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::map<std::string, std::set<track>>& tracks) {
     if (tracks.find("Tt") == tracks.end()) {
         std::cerr << "Error: Tt tracks not found in map.\n";
         return {};
     }
     const std::set<track>& tt_tracks = tracks["Tt"];
 
-    std::map<std::string, std::vector<double>> angles;
-    std::map<std::string, std::vector<double>> distances;
+    std::map<std::string, std::vector<MuonPerformance>> performances;
 
     for (const auto& [method, track_set] : tracks) {
         if (method == "Tt") continue;
@@ -308,24 +334,26 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
             std::set<track>::const_iterator it_tt = tt_tracks.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
 
             while (it_tt != track_set.end() && lower_bound_ts <= it_tt->ts && it_tt->ts <= upper_bound_ts) {
-                angles[method].push_back(compute_angle_between_track(trk, *it_tt));
-                distances[method].push_back(compute_distance_between_track(trk, *it_tt));
+                performances[method].push_back(MuonPerformance{
+                    .angle = compute_angle_between_track(trk, *it_tt),
+                    .distance = compute_distance_between_track(trk, *it_tt),
+                    .clippingness = compute_clippingness(trk)
+                });
                 ++it_tt;
             }
         }
     }
-    return std::make_pair(angles, distances);
+    return performances;
 }
 
-std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks) {
+std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks) {
     if (tracks.find("Tt") == tracks.end()) {
         std::cerr << "Error: Tt tracks not found in map.\n";
         return {};
     }
     const std::set<track>& tt_tracks = tracks["Tt"];
 
-    std::map<std::string, std::vector<double>> angles;
-    std::map<std::string, std::vector<double>> distances;
+    std::map<std::string, std::vector<MuonPerformance>> performances;
 
     for (const track& tt_muon : tt_tracks) {
         std::map<std::string, track> coincident_map;
@@ -352,12 +380,15 @@ std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std:
 
         if (all_found) {
             for (const auto& [method, muon] : coincident_map) {
-                angles[method].push_back(compute_angle_between_track(muon, tt_muon));
-                distances[method].push_back(compute_distance_between_track(muon, tt_muon));
+                performances[method].push_back(MuonPerformance{
+                    .angle = compute_angle_between_track(tt_muon, muon),
+                    .distance = compute_distance_between_track(tt_muon, muon),
+                    .clippingness = compute_clippingness(tt_muon)
+                });
             }
         }
     }
-    return std::make_pair(angles, distances);
+    return performances;
 }
 
 int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_amber, const char* path_edwin) {
@@ -365,8 +396,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     tracks["Amber_v5.5"] = open_amber_v5_5_user_chain(path_amber);
     tracks["Edwin"] = open_edwin_user_chain(path_edwin);
 
-    // std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> correlations = compute_correlations(tracks);
-    std::pair<std::map<std::string, std::vector<double>>, std::map<std::string, std::vector<double>>> correlations = compute_global_correlations(tracks);
+    // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
+    std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
     const std::map<std::string, std::vector<double>>& angles = correlations.first;
     const std::map<std::string, std::vector<double>>& distances = correlations.second;
 
@@ -391,14 +422,10 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_angle_map["Edwin"] = new TH1D("h_angle_edwin", "Angle between tracks direction (Edwin);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
     method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
 
-    for (const auto& [method, ang] : angles) {
-        for (std::vector<double>::const_iterator it = ang.begin(); it != ang.end(); ++it) {
-            method_angle_map[method]->Fill(*it);
-        }
-    }
-    for (const auto& [method, dist] : distances) {
-        for (std::vector<double>::const_iterator it = dist.begin(); it != dist.end(); ++it) {
-            method_distance_map[method]->Fill(*it);
+    for (const auto& [method, perf] : performances) {
+        for (const MuonPerformance& mp : perf) {
+            method_angle_map[method]->Fill(mp.angle);
+            method_distance_map[method]->Fill(mp.distance);
         }
     }
 
