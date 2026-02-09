@@ -268,6 +268,9 @@ int vanessa_file_analysis(const char* filepath) {
 
         if (dt < 5000 || 1000000 < dt) continue;
         if (1.5 < dR) continue;
+
+        std::cout << static_cast<int>(in_neu_veto_p) << ' ' << static_cast<int>(in_neu_veto_d) << ' ' << static_cast<int>(is_flasher_p) << ' ' << static_cast<int>(is_flasher_d) << ' ' << mult_before << ' ' << mult_between << ' ' << mult_after << '\n';
+
         
         h_e_p->Fill(energy_p);
     }
