@@ -454,8 +454,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     double r2_min = 0.0 * 0.0, r2_max = 18.0 * 18.0;
     int nbins = 9;
-    std::map<std::string, std::vector<std::vector<double>>> method_angle_r2_bin_content(nbins);
-    std::map<std::string, std::vector<std::vector<double>>> method_distance_r2_bin_content(nbins);
+    std::map<std::string, std::vector<std::vector<double>>> method_angle_r2_bin_content;
+    std::map<std::string, std::vector<std::vector<double>>> method_distance_r2_bin_content;
 
     std::map<std::string, TH1D*> method_angle_r2_map;
     method_angle_r2_map["CdWpTtChi2"] = new TH1D("h_angle_r2_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
@@ -478,9 +478,11 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
 
     for (const auto& [method, perf] : performances) {
+        method_angle_r2_bin_content[method].resize(nbins);
+        method_distance_r2_bin_content[method].resize(nbins);
         for (const MuonPerformance& mp : perf) {
             double r2 = mp.clippingness * mp.clippingness;
-            if (r2 < r2_min || r2 > r2_max) continue
+            if (r2 < r2_min || r2 > r2_max) continue;
             int bin = std::floor((r2 - r2_min) / (r2_max - r2_min) * nbins);
             method_angle_r2_bin_content[method][bin].push_back(mp.angle);
             method_distance_r2_bin_content[method][bin].push_back(mp.distance);
@@ -489,8 +491,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             method_angle_r2_map[method]->SetBinContent(i + 1, get_quantile(method_angle_r2_bin_content[method][i].begin(), method_angle_r2_bin_content[method][i].end(), 0.682));
             method_distance_r2_map[method]->SetBinContent(i + 1, get_quantile(method_distance_r2_bin_content[method][i].begin(), method_distance_r2_bin_content[method][i].end(), 0.682));
             double edge = std::sqrt(i * (r2_max - r2_min) / nbins + r2_min);
-            method_angle_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
-            method_distance_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", bin_edge));
+            method_angle_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", edge));
+            method_distance_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", edge));
         }
         method_angle_r2_map[method]->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
         method_distance_r2_map[method]->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
