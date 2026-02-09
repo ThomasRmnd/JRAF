@@ -337,7 +337,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
                 performances[method].push_back(MuonPerformance{
                     .angle = compute_angle_between_track(trk, *it_tt),
                     .distance = compute_distance_between_track(trk, *it_tt),
-                    .clippingness = compute_clippingness(trk)
+                    .clippingness = compute_clippingness(*it_tt)
                 });
                 ++it_tt;
             }
@@ -489,6 +489,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             method_distance_r2_bin_content[method][bin].push_back(mp.distance);
         }
         for (int i = 0; i < nbins; ++i) {
+            std::cout << "Method: " << method << ", size of angle vector: " << method_angle_r2_bin_content[method][i].size() << '\n';
+            std::cout << "Method: " << method << ", size of distance vector: " << method_distance_r2_bin_content[method][i].size() << '\n';
             method_angle_r2_map[method]->SetBinContent(i + 1, get_quantile(method_angle_r2_bin_content[method][i].begin(), method_angle_r2_bin_content[method][i].end(), 0.682));
             method_distance_r2_map[method]->SetBinContent(i + 1, get_quantile(method_distance_r2_bin_content[method][i].begin(), method_distance_r2_bin_content[method][i].end(), 0.682));
             method_angle_r2_map[method]->SetBinError(i + 1, 0.0001);
@@ -560,7 +562,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         h->GetYaxis()->SetTitleOffset(1.25);
         if (is_first_distance) {
             is_first_distance = false;
-            h->Draw("P");
+            h->Draw("E P");
         }
         else {
             h->Draw("P SAME");
