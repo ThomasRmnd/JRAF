@@ -265,6 +265,8 @@ int vanessa_file_analysis(const char* filepath) {
         if (16500.0 < pos_d.Mag()) continue;
         if (15500.0 < pos_p.Z() && pos_p.X() * pos_p.X() + pos_p.Y() * pos_p.Y() < 2000.0 * 2000.0) continue;
         if (15500.0 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2000.0 * 2000.0) continue;
+
+        std::cout << dt << ' ' << dR << '\n';
         
         h_e_p->Fill(energy_p);
     }
