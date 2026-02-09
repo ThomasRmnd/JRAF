@@ -17,20 +17,20 @@ int vanessa_file_analysis(const char* filepath) {
     }
     
     std::string* filename = nullptr;
-    long dt;
-    long dt_mu_time;
+    long long dt;
+    long long dt_mu_time;
     double dist_track_time;
     int mu_type_time;
     int ntracks_time;
     int Nneu_time;
     char in_neu_veto_p;
     char in_neu_veto_d;
-    long dt_mu_dist;
+    long long dt_mu_dist;
     double dist_track_dist;
     int mu_type_dist;
     int ntracks_dist;
     int Nneu_dist;
-    long dt_mu_neu;
+    long long dt_mu_neu;
     double dist_track_neu;
     int mu_type_neu;
     int ntracks_neu;
@@ -59,8 +59,8 @@ int vanessa_file_analysis(const char* filepath) {
     double R_d;
     double rho_p;
     double rho_d;
-    long t_p;
-    long t_d;
+    long long t_p;
+    long long t_d;
     int mult_after;
     int mult_between;
     int mult_before;
@@ -78,8 +78,8 @@ int vanessa_file_analysis(const char* filepath) {
     double y_d_oec;
     double z_d_oec;
     double dR_oec;
-    bool is_flasher_p;
-    bool is_lowEMuon_p;
+    char is_flasher_p;
+    char is_lowEMuon_p;
     int nFired_p;
     double ntq_mean_p;
     double ntq_std_p;
@@ -90,8 +90,8 @@ int vanessa_file_analysis(const char* filepath) {
     double charge_ratio_p;
     double hit_q_mean_p;
     double hit_q_std_p;
-    bool is_flasher_d;
-    bool is_lowEMuon_d;
+    char is_flasher_d;
+    char is_lowEMuon_d;
     int nFired_d;
     double ntq_mean_d;
     double ntq_std_d;
