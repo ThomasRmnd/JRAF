@@ -80,7 +80,6 @@ parse_args() {
 
     CAMPAIGN="$1"; shift
     RUN_NUMBER="$1"; shift
-    LIST_BASE="$1"; shift
 
     case "${CAMPAIGN}" in
         Normal)

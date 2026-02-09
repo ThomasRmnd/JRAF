@@ -36,13 +36,6 @@ XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
 RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good_v0.0.txt"
 
-OUTPUT_DIR_BASE="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod"
-OUTPUT_SUFFIX_NORMAL="output.normal.cca.root"
-OUTPUT_SUFFIX_REPROD25A="output.reprod25a.cca.root"
-OUTPUT_SUFFIX_REPROD25B="output.reprod25b.cca.root"
-OUTPUT_SUFFIX_REPROD25C="output.reprod25c.cca.root"
-OUTPUT_SUFFIX_REPROD25D="output.reprod25d.cca.root"
-
 LOWER_BOUND=""
 UPPER_BOUND=""
 
@@ -80,23 +73,18 @@ parse_args() {
     case "${CAMPAIGN}" in
         Normal)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_NORMAL}"
             ;;
         ReProd25A)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25A}"
             ;;
         ReProd25B)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25B}"
             ;;
         ReProd25C)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25C}"
             ;;
         ReProd25D)
             RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25D}"
             ;;
         *)
             log ERROR "Invalid --campaign: ${CAMPAIGN}"
@@ -162,7 +150,7 @@ launch_jobs() {
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
             job_worker.sh \
-            "${CAMPAIGN}" "${run}" "${LIST_BASE}"
+            "${CAMPAIGN}" "${run}"
         # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/cdwptt_${run}_%a.log"
     done
 }
