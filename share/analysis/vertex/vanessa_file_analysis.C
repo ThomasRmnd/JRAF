@@ -258,34 +258,34 @@ int vanessa_file_analysis(const char* filepath) {
 
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
-
-        run_min = std::min(run_min, run);
-        run_max = std::max(run_max, run);
         
+        // Energy cut
         if (energy_p < 0.7 || 12.0 < energy_p) continue;
         if (energy_d < 2.0 || 2.5 < energy_d) continue;
         
+        // Fiducial volume cut
         TVector3 pos_p(x_p, y_p, z_p);
         TVector3 pos_d(x_d, y_d, z_d);
         if (16.5 < pos_p.Mag()) continue;
-        if (16.5 < pos_d.Mag()) continue;
+        // if (16.5 < pos_d.Mag()) continue;
         if (15.5 < pos_p.Z() && pos_p.X() * pos_p.X() + pos_p.Y() * pos_p.Y() < 2.0 * 2.0) continue;
-        if (15.5 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2.0 * 2.0) continue;
+        // if (15.5 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2.0 * 2.0) continue;
 
+        // Correlation cut
         if (dt < 5000 || 1000000 < dt) continue;
         if (1.5 < dR) continue;
 
+        // Multiplicity cut
         if (mult_before || mult_between || mult_after) continue;
 
+        // Neutron veto cut
         if (in_neu_veto_p || in_neu_veto_d) continue;
 
+        // Flasher cut
         if (is_flasher_p || is_flasher_d) continue;
         
         h_e_p->Fill(energy_p);
     }
-
-    std::cout << "run_min = " << run_min << '\n';
-    std::cout << "run_max = " << run_max << '\n';
 
     TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
     c_e_p->cd();
