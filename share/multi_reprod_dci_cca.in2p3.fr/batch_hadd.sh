@@ -35,6 +35,8 @@ log INFO "Cluster detected: ${CLUSTER}"
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
 RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2/physics_good.txt"
+LOCAL_RUN_LIST_REPROD25C="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25C/physics_good.txt"
+LOCAL_RUN_LIST_REPROD25D="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25D/physics_good.txt"
 
 OUTPUT_DIR_BASE="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd"
 OUTPUT_SUFFIX_NORMAL="output.normal.root"
@@ -80,22 +82,27 @@ parse_args() {
     case "${CAMPAIGN}" in
         Normal)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
+            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             OUTPUT_SUFFIX="${OUTPUT_SUFFIX_NORMAL}"
             ;;
         ReProd25A)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
+            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25A}"
             ;;
         ReProd25B)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
+            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25B}"
             ;;
         ReProd25C)
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
+            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25C}"
             ;;
         ReProd25D)
             RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
+            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25D}"
             OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25D}"
             ;;
         *)
@@ -112,7 +119,8 @@ parse_args() {
 
 load_run_list() {
     log INFO "Fetching run list from EOS..."
-    mapfile -t RUN_LIST < <(xrdfs "${XRD_URL_EOS}" cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    # mapfile -t RUN_LIST < <(xrdfs "${XRD_URL_EOS}" cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    mapfile -t RUN_LIST < <(cat "${LOCAL_RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
 }
 
 #==============================
