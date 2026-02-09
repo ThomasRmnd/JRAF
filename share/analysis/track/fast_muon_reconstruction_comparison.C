@@ -36,7 +36,7 @@ double compute_distance_between_track(const track& a, const track& b) {
 
 double compute_clippingness(const track& a) {
     TVector3 dir = (a.fpos - a.ipos).Unit();
-    return dir.Cross(-a.ipos).Mag() / dir.Mag();
+    return dir.Cross(-a.ipos).Mag() / dir.Mag() / 1000.0;
 }
 
 double get_quantile(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last, double quantile) {
@@ -483,7 +483,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         method_distance_r2_bin_content[method].resize(nbins);
         for (const MuonPerformance& mp : perf) {
             double r2 = mp.clippingness * mp.clippingness;
-            if (r2 < r2_min || r2 > r2_max) continue;
+            if (r2 < r2_min || r2_max <= r2) continue;
             int bin = std::floor((r2 - r2_min) / (r2_max - r2_min) * nbins);
             method_angle_r2_bin_content[method][bin].push_back(mp.angle);
             method_distance_r2_bin_content[method][bin].push_back(mp.distance);
