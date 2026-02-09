@@ -491,6 +491,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         for (int i = 0; i < nbins; ++i) {
             method_angle_r2_map[method]->SetBinContent(i + 1, get_quantile(method_angle_r2_bin_content[method][i].begin(), method_angle_r2_bin_content[method][i].end(), 0.682));
             method_distance_r2_map[method]->SetBinContent(i + 1, get_quantile(method_distance_r2_bin_content[method][i].begin(), method_distance_r2_bin_content[method][i].end(), 0.682));
+            method_angle_r2_map[method]->SetBinError(i + 1, 0.0001);
+            method_distance_r2_map[method]->SetBinError(i + 1, 0.0001);
             double edge = std::sqrt(i * (r2_max - r2_min) / nbins + r2_min);
             method_angle_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", edge));
             method_distance_r2_map[method]->GetXaxis()->ChangeLabel(i + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", edge));
@@ -525,7 +527,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         h->GetYaxis()->SetTitleOffset(1.25);
         if (is_first_angle) {
             is_first_angle = false;
-            h->Draw("P");
+            h->Draw("E P");
         }
         else {
             h->Draw("P SAME");
