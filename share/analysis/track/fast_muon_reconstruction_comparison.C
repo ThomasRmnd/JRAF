@@ -468,11 +468,11 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
 
     std::map<std::string, TH1D*> method_distance_r2_map;
-    method_distance_r2_map["CdWpTtChi2"] = new TH1D("h_angle_r2_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
-    method_distance_r2_map["CdClassify"] = new TH1D("h_angle_r2_cdclassify", "Distance between tracks middle point (CdClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
-    method_distance_r2_map["WpBasic"] = new TH1D("h_angle_r2_wpclassify", "Distance between tracks middle point (WpClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
-    method_distance_r2_map["Amber_v5.5"] = new TH1D("h_angle_r2_amber", "Distance between tracks middle point (Amber);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
-    method_distance_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["CdWpTtChi2"] = new TH1D("h_distance_r2_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["CdClassify"] = new TH1D("h_distance_r2_cdclassify", "Distance between tracks middle point (CdClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["WpBasic"] = new TH1D("h_distance_r2_wpclassify", "Distance between tracks middle point (WpClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["Amber_v5.5"] = new TH1D("h_distance_r2_amber", "Distance between tracks middle point (Amber);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    method_distance_r2_map["Edwin"] = new TH1D("h_distance_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
     for (auto& [method, h] : method_distance_r2_map) {
         h->GetXaxis()->SetNdivisions(nbins);
     }
