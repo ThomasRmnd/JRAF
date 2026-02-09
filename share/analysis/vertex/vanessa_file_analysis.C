@@ -255,18 +255,18 @@ int vanessa_file_analysis(const char* filepath) {
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy;E_{p} (MeV);Entries;", e_p_bins.size() - 1, e_p_bins.data());
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
-
-        std::cout << energy_p << ' ' << energy_d << ' ' << x_p << ' ' << y_p << ' ' << z_p << ' ' << x_d << ' ' << y_d << ' ' << z_d << ' ' << dt << ' ' << dR << '\n';
         
         if (energy_p < 0.7 || 12.0 < energy_p) continue;
         if (energy_d < 2.0 || 2.5 < energy_d) continue;
         
         TVector3 pos_p(x_p, y_p, z_p);
         TVector3 pos_d(x_d, y_d, z_d);
-        if (16500.0 < pos_p.Mag()) continue;
-        if (16500.0 < pos_d.Mag()) continue;
-        if (15500.0 < pos_p.Z() && pos_p.X() * pos_p.X() + pos_p.Y() * pos_p.Y() < 2000.0 * 2000.0) continue;
-        if (15500.0 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2000.0 * 2000.0) continue;
+        if (16.5 < pos_p.Mag()) continue;
+        if (16.5 < pos_d.Mag()) continue;
+        if (15.5 < pos_p.Z() && pos_p.X() * pos_p.X() + pos_p.Y() * pos_p.Y() < 2.0 * 2.0) continue;
+        if (15.5 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2.0 * 2.0) continue;
+
+        std::cout << dt << ' ' << dR << '\n';
         
         h_e_p->Fill(energy_p);
     }
