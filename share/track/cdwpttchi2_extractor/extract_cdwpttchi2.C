@@ -110,5 +110,5 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
     ofile->Close();
     ifile->Close();
 
-    return 0:
+    return 0;
 }
