@@ -22,7 +22,6 @@ struct OBranches {
     int nsec;
     double totq_cd;
     double totq_wp;
-    unsigned char det;
     double chi2;
     double iposx, iposy, iposz;
     double fposx, fposy, fposz;
@@ -72,7 +71,6 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
     otree->Branch("nsec", &ob.nsec);
     otree->Branch("totq_cd", &ob.totq_cd);
     otree->Branch("totq_wp", &ob.totq_wp);
-    otree->Branch("det", &ob.det);
     otree->Branch("chi2", &ob.chi2);
     otree->Branch("iposx", &ob.iposx);
     otree->Branch("iposy", &ob.iposy);
@@ -93,7 +91,6 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
         ob.totq_wp = ib.totq_wp;
         for (std::size_t i = 0ul; i < ib.method->size(); ++i) {
             if ((*ib.method)[i] == "CdWpTtChi2") {
-                ob.det = (*ib.det)[i];
                 ob.chi2 = (*ib.quality)[i];
                 ob.iposx = (*ib.iposx)[i];
                 ob.iposy = (*ib.iposy)[i];
