@@ -60,7 +60,7 @@ OUTPUT_SUFFIX_REPROD25D="reconstruction.cdwpttchi2.reprod25d.root"
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") <run_number> <site>
+Usage: $(basename "$0") <campaign> <run_number>
 
 Process a single file identified by run and process ID.
 
@@ -71,7 +71,7 @@ EOF
 }
 
 parse_args() {
-    if (( $# < 3 )); then
+    if (( $# < 2 )); then
         echo "ERROR: Missing arguments for CC-IN2P3" >&2
         usage >&2
         exit 1
