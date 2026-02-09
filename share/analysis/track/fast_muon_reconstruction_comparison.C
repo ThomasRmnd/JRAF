@@ -464,7 +464,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_angle_r2_map["Amber_v5.5"] = new TH1D("h_angle_r2_amber", "Angle between tracks direction (Amber);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     method_angle_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Angle between tracks direction (Edwin);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     for (auto& [method, h] : method_angle_r2_map) {
-        h->GetXaxis()->SetNdivisions(nbins);
+        h->GetXaxis()->SetNdivisions(nbins, false);
     }
 
     std::map<std::string, TH1D*> method_distance_r2_map;
@@ -474,7 +474,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_distance_r2_map["Amber_v5.5"] = new TH1D("h_distance_r2_amber", "Distance between tracks middle point (Amber);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
     method_distance_r2_map["Edwin"] = new TH1D("h_distance_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
     for (auto& [method, h] : method_distance_r2_map) {
-        h->GetXaxis()->SetNdivisions(nbins);
+        h->GetXaxis()->SetNdivisions(nbins, false);
     }
 
     for (const auto& [method, perf] : performances) {
@@ -489,8 +489,6 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             method_distance_r2_bin_content[method][bin].push_back(mp.distance);
         }
         for (int i = 0; i < nbins; ++i) {
-            std::cout << "Method: " << method << ", size of angle vector: " << method_angle_r2_bin_content[method][i].size() << '\n';
-            std::cout << "Method: " << method << ", size of distance vector: " << method_distance_r2_bin_content[method][i].size() << '\n';
             method_angle_r2_map[method]->SetBinContent(i + 1, get_quantile(method_angle_r2_bin_content[method][i].begin(), method_angle_r2_bin_content[method][i].end(), 0.682));
             method_distance_r2_map[method]->SetBinContent(i + 1, get_quantile(method_distance_r2_bin_content[method][i].begin(), method_distance_r2_bin_content[method][i].end(), 0.682));
             method_angle_r2_map[method]->SetBinError(i + 1, 0.0001);
@@ -517,7 +515,15 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     TLegend* leg_angle_68p_r2 = new TLegend(0.45, 0.65, 0.85, 0.85);
     bool is_first_angle = true;
 
+    double max_angle = 0.0;
     for (auto& [method, h] : method_angle_r2_map) {
+        if (h->GetMaximum() > max_angle) {
+            max_angle = h->GetMaximum();
+        }
+    }
+
+    for (auto& [method, h] : method_angle_r2_map) {
+        h->SetMaximum(max_angle * 1.1);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
         h->SetMarkerSize(2.0);
@@ -547,10 +553,18 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     TCanvas* c_distance_68p_r2 = new TCanvas("c_distance_68p_r2", "Distance 68% quantile", 1000, 1000);
     c_distance_68p_r2->cd();
 
+    double max_distance = 0.0;
+    for (auto& [method, h] : method_distance_r2_map) {
+        if (h->GetMaximum() > max_distance) {
+            max_distance = h->GetMaximum();
+        }
+    }
+
     TLegend* leg_distance_68p_r2 = new TLegend(0.45, 0.65, 0.85, 0.85);
     bool is_first_distance = true;
 
     for (auto& [method, h] : method_distance_r2_map) {
+        h->SetMaximum(max_distance * 1.1);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
         h->SetMarkerSize(2.0);
