@@ -253,8 +253,14 @@ int vanessa_file_analysis(const char* filepath) {
 
     std::vector<double> e_p_bins = create_custom_e_p_bins();
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy;E_{p} (MeV);Entries;", e_p_bins.size() - 1, e_p_bins.data());
+
+    int run_min = 0, run_max = 999999;
+
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
+
+        run_min = std::min(run_min, run);
+        run_max = std::max(run_max, run);
         
         if (energy_p < 0.7 || 12.0 < energy_p) continue;
         if (energy_d < 2.0 || 2.5 < energy_d) continue;
@@ -277,6 +283,9 @@ int vanessa_file_analysis(const char* filepath) {
         
         h_e_p->Fill(energy_p);
     }
+
+    std::cout << "run_min = " << run_min << '\n';
+    std::cout << "run_max = " << run_max << '\n';
 
     TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
     c_e_p->cd();
