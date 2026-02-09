@@ -269,7 +269,7 @@ int vanessa_file_analysis(const char* filepath) {
         if (16.5 < pos_p.Mag()) continue;
         // if (16.5 < pos_d.Mag()) continue;
         if (15.5 < pos_p.Z() && pos_p.X() * pos_p.X() + pos_p.Y() * pos_p.Y() < 2.0 * 2.0) continue;
-        // if (15.5 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2.0 * 2.0) continue;
+        if (15.5 < pos_d.Z() && pos_d.X() * pos_d.X() + pos_d.Y() * pos_d.Y() < 2.0 * 2.0) continue;
 
         // Correlation cut
         if (dt < 5000 || 1000000 < dt) continue;
