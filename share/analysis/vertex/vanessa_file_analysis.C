@@ -254,7 +254,7 @@ int vanessa_file_analysis(const char* filepath) {
     std::vector<double> e_p_bins = create_custom_e_p_bins();
     TH1D* h_e_p = new TH1D("h_e_p", "Prompt energy;E_{p} (MeV);Entries;", e_p_bins.size() - 1, e_p_bins.data());
 
-    int run_min = 0, run_max = 999999;
+    int run_min = 999999, run_max = 0;
 
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
