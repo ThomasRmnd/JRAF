@@ -1,0 +1,114 @@
+#include <iostream>
+
+#include <TFile.h>
+#include <TTree.h>
+
+struct IBranches {
+    int run_id;
+    time_t sec;
+    int nsec;
+    double totq_cd;
+    double totq_wp;
+    std::vector<std::string> *method = nullptr;
+    std::vector<unsigned char> *det = nullptr;
+    std::vector<double> *quality = nullptr;
+    std::vector<double> *iposx = nullptr, *iposy = nullptr, *iposz = nullptr; 
+    std::vector<double> *fposx = nullptr, *fposy = nullptr, *fposz = nullptr;
+};
+
+struct OBranches {
+    int run_id;
+    time_t sec;
+    int nsec;
+    double totq_cd;
+    double totq_wp;
+    unsigned char det;
+    double chi2;
+    double iposx, iposy, iposz;
+    double fposx, fposy, fposz;
+};
+
+int extract_cdwpttchi2(const char* ipath, const char* opath) {
+    TFile* ifile = TFile::Open(ipath, "READ");
+    if (!ifile) {
+        std::cerr << "Error: Unable to open file " << ipath << '\n';
+        return 1;
+    }
+    TTree* itree = ifile->Get<TTree>("muons");
+    if (!itree) {
+        std::cerr << "Error: Cannot retrieve tree muons in file " << ipath << '\n';
+        return 1;
+    }
+    TFile* ofile = TFile::Open(opath, "RECREATE");
+    if (!ofile) {
+        std::cerr << "Error: Unable to open file " << opath << '\n';
+        return 1;
+    }
+    TTree* otree = new TTree("muons", "muons");
+    if (!otree) {
+        std::cerr << "Error: Unable to create output tree\n";
+        return 1;
+    }
+
+    IBranches ib;
+    itree->SetBranchAddress("run_id", &ib.run_id);
+    itree->SetBranchAddress("sec", &ib.sec);
+    itree->SetBranchAddress("nsec", &ib.nsec);
+    itree->SetBranchAddress("totq_cd", &ib.totq_cd);
+    itree->SetBranchAddress("totq_wp", &ib.totq_wp);
+    itree->SetBranchAddress("method", &ib.method);
+    itree->SetBranchAddress("det", &ib.det);
+    itree->SetBranchAddress("quality", &ib.quality);
+    itree->SetBranchAddress("iposx", &ib.iposx);
+    itree->SetBranchAddress("iposy", &ib.iposy);
+    itree->SetBranchAddress("iposz", &ib.iposz);
+    itree->SetBranchAddress("fposx", &ib.fposx);
+    itree->SetBranchAddress("fposy", &ib.fposy);
+    itree->SetBranchAddress("fposz", &ib.fposz);
+
+    OBranches ob;
+    otree->Branch("run_id", &ob.run_id);
+    otree->Branch("sec", &ob.sec);
+    otree->Branch("nsec", &ob.nsec);
+    otree->Branch("totq_cd", &ob.totq_cd);
+    otree->Branch("totq_wp", &ob.totq_wp);
+    otree->Branch("det", &ob.det);
+    otree->Branch("chi2", &ob.chi2);
+    otree->Branch("iposx", &ob.iposx);
+    otree->Branch("iposy", &ob.iposy);
+    otree->Branch("iposz", &ob.iposz);
+    otree->Branch("fposx", &ob.fposx);
+    otree->Branch("fposy", &ob.fposy);
+    otree->Branch("fposz", &ob.fposz);
+
+    long nentries = itree->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in input file\n";
+
+    for (long k = 0l; k < nentries; ++k) {
+        itree->GetEntry(k);
+        ob.run_id = ib.run_id;
+        ob.sec = ib.sec;
+        ob.nsec = ib.nsec;
+        ob.totq_cd = ib.totq_cd;
+        ob.totq_wp = ib.totq_wp;
+        for (std::size_t i = 0ul; i < ib.method->size(); ++i) {
+            if ((*ib.method)[i] == "CdWpTtChi2") {
+                ob.det = (*ib.det)[i];
+                ob.chi2 = (*ib.quality)[i];
+                ob.iposx = (*ib.iposx)[i];
+                ob.iposy = (*ib.iposy)[i];
+                ob.iposz = (*ib.iposz)[i];
+                ob.fposx = (*ib.fposx)[i];
+                ob.fposy = (*ib.fposy)[i];
+                ob.fposz = (*ib.fposz)[i];
+                otree->Fill();
+            }
+        }
+    }
+
+    ofile->Write();
+    ofile->Close();
+    ifile->Close();
+
+    return 0:
+}
