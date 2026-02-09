@@ -459,8 +459,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     std::map<std::string, TH1D*> method_angle_r2_map;
     method_angle_r2_map["CdWpTtChi2"] = new TH1D("h_angle_r2_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
-    method_angle_r2_map["CdClassify"] = new TH1D("h_angle_cdclassify", "Angle between tracks direction (CdClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
-    method_angle_r2_map["WpBasic"] = new TH1D("h_angle_wpclassify", "Angle between tracks direction (WpClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    method_angle_r2_map["CdClassify"] = new TH1D("h_angle_r2_cdclassify", "Angle between tracks direction (CdClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    method_angle_r2_map["WpBasic"] = new TH1D("h_angle_r2_wpclassify", "Angle between tracks direction (WpClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     method_angle_r2_map["Amber_v5.5"] = new TH1D("h_angle_r2_amber", "Angle between tracks direction (Amber);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     method_angle_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Angle between tracks direction (Edwin);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     for (auto& [method, h] : method_angle_r2_map) {
