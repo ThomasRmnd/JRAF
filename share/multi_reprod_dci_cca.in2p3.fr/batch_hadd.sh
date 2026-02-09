@@ -34,7 +34,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
-RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0/physics_good_v0.0.txt"
+RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2/physics_good.txt"
 
 OUTPUT_DIR_BASE="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd"
 OUTPUT_SUFFIX_NORMAL="output.normal.root"
