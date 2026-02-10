@@ -139,9 +139,9 @@ def calculate_muon_rate(filepath : str, plot=False):
     mask_cd_only = np.logical_and(data["totq_cd"] > 0, data["totq_wp"] <= 0)
     mask_wp_only = np.logical_and(data["totq_cd"] <= 0, data["totq_wp"] > 0)
 
-    data_cd_wp = data[mask_cd_wp]
-    data_cd_only = data[mask_cd_only]
-    data_wp_only = data[mask_wp_only]
+    data_cd_wp = {key: val[mask_cd_wp] for key, val in data.items()}
+    data_cd_only = {key: val[mask_cd_only] for key, val in data.items()}
+    data_wp_only = {key: val[mask_wp_only] for key, val in data.items()}
 
     ts_cd_wp = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_cd_wp["sec"], data_cd_wp["nsec"])])
     ts_cd_only = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_cd_only["sec"], data_cd_only["nsec"])])
