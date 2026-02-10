@@ -125,23 +125,23 @@ def calculate_muon_rate(filepath : str, plot=False):
     file = uproot.open(filepath)
     tree = file["muons"]
     branches = [
-        "run_id", "sec", "nsec", # "totq_cd", "totq_wp", 
+        "run_id", "sec", "nsec", "totq_cd", "totq_wp", 
         "method", "det", "quality",
         "iposx", "iposy", "iposz", 
         "fposx", "fposy", "fposz"
     ]
     data = tree.arrays(branches, library="np")
 
-    mask_cd = np.array([np.any((arr & 1) == 1) for arr in data["det"]])
-    mask_wp = np.array([np.any((arr & 2) == 2) for arr in data["det"]])
+    # mask_cd = np.array([np.any((arr & 1) == 1) for arr in data["det"]])
+    # mask_wp = np.array([np.any((arr & 2) == 2) for arr in data["det"]])
 
-    mask_cd_wp = np.logical_and(mask_cd, mask_wp)
-    mask_cd_only = np.logical_and(mask_cd, np.logical_not(mask_wp))
-    mask_wp_only = np.logical_and(np.logical_not(mask_cd), mask_wp)
+    mask_cd_wp = np.logical_and(data["totq_cd"] > 0, data["totq_wp"] > 0)
+    mask_cd_only = np.logical_and(data["totq_cd"] > 0, data["totq_wp"] <= 0)
+    mask_wp_only = np.logical_and(data["totq_cd"] <= 0, data["totq_wp"] > 0)
 
-    data_cd_wp = {key: val[mask_cd_wp] for key, val in data.items()}
-    data_cd_only = {key: val[mask_cd_only] for key, val in data.items()}
-    data_wp_only = {key: val[mask_wp_only] for key, val in data.items()}
+    data_cd_wp = data[mask_cd_wp]
+    data_cd_only = data[mask_cd_only]
+    data_wp_only = data[mask_wp_only]
 
     ts_cd_wp = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_cd_wp["sec"], data_cd_wp["nsec"])])
     ts_cd_only = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_cd_only["sec"], data_cd_only["nsec"])])
