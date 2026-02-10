@@ -141,7 +141,8 @@ public:
         m_chain->branch("dirx_mu", dirx_mu.data());
         m_chain->branch("diry_mu", diry_mu.data());
         m_chain->branch("dirz_mu", dirz_mu.data());
-        m_chain->branch("totq_mu", totq_mu.data());
+        m_chain->branch("totq_cd_mu", totq_cd_mu.data());
+        m_chain->branch("totq_wp_mu", totq_wp_mu.data());
         m_chain->branch("sec_mu", sec_mu.data());
         m_chain->branch("nsec_mu", nsec_mu.data());
         m_chain->branch("quality_mu", quality_mu.data());
@@ -196,7 +197,8 @@ public:
     vector_reader<double> dirx_mu;
     vector_reader<double> diry_mu;
     vector_reader<double> dirz_mu;
-    vector_reader<double> totq_mu;
+    vector_reader<double> totq_cd_mu;
+    vector_reader<double> totq_wp_mu;
     vector_reader<time_t> sec_mu;
     vector_reader<int> nsec_mu;
     vector_reader<double> quality_mu;
