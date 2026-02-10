@@ -85,7 +85,7 @@ void save_meta_info(const std::string& filename) {
 }
 
 int root_main(const std::string& filepath) {
-    std::string suffix = "__OMILREC_JVtx";
+    std::string suffix = "__OMILREC";
 
     // save_meta_info(filepath);
 
