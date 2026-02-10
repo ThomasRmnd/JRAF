@@ -196,7 +196,7 @@ def calculate_muon_rate(filepath : str, plot=False):
             rates_err.append(lam_err)
 
     if not plot:
-        return rates, rates_err
+        return data["run_id"][0], rates, rates_err
 
     linecolors = ["#000000", "#648fff", "#ff6464"]
     fillcolors = ["#e5e5e5", "#eff3ff", "#ffefef"]
@@ -241,12 +241,13 @@ def calculate_muon_rate(filepath : str, plot=False):
     fig.tight_layout()
     plt.show()
 
-    return rates, rates_err
+    return data["run_id"][0], rates, rates_err
 
 if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
     
+    run_ids = []
     rates_cd_wp = []
     rates_cd_only = []
     rates_wp_only = []
@@ -255,7 +256,8 @@ if __name__ == "__main__":
     rates_err_wp_only = []
     
     for filepath in args.input:
-        rates, rates_err = calculate_muon_rate(filepath, plot=False)
+        run_id, rates, rates_err = calculate_muon_rate(filepath, plot=False)
+        run_ids.append(run_id)
         rates_cd_wp.append(rates[0])
         rates_cd_only.append(rates[1])
         rates_wp_only.append(rates[2])
@@ -263,6 +265,36 @@ if __name__ == "__main__":
         rates_err_cd_only.append(rates_err[1])
         rates_err_wp_only.append(rates_err[2])
 
-    print(rates_cd_wp)
-    print(rates_cd_only)
-    print(rates_wp_only)
+    rates_total = np.array(rates_cd_wp) + np.array(rates_cd_only) + np.array(rates_wp_only)
+    err_total = np.sqrt(np.array(rates_err_cd_wp)**2 + np.array(rates_err_cd_only)**2 + np.array(rates_err_wp_only)**2)
+
+    config = [
+        (rates_total, err_total, "#000000", f"Total: {np.mean(rates_total):.2f} +/- {np.std(rates_total):.2f} Hz"),
+        (rates_cd_wp, rates_err_cd_wp, "#e69f00", f"CD+WP: {np.mean(rates_cd_wp):.2f} +/- {np.std(rates_cd_wp):.2f} Hz"),
+        (rates_cd_only, rates_err_cd_only, "#009e73", f"CD only: {np.mean(rates_cd_only):.2f} +/- {np.std(rates_cd_only):.2f} Hz"),
+        (rates_wp_only, rates_err_wp_only, "#56b4e9", f"WP only: {np.mean(rates_wp_only):.2f} +/- {np.std(rates_wp_only):.2f} Hz"),
+    ]
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    for data, err, color, label in config:
+        ax.errorbar(run_ids, data, yerr=err, fmt="o", color=color, markersize=5.0, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.5, label=label, zorder=3)
+        mean_val = np.mean(data)
+        ax.axhline(mean_val, color=color, linestyle="--", linewidth=2.0, zorder=2)
+
+    ax.set_xlabel("Run Number", fontsize=14)
+    ax.set_ylabel("Muon Rate [Hz]", fontsize=14)
+    ax.set_ylim(-0.1, 10)
+
+    ax.tick_params(direction='in', which='both', top=True, right=True, labelsize=12)
+    ax.minorticks_on()
+    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+
+    title_str = f"Run range: {min(run_ids)} - {max(run_ids)}" # exposure: {exposure_days:.1f} days"
+    ax.set_title(title_str, loc='right', fontsize=14, color='grey', pad=20)
+
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=4, frameon=False, fontsize=12, handletextpad=0.1)
+
+    fig.tight_layout()
+    plt.show()
