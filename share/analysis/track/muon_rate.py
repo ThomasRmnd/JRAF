@@ -255,7 +255,7 @@ if __name__ == "__main__":
     rates_err_wp_only = []
     
     for filepath in args.input:
-        rates, rates_err = calculate_muon_rate(filepath, plot=True)
+        rates, rates_err = calculate_muon_rate(filepath, plot=False)
         rates_cd_wp.append(rates[0])
         rates_cd_only.append(rates[1])
         rates_wp_only.append(rates[2])
