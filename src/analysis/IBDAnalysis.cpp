@@ -95,9 +95,6 @@ void IBDAnalysis::process(const EventContext::View& events) {
     }
 
     FiducialVolumeSelection fiducial_vol_cut{17700.0 /* 16500.0 */};
-    // ChimneySelection chimney_cut{15500.0, 3000.0};
-    // ChargeRangeSelection prompt_charge_cut{1500.0, 20000.0};
-    // ChargeRangeSelection delayed_charge_cut{4000.0, 6000.0};
     EnergyRangeSelection prompt_energy_cut {0.6, 20.0 /* 0.7, 12.0 */};
     EnergyRangeSelection delayed_energy_cut{0.6, 3.0 /* 2.0, 2.5 */};
     // EnergyRangeSelection spa_neu_energy_cut{1.5, 20.0};
@@ -188,7 +185,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
             LogInfo << "IBD event detected!\n";
 
             for (const VertexCorrelationSelection& cut : spa_neu_cut) {
-                if (!cut.isIn(cand.pair.prompt) || !cut.isIn(cand.pair.delayed)) continue;
+                if (!cut.isIn(cand.pair.prompt) && !cut.isIn(cand.pair.delayed)) continue;
                 cand.neus.push_back(cut.c_vtx);
             }
 
