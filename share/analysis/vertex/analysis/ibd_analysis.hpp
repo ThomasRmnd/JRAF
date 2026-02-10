@@ -54,11 +54,12 @@ public:
             double e_n = m_nav->e_n[k] * m_gtc.interpolate(ts_n);
             if (e_n < 1.5 || 20.0 < e_n) continue;
             if (m_nav->stdt_n[k] > 275.0) continue;
-            if (mag(m_nav->prompt.pos - pos_n) > 4000.0) continue;
-            if (m_nav->prompt.ts < ts_n + timestamp{0, 20000} || ts_n + timestamp{0, 1200000000} < m_nav->prompt.ts) continue;
-            if (mag(m_nav->delayed.pos - pos_n) > 4000.0) continue;
-            if (m_nav->delayed.ts < ts_n + timestamp{0, 20000} || ts_n + timestamp{0, 1200000000} < m_nav->delayed.ts) continue;
-            ++nb_neutron_veto;
+            if (
+                (mag(m_nav->prompt.pos - pos_n) < 4000.0 && ts_n + timestamp{0, 20000} < m_nav->prompt.ts && m_nav->prompt.ts < ts_n + timestamp{0, 1200000000}) ||
+                (mag(m_nav->delayed.pos - pos_n) < 4000.0 && ts_n + timestamp{0, 20000} < m_nav->delayed.ts && m_nav->delayed.ts < ts_n + timestamp{0, 1200000000})
+            ) {
+                ++nb_neutron_veto;
+            }
         }
         if (nb_neutron_veto) return false;
 
