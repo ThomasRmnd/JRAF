@@ -27,6 +27,36 @@ public:
         m_radius{radius}
     {}
 
+    class MultiplicityLookup {
+    
+    public:
+
+        void fill(const vector_reader<std::string>& methods, const vector_reader<time_t>& secs, const vector_reader<int>& nsecs, const std::string& target) {
+            m_times.clear();
+            for (std::size_t k = 0ul; k < methods.size(); ++k) {
+                if (methods[k] == target) {
+                    m_times.push_back(timestamp{secs[k], nsecs[k]});
+                }
+            }
+            std::sort(m_times.begin(), m_times.end());
+        }
+
+        std::size_t operator[](const timestamp& ts) const {
+            if (m_times.empty()) return 0ul;
+            timestamp low_bound = ts - window;
+            timestamp high_bound = ts + window;
+            std::vector<timestamp>::const_iterator it_low = std::lower_bound(m_times.begin(), m_times.end(), low_bound);
+            std::vector<timestamp>::const_iterator it_high = std::upper_bound(m_times.begin(), m_times.end(), high_bound);
+            return std::distance(it_low, it_high);
+        }
+
+    private:
+
+        std::vector<timestamp> m_times;
+        const timestamp window{0, 1000};
+
+    };
+
     bool selection() override {
         double e_p = m_nav->prompt.e * m_gtc.interpolate(m_nav->prompt.ts);
         double e_d = m_nav->delayed.e * m_gtc.interpolate(m_nav->delayed.ts);
@@ -59,9 +89,16 @@ public:
         m_dt_mu2d.clear();
         m_is_sig.clear();
 
+        MultiplicityLookup nb_muons_in_cd_event;
+        MultiplicityLookup nb_muons_in_wp_event;
+        nb_muons_in_cd_event.fill(m_nav->method_mu, m_nav->sec_mu, m_nav->nsec_mu, "CdClassify");
+        nb_muons_in_wp_event.fill(m_nav->method_mu, m_nav->sec_mu, m_nav->nsec_mu, "WpBasic");
+
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
+            if (nb_muons_in_cd_event[ts_mu] > 2ul || nb_muons_in_wp_event[ts_mu] > 2ul) continue;
+
             bool is_in_bkg = (
                 ts_mu + m_ts_bkg_low < m_nav->prompt.ts && m_nav->prompt.ts < ts_mu + m_ts_bkg_high &&
                 ts_mu + m_ts_bkg_low < m_nav->delayed.ts && m_nav->delayed.ts < ts_mu + m_ts_bkg_high
@@ -72,7 +109,7 @@ public:
             );
             if (!is_in_bkg && !is_in_sig) continue;
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
-            vec3 dir_mu{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]};
+            vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
             if (m_radius < d_mu2p && m_radius < d_mu2d) continue;

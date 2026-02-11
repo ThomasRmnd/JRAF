@@ -610,7 +610,10 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
 
     xbins_bkg = np.linspace(-1.2, 0.0, 51)
     xbins_sig = np.linspace(0.0, 1.2, 51)
-    ybins = np.linspace(0.0, 3.0, 51)
+    if "_3m_" in filepath:
+        ybins = np.linspace(0.0, 3.0, 51)
+    elif "_4m_" in filepath:
+        ybins = np.linspace(0.0, 4.0, 51)
 
     muon_veto_plotter = MuonVetoDistributionPlotter()
     muon_veto_plotter.plot(data_sig["dt_mu2p"], data_sig["dlat_mu2p"], xbins_sig, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=True)
