@@ -1,16 +1,16 @@
-#ifndef ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
-#define ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
+#ifndef ANALYSIS_COSMO_SHAPE_CHANGING_VETO_ANALYSIS_HPP_
+#define ANALYSIS_COSMO_SHAPE_CHANGING_VETO_ANALYSIS_HPP_
 
 #include <TLegend.h>
 
 #include "analysis/basic_analysis.hpp"
 #include "utils/plot.hpp"
 
-class cosmo_shape_analysis : public basic_analysis {
+class cosmo_shape_changing_veto_analysis : public basic_analysis {
 
 public:
 
-    cosmo_shape_analysis(
+    cosmo_shape_changing_veto_analysis(
         const std::string& name, 
         const std::string& filepath, const std::string& suffix, 
         const std::string& recname,
@@ -70,12 +70,21 @@ public:
                 ts_mu + m_ts_sig_low < m_nav->prompt.ts && m_nav->prompt.ts < ts_mu + m_ts_sig_high &&
                 ts_mu + m_ts_sig_low < m_nav->delayed.ts && m_nav->delayed.ts < ts_mu + m_ts_sig_high
             );
-            if (!is_in_bkg && !is_in_sig) continue;
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
             vec3 dir_mu{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]};
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
-            if (m_radius < d_mu2p && m_radius < d_mu2d) continue;
+            
+            double radius_sig = 0.0;
+            double radius_bkg = 0.0;
+            if (is_in_sig) {
+                radius_sig = m_radius + m_radius / timestamp_to_double(m_ts_sig_low - m_ts_sig_high) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
+            }
+            if (is_in_bkg) {
+                radius_bkg = m_radius + m_radius / timestamp_to_double(m_ts_bkg_low - m_ts_bkg_high) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
+            }
+
+            if (radius_sig < d_mu2p && radius_bkg < d_mu2d) continue;
             m_dlat_mu2p.push_back(d_mu2p);
             m_dlat_mu2d.push_back(d_mu2d);
             m_dt_mu2p.push_back(timestamp_to_double(m_nav->prompt.ts - ts_mu));
@@ -274,4 +283,4 @@ private:
 
 };
 
-#endif // ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
+#endif // ANALYSIS_COSMO_SHAPE_CHANGING_VETO_ANALYSIS_HPP_

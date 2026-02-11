@@ -646,6 +646,10 @@ def ibd_analysis_plot(filepath: str, **meta):
     e_p_plotter.add(data["e_p"], linecolor="#648fff", fillcolor="#eff3ff")
     e_p_plotter.plot(**meta)
 
+    e_p_plotter_normal = PromptEnergyPlotter(binmode="normal")
+    e_p_plotter_normal.add(data["e_p"], linecolor="#648fff", fillcolor="#eff3ff")
+    e_p_plotter_normal.plot(**meta)
+
     e_d_plotter = DelayedEnergyPlotter()
     e_d_plotter.add(data["e_d"], linecolor="#648fff", fillcolor="#eff3ff")
     e_d_plotter.plot()
