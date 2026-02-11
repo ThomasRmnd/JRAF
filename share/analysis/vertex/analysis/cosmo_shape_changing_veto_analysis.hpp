@@ -81,7 +81,7 @@ public:
                 radius_sig = m_radius + m_radius / timestamp_to_double(m_ts_sig_low - m_ts_sig_high) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
             }
             if (is_in_bkg) {
-                radius_bkg = m_radius + m_radius / timestamp_to_double(m_ts_bkg_low - m_ts_bkg_high) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
+                radius_bkg = m_radius + m_radius / timestamp_to_double(m_ts_bkg_high - m_ts_bkg_low) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
             }
 
             if (radius_sig < d_mu2p && radius_bkg < d_mu2d) continue;
