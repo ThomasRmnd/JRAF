@@ -45,7 +45,7 @@ public:
             if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
         }
-        if (nb_multu_veto) return false;
+        // if (nb_multu_veto) return false;
 
         std::size_t nb_neutron_veto = 0ul;
         for (std::size_t k = 0ul; k < m_nav->e_n.size(); ++k) {
@@ -61,7 +61,7 @@ public:
                 ++nb_neutron_veto;
             }
         }
-        if (nb_neutron_veto) return false;
+        // if (nb_neutron_veto) return false;
 
         if ( std::pow((m_nav->meta_prompt.stdhit - 0.55) / 0.45, 2.0) + std::pow((m_nav->meta_prompt.stdt - 170.0) / 80.0, 2.0) > 1.0 ) return false;
 
