@@ -11,6 +11,7 @@
 #include <TStyle.h>
 
 #include "analysis/basic_analysis.hpp"
+#include "utils/muon_lookup.hpp"
 #include "utils/plot.hpp"
 
 class ibd_muon_veto_analysis : public basic_analysis {
@@ -68,10 +69,23 @@ public:
         }
         if (nb_neutron_veto) return false;
 
+        multiplicity_muon_lookup nb_muons_in_cd_event;
+        multiplicity_muon_lookup nb_muons_in_wp_event;
+        nb_muons_in_cd_event.fill(m_nav, "CdClassify");
+        nb_muons_in_wp_event.fill(m_nav, "WpBasic");
+
+        // stopping_muon_lookup has_stopping_in_cd_event;
+        stopping_muon_lookup has_stopping_in_wp_event;
+        // has_stopping_in_cd_event.fill(m_nav, "CdClassify");
+        has_stopping_in_wp_event.fill(m_nav, "WpBasic");
+
         std::size_t nb_muon_veto = 0ul;
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
+            if (nb_muons_in_cd_event[ts_mu] > 2ul || nb_muons_in_wp_event[ts_mu] > 2ul) continue;
+            if (has_stopping_in_wp_event[ts_mu]) continue;
+
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
             vec3 dir_mu{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]};
             bool is_in_ts_veto = (
