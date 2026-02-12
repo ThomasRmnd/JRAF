@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime
+import os
 
 import matplotlib as mpl
 from matplotlib.colors import LogNorm
@@ -20,12 +21,12 @@ def set_latex_style():
         "font.serif": ["Computer Modern Serif"], 
         "mathtext.fontset": "cm", 
 
-        "font.size": 25, 
-        "axes.labelsize": 25, 
-        "axes.titlesize": 25, 
-        "xtick.labelsize": 20, 
-        "ytick.labelsize": 20, 
-        "legend.fontsize": 25, 
+        "font.size": 22, 
+        "axes.labelsize": 22, 
+        "axes.titlesize": 22, 
+        "xtick.labelsize": 18, 
+        "ytick.labelsize": 18, 
+        "legend.fontsize": 18, 
 
         "axes.linewidth": 1.35, 
         "xtick.direction": "in", 
@@ -278,9 +279,10 @@ class DelayedEnergyPlotter(Histogram1DPlotter):
         ) % (chisq, ndf, prob, A, A_err, mu, mu_err, sigma, sigma_err)
 
         ax.text(
-            0.6, 0.9,
+            0.55, 0.9,
             text,
             transform=ax.transAxes,
+            fontsize=18,
             verticalalignment="top",
             horizontalalignment="left"
         )
@@ -342,10 +344,10 @@ class PromptDelayedTimePlotter(Histogram1DPlotter):
         ) % (chisq, ndf, prob, A, A_err, tau * 1e3, tau_err * 1e3)
 
         ax.text(
-            0.6, 0.9,
+            0.55, 0.9,
             text,
             transform=ax.transAxes,
-            fontsize=15,
+            fontsize=18,
             verticalalignment="top",
             horizontalalignment="left"
         )
@@ -581,31 +583,54 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     print(f"Loaded {len(data_bkg['posx_p'])} background events in {filepath}")
     print(f"Loaded {len(data_sig['posx_p'])} signal events in {filepath}")
 
-    e_p_plotter = PromptEnergyPlotter(binmode="normal")
-    e_p_plotter.add(data_sig["e_p"], linecolor="#648fff", label="Cosmogenic enriched region")
-    e_p_plotter.add(data_bkg["e_p"], linecolor="#ff6464", label="Cosmogenic depleted region")
-    e_p_plotter.plot(**meta)
+    e_p_plotter = PromptEnergyPlotter(binmode="nmo")
+    e_p_plotter.add(data_sig["e_p"], linecolor="#648fff", fillcolor="#eff3ff", label="Cosmogenic enriched")
+    e_p_plotter.add(data_bkg["e_p"], linecolor="#ff6464", fillcolor="#ffefef", label="Cosmogenic depleted") 
+    e_p_plotter.plot(**meta) 
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_p_nmo.pdf')}") 
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_p_nmo.png')}")
+
+    e_p_plotter_normal = PromptEnergyPlotter(binmode="normal")
+    e_p_plotter_normal.add(data_sig["e_p"], linecolor="#648fff", label="Cosmogenic enriched")
+    e_p_plotter_normal.add(data_bkg["e_p"], linecolor="#ff6464", label="Cosmogenic depleted")
+    e_p_plotter_normal.plot(**meta)
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_p_normal.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_p_normal.png')}")
 
     e_d_plotter = DelayedEnergyPlotter()
-    e_d_plotter.add(data_sig["e_d"], linecolor="#648fff", label="Cosmogenic enriched region")
-    e_d_plotter.add(data_bkg["e_d"], linecolor="#ff6464", label="Cosmogenic depleted region")
+    e_d_plotter.add(data_sig["e_d"], linecolor="#648fff", label="Cosmogenic enriched")
+    e_d_plotter.add(data_bkg["e_d"], linecolor="#ff6464", label="Cosmogenic depleted")
     e_d_plotter.plot()
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_d.png')}")
 
     ts_diff_plotter = PromptDelayedTimePlotter()
-    ts_diff_plotter.add(ts_diff_sig, linecolor="#648fff", label="Cosmogenic enriched region")
-    ts_diff_plotter.add(ts_diff_bkg, linecolor="#ff6464", label="Cosmogenic depleted region")
+    ts_diff_plotter.add(ts_diff_sig, linecolor="#648fff", label="Cosmogenic enriched")
+    ts_diff_plotter.add(ts_diff_bkg, linecolor="#ff6464", label="Cosmogenic depleted")
     ts_diff_plotter.plot()
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_p_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_p_d.png')}")
 
     distance_plotter = PromptDelayedDistancePlotter()
-    distance_plotter.add(distance_sig, linecolor="#648fff", label="Cosmogenic enriched region")
-    distance_plotter.add(distance_bkg, linecolor="#ff6464", label="Cosmogenic depleted region")
+    distance_plotter.add(distance_sig, linecolor="#648fff", label="Cosmogenic enriched")
+    distance_plotter.add(distance_bkg, linecolor="#ff6464", label="Cosmogenic depleted")
     distance_plotter.plot()
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dr_p_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dr_p_d.png')}")
 
     spatial_plotter = SpatialDistributionPlotter()
     spatial_plotter.plot(rho_p_bkg, z_p_bkg, r"$\rho_{p}$ (m)", r"$z_{p}$ (m)")
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_p_bkg.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_p_bkg.png')}")
     spatial_plotter.plot(rho_d_bkg, z_d_bkg, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d_bkg.pdf')}") 
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d_bkg.png')}")
     spatial_plotter.plot(rho_p_sig, z_p_sig, r"$\rho_{p}$ (m)", r"$z_{p}$ (m)")
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_p_sig.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_p_sig.png')}")
     spatial_plotter.plot(rho_d_sig, z_d_sig, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d_sig.pdf')}") 
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d_sig.png')}")
 
     xbins_bkg = np.linspace(-1.2, 0.0, 51)
     xbins_sig = np.linspace(0.0, 1.2, 51)
@@ -616,9 +641,13 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
 
     muon_veto_plotter = MuonVetoDistributionPlotter()
     muon_veto_plotter.plot(data_sig["dt_mu2p"], data_sig["dlat_mu2p"], xbins_sig, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=True)
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_sig.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_sig.png')}")
     muon_veto_plotter.plot(data_bkg["dt_mu2p"], data_bkg["dlat_mu2p"], xbins_bkg, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=False)
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.png')}")
 
-    plt.show()
+    # plt.show()
 
 def ibd_analysis_plot(filepath: str, **meta):
     file = uproot.open(filepath)
@@ -647,26 +676,40 @@ def ibd_analysis_plot(filepath: str, **meta):
     e_p_plotter = PromptEnergyPlotter(binmode="nmo")
     e_p_plotter.add(data["e_p"], linecolor="#648fff", fillcolor="#eff3ff")
     e_p_plotter.plot(**meta)
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_p_nmo.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_p_nmo.png')}")
 
     e_p_plotter_normal = PromptEnergyPlotter(binmode="normal")
     e_p_plotter_normal.add(data["e_p"], linecolor="#648fff", fillcolor="#eff3ff")
     e_p_plotter_normal.plot(**meta)
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_p_normal.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_p_normal.png')}")
 
     e_d_plotter = DelayedEnergyPlotter()
     e_d_plotter.add(data["e_d"], linecolor="#648fff", fillcolor="#eff3ff")
     e_d_plotter.plot()
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_d.png')}")
 
     ts_diff_plotter = PromptDelayedTimePlotter()
     ts_diff_plotter.add(ts_diff, linecolor="#000000", fillcolor="#e5e5e5")
     ts_diff_plotter.plot()
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_p_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_p_d.png')}")
 
     distance_plotter = PromptDelayedDistancePlotter()
     distance_plotter.add(distance, linecolor="#000000", fillcolor="#e5e5e5")
     distance_plotter.plot()
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dr_p_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dr_p_d.png')}")
 
     spatial_plotter = SpatialDistributionPlotter()
     spatial_plotter.plot(rho_p, z_p, r"$\rho_{p}$ (m)", r"$z_{p}$ (m)")
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_p.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_p.png')}")
     spatial_plotter.plot(rho_d, z_d, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d.png')}")
 
     plt.show()
 

@@ -124,12 +124,14 @@ public:
             std::cerr << "Cannot create tree background or signal\n";
             return false;
         }
+        int run_id;
         vec3 pos_p, pos_d;
         timestamp ts_p, ts_d;
         double e_p, e_d;
         double dlat_mu2p, dlat_mu2d; 
         double dt_mu2p, dt_mu2d;
         
+        t_bkg->Branch("run_id", &run_id);
         t_bkg->Branch("posx_p", &pos_p.x);
         t_bkg->Branch("posy_p", &pos_p.y);
         t_bkg->Branch("posz_p", &pos_p.z);
@@ -148,6 +150,7 @@ public:
         t_bkg->Branch("dt_mu2d", &dt_mu2d);
 
         for (std::set<cosmogenic>::const_iterator it = m_cosmos_bkg.begin(); it != m_cosmos_bkg.end(); ++it) {
+            run_id = it->run_id;
             pos_p = it->prompt.pos;
             pos_d = it->delayed.pos;
             ts_p = it->prompt.ts;
@@ -161,6 +164,7 @@ public:
             t_bkg->Fill();
         }
 
+        t_sig->Branch("run_id", &run_id);
         t_sig->Branch("posx_p", &pos_p.x);
         t_sig->Branch("posy_p", &pos_p.y);
         t_sig->Branch("posz_p", &pos_p.z);
@@ -179,6 +183,7 @@ public:
         t_sig->Branch("dt_mu2d", &dt_mu2d);
 
         for (std::set<cosmogenic>::const_iterator it = m_cosmos_sig.begin(); it != m_cosmos_sig.end(); ++it) {
+            run_id = it->run_id;
             pos_p = it->prompt.pos;
             pos_d = it->delayed.pos;
             ts_p = it->prompt.ts;

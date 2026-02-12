@@ -122,9 +122,11 @@ public:
             std::cerr << "Cannot create tree events\n";
             return false;
         }
+        int run_id;
         vec3 pos_p, pos_d;
         timestamp ts_p, ts_d;
         double e_p, e_d;
+        t->Branch("run_id", &run_id);
         t->Branch("posx_p", &pos_p.x);
         t->Branch("posy_p", &pos_p.y);
         t->Branch("posz_p", &pos_p.z);
@@ -139,6 +141,7 @@ public:
         t->Branch("e_d", &e_d);
 
         for (std::set<ibd>::const_iterator it = m_ibds.begin(); it != m_ibds.end(); ++it) {
+            run_id = it->run_id;
             pos_p = it->prompt.pos;
             pos_d = it->delayed.pos;
             ts_p = it->prompt.ts;
