@@ -10,6 +10,8 @@ class cosmo_shape_changing_veto_analysis : public cosmo_shape_analysis {
 
 public:
 
+    using cosmo_shape_analysis::cosmo_shape_analysis;
+
     bool selection() override {
         double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);
         double e_d = m_nav->delayed.e / m_gtc.interpolate(m_nav->delayed.ts);
