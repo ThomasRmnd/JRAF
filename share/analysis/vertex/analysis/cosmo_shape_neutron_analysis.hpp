@@ -27,7 +27,9 @@ public:
         m_radius{radius}
     {}
 
-    bool selection() override {
+    virtual ~cosmo_shape_neutron_analysis() override = default;
+
+    virtual bool selection() override {
         if (m_nav->meta_prompt.stdt > 200.0 || m_nav->meta_delayed.stdt > 200.0) return false; // Flasher cut
         if (mag(m_nav->prompt.pos) > 16500.0) return false; // Fiducial cut
         if ((m_nav->prompt.pos.z < -15500.0 || 15500 < m_nav->prompt.pos.z) && std::sqrt(m_nav->prompt.pos.x * m_nav->prompt.pos.x + m_nav->prompt.pos.y * m_nav->prompt.pos.y) < 3000.0) return false; // Chimney cut

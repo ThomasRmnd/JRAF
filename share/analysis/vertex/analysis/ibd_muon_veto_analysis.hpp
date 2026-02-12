@@ -31,8 +31,8 @@ public:
     {}
 
     bool selection() override {
-        double e_p = m_nav->prompt.e * m_gtc.interpolate(m_nav->prompt.ts);
-        double e_d = m_nav->delayed.e * m_gtc.interpolate(m_nav->delayed.ts);
+        double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);
+        double e_d = m_nav->delayed.e / m_gtc.interpolate(m_nav->delayed.ts);
 
         if (e_p < 0.7 || 12.0 < e_p) return false;
         if (e_d < 2.0 || 2.5 < e_d) return false;
@@ -47,7 +47,7 @@ public:
         for (std::size_t k = 0ul; k < m_nav->e_mult.size(); ++k) {
             timestamp ts_mult{m_nav->sec_mult[k], m_nav->nsec_mult[k]};
             vec3 pos_mult{m_nav->posx_mult[k], m_nav->posy_mult[k], m_nav->posz_mult[k]};
-            double e_mult = m_nav->e_mult[k] * m_gtc.interpolate(ts_mult);
+            double e_mult = m_nav->e_mult[k] / m_gtc.interpolate(ts_mult);
             if (e_mult < 2.0 || 12.0 < e_mult) continue;
             if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
@@ -58,7 +58,7 @@ public:
         for (std::size_t k = 0ul; k < m_nav->e_n.size(); ++k) {
             timestamp ts_n{m_nav->sec_n[k], m_nav->nsec_n[k]};
             vec3 pos_n{m_nav->posx_n[k], m_nav->posy_n[k], m_nav->posz_n[k]};
-            double e_n = m_nav->e_n[k] * m_gtc.interpolate(ts_n);
+            double e_n = m_nav->e_n[k] / m_gtc.interpolate(ts_n);
             if (e_n < 1.5 || 20.0 < e_n) continue;
             if (m_nav->stdt_n[k] > 275.0) continue;
             if (mag(m_nav->prompt.pos - pos_n) > 4000.0 || mag(m_nav->delayed.pos - pos_n) > 4000.0) continue;
@@ -129,8 +129,8 @@ public:
             pos_d = it->delayed.pos;
             ts_p = it->prompt.ts;
             ts_d = it->delayed.ts;
-            e_p = it->prompt.e * m_gtc.interpolate(it->prompt.ts);
-            e_d = it->delayed.e * m_gtc.interpolate(it->delayed.ts);
+            e_p = it->prompt.e / m_gtc.interpolate(it->prompt.ts);
+            e_d = it->delayed.e / m_gtc.interpolate(it->delayed.ts);
             t->Fill();
         }
 
