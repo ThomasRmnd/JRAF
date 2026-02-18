@@ -156,8 +156,8 @@ public:
             pos_d = it->delayed.pos;
             ts_p = it->prompt.ts;
             ts_d = it->delayed.ts;
-            e_p = it->prompt.e / m_gtc.interpolate(it->prompt.ts);
-            e_d = it->delayed.e / m_gtc.interpolate(it->delayed.ts);
+            e_p = it->prompt.e; // / m_gtc.interpolate(it->prompt.ts);
+            e_d = it->delayed.e; // / m_gtc.interpolate(it->delayed.ts);
             dlat_mu2p = it->dlat_mu2p;
             dlat_mu2d = it->dlat_mu2d;
             dt_mu2p = it->dt_mu2p;

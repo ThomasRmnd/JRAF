@@ -217,7 +217,7 @@ class Histogram1DPlotter(BasePlotter):
 
 class PromptEnergyPlotter(Histogram1DPlotter):
     def __init__(self, binmode="nmo", **kwargs):
-        bins = nmo_analysis_bins() if binmode == "nmo" else np.linspace(0, 12, 51)
+        bins = nmo_analysis_bins() if binmode == "nmo" else np.linspace(0, 12, 101)
         super().__init__(
             bins=bins, 
             xlabel=r"$E_{p}$ (MeV)", ylabel="Entries", xlim=(0, 12.5),
@@ -654,6 +654,34 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     muon_veto_plotter.plot(data_bkg["dt_mu2p"], data_bkg["dlat_mu2p"], xbins_bkg, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=False)
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.png')}")
+
+    print(f"Found {np.sum(np.isnan(data_sig['e_p']))} NaN in e_p")
+    print(f"Found {np.sum(np.isnan(data_bkg['e_p']))} NaN in e_p")
+    print(f"Found {np.sum(np.isnan(data_sig['dt_mu2p']))} NaN in dt_mu2p")
+    print(f"Found {np.sum(np.isnan(data_bkg['dt_mu2p']))} NaN in dt_mu2p")
+    print(f"Found {np.sum(np.isnan(data_sig['dlat_mu2p']))} NaN in dlat_mu2p")
+    print(f"Found {np.sum(np.isnan(data_bkg['dlat_mu2p']))} NaN in dlat_mu2p")
+
+    plt.figure()
+    plt.hist2d(data_sig["e_p"], data_sig["dt_mu2p"], bins=(np.linspace(0.0, 12.0, 101), np.linspace(0.0, 1.2, 101)), cmin=1.0)
+
+    plt.figure()
+    plt.hist2d(data_sig["e_p"], data_sig["dlat_mu2p"] / 1000.0, bins=(np.linspace(0.0, 12.0, 101), np.linspace(0.0, 3.0, 101)), cmin=1.0)
+
+    mask_sig_dlat_mu2p = np.logical_and(2.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 3.0)
+    
+    plt.figure()
+    plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
+
+    mask_sig_dlat_mu2p = np.logical_and(1.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 2.0)
+    
+    plt.figure()
+    plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
+
+    mask_sig_dlat_mu2p = np.logical_and(0.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 1.0)
+    
+    plt.figure()
+    plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
 
     plt.show()
 
