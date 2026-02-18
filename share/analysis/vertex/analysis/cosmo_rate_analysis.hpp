@@ -186,7 +186,7 @@ public:
         c_d_mu2p_tt_vs_dt_mu2p->Update();
     }
 
-private:
+protected:
 
     struct physical_muon {
 
@@ -236,6 +236,8 @@ private:
         f->SetParameter(1, exponential_term);
         f->SetParameter(2, 180.0e-3);
 
+        std::cout << "Fitting " << h->GetName() << '\n';
+
         TFitResultPtr res = h->Fit(f, "RS");
 
         double time_window = 1.2;
@@ -260,6 +262,9 @@ private:
         rate_res.nIBD_err = rate_res.sp0 * time_window / binning;
         rate_res.nLiHe = (rate_res.p1 * rate_res.p2 * (1.0 - exp_term)) / binning;
         rate_res.nLiHe_err = std::sqrt(std::pow(df_dp1 * rate_res.sp1, 2.0) + std::pow(df_dp2 * rate_res.sp2, 2.0) + 2.0 * df_dp1 * df_dp2 * covp1p2);
+
+        std::cout << "nIBD = " << rate_res.nIBD << " +- " << rate_res.nIBD_err << '\n';
+        std::cout << "nLiHe = " << rate_res.nLiHe << " +- " << rate_res.nLiHe_err << '\n';
         
         return rate_res;
     }
