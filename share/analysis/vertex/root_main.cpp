@@ -108,8 +108,8 @@ int root_main(const std::string& filepath) {
 
 
 
-    std::shared_ptr<analysis_base> cosmo_rate_with_neutron_analysis(new cosmo_rate_analysis("cosmo_rate_analysis_omilrec_jvertex", filepath, suffix));
-    if (!registry.book(cosmo_rate_with_neutron_analysis)) return 1;
+    std::shared_ptr<analysis_base> cosmo_rate_analysis_omilrec_jvertex(new cosmo_rate_analysis("cosmo_rate_analysis_omilrec_jvertex", filepath, suffix));
+    if (!registry.book(cosmo_rate_analysis_omilrec_jvertex)) return 1;
 
     std::shared_ptr<analysis_base> cosmo_rate_neutron_veto_analysis_omilrec_jvertex(new cosmo_rate_neutron_veto_analysis("cosmo_rate_neutron_veto_analysis_omilrec_jvertex", filepath, suffix));
     if (!registry.book(cosmo_rate_neutron_veto_analysis_omilrec_jvertex)) return 1;
