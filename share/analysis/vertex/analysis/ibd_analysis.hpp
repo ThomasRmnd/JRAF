@@ -126,7 +126,7 @@ public:
         t->Branch("sec_d", &ts_d.sec);
         t->Branch("nsec_d", &ts_d.nsec);
         t->Branch("e_d", &e_d);
-        t->Branch("dt_last_mu", dt_last_mu);
+        t->Branch("dt_last_mu", &dt_last_mu);
 
         for (std::set<ibd_wmu>::const_iterator it = m_ibds.begin(); it != m_ibds.end(); ++it) {
             run_id = it->i.run_id;

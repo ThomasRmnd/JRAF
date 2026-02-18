@@ -711,6 +711,15 @@ def ibd_analysis_plot(filepath: str, **meta):
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d.png')}")
 
+    fig, ax = plt.subplots(figsize=(7, 6))
+    ax.hist(data["dt_last_mu"])
+    ax.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
+    ax.set_ylabel("Entries")
+    ax.minorticks_on()
+    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+    fig.show()
+
     plt.show()
 
 def analyze_run_info(filepath: str):
