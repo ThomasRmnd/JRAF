@@ -655,7 +655,8 @@ def ibd_analysis_plot(filepath: str, **meta):
 
     branches = [
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
-        "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d"
+        "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d",
+        "dt_last_mu"
     ]
     data = tree.arrays(branches, library="np")
 
@@ -711,13 +712,45 @@ def ibd_analysis_plot(filepath: str, **meta):
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d.png')}")
 
+    xbins = np.linspace(0.0, 1.5, 101)
+    hist, edges = np.histogram(data["dt_last_mu"], bins=xbins)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+
+    def cosmogenic_rate_fit(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu, bin_width):
+        lambda_li = Rmu + 1.0 / tau_li
+        lambda_he = Rmu + 1.0 / tau_he
+
+        li_term = N_lihe * f * lambda_li * np.exp(-lambda_li * t)
+        he_term = N_lihe * (1.0 - f) * lambda_he * np.exp(-lambda_he * t)
+        bkg_term = N_bkg * Rmu * np.exp(-Rmu * t)
+
+        return bin_width * (li_term + he_term + bkg_term)
+    
+    bin_width = np.diff(xbins)[0]
+    tau_li_fixed = 0.257
+    tau_he_fixed = 0.172
+    
+    def fit_func(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu):
+        return cosmogenic_rate_fit(t, N_lihe, f, tau_li_fixed, tau_he_fixed, N_bkg, Rmu, bin_width)
+
+    p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.1]
+    x_fit = centers
+    y_fit = hist
+    popt, pcov = curve_fit(fit_func, x_fit, y_fit, p0=p0, absolute_sigma=True)
+    N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
+    print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
+    x_smooth = np.linspace(0.0, 1.5, 500)
+    y_smooth = fit_func(x_smooth, *popt)
+
     fig, ax = plt.subplots(figsize=(7, 6))
-    ax.hist(data["dt_last_mu"])
+    ax.bar(centers, hist, width=np.diff(edges), color="#90b4ff")
+    ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
     ax.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
     ax.set_ylabel("Entries")
     ax.minorticks_on()
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.set_yscale("log")
     fig.show()
 
     plt.show()
