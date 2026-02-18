@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import numpy as np
 import pandas as pd
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, leastsq
 from scipy.stats import chi2
 import uproot
 
@@ -712,11 +712,12 @@ def ibd_analysis_plot(filepath: str, **meta):
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d.png')}")
 
-    xbins = np.linspace(0.0, 1.5, 101)
+    xbins = np.linspace(0.0, 2.0, 51)
     hist, edges = np.histogram(data["dt_last_mu"], bins=xbins)
     centers = 0.5 * (edges[:-1] + edges[1:])
+    bin_width = np.diff(edges)[0]
 
-    def cosmogenic_rate_fit(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu, bin_width):
+    def cosmogenic_rate_fit(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu):
         lambda_li = Rmu + 1.0 / tau_li
         lambda_he = Rmu + 1.0 / tau_he
 
@@ -724,27 +725,24 @@ def ibd_analysis_plot(filepath: str, **meta):
         he_term = N_lihe * (1.0 - f) * lambda_he * np.exp(-lambda_he * t)
         bkg_term = N_bkg * Rmu * np.exp(-Rmu * t)
 
-        return bin_width * (li_term + he_term + bkg_term)
-    
-    bin_width = np.diff(xbins)[0]
-    tau_li_fixed = 0.257
-    tau_he_fixed = 0.172
-    
-    def fit_func(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu):
-        return cosmogenic_rate_fit(t, N_lihe, f, tau_li_fixed, tau_he_fixed, N_bkg, Rmu, bin_width)
+        return li_term + he_term + bkg_term
 
-    # p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.1]
-    # x_fit = centers
-    # y_fit = hist
-    # popt, pcov = curve_fit(fit_func, x_fit, y_fit, p0=p0, absolute_sigma=True)
-    # N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
-    # print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
-    # x_smooth = np.linspace(0.0, 1.5, 500)
-    # y_smooth = fit_func(x_smooth, *popt)
+    p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.01]
+    x_fit = centers
+    y_fit = hist
+    bounds = (
+        [0.0, 0.0, 0.200, 0.200, 0.0, 0.0],
+        [np.inf, 1.0, 0.260, 0.260, np.inf, np.inf]
+    )
+    popt, pcov = curve_fit(cosmogenic_rate_fit, x_fit, y_fit, p0=p0, absolute_sigma=True, bounds=bounds)
+    N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
+    print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
+    x_smooth = np.linspace(0.0, 2.0, 500)
+    y_smooth = cosmogenic_rate_fit(x_smooth, *p0)
 
     fig, ax = plt.subplots(figsize=(7, 6))
     ax.bar(centers, hist, width=np.diff(edges), color="#90b4ff")
-    # ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
+    ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
     ax.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
     ax.set_ylabel("Entries")
     ax.minorticks_on()

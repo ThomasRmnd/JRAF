@@ -16,7 +16,9 @@ public:
         basic_analysis{name, filepath, suffix}
     {}
 
-    bool selection() override {
+    virtual ~cosmo_rate_analysis() override = default;
+
+    virtual bool selection() override {
         if (m_nav->meta_prompt.stdt > 200.0 || m_nav->meta_delayed.stdt > 200.0) return false; // Flasher cut
         if (mag(m_nav->prompt.pos) > 16500.0) return false; // Fiducial cut
         if ((m_nav->prompt.pos.z < -15500.0 || 15500 < m_nav->prompt.pos.z) && std::sqrt(m_nav->prompt.pos.x * m_nav->prompt.pos.x + m_nav->prompt.pos.y * m_nav->prompt.pos.y) < 3000.0) return false; // Chimney cut
@@ -99,9 +101,9 @@ public:
 
     void result() override {
         std::unordered_map<int, TH1D*> cosmo_rate_with_at_least_n_neutron;
-        int max_number_neutron = 10;
+        int max_number_neutron = 5;
         for (int k = 0; k < max_number_neutron; ++k) {
-            cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_cosmo_rate_with_at_least_%i_neutron", k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
+            cosmo_rate_with_at_least_n_neutron[k] = new TH1D(Form("h_%s_cosmo_rate_with_at_least_%i_neutron", m_name.c_str(), k), Form("Cosmo rate with at least %i neutron", k), 120, 0.0, 1.2);
         }
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
             const std::vector<muon_data_association>& muon_data = val.second;
@@ -121,17 +123,13 @@ public:
             plot_cosmo_rate_with_fit_res(h, cosmo_rate_fit_result[n]);
         }
 
-        TH1I* h_rate_cosmo_per_at_least_neutron = new TH1I("h_rate_cosmo_per_at_least_neutron", "h_rate_cosmo_per_at_least_neutron", max_number_neutron, 0, max_number_neutron);
+        TH1I* h_rate_cosmo_per_at_least_neutron = new TH1I(Form("h_%s_rate_cosmo_per_at_least_neutron", m_name.c_str()), "h_rate_cosmo_per_at_least_neutron", max_number_neutron, 0, max_number_neutron);
         for (const auto& [n, res] : cosmo_rate_fit_result) {
             h_rate_cosmo_per_at_least_neutron->SetBinContent(n + 1, static_cast<double>(res.nLiHe));
             h_rate_cosmo_per_at_least_neutron->SetBinError(n + 1, res.nLiHe_err);
         }
-        TH1I* h_rate_cosmo_per_neutron = new TH1I("h_rate_cosmo_per_neutron", "h_rate_cosmo_per_neutron", max_number_neutron, 0, max_number_neutron);
-        for (int k = 0; k < max_number_neutron - 1; ++k) {
-            h_rate_cosmo_per_neutron->SetBinContent(k, h_rate_cosmo_per_at_least_neutron->GetBinContent(k) - h_rate_cosmo_per_at_least_neutron->GetBinContent(k + 1));
-        }
 
-        TCanvas* c_rate_cosmo_per_at_least_neutron = new TCanvas("c_rate_cosmo_per_at_least_neutron", "c_rate_cosmo_per_at_least_neutron", 1000, 1000);
+        TCanvas* c_rate_cosmo_per_at_least_neutron = new TCanvas(Form("c_%s_rate_cosmo_per_at_least_neutron", m_name.c_str()), "c_rate_cosmo_per_at_least_neutron", 1000, 1000);
         c_rate_cosmo_per_at_least_neutron->cd();
         h_rate_cosmo_per_at_least_neutron->SetLineStyle(kSolid);
         h_rate_cosmo_per_at_least_neutron->SetLineWidth(3);
@@ -139,16 +137,8 @@ public:
         h_rate_cosmo_per_at_least_neutron->Draw("HIST");
         c_rate_cosmo_per_at_least_neutron->Update();
 
-        TCanvas* c_rate_cosmo_per_neutron = new TCanvas("c_rate_cosmo_per_neutron", "c_rate_cosmo_per_neutron", 1000, 1000);
-        c_rate_cosmo_per_neutron->cd();
-        h_rate_cosmo_per_neutron->SetLineStyle(kSolid);
-        h_rate_cosmo_per_neutron->SetLineWidth(3);
-        h_rate_cosmo_per_neutron->SetLineColorAlpha(kBlue, 1.0);
-        h_rate_cosmo_per_neutron->Draw("HIST");
-        c_rate_cosmo_per_neutron->Update();
-
-        TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D("h_d_mu2p_cdwp_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
-        TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D("h_d_mu2p_tt_vs_dt_mu2p", "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
+        TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D(Form("h_%s_d_mu2p_cdwp_vs_dt_mu2p", m_name.c_str()),"Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
+        TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D(Form("h_%s_d_mu2p_tt_vs_dt_mu2p", m_name.c_str()), "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
             const std::vector<muon_data_association>& muon_data = val.second;
             for (const muon_data_association& assoc : muon_data) {
@@ -163,7 +153,7 @@ public:
             }
         }
 
-        TCanvas* c_d_mu2p_cdwp_vs_dt_mu2p = new TCanvas("c_d_mu2p_cdwp_vs_dt_mu2p", "d_mu2p_cdwp vs dt_mu2p", 1000, 1000);
+        TCanvas* c_d_mu2p_cdwp_vs_dt_mu2p = new TCanvas(Form("c_%s_d_mu2p_cdwp_vs_dt_mu2p", m_name.c_str()), "d_mu2p_cdwp vs dt_mu2p", 1000, 1000);
         c_d_mu2p_cdwp_vs_dt_mu2p->cd();
         h_d_mu2p_cdwp_vs_dt_mu2p->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
         h_d_mu2p_cdwp_vs_dt_mu2p->GetXaxis()->CenterTitle(kTRUE);
@@ -175,7 +165,7 @@ public:
         c_d_mu2p_cdwp_vs_dt_mu2p->SetTicky();
         c_d_mu2p_cdwp_vs_dt_mu2p->Update();
 
-        TCanvas* c_d_mu2p_tt_vs_dt_mu2p = new TCanvas("c_d_mu2p_tt_vs_dt_mu2p", "d_mu2p_tt vs dt_mu2p", 1000, 1000);
+        TCanvas* c_d_mu2p_tt_vs_dt_mu2p = new TCanvas(Form("c_%s_d_mu2p_tt_vs_dt_mu2p", m_name.c_str()), "d_mu2p_tt vs dt_mu2p", 1000, 1000);
         c_d_mu2p_tt_vs_dt_mu2p->cd();
         h_d_mu2p_tt_vs_dt_mu2p->GetXaxis()->SetTitle("#Delta t_{#mu2p} (s)");
         h_d_mu2p_tt_vs_dt_mu2p->GetXaxis()->CenterTitle(kTRUE);
