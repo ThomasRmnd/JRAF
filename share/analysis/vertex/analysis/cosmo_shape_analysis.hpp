@@ -70,10 +70,13 @@ public:
         // has_stopping_in_cd_event.fill(m_nav, "CdClassify");
         has_stopping_in_wp_event.fill(m_nav, "WpBasic");
 
+        is_cd_muon_lookup is_cd_muon;
+        is_cd_muon.fill(m_nav);
+
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != m_recname) continue;
-            if (m_nav->totq_cd_mu[k] <= 0.0) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
+            if (!is_cd_muon[ts_mu]) continue;
             if (nb_muons_in_cd_event[ts_mu] > 2ul || nb_muons_in_wp_event[ts_mu] > 2ul) continue;
             if (has_stopping_in_wp_event[ts_mu]) continue;
 

@@ -9,6 +9,35 @@
 #include "utils/navigator.hpp"
 #include "utils/timestamp.hpp"
 
+class is_cd_muon_lookup {
+
+public:
+
+    void fill(const std::shared_ptr<basic_navigator>& nav) {
+        m_times.clear();
+        for (std::size_t k = 0ul; k < nav->method_mu.size(); ++k) {
+            if (nav->totq_cd_mu[k] <= 0.0) continue;
+            m_times.push_back(timestamp{nav->sec_mu[k], nav->nsec_mu[k]});
+        }
+        std::sort(m_times.begin(), m_times.end());
+    }
+
+    bool operator[](const timestamp& ts) const {
+        if (m_times.empty()) return false;
+        timestamp low_bound = ts - window;
+        timestamp high_bound = ts + window;
+        std::vector<timestamp>::const_iterator it_low = std::lower_bound(m_times.begin(), m_times.end(), low_bound);
+        std::vector<timestamp>::const_iterator it_high = std::upper_bound(m_times.begin(), m_times.end(), high_bound);
+        return std::distance(it_low, it_high) > 0l;
+    }
+
+private:
+
+    std::vector<timestamp> m_times;
+    const timestamp window{0, 1000};
+
+};
+
 class multiplicity_muon_lookup {
 
 public:
