@@ -96,19 +96,15 @@ public:
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             if (m_nav->prompt.ts < ts_mu) continue;
             bool found_neutron = false;
-            for (std::size_t l = 0ul; l < m_nav->e_n.size(); ++l) {
+            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
                 timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
-                if (ts_n < ts_mu + timestamp{0, 20000} || timestamp{0, 2000000} < ts_n) continue;
+                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
                 found_neutron = true;
-                break;
             }
             if (!found_neutron) continue;
-            if (!is_set_dt_last_mu) {
-                m_dt_last_mu = m_nav->prompt.ts - ts_mu;
-                is_set_dt_last_mu = true;
-                continue;
-            }
-            if (m_dt_last_mu > m_nav->prompt.ts - ts_mu) m_dt_last_mu = m_nav->prompt.ts - ts_mu;
+            if (!is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
+            m_dt_last_mu = m_nav->prompt.ts - ts_mu;
+            is_set_dt_last_mu = true;
         }
 
         if ( std::pow((m_nav->meta_prompt.stdhit - 0.55) / 0.45, 2.0) + std::pow((m_nav->meta_prompt.stdt - 170.0) / 80.0, 2.0) > 1.0 ) return false;

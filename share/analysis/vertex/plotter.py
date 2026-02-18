@@ -733,18 +733,18 @@ def ibd_analysis_plot(filepath: str, **meta):
     def fit_func(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu):
         return cosmogenic_rate_fit(t, N_lihe, f, tau_li_fixed, tau_he_fixed, N_bkg, Rmu, bin_width)
 
-    p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.1]
-    x_fit = centers
-    y_fit = hist
-    popt, pcov = curve_fit(fit_func, x_fit, y_fit, p0=p0, absolute_sigma=True)
-    N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
-    print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
-    x_smooth = np.linspace(0.0, 1.5, 500)
-    y_smooth = fit_func(x_smooth, *popt)
+    # p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.1]
+    # x_fit = centers
+    # y_fit = hist
+    # popt, pcov = curve_fit(fit_func, x_fit, y_fit, p0=p0, absolute_sigma=True)
+    # N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
+    # print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
+    # x_smooth = np.linspace(0.0, 1.5, 500)
+    # y_smooth = fit_func(x_smooth, *popt)
 
     fig, ax = plt.subplots(figsize=(7, 6))
     ax.bar(centers, hist, width=np.diff(edges), color="#90b4ff")
-    ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
+    # ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
     ax.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
     ax.set_ylabel("Entries")
     ax.minorticks_on()
