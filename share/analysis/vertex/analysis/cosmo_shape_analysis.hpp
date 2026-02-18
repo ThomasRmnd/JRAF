@@ -77,7 +77,7 @@ public:
             if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             // if (!is_cd_muon[ts_mu]) continue;
-            if (nb_muons_in_cd_event[ts_mu] > 2ul || nb_muons_in_wp_event[ts_mu] > 2ul) continue;
+            if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             if (has_stopping_in_wp_event[ts_mu]) continue;
 
             bool is_in_bkg = (
