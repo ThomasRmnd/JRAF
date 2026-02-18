@@ -549,12 +549,20 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     tree_sig = file["signal_events"]
 
     branches = [
+        "run_id",
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p", "dlat_mu2p", "dt_mu2p",
         "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d", "dlat_mu2d", "dt_mu2d"
     ]
 
     data_bkg = tree_bkg.arrays(branches, library="np")
     data_sig = tree_sig.arrays(branches, library="np")
+
+    # mask_sig_reprodc = np.logical_and(9789 <= data_sig["run_id"], data_sig["run_id"] <= 11039)
+    # mask_sig_reprodd = np.logical_and(11049 <= data_sig["run_id"], data_sig["run_id"] <= 12135)
+    # data_sig = {key: value[mask_sig_reprodd] for key, value in data_sig.items()}
+    # mask_bkg_reprodc = np.logical_and(9789 <= data_bkg["run_id"], data_bkg["run_id"] <= 11039)
+    # mask_sig_reprodd = np.logical_and(11049 <= data_bkg["run_id"], data_bkg["run_id"] <= 12135)
+    # data_bkg = {key: value[mask_sig_reprodd] for key, value in data_bkg.items()}
 
     ts_p_bkg = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_bkg["sec_p"], data_bkg["nsec_p"])])
     ts_d_bkg = np.array([timestamp(sec, nsec) for sec, nsec in zip(data_bkg["sec_d"], data_bkg["nsec_d"])])
@@ -647,7 +655,7 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.png')}")
 
-    # plt.show()
+    plt.show()
 
 def ibd_analysis_plot(filepath: str, **meta):
     file = uproot.open(filepath)
@@ -731,8 +739,8 @@ def ibd_analysis_plot(filepath: str, **meta):
     x_fit = centers
     y_fit = hist
     bounds = (
-        [0.0, 0.0, 0.200, 0.200, 0.0, 0.0],
-        [np.inf, 1.0, 0.260, 0.260, np.inf, np.inf]
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [np.inf, 1.0, np.inf, np.inf, np.inf, np.inf]
     )
     popt, pcov = curve_fit(cosmogenic_rate_fit, x_fit, y_fit, p0=p0, absolute_sigma=True, bounds=bounds)
     N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
