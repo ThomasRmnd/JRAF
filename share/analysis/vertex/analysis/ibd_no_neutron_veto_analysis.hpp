@@ -49,7 +49,7 @@ public:
                 found_neutron = true;
             }
             if (!found_neutron) continue;
-            if (!is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
+            if (is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
             m_dt_last_mu = m_nav->prompt.ts - ts_mu;
             is_set_dt_last_mu = true;
         }

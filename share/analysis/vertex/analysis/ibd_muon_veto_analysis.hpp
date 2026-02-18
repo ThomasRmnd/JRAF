@@ -96,15 +96,13 @@ public:
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             if (m_nav->prompt.ts < ts_mu) continue;
             bool found_neutron = false;
-            int neutron_count = 0;
             for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
                 timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
                 if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
                 found_neutron = true;
             }
-            // std::cout << neutron_count << '\n';
             if (!found_neutron) continue;
-            if (!is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
+            if (is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
             m_dt_last_mu = m_nav->prompt.ts - ts_mu;
             is_set_dt_last_mu = true;
         }
