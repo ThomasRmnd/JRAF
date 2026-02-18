@@ -145,18 +145,18 @@ public:
         h_rate_cosmo_per_at_least_neutron->Draw("HIST");
         c_rate_cosmo_per_at_least_neutron->Update();
 
-        TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D(Form("h_%s_d_mu2p_cdwp_vs_dt_mu2p", m_name.c_str()),"Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
-        TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D(Form("h_%s_d_mu2p_tt_vs_dt_mu2p", m_name.c_str()), "Cosmo time vs distance", 120, 0.0, 1.5, 100, 0.0, 40000.0);
+        TH2D* h_d_mu2p_cdwp_vs_dt_mu2p = new TH2D(Form("h_%s_d_mu2p_cdwp_vs_dt_mu2p", m_name.c_str()),"Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 35.0);
+        TH2D* h_d_mu2p_tt_vs_dt_mu2p = new TH2D(Form("h_%s_d_mu2p_tt_vs_dt_mu2p", m_name.c_str()), "Cosmo time vs distance", 120, 0.0, 1.2, 100, 0.0, 35.0);
         for (const std::pair<ibd, std::vector<muon_data_association>>& val : m_ibds_to_mu) {
             const std::vector<muon_data_association>& muon_data = val.second;
             for (const muon_data_association& assoc : muon_data) {
                 std::vector<double>::const_iterator it_dlat_cdwp = std::min_element(assoc.dlat_cdwp.begin(), assoc.dlat_cdwp.end());
                 std::vector<double>::const_iterator it_dlat_tt = std::min_element(assoc.dlat_tt.begin(), assoc.dlat_tt.end());
                 if (it_dlat_cdwp != assoc.dlat_cdwp.end()) {
-                    h_d_mu2p_cdwp_vs_dt_mu2p->Fill(assoc.dt, *it_dlat_cdwp);
+                    h_d_mu2p_cdwp_vs_dt_mu2p->Fill(assoc.dt, *it_dlat_cdwp / 1000.0);
                 }
                 if (it_dlat_tt != assoc.dlat_tt.end()) {
-                    h_d_mu2p_tt_vs_dt_mu2p->Fill(assoc.dt, *it_dlat_tt);
+                    h_d_mu2p_tt_vs_dt_mu2p->Fill(assoc.dt, *it_dlat_tt / 1000.0);
                 }
             }
         }
