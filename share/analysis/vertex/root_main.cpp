@@ -19,6 +19,7 @@
 #include "analysis/cosmo_shape_neutron_analysis.hpp"
 #include "analysis/ibd_analysis.hpp"
 #include "analysis/ibd_muon_veto_analysis.hpp"
+#include "analysis/ibd_no_neutron_veto_analysis.hpp"
 
 struct DAQ {
     int run_id;
@@ -95,11 +96,14 @@ int root_main(const std::string& filepath) {
 
 
 
-    std::shared_ptr<analysis_base> main_analysis(new ibd_analysis("ibd_analysis_omilrec_jvertex", filepath, suffix));
-    if (!registry.book(main_analysis)) return 1;
+    std::shared_ptr<analysis_base> ibd_analysis_omilrec_jvertex(new ibd_analysis("ibd_analysis_omilrec_jvertex", filepath, suffix));
+    if (!registry.book(ibd_analysis_omilrec_jvertex)) return 1;
 
-    std::shared_ptr<analysis_base> ibd_with_muon_veto_analysis(new ibd_muon_veto_analysis("ibd_muon_veto_analysis_cdwpttchi2_3m_1_2s_omilrec_jvertex", filepath, suffix, "CdWpTtChi2", timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0));
-    if (!registry.book(ibd_with_muon_veto_analysis)) return 1;
+    std::shared_ptr<analysis_base> ibd_no_neutron_veto_analysis_omilrec_jvertex(new ibd_no_neutron_veto_analysis("ibd_no_neutron_veto_analysis_omilrec_jvertex", filepath, suffix));
+    if (!registry.book(ibd_no_neutron_veto_analysis_omilrec_jvertex)) return 1;
+
+    std::shared_ptr<analysis_base> ibd_muon_veto_analysis_cdwpttchi2_3m_1_2s_omilrec_jvertex(new ibd_muon_veto_analysis("ibd_muon_veto_analysis_cdwpttchi2_3m_1_2s_omilrec_jvertex", filepath, suffix, "CdWpTtChi2", timestamp{0, 5000000}, timestamp{0, 1200000000}, 3000.0));
+    if (!registry.book(ibd_muon_veto_analysis_cdwpttchi2_3m_1_2s_omilrec_jvertex)) return 1;
 
 
 
