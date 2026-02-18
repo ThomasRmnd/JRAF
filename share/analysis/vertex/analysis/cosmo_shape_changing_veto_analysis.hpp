@@ -57,16 +57,16 @@ public:
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
-            if (nb_muons_in_cd_event[ts_mu] > 2ul || nb_muons_in_wp_event[ts_mu] > 2ul) continue;
+            if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             if (has_stopping_in_wp_event[ts_mu]) continue;
 
             bool is_in_bkg = (
-                ts_mu + m_ts_bkg_low < m_nav->prompt.ts && m_nav->prompt.ts < ts_mu + m_ts_bkg_high &&
-                ts_mu + m_ts_bkg_low < m_nav->delayed.ts && m_nav->delayed.ts < ts_mu + m_ts_bkg_high
+                ts_mu + m_ts_bkg_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_bkg_high &&
+                ts_mu + m_ts_bkg_low <= m_nav->delayed.ts && m_nav->delayed.ts <= ts_mu + m_ts_bkg_high
             );
             bool is_in_sig = (
-                ts_mu + m_ts_sig_low < m_nav->prompt.ts && m_nav->prompt.ts < ts_mu + m_ts_sig_high &&
-                ts_mu + m_ts_sig_low < m_nav->delayed.ts && m_nav->delayed.ts < ts_mu + m_ts_sig_high
+                ts_mu + m_ts_sig_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_sig_high &&
+                ts_mu + m_ts_sig_low <= m_nav->delayed.ts && m_nav->delayed.ts <= ts_mu + m_ts_sig_high
             );
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
             vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
@@ -90,7 +90,7 @@ public:
             m_is_sig.push_back(is_in_sig);
         }
 
-        return (nb_multu_veto == 0ul && !m_is_sig.empty());
+        return (!m_is_sig.empty());
     }
 
 };

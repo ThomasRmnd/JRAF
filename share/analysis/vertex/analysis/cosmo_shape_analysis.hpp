@@ -66,19 +66,16 @@ public:
         nb_muons_in_wp_event.fill(m_nav, "WpBasic");
 
         // stopping_muon_lookup has_stopping_in_cd_event;
-        stopping_muon_lookup has_stopping_in_wp_event;
+        // stopping_muon_lookup has_stopping_in_wp_event;
         // has_stopping_in_cd_event.fill(m_nav, "CdClassify");
-        has_stopping_in_wp_event.fill(m_nav, "WpBasic");
-
-        is_cd_muon_lookup is_cd_muon;
-        is_cd_muon.fill(m_nav);
+        // has_stopping_in_wp_event.fill(m_nav, "WpBasic");
 
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
-            // if (!is_cd_muon[ts_mu]) continue;
             if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
-            if (has_stopping_in_wp_event[ts_mu]) continue;
+            // if (has_stopping_in_cd_event[ts_mu]) continue;
+            // if (has_stopping_in_wp_event[ts_mu]) continue;
 
             bool is_in_bkg = (
                 ts_mu + m_ts_bkg_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_bkg_high &&
@@ -101,7 +98,7 @@ public:
             m_is_sig.push_back(is_in_sig);
         }
 
-        return (nb_multu_veto == 0ul && !m_is_sig.empty());
+        return !m_is_sig.empty();
     }
 
     bool process() override {
