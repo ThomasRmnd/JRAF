@@ -249,15 +249,17 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
     std::map<std::string, std::vector<std::vector<track>::const_iterator>> track_map;
     track_map["CdWpTtChi2"] = {};
     track_map["CdClassify"] = {};
+    track_map["WpBasic"] = {};
     for (std::vector<track>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
         track_map[it->method].push_back(it);
     }
-    if (track_map["CdWpTtChi2"].size() != 1 || track_map["CdClassify"].size() != 1) {
-        LogInfo << "Muon event is empty or a bundle considering CdWpTtChi2 or CdClassify\n";
+    if (track_map["CdWpTtChi2"].size() != 1 || track_map["CdClassify"].size() != 1 || track_map["WpBasic"].size() != 1) {
+        LogInfo << "Muon event is empty or a bundle considering CdWpTtChi2 or CdClassify or WpBasic\n";
         return;
     }
     std::vector<track>::const_iterator trk_cdwpttchi2 = track_map["CdWpTtChi2"][0];
     std::vector<track>::const_iterator trk_cdclassify = track_map["CdClassify"][0];
+    std::vector<track>::const_iterator trk_wpbasic = track_map["WpBasic"][0];
 
     m_featureSaver.run_id = run_id;
     m_featureSaver.sec = curts.GetSec();
@@ -270,7 +272,16 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
     m_featureSaver.fposy.push_back(trk_cdwpttchi2->fpos.y);
     m_featureSaver.fposz.push_back(trk_cdwpttchi2->fpos.z);
     m_featureSaver.chi2.push_back(trk_cdwpttchi2->quality);
-    m_featureSaver.det.push_back(1 << 0);
+    m_featureSaver.det.push_back(0b001);
+
+    m_featureSaver.iposx.push_back(trk_wpbasic->ipos.x);
+    m_featureSaver.iposy.push_back(trk_wpbasic->ipos.y);
+    m_featureSaver.iposz.push_back(trk_wpbasic->ipos.z);
+    m_featureSaver.fposx.push_back(trk_wpbasic->fpos.x);
+    m_featureSaver.fposy.push_back(trk_wpbasic->fpos.y);
+    m_featureSaver.fposz.push_back(trk_wpbasic->fpos.z);
+    m_featureSaver.chi2.push_back(trk_wpbasic->quality);
+    m_featureSaver.det.push_back(0b010);
 
     m_featureSaver.iposx.push_back(trk_cdclassify->ipos.x);
     m_featureSaver.iposy.push_back(trk_cdclassify->ipos.y);
@@ -279,7 +290,7 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
     m_featureSaver.fposy.push_back(trk_cdclassify->fpos.y);
     m_featureSaver.fposz.push_back(trk_cdclassify->fpos.z);
     m_featureSaver.chi2.push_back(trk_cdclassify->quality);
-    m_featureSaver.det.push_back(1 << 1);
+    m_featureSaver.det.push_back(0b011);
 
     vec3 ipos(m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0] + 26452.0);
     vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
@@ -291,7 +302,7 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
     m_featureSaver.fposy.push_back(fpos.y);
     m_featureSaver.fposz.push_back(fpos.z);
     m_featureSaver.chi2.push_back(m_ttRecoFile.Chi2[0]);
-    m_featureSaver.det.push_back(1 << 2);
+    m_featureSaver.det.push_back(0b100);
 
     for (const PmtProp& pmt : m_pmtTable) {
         if (!pmt.used) continue;
