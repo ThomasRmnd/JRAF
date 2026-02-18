@@ -95,6 +95,14 @@ public:
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             if (m_nav->prompt.ts < ts_mu) continue;
+            bool found_neutron = false;
+            for (std::size_t l = 0ul; l < m_nav->e_n.size(); ++l) {
+                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
+                if (ts_n < ts_mu + timestamp{0, 20000} || timestamp{0, 2000000} < ts_n) continue;
+                found_neutron = true;
+                break;
+            }
+            if (!found_neutron) continue;
             if (!is_set_dt_last_mu) {
                 m_dt_last_mu = m_nav->prompt.ts - ts_mu;
                 is_set_dt_last_mu = true;
