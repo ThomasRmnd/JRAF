@@ -102,7 +102,7 @@ public:
                 if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
                 found_neutron = true;
             }
-            std::cout << neutron_count << '\n';
+            // std::cout << neutron_count << '\n';
             if (!found_neutron) continue;
             if (!is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
             m_dt_last_mu = m_nav->prompt.ts - ts_mu;

@@ -204,75 +204,7 @@ public:
         return true;
     }
 
-    void result() override {
-        std::vector<cosmogenic> cosmos_bkg(m_cosmos_bkg.begin(), m_cosmos_bkg.end());
-        std::vector<cosmogenic> cosmos_sig(m_cosmos_sig.begin(), m_cosmos_sig.end());
-
-        TH1D* h_e_p_cosmo_bkg = make_normal_prompt_energy_plot(Form("h_e_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH1D* h_e_p_cosmo_sig = make_normal_prompt_energy_plot(Form("h_e_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-        TH1D* h_e_p_cosmo_diff = make_normal_prompt_energy_plot(Form("h_e_p_cosmo_diff__%s", m_name.c_str()), Form("Prompt energy (Cosmo sig - Cosmo bkg) {%s}", m_name.c_str()), std::vector<cosmogenic>{});
-        h_e_p_cosmo_diff->Add(h_e_p_cosmo_sig, h_e_p_cosmo_bkg, 1.0, -1.0);
-
-        TH1D* h_e_d_cosmo_bkg = make_delayed_energy_plot(Form("h_e_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed energy (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH1D* h_e_d_cosmo_sig = make_delayed_energy_plot(Form("h_e_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed energy (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-
-        TH1D* h_dt_cosmo_bkg = make_prompt_delayed_time_plot(Form("h_dt_cosmo_bkg__%s", m_name.c_str()), Form("Prompt-Delayed time difference (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg); 
-        TH1D* h_dt_cosmo_sig = make_prompt_delayed_time_plot(Form("h_dt_cosmo_sig__%s", m_name.c_str()), Form("Prompt-Delayed time difference (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-
-        TH1D* h_dr_cosmo_bkg = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_bkg__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        TH1D* h_dr_cosmo_sig = make_prompt_delayed_distance_plot(Form("h_dr_cosmo_sig__%s", m_name.c_str()), Form("Prompt-Delayed distance (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-
-        // TH2D* h_rho_z_p_cosmo_bkg = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_bkg__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        // TH2D* h_rho_z_d_cosmo_bkg = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_bkg__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo bkg) {%s}", m_name.c_str()), cosmos_bkg);
-        // TH2D* h_rho_z_p_cosmo_sig = make_prompt_spatial_plot(Form("h_rho_z_p_cosmo_sig__%s", m_name.c_str()), Form("Prompt vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-        // TH2D* h_rho_z_d_cosmo_sig = make_delayed_spatial_plot(Form("h_rho_z_d_cosmo_sig__%s", m_name.c_str()), Form("Delayed vertex distribution (Cosmo sig) {%s}", m_name.c_str()), cosmos_sig);
-
-        // Prompt energy
-        TLegend* leg_e_p = new TLegend(0.58, 0.75, 0.88, 0.88);
-        pimp_my_line(h_e_p_cosmo_bkg, LineConfig{.style = kSolid, .width = 3, .color = kRed});
-        h_e_p_cosmo_bkg->SetTitle("Cosmo depleted region");
-        pimp_my_line(h_e_p_cosmo_sig, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        h_e_p_cosmo_sig->SetTitle("Cosmo enriched region");
-        pimp_my_line(h_e_p_cosmo_diff, LineConfig{.style = kSolid, .width = 3, .color = kBlack});
-        h_e_p_cosmo_diff->SetTitle("Substraction");
-        plot_multiple(Form("c_e_p_cosmo__%s", m_name.c_str()), "Prompt energy", {h_e_p_cosmo_bkg, h_e_p_cosmo_sig, h_e_p_cosmo_diff}, leg_e_p, "HIST");
-
-        // Cosmo bkg - Delayed energy
-        TLegend* leg_e_d = new TLegend(0.58, 0.75, 0.88, 0.88);
-        pimp_my_line(h_e_d_cosmo_bkg, LineConfig{.style = kSolid, .width = 3, .color = kRed});
-        h_e_d_cosmo_bkg->SetTitle("Cosmo depleted region");
-        pimp_my_line(h_e_d_cosmo_sig, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        h_e_d_cosmo_sig->SetTitle("Cosmo enriched region");
-        plot_multiple(Form("c_e_d_cosmo__%s", m_name.c_str()), "Delayed energy", {h_e_d_cosmo_bkg, h_e_d_cosmo_sig}, leg_e_d, "HIST");
-
-        // Cosmo bkg - Prompt-Delayed time difference
-        TLegend* leg_dt = new TLegend(0.58, 0.75, 0.88, 0.88);
-        pimp_my_line(h_dt_cosmo_bkg, LineConfig{.style = kSolid, .width = 3, .color = kRed});
-        h_dt_cosmo_bkg->SetTitle("Cosmo depleted region");
-        pimp_my_line(h_dt_cosmo_sig, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        h_dt_cosmo_sig->SetTitle("Cosmo enriched region");
-        plot_multiple(Form("c_dt_cosmo__%s", m_name.c_str()), "Prompt-Delayed time difference", {h_dt_cosmo_bkg, h_dt_cosmo_sig}, leg_dt, "HIST");
-
-        // Cosmo bkg - Prompt-Delayed distance
-        TLegend* leg_dr = new TLegend(0.58, 0.75, 0.88, 0.88);
-        pimp_my_line(h_dr_cosmo_bkg, LineConfig{.style = kSolid, .width = 3, .color = kRed});
-        h_dr_cosmo_bkg->SetTitle("Cosmo depleted region");
-        pimp_my_line(h_dr_cosmo_sig, LineConfig{.style = kSolid, .width = 3, .color = kBlue});
-        h_dr_cosmo_sig->SetTitle("Cosmo enriched region");
-        plot_multiple(Form("c_dr_cosmo__%s", m_name.c_str()), "Prompt-Delayed distance", {h_dr_cosmo_bkg, h_dr_cosmo_sig}, leg_dr, "HIST");
-
-        // Cosmo bkg - Prompt vertex position
-        // plot_basic(h_rho_z_p_cosmo_bkg, "COLZ");
-
-        // Cosmo bkg - Delayed vertex position
-        // plot_basic(h_rho_z_d_cosmo_bkg, "COLZ");
-
-        // Cosmo sig - Prompt vertex position
-        // plot_basic(h_rho_z_p_cosmo_sig, "COLZ");
-
-        // Cosmo sig - Delayed vertex position
-        // plot_basic(h_rho_z_d_cosmo_sig, "COLZ");
-    }
+    void result() override {}
 
 protected:
 
