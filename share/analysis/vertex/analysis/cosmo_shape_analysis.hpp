@@ -95,6 +95,10 @@ public:
             if (!is_in_bkg && !is_in_sig) continue;
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
             vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
+            if (
+                std::isnan(pos_mu.x) || std::isnan(pos_mu.y) || std::isnan(pos_mu.z) ||
+                std::isnan(dir_mu.x) || std::isnan(dir_mu.y) || std::isnan(dir_mu.z)
+            ) continue;
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
             if (m_radius < d_mu2p && m_radius < d_mu2d) continue;
@@ -103,15 +107,6 @@ public:
             m_dt_mu2p.push_back(timestamp_to_double(m_nav->prompt.ts - ts_mu));
             m_dt_mu2d.push_back(timestamp_to_double(m_nav->delayed.ts - ts_mu));
             m_is_sig.push_back(is_in_sig);
-
-            if (std::isnan(d_mu2p) || std::isnan(d_mu2d) || std::isnan(timestamp_to_double(m_nav->prompt.ts - ts_mu)) || std::isnan(timestamp_to_double(m_nav->delayed.ts - ts_mu))) {
-                std::cerr << "NaN value detected!\n";
-                std::cerr << "d_mu2p = " << d_mu2p << ", d_mu2d = " << d_mu2d << ", dt_mu2p = " << timestamp_to_double(m_nav->prompt.ts - ts_mu) << ", dt_mu2d = " << timestamp_to_double(m_nav->delayed.ts - ts_mu) << '\n';
-                std::cerr << "run_id = " << m_nav->run_id << ", sec = " << m_nav->prompt.ts.sec << ", nsec = " << m_nav->prompt.ts.nsec << '\n';
-                std::cerr << "track = [ (" << m_nav->posx_mu[k] << ", " << m_nav->posy_mu[k] << ", " << m_nav->posz_mu[k] << "), (" << m_nav->dirx_mu[k] << ", " << m_nav->diry_mu[k] << ", " << m_nav->dirz_mu[k] << ") ]\n";
-                std::cerr << "prompt = [ " << m_nav->prompt.pos << ", " << m_nav->prompt.e << " ]\n";
-                std::cerr << "delayed = [ " << m_nav->delayed.pos << ", " << m_nav->delayed << " ]\n";
-            }
         }
 
         return !m_is_sig.empty();
