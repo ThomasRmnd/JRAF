@@ -1,11 +1,10 @@
 #ifndef ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
 #define ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
 
-#include <TLegend.h>
+#include <cmath>
 
 #include "analysis/basic_analysis.hpp"
 #include "utils/muon_lookup.hpp"
-#include "utils/plot.hpp"
 
 class cosmo_shape_analysis : public basic_analysis {
 
@@ -50,7 +49,7 @@ public:
             if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
             ++nb_multu_veto;
         }
-        if (nb_multu_veto) return false;
+        // if (nb_multu_veto) return false;
 
         if ( std::pow((m_nav->meta_prompt.stdhit - 0.55) / 0.45, 2.0) + std::pow((m_nav->meta_prompt.stdt - 170.0) / 80.0, 2.0) > 1.0 ) return false;
 
@@ -73,7 +72,7 @@ public:
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != m_recname) continue;
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
-            // if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
+            if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             // if (has_stopping_in_cd_event[ts_mu]) continue;
             // if (has_stopping_in_wp_event[ts_mu]) continue;
             
@@ -104,6 +103,15 @@ public:
             m_dt_mu2p.push_back(timestamp_to_double(m_nav->prompt.ts - ts_mu));
             m_dt_mu2d.push_back(timestamp_to_double(m_nav->delayed.ts - ts_mu));
             m_is_sig.push_back(is_in_sig);
+
+            if (std::isnan(d_mu2p) || std::isnan(d_mu2d) || std::isnan(timestamp_to_double(m_nav->prompt.ts - ts_mu)) || std::isnan(timestamp_to_double(m_nav->delayed.ts - ts_mu))) {
+                std::cerr << "NaN value detected!\n";
+                std::cerr << "d_mu2p = " << d_mu2p << ", d_mu2d = " << d_mu2d << ", dt_mu2p = " << timestamp_to_double(m_nav->prompt.ts - ts_mu) << ", dt_mu2d = " << timestamp_to_double(m_nav->delayed.ts - ts_mu) << '\n';
+                std::cerr << "run_id = " << m_nav->run_id << ", sec = " << m_nav->prompt.ts.sec << ", nsec = " << m_nav->prompt.ts.nsec << '\n';
+                std::cerr << "track = [ " << pos_mu << ", " << dir_mu << " ]\n";
+                std::cerr << "prompt = [ " << m_nav->prompt.pos << ", " << m_nav->prompt.e << " ]\n";
+                std::cerr << "delayed = [ " << m_nav->delayed.pos << ", " << m_nav->delayed << " ]\n";
+            }
         }
 
         return !m_is_sig.empty();
