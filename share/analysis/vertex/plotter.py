@@ -660,33 +660,33 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.png')}")
 
-    print(f"Found {np.sum(np.isnan(data_sig['e_p']))} NaN in e_p")
-    print(f"Found {np.sum(np.isnan(data_bkg['e_p']))} NaN in e_p")
-    print(f"Found {np.sum(np.isnan(data_sig['dt_mu2p']))} NaN in dt_mu2p")
-    print(f"Found {np.sum(np.isnan(data_bkg['dt_mu2p']))} NaN in dt_mu2p")
-    print(f"Found {np.sum(np.isnan(data_sig['dlat_mu2p']))} NaN in dlat_mu2p")
-    print(f"Found {np.sum(np.isnan(data_bkg['dlat_mu2p']))} NaN in dlat_mu2p")
+    # print(f"Found {np.sum(np.isnan(data_sig['e_p']))} NaN in e_p")
+    # print(f"Found {np.sum(np.isnan(data_bkg['e_p']))} NaN in e_p")
+    # print(f"Found {np.sum(np.isnan(data_sig['dt_mu2p']))} NaN in dt_mu2p")
+    # print(f"Found {np.sum(np.isnan(data_bkg['dt_mu2p']))} NaN in dt_mu2p")
+    # print(f"Found {np.sum(np.isnan(data_sig['dlat_mu2p']))} NaN in dlat_mu2p")
+    # print(f"Found {np.sum(np.isnan(data_bkg['dlat_mu2p']))} NaN in dlat_mu2p")
 
-    plt.figure()
-    plt.hist2d(data_sig["e_p"], data_sig["dt_mu2p"], bins=(np.linspace(0.0, 12.0, 101), np.linspace(0.0, 1.2, 101)), cmin=1.0)
+    # plt.figure()
+    # plt.hist2d(data_sig["e_p"], data_sig["dt_mu2p"], bins=(np.linspace(0.0, 12.0, 101), np.linspace(0.0, 1.2, 101)), cmin=1.0)
 
-    plt.figure()
-    plt.hist2d(data_sig["e_p"], data_sig["dlat_mu2p"] / 1000.0, bins=(np.linspace(0.0, 12.0, 101), np.linspace(0.0, 3.0, 101)), cmin=1.0)
+    # plt.figure()
+    # plt.hist2d(data_sig["e_p"], data_sig["dlat_mu2p"] / 1000.0, bins=(np.linspace(0.0, 12.0, 101), np.linspace(0.0, 3.0, 101)), cmin=1.0)
 
-    mask_sig_dlat_mu2p = np.logical_and(2.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 3.0)
+    # mask_sig_dlat_mu2p = np.logical_and(2.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 3.0)
     
-    plt.figure()
-    plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
+    # plt.figure()
+    # plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
 
-    mask_sig_dlat_mu2p = np.logical_and(1.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 2.0)
+    # mask_sig_dlat_mu2p = np.logical_and(1.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 2.0)
     
-    plt.figure()
-    plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
+    # plt.figure()
+    # plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
 
-    mask_sig_dlat_mu2p = np.logical_and(0.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 1.0)
+    # mask_sig_dlat_mu2p = np.logical_and(0.0 < data_sig["dlat_mu2p"] / 1000.0, data_sig["dlat_mu2p"] / 1000.0 < 1.0)
     
-    plt.figure()
-    plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
+    # plt.figure()
+    # plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
 
     # sort_indices = np.argsort(ts_p_sig)
     # sorted_e_p = data_sig["e_p"][sort_indices]
@@ -796,44 +796,44 @@ def ibd_analysis_plot(filepath: str, **meta):
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d.png')}")
 
-    xbins = np.linspace(0.0, 2.0, 51)
-    hist, edges = np.histogram(data["dt_last_mu"], bins=xbins)
-    centers = 0.5 * (edges[:-1] + edges[1:])
-    bin_width = np.diff(edges)[0]
+    # xbins = np.linspace(0.0, 2.0, 51)
+    # hist, edges = np.histogram(data["dt_last_mu"], bins=xbins)
+    # centers = 0.5 * (edges[:-1] + edges[1:])
+    # bin_width = np.diff(edges)[0]
 
-    def cosmogenic_rate_fit(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu):
-        lambda_li = Rmu + 1.0 / tau_li
-        lambda_he = Rmu + 1.0 / tau_he
+    # def cosmogenic_rate_fit(t, N_lihe, f, tau_li, tau_he, N_bkg, Rmu):
+    #     lambda_li = Rmu + 1.0 / tau_li
+    #     lambda_he = Rmu + 1.0 / tau_he
 
-        li_term = N_lihe * f * lambda_li * np.exp(-lambda_li * t)
-        he_term = N_lihe * (1.0 - f) * lambda_he * np.exp(-lambda_he * t)
-        bkg_term = N_bkg * Rmu * np.exp(-Rmu * t)
+    #     li_term = N_lihe * f * lambda_li * np.exp(-lambda_li * t)
+    #     he_term = N_lihe * (1.0 - f) * lambda_he * np.exp(-lambda_he * t)
+    #     bkg_term = N_bkg * Rmu * np.exp(-Rmu * t)
 
-        return li_term + he_term + bkg_term
+    #     return li_term + he_term + bkg_term
 
-    p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.01]
-    x_fit = centers
-    y_fit = hist
-    bounds = (
-        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [np.inf, 1.0, np.inf, np.inf, np.inf, np.inf]
-    )
-    popt, pcov = curve_fit(cosmogenic_rate_fit, x_fit, y_fit, p0=p0, absolute_sigma=True, bounds=bounds)
-    N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
-    print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
-    x_smooth = np.linspace(0.0, 2.0, 500)
-    y_smooth = cosmogenic_rate_fit(x_smooth, *p0)
+    # p0 = [hist[0] / 2.0, 0.97, 0.237, 0.237, hist[0] / 2.0, 0.01]
+    # x_fit = centers
+    # y_fit = hist
+    # bounds = (
+    #     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    #     [np.inf, 1.0, np.inf, np.inf, np.inf, np.inf]
+    # )
+    # popt, pcov = curve_fit(cosmogenic_rate_fit, x_fit, y_fit, p0=p0, absolute_sigma=True, bounds=bounds)
+    # N_lihe, f, tau_li, tau_he, N_bkg, Rmu = popt
+    # print(f"N_lihe = {N_lihe}, f = {f}, tau_li = {tau_li}, tau_he = {tau_he}, N_bkg = {N_bkg}, Rmu = {Rmu}")
+    # x_smooth = np.linspace(0.0, 2.0, 500)
+    # y_smooth = cosmogenic_rate_fit(x_smooth, *p0)
 
-    fig, ax = plt.subplots(figsize=(7, 6))
-    ax.bar(centers, hist, width=np.diff(edges), color="#90b4ff")
-    ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
-    ax.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
-    ax.set_ylabel("Entries")
-    ax.minorticks_on()
-    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
-    ax.set_yscale("log")
-    fig.show()
+    # fig, ax = plt.subplots(figsize=(7, 6))
+    # ax.bar(centers, hist, width=np.diff(edges), color="#90b4ff")
+    # ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
+    # ax.set_xlabel(r"$\Delta t_{\mu-p}$ (s)")
+    # ax.set_ylabel("Entries")
+    # ax.minorticks_on()
+    # ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+    # ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+    # ax.set_yscale("log")
+    # fig.show()
 
     plt.show()
 
