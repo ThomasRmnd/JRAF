@@ -388,8 +388,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
                 performances[method].push_back(MuonPerformance{
                     .angle = compute_angle_between_track(trk, *it_tt),
                     .distance = compute_distance_between_track(trk, *it_tt),
-                    .clippingness = compute_clippingness(*it_tt)
-                    .quality = trk.quality
+                    .clippingness = compute_clippingness(*it_tt),
+                    .quality = trk.quality,
                     .tt_quality = it_tt->quality
                 });
                 ++it_tt;
@@ -436,8 +436,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                 performances[method].push_back(MuonPerformance{
                     .angle = compute_angle_between_track(tt_muon, muon),
                     .distance = compute_distance_between_track(tt_muon, muon),
-                    .clippingness = compute_clippingness(tt_muon)
-                    .quality = muon.quality
+                    .clippingness = compute_clippingness(tt_muon),
+                    .quality = muon.quality,
                     .tt_quality = tt_muon.quality
                 });
             }
