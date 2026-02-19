@@ -27,7 +27,7 @@ public:
         m_radius{radius}
     {}
 
-    virtual ~cosmo_shape_analysis() = default
+    virtual ~cosmo_shape_analysis() override = default;
 
     bool selection() override {
         double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);

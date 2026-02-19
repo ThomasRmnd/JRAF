@@ -1,5 +1,5 @@
-#ifndef ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
-#define ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
+#ifndef ANALYSIS_COSMO_SHAPE_WITH_NEUTRON_ANALYSIS_HPP_
+#define ANALYSIS_COSMO_SHAPE_WITH_NEUTRON_ANALYSIS_HPP_
 
 #include <cmath>
 
@@ -11,6 +11,8 @@ class cosmo_shape_with_neutron_analysis : public cosmo_shape_analysis {
 public:
 
     using cosmo_shape_analysis::cosmo_shape_analysis;
+
+    ~cosmo_shape_with_neutron_analysis() override = default;
 
     bool selection() override {
         double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);
@@ -119,4 +121,4 @@ public:
 
 };
 
-#endif // ANALYSIS_COSMO_SHAPE_ANALYSIS_HPP_
+#endif // ANALYSIS_COSMO_SHAPE_WITH_NEUTRON_ANALYSIS_HPP_
