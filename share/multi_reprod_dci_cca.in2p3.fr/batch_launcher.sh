@@ -34,10 +34,8 @@ log INFO "Cluster detected: ${CLUSTER}"
 #==============================
 
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
-RUN_LIST_REPROD25C="/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
-RUN_LIST_REPROD25D="/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2/physics_good.txt"
-LOCAL_RUN_LIST_REPROD25C="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25C/physics_good.txt"
-LOCAL_RUN_LIST_REPROD25D="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25D/physics_good.txt"
+RUN_LIST_REPROD25C="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25C/physics_good.txt"
+RUN_LIST_REPROD25D="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25D/physics_good.txt"
 
 RANGE_BEFORE_11266=100
 RANGE_AFTER_11266=20
@@ -136,8 +134,7 @@ parse_args() {
 #==============================
 
 load_run_list() {
-    log INFO "Fetching run list from EOS..."
-    # mapfile -t RUN_LIST < <(xrdfs "${XRD_URL_EOS}" cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    log INFO "Fetching run list"
     mapfile -t RUN_LIST < <(cat "${LOCAL_RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
 }
 

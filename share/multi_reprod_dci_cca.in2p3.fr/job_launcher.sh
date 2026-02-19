@@ -33,8 +33,6 @@ log INFO "Cluster detected: ${CLUSTER}"
 # Configuration defaults
 #==============================
 
-XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
-
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=4
 
@@ -138,8 +136,8 @@ load_file_lists() {
     local esd_list_file="${LIST_BASE}/esd_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST < <(xrdfs "${XRD_URL_EOS}" cat "${rtraw_list_file}")
-    mapfile -t ESD_LIST   < <(xrdfs "${XRD_URL_EOS}" cat "${esd_list_file}")
+    mapfile -t RTRAW_LIST < <(cat "${rtraw_list_file}")
+    mapfile -t ESD_LIST   < <(cat "${esd_list_file}")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
     log INFO "Number of ESD   files: ${#ESD_LIST[@]}"
