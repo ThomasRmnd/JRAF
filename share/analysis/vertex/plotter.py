@@ -465,7 +465,7 @@ class MuonVetoDistributionPlotter:
         # Top axis
 
         if fit_ignore_first_bin:
-            mask = np.logical_and(proj_x > 0, centers_x > 0.05)
+            mask = np.logical_and(proj_x > 0, centers_x > 0.06)
         else:
             mask = proj_x > 0
         x_fit = centers_x[mask]
@@ -489,7 +489,7 @@ class MuonVetoDistributionPlotter:
         prob = chi2.sf(chisq, ndf)
 
         if fit_ignore_first_bin:
-            x_smooth = np.linspace(0.05, xedges[-1], 500)
+            x_smooth = np.linspace(0.06, xedges[-1], 500)
         else:
             x_smooth = np.linspace(xedges[0], xedges[-1], 500)
         y_smooth = exp_decay_cste(x_smooth, *popt)
