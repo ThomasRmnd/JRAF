@@ -123,11 +123,13 @@ class timestamp:
         self.nsec %= 1e9
 
 class BasePlotter:
-    def __init__(self, xlabel="", ylabel="", xlim=None, ylim=(0, None)):
+    def __init__(self, xlabel="", ylabel="", xlim=None, ylim=(0, None), xscale="linear", yscale="linear"):
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.xlim = xlim
         self.ylim = ylim
+        self.xscale = xscale
+        self.yscale = yscale
 
     def apply_style(self, ax):
         ax.set_xlabel(self.xlabel)
@@ -138,6 +140,8 @@ class BasePlotter:
         ax.tick_params(direction="in", which="both", top=True, right=True)
         if self.xlim: ax.set_xlim(self.xlim)
         if self.ylim: ax.set_ylim(bottom=self.ylim[0], top=self.ylim[1])
+        ax.set_xscale(self.xscale)
+        ax.set_yscale(self.yscale)
 
 class Histogram1DPlotter(BasePlotter):
     def __init__(self, bins, force_not_diff=False, **kwargs):
@@ -684,47 +688,47 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     plt.figure()
     plt.hist(data_sig["e_p"][mask_sig_dlat_mu2p], bins=np.linspace(0.0, 12.0, 101))
 
-    sort_indices = np.argsort(ts_p_sig)
-    sorted_e_p = data_sig["e_p"][sort_indices]
-    sorted_ts = ts_p_sig[sort_indices]
+    # sort_indices = np.argsort(ts_p_sig)
+    # sorted_e_p = data_sig["e_p"][sort_indices]
+    # sorted_ts = ts_p_sig[sort_indices]
 
-    bins = np.linspace(0.0, 12.0, 101)
-    centers = 0.5 * (bins[:-1] + bins[1:])
+    # bins = np.linspace(0.0, 12.0, 101)
+    # centers = 0.5 * (bins[:-1] + bins[1:])
     
-    fig, ax = plt.subplots(figsize=(8, 6))
-    bar_container = ax.bar(centers, np.zeros_like(centers), width=np.diff(bins), color="skyblue", edgecolor="steelblue", alpha=0.7)
+    # fig, ax = plt.subplots(figsize=(8, 6))
+    # bar_container = ax.bar(centers, np.zeros_like(centers), width=np.diff(bins), color="skyblue", edgecolor="steelblue", alpha=0.7)
     
-    text_time = ax.text(0.95, 0.95, "", transform=ax.transAxes, ha="right", fontsize=10)
-    ax.set_xlim(0, 12)
-    ax.set_ylim(0, 50)
-    ax.set_xlabel("Prompt Energy $E_p$ [MeV]")
-    ax.set_ylabel("Counts")
-    ax.set_title("Evolution of Energy Spectrum (Chronological)")
+    # text_time = ax.text(0.95, 0.95, "", transform=ax.transAxes, ha="right", fontsize=10)
+    # ax.set_xlim(0, 12)
+    # ax.set_ylim(0, 50)
+    # ax.set_xlabel("Prompt Energy $E_p$ [MeV]")
+    # ax.set_ylabel("Counts")
+    # ax.set_title("Evolution of Energy Spectrum (Chronological)")
 
-    events_per_frame = max(1, len(sorted_e_p) // 100) 
+    # events_per_frame = max(1, len(sorted_e_p) // 100) 
 
-    def update(frame):
-        end_idx = (frame + 1) * events_per_frame
-        if end_idx > len(sorted_e_p):
-            end_idx = len(sorted_e_p)
+    # def update(frame):
+    #     end_idx = (frame + 1) * events_per_frame
+    #     if end_idx > len(sorted_e_p):
+    #         end_idx = len(sorted_e_p)
             
-        current_data = sorted_e_p[:end_idx]
-        current_ts = sorted_ts[end_idx-1]
+    #     current_data = sorted_e_p[:end_idx]
+    #     current_ts = sorted_ts[end_idx-1]
         
-        counts, _ = np.histogram(current_data, bins=bins)
+    #     counts, _ = np.histogram(current_data, bins=bins)
         
-        for count, rect in zip(counts, bar_container):
-            rect.set_height(count)
+    #     for count, rect in zip(counts, bar_container):
+    #         rect.set_height(count)
         
-        text_time.set_text(f"Time: {current_ts.sec}s")
+    #     text_time.set_text(f"Time: {current_ts.sec}s")
         
-        if len(current_data) > 0:
-            ax.set_ylim(0, max(counts) * 1.1 + 1)
+    #     if len(current_data) > 0:
+    #         ax.set_ylim(0, max(counts) * 1.1 + 1)
             
-        return bar_container, text_time
+    #     return bar_container, text_time
 
-    num_frames = len(sorted_e_p) // events_per_frame
-    ani = FuncAnimation(fig, update, frames=num_frames, blit=False, interval=50, repeat=False)
+    # num_frames = len(sorted_e_p) // events_per_frame
+    # ani = FuncAnimation(fig, update, frames=num_frames, blit=False, interval=50, repeat=False)
 
 
     plt.show()
