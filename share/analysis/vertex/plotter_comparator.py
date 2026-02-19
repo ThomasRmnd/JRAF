@@ -204,32 +204,24 @@ class Histogram1DPlotter(BasePlotter):
         err = np.sqrt(e1**2 + e2**2)
 
         ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-
-        ax.errorbar(
-            self.centers, diff, yerr=err, xerr=self.widths/2, 
-            fmt="o", color="black", markersize=4, zorder=3
-        )
-        ax.step(
-            self.bins, np.r_[diff, diff[-1]], 
-            where="post", color="black", linewidth=1, alpha=0.8, zorder=2
-        )
-
-        max_deviation = np.max(np.abs(diff) + err)
-        limit = max_deviation * 1.1 if max_deviation > 0 else 1.0
-        ax.set_ylim(-limit, limit)
+        ax.plot(self.centers, diff, linestyle='None', marker="o", color="black", markersize=4, zorder=3)
 
     def _apply_shared_style(self, ax_main, ax_diff):
         for ax in [ax_main, ax_diff]:
-            ax.tick_params(direction="in", which="both", top=True, right=True)
-            ax.minorticks_on()
-            ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-            ax.yaxis.set_minor_locator(AutoMinorLocator(5))
             self.apply_style(ax)
+        ax_main.set_xlabel(None)
 
         ax_main.set_ylabel("Entries")
-        ax_diff.set_ylabel("Diff (1-2)")
+        ax_diff.set_ylabel(r"$\Delta$")
 
         ax_diff.yaxis.set_major_locator(plt.MaxNLocator(5, prune='both'))
+
+        h1, e1 = self.datasets[0]["hist"], self.datasets[0]["err"]
+        h2, e2 = self.datasets[1]["hist"], self.datasets[1]["err"]
+        diff = h1 - h2
+        max_deviation = np.max(np.abs(diff))
+        limit = max_deviation * 1.25
+        ax_diff.set_ylim(bottom=-limit, top=limit)
         
         plt.setp(ax_main.get_xticklabels(), visible=False)
 
@@ -245,7 +237,7 @@ class PromptEnergyPlotter(Histogram1DPlotter):
 class DelayedEnergyPlotter(Histogram1DPlotter):
     def __init__(self, **kwargs):
         super().__init__(
-            bins=np.linspace(2.0, 2.5, 51), 
+            bins=np.linspace(2.0, 2.5, 76), 
             xlabel=r"$E_{d}$ (MeV)", ylabel="Entries", xlim=(1.98, 2.52),
             **kwargs
         )
@@ -483,11 +475,11 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
         10459, 10470, 10479, 10520, 10529, 10540, 10550, 10563, 10584, 10593, 
         11027, 11237, 11410, 11397, 11788
     ]
-    mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) <= max_run_id 
-    mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) <= max_run_id 
+    # mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) >= max_run_id 
+    # mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) >= max_run_id 
 
-    data1 = {k: v[mask1] for k, v in data1.items()} 
-    data2 = {k: v[mask2] for k, v in data2.items()}
+    # data1 = {k: v[mask1] for k, v in data1.items()} 
+    # data2 = {k: v[mask2] for k, v in data2.items()}
 
     mask1 = ~np.isin(data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"], failed_jobs) 
     mask2 = ~np.isin(data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"], failed_jobs)
@@ -495,10 +487,15 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     data1 = {k: v[mask1] for k, v in data1.items()} 
     data2 = {k: v[mask2] for k, v in data2.items()}
 
-    e_p_plotter = PromptEnergyPlotter(binmode="normal")
+    e_p_plotter = PromptEnergyPlotter(binmode="nmo")
     e_p_plotter.add(data1["e_p"] if "IBD_all_reprod" not in filepath1 else data1["energy_p_omilrec"], linecolor="#648fff", fillcolor="#eff3ff", label=label1)
     e_p_plotter.add(data2["e_p"] if "IBD_all_reprod" not in filepath2 else data2["energy_p_omilrec"], linecolor="#ff6464", fillcolor="#ffefef", label=label2)
     e_p_plotter.plot()
+
+    e_d_plotter = DelayedEnergyPlotter()
+    e_d_plotter.add(data1["e_d"] if "IBD_all_reprod" not in filepath1 else data1["energy_d_omilrec"], linecolor="#648fff", label=label1)
+    e_d_plotter.add(data2["e_d"] if "IBD_all_reprod" not in filepath2 else data2["energy_d_omilrec"], linecolor="#ff6464", label=label2)
+    e_d_plotter.plot()
 
     plt.show()
 
