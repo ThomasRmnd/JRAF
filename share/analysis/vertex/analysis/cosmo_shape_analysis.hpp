@@ -84,6 +84,7 @@ public:
             if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             // if (has_stopping_in_cd_event[ts_mu]) continue;
             // if (has_stopping_in_wp_event[ts_mu]) continue;
+
             bool is_in_bkg = (
                 ts_mu + m_ts_bkg_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_bkg_high &&
                 ts_mu + m_ts_bkg_low <= m_nav->delayed.ts && m_nav->delayed.ts <= ts_mu + m_ts_bkg_high
@@ -93,15 +94,18 @@ public:
                 ts_mu + m_ts_sig_low <= m_nav->delayed.ts && m_nav->delayed.ts <= ts_mu + m_ts_sig_high
             );
             if (!is_in_bkg && !is_in_sig) continue;
+
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
             vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
             if (
                 std::isnan(pos_mu.x) || std::isnan(pos_mu.y) || std::isnan(pos_mu.z) ||
                 std::isnan(dir_mu.x) || std::isnan(dir_mu.y) || std::isnan(dir_mu.z)
             ) continue;
+
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
             if (m_radius < d_mu2p && m_radius < d_mu2d) continue;
+
             if (min_dlat_mu2p < d_mu2p) continue;
             min_dlat_mu2p = d_mu2p;
             min_dlat_mu2d = d_mu2d;
