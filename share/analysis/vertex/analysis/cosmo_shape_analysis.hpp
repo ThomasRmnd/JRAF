@@ -76,6 +76,14 @@ public:
             if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             // if (has_stopping_in_cd_event[ts_mu]) continue;
             // if (has_stopping_in_wp_event[ts_mu]) continue;
+            
+            bool found_neutron = false;
+            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
+                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
+                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
+                found_neutron = true;
+            }
+            if (!found_neutron) continue;
 
             bool is_in_bkg = (
                 ts_mu + m_ts_bkg_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_bkg_high &&
