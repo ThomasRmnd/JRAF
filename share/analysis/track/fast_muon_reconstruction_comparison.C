@@ -12,6 +12,7 @@ struct track {
     TTimeStamp ts;
     double totq_cd;
     double totq_wp;
+    double quality;
 
     TVector3 ipos;
     TVector3 fpos;
@@ -145,6 +146,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
             .ts = TTimeStamp(fSec, fNanoSec),
             .totq_cd = 0.0,
             .totq_wp = charge,
+            .quality = 0.0,
             .ipos = TVector3(xin, yin, zin),
             .fpos = fpos
         });
@@ -197,6 +199,7 @@ std::set<track> open_edwin_user_chain(const char* path) {
             .ts = TTimeStamp(cd_time_s, cd_time_ns),
             .totq_cd = cd_totalPE,
             .totq_wp = wp_totalPE,
+            .quality = 0.0,
             .ipos = TVector3(enterX, enterY, enterZ),
             .fpos = fpos
         });
@@ -241,6 +244,7 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
             .ts = TTimeStamp(sec, nsec),
             .totq_cd = totq_cd,
             .totq_wp = totq_wp,
+            .quality = chi2,
             .ipos = TVector3(iposx, iposy, iposz),
             .fpos = TVector3(fposx, fposy, fposz)
         });
@@ -327,6 +331,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
                 .ts = TTimeStamp(sec, nsec),
                 .totq_cd = totq_cd,
                 .totq_wp = totq_wp,
+                .quality = (*quality)[i],
                 .ipos = TVector3((*iposx)[i], (*iposy)[i], (*iposz)[i]),
                 .fpos = TVector3((*fposx)[i], (*fposy)[i], (*fposz)[i])
             });
@@ -339,6 +344,8 @@ struct MuonPerformance {
     double angle;
     double distance;
     double clippingness;
+    double quality;
+    double tt_quality;
 };
 
 std::vector<double> extract_angles_from_performances(const std::vector<MuonPerformance>& perf) {
@@ -382,6 +389,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
                     .angle = compute_angle_between_track(trk, *it_tt),
                     .distance = compute_distance_between_track(trk, *it_tt),
                     .clippingness = compute_clippingness(*it_tt)
+                    .quality = trk.quality
+                    .tt_quality = it_tt->quality
                 });
                 ++it_tt;
             }
@@ -428,6 +437,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .angle = compute_angle_between_track(tt_muon, muon),
                     .distance = compute_distance_between_track(tt_muon, muon),
                     .clippingness = compute_clippingness(tt_muon)
+                    .quality = muon.quality
+                    .tt_quality = tt_muon.quality
                 });
             }
         }
