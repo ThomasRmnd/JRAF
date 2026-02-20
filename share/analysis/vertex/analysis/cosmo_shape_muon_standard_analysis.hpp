@@ -87,8 +87,8 @@ public:
                 std::isnan(dir_mu.x) || std::isnan(dir_mu.y) || std::isnan(dir_mu.z)
             ) continue;
 
-            double clippingness = mag(cross(dir_mu, -pos_mu));
-            if (clippingness > 16000.0) continue;
+            // double clippingness = mag(cross(dir_mu, -pos_mu));
+            // if (clippingness > 16000.0) continue;
 
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
