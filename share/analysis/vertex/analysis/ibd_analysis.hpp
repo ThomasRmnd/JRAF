@@ -12,9 +12,9 @@
 struct ibd_wmu {
 
     ibd i;
-    double dt_last_mu;
+    timestamp dt_last_mu;
     double dlat_mu2p; // to closest muon
-    double dt_mu2p; // to closest muon
+    timestamp dt_mu2p; // to closest muon
 
 };
 
@@ -37,7 +37,7 @@ public:
     bool process() override {
         m_ibds.insert({
             {m_nav->run_id, m_nav->prompt, m_nav->delayed}, 
-            timestamp_to_double(m_dt_last_mu), m_dlat_mu2p, m_dt_mu2p
+            m_dt_last_mu, m_dlat_mu2p, m_dt_mu2p
         });
         return true;
     }
@@ -85,9 +85,9 @@ public:
             ts_d = it->i.delayed.ts;
             e_p = it->i.prompt.e / m_gtc.interpolate(it->i.prompt.ts);
             e_d = it->i.delayed.e / m_gtc.interpolate(it->i.delayed.ts);
-            dt_last_mu = it->dt_last_mu;
+            dt_last_mu = timestamp_to_double(it->dt_last_mu);
             dlat_mu2p = it->dlat_mu2p;
-            dt_mu2p = it->dt_mu2p;
+            dt_mu2p = timestamp_to_double(it->dt_mu2p);
             t->Fill();
         }
 
@@ -140,7 +140,7 @@ protected:
         // has_stopping_in_wp_event.fill(m_nav, "WpBasic");
 
         m_dlat_mu2p = std::numeric_limits<double>::infinity();
-        m_dt_mu2p = timestamp{0, 0}
+        m_dt_mu2p = timestamp{0, 0};
         bool is_set_dlat_mu2p = false;
         for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
             if (m_nav->method_mu[k] != "CdWpTtChi2") continue;
