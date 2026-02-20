@@ -740,7 +740,7 @@ def ibd_analysis_plot(filepath: str, **meta):
     branches = [
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
         "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d",
-        "dt_last_mu"
+        "dt_last_mu", "dt_mu2p", "dlat_mu2p"
     ]
     data = tree.arrays(branches, library="np")
 
@@ -795,6 +795,13 @@ def ibd_analysis_plot(filepath: str, **meta):
     spatial_plotter.plot(rho_d, z_d, r"$\rho_{d}$ (m)", r"$z_{d}$ (m)")
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_rho_z_d.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_rho_z_d.png')}")
+
+    xbins = np.linspace(0.0, 1.2, 51)
+    ybins = np.linspace(0.0, 3.0, 51)
+    muon_veto_plotter = MuonVetoDistributionPlotter()
+    muon_veto_plotter.plot(data["dt_mu2p"], data["dlat_mu2p"], xbins, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=True)
+    plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p.pdf')}")
+    plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p.png')}")
 
     # xbins = np.linspace(0.0, 2.0, 51)
     # hist, edges = np.histogram(data["dt_last_mu"], bins=xbins)

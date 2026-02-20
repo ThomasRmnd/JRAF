@@ -151,23 +151,6 @@ public:
         return !m_is_sig.empty();
     }
 
-protected:
-
-    std::string m_recname;
-    timestamp m_ts_sig_low;
-    timestamp m_ts_sig_high;
-    timestamp m_ts_bkg_low;
-    timestamp m_ts_bkg_high;
-    double m_radius;
-
-    std::vector<double> m_dlat_mu2p;
-    std::vector<double> m_dlat_mu2d;
-    std::vector<double> m_dt_mu2p;
-    std::vector<double> m_dt_mu2d;
-    std::vector<bool> m_is_sig;
-
-    std::set<cosmogenic> m_cosmos_bkg, m_cosmos_sig;
-
 };
 
 #endif // ANALYSIS_COSMO_MUON_STANDARD_SHAPE_ANALYSIS_HPP_
