@@ -499,9 +499,9 @@ class MuonVetoDistributionPlotter:
         
         fit_text = (
             r"$P(\chi^2/\mathrm{ndf} = %.1f / %d) = %.3f$" "\n"
-            r"$A = %.2f \pm %.2f$" "\n"
-            r"$\tau = %.2f \pm %.2f~\mathrm{s}$" "\n"
-            r"$c = %.2f \pm %.2f$"
+            r"$A = %.3f \pm %.3f$" "\n"
+            r"$\tau = %.3f \pm %.3f~\mathrm{s}$" "\n"
+            r"$c = %.3f \pm %.3f$"
         ) % (chisq, ndf, prob, A, A_err, tau, tau_err, c, c_err)
 
         ax_top.text(
