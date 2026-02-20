@@ -7,10 +7,6 @@
 
 #include "analysis/ibd_analysis.hpp"
 
-inline bool operator<(const ibd_wmu& lhs, const ibd_wmu& rhs) {
-    return lhs.i < rhs.i;
-}
-
 class ibd_standard_analysis : public ibd_analysis {
 
 public:
