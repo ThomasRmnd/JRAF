@@ -1,18 +1,16 @@
-#ifndef ANALYSIS_COSMO_SHAPE_WITH_NEUTRON_ANALYSIS_HPP_
-#define ANALYSIS_COSMO_SHAPE_WITH_NEUTRON_ANALYSIS_HPP_
+#ifndef ANALYSIS_COSMO_SHAPE_MUON_CHANGING_VETO_ANALYSIS_HPP_
+#define ANALYSIS_COSMO_SHAPE_MUON_CHANGING_VETO_ANALYSIS_HPP_
 
-#include <cmath>
+#include <TLegend.h>
 
-#include "analysis/cosmo_shape_analysis.hpp"
-#include "utils/muon_lookup.hpp"
+#include "analysis/cosmo_shape_muon_analysis.hpp"
+#include "utils/plot.hpp"
 
-class cosmo_shape_with_neutron_analysis : public cosmo_shape_analysis {
+class cosmo_shape_muon_changing_veto_analysis : public cosmo_shape_muon_analysis {
 
 public:
 
-    using cosmo_shape_analysis::cosmo_shape_analysis;
-
-    ~cosmo_shape_with_neutron_analysis() override = default;
+    using cosmo_shape_muon_analysis::cosmo_shape_muon_analysis;
 
     bool selection() override {
         double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);
@@ -69,14 +67,6 @@ public:
             if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             // if (has_stopping_in_cd_event[ts_mu]) continue;
             // if (has_stopping_in_wp_event[ts_mu]) continue;
-            
-            bool found_neutron = false;
-            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
-                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
-                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
-                found_neutron = true;
-            }
-            if (!found_neutron) continue;
 
             bool is_in_bkg = (
                 ts_mu + m_ts_bkg_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_bkg_high &&
@@ -86,7 +76,6 @@ public:
                 ts_mu + m_ts_sig_low <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + m_ts_sig_high &&
                 ts_mu + m_ts_sig_low <= m_nav->delayed.ts && m_nav->delayed.ts <= ts_mu + m_ts_sig_high
             );
-            if (!is_in_bkg && !is_in_sig) continue;
 
             vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
             vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
@@ -94,10 +83,20 @@ public:
                 std::isnan(pos_mu.x) || std::isnan(pos_mu.y) || std::isnan(pos_mu.z) ||
                 std::isnan(dir_mu.x) || std::isnan(dir_mu.y) || std::isnan(dir_mu.z)
             ) continue;
-
+            
             double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
             double d_mu2d = mag(cross(dir_mu, m_nav->delayed.pos - pos_mu));
-            if (m_radius < d_mu2p && m_radius < d_mu2d) continue;
+            double radius_sig = 0.0;
+            double radius_bkg = 0.0;
+
+            if (is_in_sig) {
+                radius_sig = m_radius + m_radius / timestamp_to_double(m_ts_sig_low - m_ts_sig_high) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
+            }
+            if (is_in_bkg) {
+                radius_bkg = m_radius + m_radius / timestamp_to_double(m_ts_bkg_high - m_ts_bkg_low) * timestamp_to_double(m_nav->prompt.ts - ts_mu);
+            }
+
+            if (radius_sig < d_mu2p && radius_bkg < d_mu2d) continue;
 
             if (min_dlat_mu2p < d_mu2p) continue;
             min_dlat_mu2p = d_mu2p;
@@ -121,4 +120,4 @@ public:
 
 };
 
-#endif // ANALYSIS_COSMO_SHAPE_WITH_NEUTRON_ANALYSIS_HPP_
+#endif // ANALYSIS_COSMO_SHAPE_MUON_CHANGING_VETO_ANALYSIS_HPP_

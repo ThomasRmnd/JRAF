@@ -3,20 +3,18 @@
 
 #include <set>
 
-#include <TCanvas.h>
-#include <TF1.h>
 #include <TFile.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <TStyle.h>
+#include <TTree.h>
 
 #include "analysis/basic_analysis.hpp"
-#include "utils/plot.hpp"
+#include "utils/muon_lookup.hpp"
 
 struct ibd_wmu {
 
     ibd i;
     double dt_last_mu;
+    double dlat_mu2p; // to closest muon
+    double dt_mu2p; // to closest muon
 
 };
 
@@ -34,70 +32,13 @@ public:
 
     virtual ~ibd_analysis() override = default;
 
-    virtual bool selection() override {
-        double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);
-        double e_d = m_nav->delayed.e / m_gtc.interpolate(m_nav->delayed.ts);
-
-        if (e_p < 0.7 || 12.0 < e_p) return false;
-        if (e_d < 2.0 || 2.5 < e_d) return false;
-        if (mag(m_nav->prompt.pos) > 16500.0) return false;
-        if (std::abs(m_nav->prompt.pos.z) > 15500.0 && std::sqrt(m_nav->prompt.pos.x * m_nav->prompt.pos.x + m_nav->prompt.pos.y * m_nav->prompt.pos.y) < 2000.0) return false;
-        timestamp ts_diff = m_nav->delayed.ts - m_nav->prompt.ts;
-        if (ts_diff < timestamp{0, 5000} || timestamp{0, 1000000} < ts_diff) return false;
-        vec3 pos_diff = m_nav->delayed.pos - m_nav->prompt.pos;
-        if (mag(pos_diff) > 1500.0) return false;
-
-        std::size_t nb_multu_veto = 0ul;
-        for (std::size_t k = 0ul; k < m_nav->e_mult.size(); ++k) {
-            timestamp ts_mult{m_nav->sec_mult[k], m_nav->nsec_mult[k]};
-            vec3 pos_mult{m_nav->posx_mult[k], m_nav->posy_mult[k], m_nav->posz_mult[k]};
-            double e_mult = m_nav->e_mult[k] / m_gtc.interpolate(ts_mult);
-            if (e_mult < 2.0 || 12.0 < e_mult) continue;
-            if (ts_mult < m_nav->prompt.ts - timestamp{0, 1000000} || m_nav->delayed.ts + timestamp{0, 1000000} < ts_mult) continue;
-            ++nb_multu_veto;
-        }
-        if (nb_multu_veto) return false;
-
-        std::size_t nb_neutron_veto = 0ul;
-        for (std::size_t k = 0ul; k < m_nav->e_n.size(); ++k) {
-            timestamp ts_n{m_nav->sec_n[k], m_nav->nsec_n[k]};
-            vec3 pos_n{m_nav->posx_n[k], m_nav->posy_n[k], m_nav->posz_n[k]};
-            double e_n = m_nav->e_n[k] / m_gtc.interpolate(ts_n);
-            if (e_n < 1.5 || 20.0 < e_n) continue;
-            if (m_nav->stdt_n[k] > 275.0) continue;
-            if (
-                (mag(m_nav->prompt.pos - pos_n) < 4000.0 && ts_n + timestamp{0, 20000} < m_nav->prompt.ts && m_nav->prompt.ts < ts_n + timestamp{0, 1200000000}) ||
-                (mag(m_nav->delayed.pos - pos_n) < 4000.0 && ts_n + timestamp{0, 20000} < m_nav->delayed.ts && m_nav->delayed.ts < ts_n + timestamp{0, 1200000000})
-            ) {
-                ++nb_neutron_veto;
-            }
-        }
-        if (nb_neutron_veto) return false;
-
-        m_dt_last_mu = timestamp{0, 0};
-        bool is_set_dt_last_mu = false;
-        for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
-            timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
-            if (m_nav->prompt.ts < ts_mu) continue;
-            bool found_neutron = false;
-            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
-                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
-                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
-                found_neutron = true;
-            }
-            if (!found_neutron) continue;
-            if (is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
-            m_dt_last_mu = m_nav->prompt.ts - ts_mu;
-            is_set_dt_last_mu = true;
-        }
-
-        if ( std::pow((m_nav->meta_prompt.stdhit - 0.55) / 0.45, 2.0) + std::pow((m_nav->meta_prompt.stdt - 170.0) / 80.0, 2.0) > 1.0 ) return false;
-
-        return true;
-    }
+    virtual bool selection() override = 0;
 
     bool process() override {
-        m_ibds.insert({{m_nav->run_id, m_nav->prompt, m_nav->delayed}, timestamp_to_double(m_dt_last_mu)});
+        m_ibds.insert({
+            {m_nav->run_id, m_nav->prompt, m_nav->delayed}, 
+            timestamp_to_double(m_dt_last_mu), m_dlat_mu2p, m_dt_mu2p
+        });
         return true;
     }
 
@@ -117,6 +58,8 @@ public:
         timestamp ts_p, ts_d;
         double e_p, e_d;
         double dt_last_mu;
+        double dlat_mu2p;
+        double dt_mu2p;
         t->Branch("run_id", &run_id);
         t->Branch("posx_p", &pos_p.x);
         t->Branch("posy_p", &pos_p.y);
@@ -131,6 +74,8 @@ public:
         t->Branch("nsec_d", &ts_d.nsec);
         t->Branch("e_d", &e_d);
         t->Branch("dt_last_mu", &dt_last_mu);
+        t->Branch("dlat_mu2p", &dlat_mu2p);
+        t->Branch("dt_mu2p", &dt_mu2p);
 
         for (std::set<ibd_wmu>::const_iterator it = m_ibds.begin(); it != m_ibds.end(); ++it) {
             run_id = it->i.run_id;
@@ -141,6 +86,8 @@ public:
             e_p = it->i.prompt.e / m_gtc.interpolate(it->i.prompt.ts);
             e_d = it->i.delayed.e / m_gtc.interpolate(it->i.delayed.ts);
             dt_last_mu = it->dt_last_mu;
+            dlat_mu2p = it->dlat_mu2p;
+            dt_mu2p = it->dt_mu2p;
             t->Fill();
         }
 
@@ -156,6 +103,79 @@ protected:
 
     std::set<ibd_wmu> m_ibds;
     timestamp m_dt_last_mu;
+    double m_dlat_mu2p;
+    timestamp m_dt_mu2p;
+
+    void calculate_dt_to_last_muon() {
+        m_dt_last_mu = timestamp{0, 0};
+        bool is_set_dt_last_mu = false;
+        for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
+            timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
+            if (m_nav->prompt.ts < ts_mu) continue;
+            bool found_neutron = false;
+            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
+                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
+                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
+                found_neutron = true;
+            }
+            if (!found_neutron) continue;
+            if (is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
+            m_dt_last_mu = m_nav->prompt.ts - ts_mu;
+            is_set_dt_last_mu = true;
+        }
+        if (!is_set_dt_last_mu) {
+            m_dt_last_mu = timestamp{-1, 0};
+        }
+    }
+
+    void calculate_dlat_dt_muon_to_prompt() {
+        multiplicity_muon_lookup nb_muons_in_cd_event;
+        multiplicity_muon_lookup nb_muons_in_wp_event;
+        nb_muons_in_cd_event.fill(m_nav, "CdClassify");
+        nb_muons_in_wp_event.fill(m_nav, "WpBasic");
+
+        // stopping_muon_lookup has_stopping_in_cd_event;
+        // stopping_muon_lookup has_stopping_in_wp_event;
+        // has_stopping_in_cd_event.fill(m_nav, "CdClassify");
+        // has_stopping_in_wp_event.fill(m_nav, "WpBasic");
+
+        m_dlat_mu2p = std::numeric_limits<double>::infinity();
+        m_dt_mu2p = timestamp{0, 0}
+        bool is_set_dlat_mu2p = false;
+        for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
+            if (m_nav->method_mu[k] != "CdWpTtChi2") continue;
+            timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
+            if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
+            // if (has_stopping_in_cd_event[ts_mu]) continue;
+            // if (has_stopping_in_wp_event[ts_mu]) continue;
+
+            bool is_in_sig = (
+                ts_mu + timestamp{0, 5000000} <= m_nav->prompt.ts && m_nav->prompt.ts <= ts_mu + timestamp{0, 1200000000} &&
+                ts_mu + timestamp{0, 5000000} <= m_nav->delayed.ts && m_nav->delayed.ts <= ts_mu + timestamp{0, 1200000000}
+            );
+
+            if (!is_in_sig) continue;
+
+            vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
+            vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
+            if (
+                std::isnan(pos_mu.x) || std::isnan(pos_mu.y) || std::isnan(pos_mu.z) ||
+                std::isnan(dir_mu.x) || std::isnan(dir_mu.y) || std::isnan(dir_mu.z)
+            ) continue;
+
+            double d_mu2p = mag(cross(dir_mu, m_nav->prompt.pos - pos_mu));
+
+            if (m_dlat_mu2p < d_mu2p) continue;
+            m_dlat_mu2p = d_mu2p;
+            m_dt_mu2p = m_nav->prompt.ts - ts_mu;
+            is_set_dlat_mu2p = true;
+        }
+
+        if (!is_set_dlat_mu2p) {
+            m_dlat_mu2p = -1.0;
+            m_dt_mu2p = timestamp{-1, 0};
+        }
+    }
 
 };
 

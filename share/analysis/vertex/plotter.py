@@ -848,6 +848,7 @@ def analyze_run_info(filepath: str):
 
     data_daq = tree_daq.arrays(branches_daq, library="np")
     data_veto = tree_veto.arrays(branches_veto, library="np")
+    df = tree_veto.arrays(branches_veto, library="pd")
 
     run_ids = data_daq["run_id"]
     unique_run_ids = np.unique(run_ids)
@@ -863,6 +864,8 @@ def analyze_run_info(filepath: str):
         4: np.zeros_like(all_runs, dtype=float) # Muons
     }
 
+    # Compute total DAQ time for each RUN
+
     daq_per_run = {}
     for run_id, sec, nsec in zip(data_daq["run_id"], data_daq["sec"], data_daq["nsec"]):
         ts = timestamp(sec, nsec)
@@ -877,7 +880,21 @@ def analyze_run_info(filepath: str):
         else:
             daq_hours[run_id - min_run] = 0.0
 
-    df = tree_veto.arrays(branches_veto, library="pd")
+    print(f"Total DAQ time: {np.sum(daq_hours)} hours")
+
+    # Compute total veto time for each veto type
+
+    global_veto_by_type = {}
+    global_veto_sums = df.groupby("veto_type")[["veto_sec", "veto_nsec"]].sum()
+    for v_type, row in global_veto_sums.iterrows():
+        total_ts = timestamp(row["veto_sec"], row["veto_nsec"])
+        total_houes = total_ts.to_sec() / 3600.0
+        global_veto_by_type[v_type] = total_houes
+        print(f"Total veto time for type {v_type}: {total_houes} hours")
+    print(f"Total veto time: {np.sum(list(global_veto_by_type.values()))} hours")
+
+    # Compute total veto time for each run and veto type
+
     aggregated = df.groupby(["run_id", "veto_type"])[["veto_sec", "veto_nsec"]].sum()
     results = {}
     for (run_id, v_type), row in aggregated.iterrows():
@@ -893,7 +910,7 @@ def analyze_run_info(filepath: str):
     fig, ax = plt.subplots(figsize=(16, 6))
 
     ax.bar(all_runs, daq_hours, width=1.0, align="center", color="#648fff")
-    ax.bar(all_runs, veto_hours[4], width=1.0, align="center", color="#ff6464")
+    ax.bar(all_runs, veto_hours[3], width=1.0, align="center", color="#ff6464")
 
     ax.add_patch(
         Rectangle(

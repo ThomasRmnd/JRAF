@@ -1,19 +1,25 @@
-#ifndef ANALYSIS_IBD_NO_NEUTRON_VETO_ANALYSIS_HPP_
-#define ANALYSIS_IBD_NO_NEUTRON_VETO_ANALYSIS_HPP_
+#ifndef ANALYSIS_IBD_STANDARD_ANALYSIS_HPP_
+#define ANALYSIS_IBD_STANDARD_ANALYSIS_HPP_
+
+#include <set>
+
+#include <TFile.h>
 
 #include "analysis/ibd_analysis.hpp"
 
-class ibd_no_neutron_veto_analysis : public ibd_analysis {
+inline bool operator<(const ibd_wmu& lhs, const ibd_wmu& rhs) {
+    return lhs.i < rhs.i;
+}
+
+class ibd_standard_analysis : public ibd_analysis {
 
 public:
 
-    ibd_no_neutron_veto_analysis(const std::string& name, const std::string& filepath, const std::string& suffix) :
-        ibd_analysis{name, filepath, suffix}
-    {}
+    using ibd_analysis::ibd_analysis;
 
-    ~ibd_no_neutron_veto_analysis() override = default;
+    virtual ~ibd_standard_analysis() override = default;
 
-    bool selection() override {
+    virtual bool selection() override {
         double e_p = m_nav->prompt.e / m_gtc.interpolate(m_nav->prompt.ts);
         double e_d = m_nav->delayed.e / m_gtc.interpolate(m_nav->delayed.ts);
 
@@ -37,22 +43,21 @@ public:
         }
         if (nb_multu_veto) return false;
 
-        m_dt_last_mu = timestamp{0, 0};
-        bool is_set_dt_last_mu = false;
-        for (std::size_t k = 0ul; k < m_nav->method_mu.size(); ++k) {
-            timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
-            if (m_nav->prompt.ts < ts_mu) continue;
-            bool found_neutron = false;
-            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
-                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
-                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
-                found_neutron = true;
+        std::size_t nb_neutron_veto = 0ul;
+        for (std::size_t k = 0ul; k < m_nav->e_n.size(); ++k) {
+            timestamp ts_n{m_nav->sec_n[k], m_nav->nsec_n[k]};
+            vec3 pos_n{m_nav->posx_n[k], m_nav->posy_n[k], m_nav->posz_n[k]};
+            double e_n = m_nav->e_n[k] / m_gtc.interpolate(ts_n);
+            if (e_n < 1.5 || 20.0 < e_n) continue;
+            if (m_nav->stdt_n[k] > 275.0) continue;
+            if (
+                (mag(m_nav->prompt.pos - pos_n) < 4000.0 && ts_n + timestamp{0, 20000} < m_nav->prompt.ts && m_nav->prompt.ts < ts_n + timestamp{0, 1200000000}) ||
+                (mag(m_nav->delayed.pos - pos_n) < 4000.0 && ts_n + timestamp{0, 20000} < m_nav->delayed.ts && m_nav->delayed.ts < ts_n + timestamp{0, 1200000000})
+            ) {
+                ++nb_neutron_veto;
             }
-            if (!found_neutron) continue;
-            if (is_set_dt_last_mu && m_nav->prompt.ts - ts_mu > m_dt_last_mu) continue;
-            m_dt_last_mu = m_nav->prompt.ts - ts_mu;
-            is_set_dt_last_mu = true;
         }
+        if (nb_neutron_veto) return false;
 
         if ( std::pow((m_nav->meta_prompt.stdhit - 0.55) / 0.45, 2.0) + std::pow((m_nav->meta_prompt.stdt - 170.0) / 80.0, 2.0) > 1.0 ) return false;
 
@@ -64,4 +69,4 @@ public:
 
 };
 
-#endif // ANALYSIS_IBD_NO_NEUTRON_VETO_ANALYSIS_HPP_
+#endif // ANALYSIS_IBD_STANDARD_ANALYSIS_HPP_
