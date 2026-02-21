@@ -187,7 +187,7 @@ download_run() {
 
     mkdir -p "${LOCAL_DIR}"
 
-    mapfile -t FILE_LIST < <(xrdfs "${XRD_URL}" ls "${REMOTE_DIR}" | grep "\.root$")
+    mapfile -t FILE_LIST < <(xrdfs "${XRD_URL}" ls "${REMOTE_DIR}" | grep "RUN\.${RUN_NUMBER}.*\.esd$")
 
     if (( ${#FILE_LIST[@]} == 0 )); then
         log WARN "No ROOT files found for run ${RUN_NUMBER}."
