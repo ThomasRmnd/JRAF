@@ -159,7 +159,7 @@ resolve_remote_directory() {
     local run_bucket=$(printf "%08d" "$bucket_val")
     local run_group=$(printf "%08d" "$group_val")
 
-    local base_search_dir="${XRD_BASEPATH}/${CAMPAIGN}/${STREAM}/${run_bucket}"
+    local base_search_dir="${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${STREAM}/${run_bucket}"
     
     log INFO "Searching for latest group version in ${base_search_dir}..."
 
