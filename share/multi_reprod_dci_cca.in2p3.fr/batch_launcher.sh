@@ -98,27 +98,22 @@ parse_args() {
     case "${CAMPAIGN}" in
         Normal)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25A)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25B)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25C)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25D)
             LIST_BASE="${RUN_LIST_REPROD25D%/*}"
-            LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25D}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
             ;;
         *)
@@ -135,7 +130,7 @@ parse_args() {
 
 load_run_list() {
     log INFO "Fetching run list"
-    mapfile -t RUN_LIST < <(cat "${LOCAL_RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    mapfile -t RUN_LIST < <(cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
 }
 
 #==============================

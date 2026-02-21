@@ -24,6 +24,7 @@ XRD_URL_CNAF="root://xrootd-archive.cr.cnaf.infn.it:1095/"
 
 XRD_BASEPATH_EOS="/eos"
 XRD_BASEPATH_CNAF="/production/storm/dirac"
+LOCAL_BASEPATH="/sps/juno/jdeandre/rtraw_ThomasRaymond"
 
 OUTPUT_SUFFIX_NORMAL="output.normal.root"
 OUTPUT_SUFFIX_REPROD25A="output.reprod25a.root"
@@ -36,7 +37,8 @@ OUTPUT_SUFFIX_REPROD25D="output.reprod25d.root"
 #==============================
 
 DIRECT_IO=0 # default = copy to TMPDIR
-SKIP_IF_EXIST=0 # default = 
+SKIP_IF_EXIST=0 # default = doesn't skip
+USE_LOCAL=0 # default = use remote xrootd
 
 #==============================
 # Parse command-line arguments
@@ -44,16 +46,20 @@ SKIP_IF_EXIST=0 # default =
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") <run_number> <range_start> <range_end> [options...]
+Usage: $(basename "$0") <site> <campaign> <run> <list-base> <range-start> <range-end> [options...]
 
 Process a single range of files identified by run and file indices.
 
 Arguments:
-  <run_number>                   Run number to process
-  <range_start>                  Start index of the file range in the run list
-  <range_end>                    End index of the file range in the run list
+  <str>                          Storage site selection {EOS|CNAF}
+  <str>                          Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
+  <int>                          Run number to process
+  <str>                          Basepath for the file list
+  <int>                          Start index of the file range in the run list
+  <int>                          End index of the file range in the run list
 
 Options:
+  --local                        Use local files instead of remote xrootd
   --no-local-copy | --direct-io  Use direct I/O (no copy to TMPDIR)
   --skip-if-exist                Skip the job if the final output file already exists.
 EOF
@@ -75,6 +81,9 @@ parse_args() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --local)
+                USE_LOCAL=1
+                ;;
             --no-local-copy|--direct-io)
                 DIRECT_IO=1
                 ;;
@@ -144,7 +153,7 @@ load_file_lists() {
     local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST   < <(xrdfs "${XRD_URL_EOS}" cat "${rtraw_list_file}")
+    mapfile -t RTRAW_LIST   < <(cat "${rtraw_list_file}")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
 }
@@ -327,9 +336,14 @@ rtraw_to_reprod_filename() {
     local selected_group
     selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
 
-    local reprod_path="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    local reprod_path=""
+    if (( USE_LOCAL == 1 )); then
+        reprod_path="${LOCAL_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    else
+        reprod_path="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
+    fi
 
-    echo "$reprod_path"
+    echo "${reprod_path}"
 }
 
 
@@ -393,7 +407,11 @@ main() {
 
         else
             log INFO "Copying input file index ${idx}: $filename"
-            xrdcp "${input_reprod_file}" "${local_reprod_file}"
+            if (( USE_LOCAL == 1 )); then
+                cp "${input_reprod_file}" "${local_reprod_file}"
+            else
+                xrdcp "${input_reprod_file}" "${local_reprod_file}"
+            fi
             reprod_files+=("${local_reprod_file}")
         fi
     done

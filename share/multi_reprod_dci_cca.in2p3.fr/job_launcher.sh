@@ -42,20 +42,20 @@ LOG_LEVEL=4
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") --run <number> [options]
+Usage: $(basename "$0") --iste <str> --campaign <str> --run <int> --list-base <str> --range <int> [options]
 
 Required:
-  --site <str>                 Storage site selection {EOS|CNAF}
-  --campaign <str>             Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
-  --run <num>                  Run number to process
-  --list-base <str>            Basepath for the file list
-  --range <num>                Number of files to process per job
+  --site <str>                  Storage site selection {EOS|CNAF}
+  --campaign <str>              Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
+  --run <int>                   Run number to process
+  --list-base <str>             Basepath for the file list
+  --range <int>                 Number of files to process per job
 
 Optional:
-  --property-file <path>       Path to property file
-  --time-window <min> <max>    Time window (default: ${TIME_WINDOW[*]})
-  --log-level <num>            Logging level (default: $LOG_LEVEL)
-  --help                       Show this help message and exit
+  --property-file <path>        Path to property file
+  --time-window <float> <float> Time window (default: ${TIME_WINDOW[*]})
+  --log-level <int>             Logging level (default: $LOG_LEVEL)
+  --help                        Show this help message and exit
 EOF
 }
 

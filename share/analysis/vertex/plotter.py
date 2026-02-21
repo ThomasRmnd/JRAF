@@ -229,6 +229,70 @@ class PromptEnergyPlotter(Histogram1DPlotter):
             **kwargs
         )
 
+class PromptEnergyUncertaintyPlotter(PromptEnergyPlotter):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
+    def add(self, data, linecolor, fillcolor=None, label=None):
+        if len(self.datasets) >= 2:
+            raise ValueError("This plotter only accepts exactly two datasets")
+        super().add(data, linecolor, fillcolor, label)
+
+    def plot(self):
+        if len(self.datasets) != 2:
+            raise ValueError("Plotting requires exactly 2 datasets.")
+
+        fig, (ax_top, ax_bottom) = plt.subplots(
+            2, 1, figsize=(7, 8), sharex=True,
+            gridspec_kw={"height_ratios": [3, 1], "hspace": 0.05}
+        )
+
+        h1, e1 = self.datasets[0]["hist"], self.datasets[0]["err"]
+        h2, e2 = self.datasets[1]["hist"], self.datasets[1]["err"]
+
+        diff = h1 - h2
+        err = np.sqrt(e1**2 + e2**2)
+
+        self._draw_diff_main(ax_top, diff, err)
+
+        self.apply_style(ax_top)
+        self.apply_style(ax_bottom)
+        ax_top.set_xlabel("")
+        plt.setp(ax_top.get_xticklabels(), visible=False)
+
+        self._draw_uncertainty_band(ax_bottom, diff, err)
+        
+        ax_top.set_ylabel(r"Entries")
+        ax_bottom.set_ylabel(r"Relative uncertainty")
+        
+        fig.align_ylabels([ax_top, ax_bottom])
+        fig.show()
+
+    def _draw_diff_main(self, ax, diff, err):
+        ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+        ax.errorbar(
+            self.centers, diff, yerr=err, xerr=self.widths/2,
+            fmt="o", color="black", markersize=4, ls='None', 
+            label="Observed Difference", zorder=3
+        )
+
+    def _draw_uncertainty_band(self, ax, diff, err):
+        ax.axhline(0, color='black', linestyle='-', linewidth=1.0)
+
+        mask = diff > 0
+        bins = self.bins[:-1][mask]
+        vals = err[mask] / diff[mask]
+        ax.step(
+            bins, vals, 
+            where="post", color="black", linewidth=2.0, zorder=2
+        )
+
+        ax.set_ylim(0.0, 1.0)
+
+    def apply_style(self, ax):
+        super().apply_style(ax)
+        ax.yaxis.set_major_locator(plt.MaxNLocator(5, prune='both'))
+
 class DelayedEnergyPlotter(Histogram1DPlotter):
     def __init__(self, **kwargs):
         super().__init__(
@@ -602,6 +666,11 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     e_p_plotter.plot(**meta) 
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_e_p_nmo.pdf')}") 
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_e_p_nmo.png')}")
+
+    e_p_uncertainty_plotter = PromptEnergyUncertaintyPlotter(binmode="normal")
+    e_p_uncertainty_plotter.add(data_sig["e_p"], linecolor="#648fff", fillcolor="#eff3ff", label="Cosmogenic enriched")
+    e_p_uncertainty_plotter.add(data_bkg["e_p"], linecolor="#ff6464", fillcolor="#ffefef", label="Cosmogenic depleted")
+    e_p_uncertainty_plotter.plot(**meta)
 
     e_p_plotter_normal = PromptEnergyPlotter(binmode="normal")
     e_p_plotter_normal.add(data_sig["e_p"], linecolor="#648fff", label="Cosmogenic enriched")
