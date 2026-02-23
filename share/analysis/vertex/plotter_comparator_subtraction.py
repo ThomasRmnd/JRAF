@@ -152,8 +152,18 @@ class Histogram1DPlotter(BasePlotter):
 
         hist_sig, _ = np.histogram(data_sig, bins=self.bins)
         hist_bkg, _ = np.histogram(data_bkg, bins=self.bins)
+        
         hist = hist_sig - hist_bkg
         err = np.sqrt(hist_sig + hist_bkg)
+
+        integral = np.sum(hist * self.widths)
+
+        if integral == 0:
+            print("Warning: Integral is zero, cannot normalize")
+        else:
+            hist = hist / integral
+            err = err / integral
+
         self.datasets.append({
             "hist": hist,
             "err": err,
@@ -242,10 +252,10 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     file1 = uproot.open(filepath1) 
     file2 = uproot.open(filepath2) 
     
-    tree1_sig = file1["sig"]
-    tree1_bkg = file1["bkg"]
-    tree2_sig = file2["sig"]
-    tree2_bkg = file2["bkg"]
+    tree1_sig = file1["signal_events"]
+    tree1_bkg = file1["background_events"]
+    tree2_sig = file2["signal_events"]
+    tree2_bkg = file2["background_events"]
 
     branches = [
         "run_id",
