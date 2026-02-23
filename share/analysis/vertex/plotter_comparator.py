@@ -205,6 +205,7 @@ class Histogram1DPlotter(BasePlotter):
 
         ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
         ax.plot(self.centers, diff, linestyle='None', marker="o", color="black", markersize=4, zorder=3)
+        ax.errorbar(self.centers, diff, yerr=err, xerr=self.widths/2, fmt="o", color="black", markersize=4.5, zorder=3)
 
     def _apply_shared_style(self, ax_main, ax_diff):
         for ax in [ax_main, ax_diff]:
@@ -487,7 +488,7 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     data1 = {k: v[mask1] for k, v in data1.items()} 
     data2 = {k: v[mask2] for k, v in data2.items()}
 
-    e_p_plotter = PromptEnergyPlotter(binmode="nmo")
+    e_p_plotter = PromptEnergyPlotter(binmode="normal")
     e_p_plotter.add(data1["e_p"] if "IBD_all_reprod" not in filepath1 else data1["energy_p_omilrec"], linecolor="#648fff", fillcolor="#eff3ff", label=label1)
     e_p_plotter.add(data2["e_p"] if "IBD_all_reprod" not in filepath2 else data2["energy_p_omilrec"], linecolor="#ff6464", fillcolor="#ffefef", label=label2)
     e_p_plotter.plot()
