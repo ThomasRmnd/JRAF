@@ -252,8 +252,8 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     file1 = uproot.open(filepath1) 
     file2 = uproot.open(filepath2) 
     
-    tree1_sig = file1["signal_events"]
-    tree1_bkg = file1["background_events"]
+    tree1_sig = file1["events"]
+    # tree1_bkg = file1["background_events"]
     tree2_sig = file2["signal_events"]
     tree2_bkg = file2["background_events"]
 
@@ -264,12 +264,12 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     ]
 
     data1_sig = tree1_sig.arrays(branches, library="np")
-    data1_bkg = tree1_bkg.arrays(branches, library="np")
+    # data1_bkg = tree1_bkg.arrays(branches, library="np")
     data2_sig = tree2_sig.arrays(branches, library="np")
     data2_bkg = tree2_bkg.arrays(branches, library="np")
 
     e_p_plotter = PromptEnergyPlotter(binmode="normal")
-    e_p_plotter.add(data1_sig["e_p"], data1_bkg["e_p"], linecolor="#648fff", fillcolor="#eff3ff", label=label1)
+    e_p_plotter.add(data1_sig["e_p"], np.array([]), linecolor="#648fff", fillcolor="#eff3ff", label=label1)
     e_p_plotter.add(data2_sig["e_p"], data2_bkg["e_p"], linecolor="#ff6464", fillcolor="#ffefef", label=label2)
     e_p_plotter.plot()
 

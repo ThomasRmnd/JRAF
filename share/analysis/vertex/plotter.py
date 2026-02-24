@@ -660,6 +660,13 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     print(f"Loaded {len(data_bkg['posx_p'])} background events in {filepath}")
     print(f"Loaded {len(data_sig['posx_p'])} signal events in {filepath}")
 
+    mask_reprod25d_sig = data_sig["run_id"] >= 11049
+    mask_reprod25d_bkg = data_bkg["run_id"] >= 11049
+    data_sig["e_p"][mask_reprod25d_sig] *= 1.00950656406
+    data_sig["e_d"][mask_reprod25d_sig] *= 1.00950656406
+    data_bkg["e_p"][mask_reprod25d_bkg] *= 1.00950656406
+    data_bkg["e_d"][mask_reprod25d_bkg] *= 1.00950656406
+
     e_p_plotter = PromptEnergyPlotter(binmode="nmo")
     e_p_plotter.add(data_sig["e_p"], linecolor="#648fff", fillcolor="#eff3ff", label="Cosmogenic enriched")
     e_p_plotter.add(data_bkg["e_p"], linecolor="#ff6464", fillcolor="#ffefef", label="Cosmogenic depleted") 

@@ -476,15 +476,14 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
         10459, 10470, 10479, 10520, 10529, 10540, 10550, 10563, 10584, 10593, 
         11027, 11237, 11410, 11397, 11788
     ]
-    # mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) >= max_run_id 
-    # mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) >= max_run_id 
 
-    # data1 = {k: v[mask1] for k, v in data1.items()} 
-    # data2 = {k: v[mask2] for k, v in data2.items()}
+    mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) <= max_run_id 
+    mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) <= max_run_id 
+    data1 = {k: v[mask1] for k, v in data1.items()} 
+    data2 = {k: v[mask2] for k, v in data2.items()}
 
     mask1 = ~np.isin(data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"], failed_jobs) 
     mask2 = ~np.isin(data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"], failed_jobs)
-
     data1 = {k: v[mask1] for k, v in data1.items()} 
     data2 = {k: v[mask2] for k, v in data2.items()}
 

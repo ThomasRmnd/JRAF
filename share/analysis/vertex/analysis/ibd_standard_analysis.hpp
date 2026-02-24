@@ -53,7 +53,7 @@ public:
                 ++nb_neutron_veto;
             }
         }
-        if (!nb_neutron_veto) return false;
+        if (nb_neutron_veto) return false;
 
         if ( std::pow((m_nav->meta_prompt.stdhit - 0.55) / 0.45, 2.0) + std::pow((m_nav->meta_prompt.stdt - 170.0) / 80.0, 2.0) > 1.0 ) return false;
 
