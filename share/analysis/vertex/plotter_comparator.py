@@ -138,12 +138,14 @@ class BasePlotter:
         if self.ylim: ax.set_ylim(bottom=self.ylim[0], top=self.ylim[1])
 
 class Histogram1DPlotter(BasePlotter):
-    def __init__(self, bins, **kwargs):
+    def __init__(self, bins, diffplot = True, normalize = False, **kwargs):
         super().__init__(**kwargs)
         self.bins = bins
         self.centers = 0.5 * (self.bins[1:] + self.bins[:-1])
         self.widths = self.bins[1:] - self.bins[:-1]
         self.datasets = []
+        self.diffplot = diffplot
+        self.normalize = normalize
 
     def add(self, data, linecolor, fillcolor=None, label=None):
         if len(self.datasets) >= 2:
@@ -163,16 +165,23 @@ class Histogram1DPlotter(BasePlotter):
         if len(self.datasets) != 2:
             raise ValueError("Plotting requires exactly 2 datasets")
 
-        fig, (ax_main, ax_diff) = plt.subplots(
-            2, 1, figsize=(7, 10), sharex=True,
-            gridspec_kw={"height_ratios": [3, 1], "hspace": 0.05}
-        )
+        if self.diffplot:
+            fig, (ax_main, ax_diff) = plt.subplots(
+                2, 1, figsize=(7, 10), sharex=True,
+                gridspec_kw={"height_ratios": [3, 1], "hspace": 0.05}
+            )
+        else:
+            fig, ax_main = plt.subplots(figsize=(7, 6))
         
+        self._maybe_plot_function(ax_main)
         for d in self.datasets:
             self._draw_main(ax_main, d)
         
-        self._draw_diff(ax_diff)
-        self._apply_shared_style(ax_main, ax_diff)
+        if self.diffplot:
+            self._draw_diff(ax_diff)
+            self._apply_shared_style(ax_main, ax_diff)
+        else:
+            self.apply_style(ax_main)
         
         if any(d["label"] for d in self.datasets):
             ax_main.legend(loc="upper right", frameon=False)
@@ -180,6 +189,13 @@ class Histogram1DPlotter(BasePlotter):
         fig.show()
 
     def _draw_main(self, ax, d):
+        if self.normalize:
+            integral = np.sum(d["hist"] * self.widths)
+            if integral == 0:
+                print("Warning: Integral is zero, cannot normalize")
+            d["hist"] = d["hist"] / integral
+            d["err"] = d["hist"] / integral
+
         if d["fillcolor"]:
             ax.fill_between(
                 self.bins, np.r_[d["hist"], d["hist"][-1]], 
@@ -206,6 +222,9 @@ class Histogram1DPlotter(BasePlotter):
         ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
         ax.plot(self.centers, diff, linestyle='None', marker="o", color="black", markersize=4, zorder=3)
         ax.errorbar(self.centers, diff, yerr=err, xerr=self.widths/2, fmt="o", color="black", markersize=4.5, zorder=3)
+
+    def _maybe_plot_function(self, ax):
+        pass
 
     def _apply_shared_style(self, ax_main, ax_diff):
         for ax in [ax_main, ax_diff]:
@@ -371,6 +390,29 @@ class PromptDelayedDistancePlotter(Histogram1DPlotter):
             **kwargs
         )
 
+class SpatialComponentPlotter(Histogram1DPlotter):
+    def __init__(self, component : str, **kwargs):
+        self.component = component
+        super().__init__(
+            bins=np.linspace(-17.7, 17.7, 101),
+            xlabel=r"$%s$ (m)" % component, ylabel="Entries", xlim=(-17.8, 17.8),
+            **kwargs
+        )
+
+    def _maybe_plot_function(self, ax):
+        # Pot 3 / (4 R^3) * (R^2 - x^2)
+        radius = 16.5
+        y = 3.0 / (4.0 * radius**3) * (radius**2 - self.centers**2)
+        ax.plot(self.centers, y, linestyle="--", linewidth=1.2, color="black")
+
+class SpatialR3Plotter(Histogram1DPlotter):
+    def __init__(self, **kwargs):
+        super().__init__(
+            bins=np.linspace(0.0, 17.7 * 17.7 * 17.7, 101),
+            xlabel=r"$R^3$ (m$^3$)", ylabel="Entries", xlim=(0, 17.7 * 17.7 * 17.7),
+            **kwargs
+        )
+
 class SpatialDistributionPlotter:
     def __init__(self):
         self.xbins = np.linspace(0.0 * 0.0, 17.7 * 17.7, 51)
@@ -433,8 +475,8 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     file1 = uproot.open(filepath1) 
     file2 = uproot.open(filepath2) 
     
-    tree1 = file1["events"]
-    tree2 = file2["events"]
+    tree1 = file1["signal_events"]
+    tree2 = file2["background_events"]
 
     if "IBD_all_reprod" in filepath1:
         branches1 = [
@@ -477,25 +519,47 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
         11027, 11237, 11410, 11397, 11788
     ]
 
-    mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) <= max_run_id 
-    mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) <= max_run_id 
-    data1 = {k: v[mask1] for k, v in data1.items()} 
-    data2 = {k: v[mask2] for k, v in data2.items()}
+    # mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) <= max_run_id 
+    # mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) <= max_run_id 
+    # data1 = {k: v[mask1] for k, v in data1.items()} 
+    # data2 = {k: v[mask2] for k, v in data2.items()}
 
-    mask1 = ~np.isin(data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"], failed_jobs) 
-    mask2 = ~np.isin(data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"], failed_jobs)
-    data1 = {k: v[mask1] for k, v in data1.items()} 
-    data2 = {k: v[mask2] for k, v in data2.items()}
+    # mask1 = ~np.isin(data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"], failed_jobs) 
+    # mask2 = ~np.isin(data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"], failed_jobs)
+    # data1 = {k: v[mask1] for k, v in data1.items()} 
+    # data2 = {k: v[mask2] for k, v in data2.items()}
 
     e_p_plotter = PromptEnergyPlotter(binmode="normal")
     e_p_plotter.add(data1["e_p"] if "IBD_all_reprod" not in filepath1 else data1["energy_p_omilrec"], linecolor="#648fff", fillcolor="#eff3ff", label=label1)
     e_p_plotter.add(data2["e_p"] if "IBD_all_reprod" not in filepath2 else data2["energy_p_omilrec"], linecolor="#ff6464", fillcolor="#ffefef", label=label2)
     e_p_plotter.plot()
 
-    e_d_plotter = DelayedEnergyPlotter()
-    e_d_plotter.add(data1["e_d"] if "IBD_all_reprod" not in filepath1 else data1["energy_d_omilrec"], linecolor="#648fff", label=label1)
-    e_d_plotter.add(data2["e_d"] if "IBD_all_reprod" not in filepath2 else data2["energy_d_omilrec"], linecolor="#ff6464", label=label2)
-    e_d_plotter.plot()
+    # e_d_plotter = DelayedEnergyPlotter()
+    # e_d_plotter.add(data1["e_d"] if "IBD_all_reprod" not in filepath1 else data1["energy_d_omilrec"], linecolor="#648fff", label=label1)
+    # e_d_plotter.add(data2["e_d"] if "IBD_all_reprod" not in filepath2 else data2["energy_d_omilrec"], linecolor="#ff6464", label=label2)
+    # e_d_plotter.plot()
+
+    x_plotter = SpatialComponentPlotter(component="x", normalize=True, diffplot=False)
+    x_plotter.add(data1["posx_p"] / 1000.0, linecolor="#648fff", label=label1)
+    x_plotter.add(data2["posx_p"] / 1000.0, linecolor="#ff6464", label=label2)
+    x_plotter.plot()
+
+    y_plotter = SpatialComponentPlotter(component="y", normalize=True, diffplot=False)
+    y_plotter.add(data1["posy_p"] / 1000.0, linecolor="#648fff", label=label1)
+    y_plotter.add(data2["posy_p"] / 1000.0, linecolor="#ff6464", label=label2)
+    y_plotter.plot()
+
+    z_plotter = SpatialComponentPlotter(component="z", normalize=True, diffplot=False)
+    z_plotter.add(data1["posz_p"] / 1000.0, linecolor="#648fff", label=label1)
+    z_plotter.add(data2["posz_p"] / 1000.0, linecolor="#ff6464", label=label2)
+    z_plotter.plot()
+
+    r_p_1 = np.sqrt((data1["posx_p"] / 1000.0)**2 + (data1["posy_p"] / 1000.0)**2 + (data1["posz_p"] / 1000.0)**2)**3
+    r_p_2 = np.sqrt((data2["posx_p"] / 1000.0)**2 + (data2["posy_p"] / 1000.0)**2 + (data2["posz_p"] / 1000.0)**2)**3
+    r_plotter = SpatialR3Plotter(normalize=True, diffplot=False)
+    r_plotter.add(r_p_1, linecolor="#648fff", label=label1)
+    r_plotter.add(r_p_2, linecolor="#ff6464", label=label2)
+    r_plotter.plot()
 
     plt.show()
 

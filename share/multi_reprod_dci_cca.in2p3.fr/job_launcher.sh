@@ -213,7 +213,7 @@ submit_jobs() {
 
         sbatch \
             --job-name="agrpc_${RUN_NUMBER}_${start}_${end}_batch" \
-            --output="/dev/null" \
+            --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log" \
             --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/err/agrpc_${RUN_NUMBER}_${start}_${end}.err" \
             --partition="htc" \
             --ntasks=1 \
