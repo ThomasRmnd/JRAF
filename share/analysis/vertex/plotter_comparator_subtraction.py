@@ -213,12 +213,16 @@ class Histogram1DPlotter(BasePlotter):
         h1, e1 = self.datasets[0]["hist"], self.datasets[0]["err"]
         h2, e2 = self.datasets[1]["hist"], self.datasets[1]["err"]
 
-        diff = h1 - h2
-        err = np.sqrt(e1**2 + e2**2)
+        err = e1 # TODO: ATTENTION PUT BACK np.sqrt(e1**2 + e2**2)
+        mask = err > 0
+        err = err[mask]
+        diff = (h1 - h2)[mask] / err
+        centers = self.centers[mask]
+        widths = self.widths[mask]
 
         ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.7)
-        ax.plot(self.centers, diff, linestyle='None', marker="o", color="black", markersize=4, zorder=3)
-        ax.errorbar(self.centers, diff, yerr=err, xerr=self.widths/2, fmt="o", color="black", markersize=4.5, zorder=3)
+        ax.plot(centers, diff, linestyle='None', marker="o", color="black", markersize=4, zorder=3)
+        ax.errorbar(centers, diff, yerr=err, xerr=widths/2, fmt="o", color="black", markersize=4.5, zorder=3)
 
     def _apply_shared_style(self, ax_main, ax_diff):
         for ax in [ax_main, ax_diff]:
@@ -226,13 +230,16 @@ class Histogram1DPlotter(BasePlotter):
         ax_main.set_xlabel(None)
 
         ax_main.set_ylabel("Entries")
-        ax_diff.set_ylabel(r"$\Delta$")
+        ax_diff.set_ylabel(r"$\sigma$")
 
         ax_diff.yaxis.set_major_locator(plt.MaxNLocator(5, prune='both'))
 
         h1, e1 = self.datasets[0]["hist"], self.datasets[0]["err"]
         h2, e2 = self.datasets[1]["hist"], self.datasets[1]["err"]
-        diff = h1 - h2
+        err = e1 # TODO: ATTENTION PUT BACK np.sqrt(e1**2 + e2**2)
+        mask = err > 0
+        err = err[mask]
+        diff = (h1 - h2)[mask] / err
         max_deviation = np.max(np.abs(diff))
         limit = max_deviation * 1.25
         ax_diff.set_ylim(bottom=-limit, top=limit)
@@ -252,25 +259,36 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     file1 = uproot.open(filepath1) 
     file2 = uproot.open(filepath2) 
     
-    tree1_sig = file1["events"]
-    # tree1_bkg = file1["background_events"]
-    tree2_sig = file2["signal_events"]
-    tree2_bkg = file2["background_events"]
+    tree1_sig = file1["signal_events"]
+    tree1_bkg = file1["background_events"]
+    tree2 = file2["cosmogenics"]
 
-    branches = [
+    
+    branches1 = [
         "run_id",
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
         "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d"
     ]
+    branches2 = [
+        "posx_p", "posy_p", "posz_p", "e_p", "element"
+    ]
 
-    data1_sig = tree1_sig.arrays(branches, library="np")
-    # data1_bkg = tree1_bkg.arrays(branches, library="np")
-    data2_sig = tree2_sig.arrays(branches, library="np")
-    data2_bkg = tree2_bkg.arrays(branches, library="np")
+    data1_sig = tree1_sig.arrays(branches1, library="np")
+    data1_bkg = tree1_bkg.arrays(branches1, library="np")
+    data2 = tree2.arrays(branches2, library="np")
+
+    mask = data2["element"] == "Li9"
+
+    mask_reprod25d_sig = data1_sig["run_id"] >= 11049
+    mask_reprod25d_bkg = data1_bkg["run_id"] >= 11049
+    data1_sig["e_p"][mask_reprod25d_sig] *= 1.00950656406
+    data1_sig["e_d"][mask_reprod25d_sig] *= 1.00950656406
+    data1_bkg["e_p"][mask_reprod25d_bkg] *= 1.00950656406
+    data1_bkg["e_d"][mask_reprod25d_bkg] *= 1.00950656406
 
     e_p_plotter = PromptEnergyPlotter(binmode="normal")
-    e_p_plotter.add(data1_sig["e_p"], np.array([]), linecolor="#648fff", fillcolor="#eff3ff", label=label1)
-    e_p_plotter.add(data2_sig["e_p"], data2_bkg["e_p"], linecolor="#ff6464", fillcolor="#ffefef", label=label2)
+    e_p_plotter.add(data1_sig["e_p"], data1_bkg["e_p"], linecolor="#000000", label=label1)
+    e_p_plotter.add(data2["e_p"][mask], np.array([]), linecolor="#d364ff", label=label2)
     e_p_plotter.plot()
 
     plt.show()

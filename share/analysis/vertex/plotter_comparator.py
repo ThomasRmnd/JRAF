@@ -476,7 +476,7 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
     file2 = uproot.open(filepath2) 
     
     tree1 = file1["signal_events"]
-    tree2 = file2["background_events"]
+    tree2 = file2["background_events"] # events, signal_events, background_events
 
     if "IBD_all_reprod" in filepath1:
         branches1 = [

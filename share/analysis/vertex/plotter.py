@@ -144,13 +144,15 @@ class BasePlotter:
         ax.set_yscale(self.yscale)
 
 class Histogram1DPlotter(BasePlotter):
-    def __init__(self, bins, force_not_diff=False, **kwargs):
+    def __init__(self, bins, force_not_plot_main=False, force_not_diff=False, mc_cosmo_spectrum="", **kwargs):
         super().__init__(**kwargs)
         self.bins = bins
         self.centers = 0.5 * (self.bins[1:] + self.bins[:-1])
         self.widths = self.bins[1:] - self.bins[:-1]
         self.datasets = []
+        self.force_not_plot_main = force_not_plot_main
         self.force_not_diff = force_not_diff
+        self.mc_cosmo_spectrum = mc_cosmo_spectrum
 
     def add(self, data, linecolor, fillcolor=None, label=None):
         hist, _ = np.histogram(data, bins=self.bins)
@@ -166,7 +168,9 @@ class Histogram1DPlotter(BasePlotter):
         fig, ax = plt.subplots(figsize=(7, 6))
         
         for d in self.datasets:
-            self._draw_dataset(ax, d)
+            if not self.force_not_plot_main:
+                self._draw_dataset(ax, d)
+        self._maybe_plot_mc_cosmo_spectrum(ax)
         
         if not self.force_not_diff:
             self._maybe_plot_diff(ax)
@@ -218,6 +222,36 @@ class Histogram1DPlotter(BasePlotter):
         ax.errorbar(
             self.centers, diff, yerr=err, xerr=self.widths/2, 
             label="Difference", fmt="o", color="#000000", markersize=4.5, zorder=3
+        )
+
+    def _maybe_plot_mc_cosmo_spectrum(self, ax):
+        if not self.mc_cosmo_spectrum:
+            return
+        
+        file = uproot.open(self.mc_cosmo_spectrum)
+        tree = file["cosmogenics"]
+        branches = ["posx_p", "posy_p", "posz_p", "e_p", "element"]
+        data = tree.arrays(branches, library="np")
+        mask = data["element"] == "Li9"
+        hist, _ = np.histogram(data["e_p"][mask], bins=self.bins)
+
+        integral = np.sum(hist * self.widths)
+        hist = hist / integral
+
+        if len(self.datasets) != 2: return
+        hist1 = self.datasets[0]["hist"]
+        err1 = self.datasets[0]["err"]
+        hist2 = self.datasets[1]["hist"]
+        err2 = self.datasets[1]["err"]
+
+        diff = hist1 - hist2
+
+        integral_new = np.sum(diff * self.widths)
+        hist = hist * integral_new
+
+        ax.step(
+            self.bins, np.r_[hist, hist[-1]], 
+            where="post", color="#FF0000", linewidth=1.5, zorder=2
         )
 
 class PromptEnergyPlotter(Histogram1DPlotter):
@@ -678,6 +712,11 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     e_p_uncertainty_plotter.add(data_sig["e_p"], linecolor="#648fff", fillcolor="#eff3ff", label="Cosmogenic enriched")
     e_p_uncertainty_plotter.add(data_bkg["e_p"], linecolor="#ff6464", fillcolor="#ffefef", label="Cosmogenic depleted")
     e_p_uncertainty_plotter.plot(**meta)
+
+    e_p_plotter_normal = PromptEnergyPlotter(binmode="normal", force_not_plot_main=True, mc_cosmo_spectrum="mc/mc_cosmogenics.root")
+    e_p_plotter_normal.add(data_sig["e_p"], linecolor="#648fff", label="Cosmogenic enriched")
+    e_p_plotter_normal.add(data_bkg["e_p"], linecolor="#ff6464", label="Cosmogenic depleted")
+    e_p_plotter_normal.plot(**meta)
 
     e_p_plotter_normal = PromptEnergyPlotter(binmode="normal")
     e_p_plotter_normal.add(data_sig["e_p"], linecolor="#648fff", label="Cosmogenic enriched")
