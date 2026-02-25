@@ -36,6 +36,8 @@ log INFO "Cluster detected: ${CLUSTER}"
 TIME_WINDOW=("-2.0" "2.0")
 LOG_LEVEL=4
 
+SKIP_MISSING_FILES=0
+
 #==============================
 # Usage & Argument Parsing
 #==============================
@@ -55,6 +57,7 @@ Optional:
   --property-file <path>        Path to property file
   --time-window <float> <float> Time window (default: ${TIME_WINDOW[*]})
   --log-level <int>             Logging level (default: $LOG_LEVEL)
+  --skip-missing-files          Skip missing files
   --help                        Show this help message and exit
 EOF
 }
@@ -75,6 +78,7 @@ parse_args() {
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
+            --skip-missing-files) SKIP_MISSING_FILES=1; shift 1 ;;
             --help|-h)       usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
@@ -148,41 +152,64 @@ load_file_lists() {
 #==============================
 
 prepare_job_arrays() {
-    log INFO "Building grouped file ranges (max ${RANGE} per group)..."
+    log INFO "Building grouped file ranges (max ${RANGE} per group, skipping missing files = ${SKIP_MISSING_FILES})..."
 
     RANGES=()
-    local range_start=""
-    local prev_idx=""
+    local total=${#RTRAW_LIST[@]}
 
-    for i in "${!RTRAW_LIST[@]}"; do
-        f="${RTRAW_LIST[$i]}"
-        fname=${f##*/}
+    if (( total == 0 )); then
+        log WARN "RTRAW_LIST is empty"
+        return
+    fi
 
-        if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
-            num="${BASH_REMATCH[1]}"
-            num=$((10#$num))  # strip leading zeros
-        else
-            log WARN "Could not extract file number from: $fname"
-            continue
-        fi
+    if [[ "${SKIP_MISSING_FILES}" -eq 1 ]]; then
 
-        if [[ -z "$range_start" ]]; then
-            range_start=$i
-            count=1
-        else
-            if (( num == prev_num + 1 && count < RANGE )); then
-                ((count++))
+        local range_start=""
+        local prev_idx=""
+        local prev_num=""
+        local count=0
+
+        for i in "${!RTRAW_LIST[@]}"; do
+            f="${RTRAW_LIST[$i]}"
+            fname=${f##*/}
+
+            if [[ $fname =~ \.[0-9]{14}\.([0-9]+)_ ]]; then
+                num="${BASH_REMATCH[1]}"
+                num=$((10#$num))  # strip leading zeros
             else
-                RANGES+=("$range_start-$prev_idx")
+                log WARN "Could not extract file number from: $fname"
+                continue
+            fi
+
+            if [[ -z "$range_start" ]]; then
                 range_start=$i
                 count=1
+            else
+                if (( num == prev_num + 1 && count < RANGE )); then
+                    ((count++))
+                else
+                    RANGES+=("${range_start}-${prev_idx}")
+                    range_start=$i
+                    count=1
+                fi
             fi
-        fi
-        prev_num=$num
-        prev_idx=$i
-    done
+            prev_num=$num
+            prev_idx=$i
+        done
 
-    RANGES+=("$range_start-$prev_idx")
+        RANGES+=("${range_start}-${prev_idx}")
+
+    else
+
+        for ((start=0; start<total; start+=RANGE)); do
+            end=$((start + RANGE - 1))
+
+            (( end >= total )) && end=$((total - 1))
+
+            RANGES+=("${start}-${end}")
+        done
+    fi
+
     log INFO "Generated ${#RANGES[@]} job ranges"
 }
 
