@@ -144,7 +144,7 @@ load_file_lists() {
     local rtraw_list_file="${LIST_BASE}/rtraw_list/run_${RUN_NUMBER}.txt"
 
     log INFO "Listing ROOT files from EOS..."
-    mapfile -t RTRAW_LIST   < <(xrdfs "${XRD_URL_EOS}" cat "${rtraw_list_file}")
+    mapfile -t RTRAW_LIST   < <(cat "${rtraw_list_file}")
 
     log INFO "Number of RTRAW files: ${#RTRAW_LIST[@]}"
 }
