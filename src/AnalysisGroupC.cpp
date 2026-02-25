@@ -357,10 +357,12 @@ bool AnalysisGroupC::execute() {
         for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
             if (!it->used) continue;
             if ( (it->type & PmtType::PMT_20INCH) == it->type ) {
-                calib.totq += it->q;
-                calib.meant += it->fht;
+                for (float t : it->hittime) {
+                    calib.meant += static_cast<double>(t);
+                }
                 ++calib.npmt;
                 calib.nhit += it->hittime.size();
+                calib.totq += it->q;
                 if (it->q < calib.minq) calib.minq = it->q;
                 if (it->q > calib.maxq) calib.maxq = it->q;
             }
@@ -369,9 +371,9 @@ bool AnalysisGroupC::execute() {
             }
         }
         if (calib.npmt > 0) {
-            calib.meanq = calib.totq / calib.npmt;
-            calib.meant = calib.meant / calib.npmt;
-            calib.meanhit = static_cast<double>(calib.nhit) / calib.npmt;
+            calib.meanq = calib.totq / static_cast<double>(calib.npmt);
+            calib.meant = calib.meant / static_cast<double>(calib.nhit);
+            calib.meanhit = static_cast<double>(calib.nhit) / static_cast<double>(calib.npmt);
         }
         double sqq = 0.0;
         double sqt = 0.0;
@@ -380,13 +382,15 @@ bool AnalysisGroupC::execute() {
             if (!it->used) continue;
             if ( (it->type & PmtType::PMT_20INCH) != it->type ) continue;
             sqq += (it->q - calib.meanq) * (it->q - calib.meanq);
-            sqt += (it->fht - calib.meant) * (it->fht - calib.meant);
+            for (float t : it->hittime) {
+                sqt += (static_cast<double>(t) - calib.meant) * (static_cast<double>(t) - calib.meant);
+            }
             sqhit += (static_cast<double>(it->hittime.size()) - calib.meanhit) * (static_cast<double>(it->hittime.size()) - calib.meanhit);
         }
         if (calib.npmt > 1) {
-            calib.stdq = std::sqrt(sqq / (calib.npmt - 1));
-            calib.stdt = std::sqrt(sqt / (calib.npmt - 1));
-            calib.stdhit = std::sqrt(sqhit / (calib.npmt - 1));
+            calib.stdq = std::sqrt(sqq / static_cast<double>(calib.npmt - 1ul));
+            calib.stdt = std::sqrt(sqt / static_cast<double>(calib.nhit - 1ul));
+            calib.stdhit = std::sqrt(sqhit / static_cast<double>(calib.npmt - 1ul));
         }
 
         LogInfo << "TotQ: CD = " << calib.totq << ", WP = " << totq_wp << '\n';
