@@ -25,10 +25,8 @@ bool Event::load(JM::EvtNavigator* nav) {
     calibration_context calib;
     if (calib_hdr && calib_hdr->event()) {
         const std::list<JM::CalibPmtChannel*>& chlist = calib_hdr->event()->calibPMTCol();
-        double q = 0.0;
-        double t = 0.0;
         for (const JM::CalibPmtChannel* ch : chlist) {
-            q = static_cast<double>(ch->nPE());
+            double q = static_cast<double>(ch->nPE());
             calib.totq += q;
             for (float t : ch->time()) {
                 calib.meant += static_cast<double>(t);
@@ -47,8 +45,7 @@ bool Event::load(JM::EvtNavigator* nav) {
         double sqt = 0.0;
         double sqhit = 0.0;
         for (const JM::CalibPmtChannel* ch : chlist) {
-            q = static_cast<double>(ch->nPE());
-            t = static_cast<double>(ch->firstHitTime());
+            double q = static_cast<double>(ch->nPE());
             sqq += (q - calib.meanq) * (q - calib.meanq);
             for (float t : ch->time()) {
                 sqt += (static_cast<double>(t) - calib.meant) * (static_cast<double>(t) - calib.meant);
