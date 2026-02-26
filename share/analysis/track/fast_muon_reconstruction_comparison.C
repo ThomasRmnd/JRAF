@@ -462,6 +462,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
     for (const auto& [method, perf] : performances) {
+        std::cout << "Extracting angles and distances for " << method << '\n';
         angles[method] = extract_angles_from_performances(perf);
         distances[method] = extract_distances_from_performances(perf);
     }
