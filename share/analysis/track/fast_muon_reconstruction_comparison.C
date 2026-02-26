@@ -344,6 +344,7 @@ struct MuonPerformance {
     double angle;
     double distance;
     double clippingness;
+    int run_id;
     double quality;
     double tt_quality;
 };
@@ -389,6 +390,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
                     .angle = compute_angle_between_track(trk, *it_tt),
                     .distance = compute_distance_between_track(trk, *it_tt),
                     .clippingness = compute_clippingness(*it_tt),
+                    .run_id = trk.run_id,
                     .quality = trk.quality,
                     .tt_quality = it_tt->quality
                 });
@@ -437,6 +439,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .angle = compute_angle_between_track(tt_muon, muon),
                     .distance = compute_distance_between_track(tt_muon, muon),
                     .clippingness = compute_clippingness(tt_muon),
+                    .run_id = muon.run_id,
                     .quality = muon.quality,
                     .tt_quality = tt_muon.quality
                 });
@@ -557,6 +560,44 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         method_distance_r2_map[method]->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
     }
 
+    int run_id_min = 9789, run_id_max = 11039 + 1;
+    int run_id_nbins = run_id_max - run_id_min + 1;
+    std::map<std::string, std::vector<std::vector<double>>> method_angle_runid_bin_content;
+    std::map<std::string, std::vector<std::vector<double>>> method_distance_runid_bin_content;
+
+    std::map<std::string, TH1D*> method_angle_runid_map;
+    method_angle_runid_map["CdWpTtChi2"] = new TH1D("h_angle_runid_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
+    method_angle_runid_map["CdClassify"] = new TH1D("h_angle_runid_cdclassify", "Angle between tracks direction (CdClassify);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
+    method_angle_runid_map["WpBasic"] = new TH1D("h_angle_runid_wpclassify", "Angle between tracks direction (WpBasic);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
+    method_angle_runid_map["Amber_v5.5"] = new TH1D("h_angle_runid_amber", "Angle between tracks direction (Amber);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
+    method_angle_runid_map["Edwin"] = new TH1D("h_angle_runid_edwin", "Angle between tracks direction (Edwin);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
+    
+    std::map<std::string, TH1D*> method_distance_runid_map;
+    method_distance_runid_map["CdWpTtChi2"] = new TH1D("h_distance_runid_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
+    method_distance_runid_map["CdClassify"] = new TH1D("h_distance_runid_cdclassify", "Distance between tracks middle point (CdClassify);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
+    method_distance_runid_map["WpBasic"] = new TH1D("h_distance_runid_wpclassify", "Distance between tracks middle point (WpBasic);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
+    method_distance_runid_map["Amber_v5.5"] = new TH1D("h_distance_runid_amber", "Distance between tracks middle point (Amber);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
+    method_distance_runid_map["Edwin"] = new TH1D("h_distance_runid_edwin", "Distance between tracks middle point (Edwin);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
+
+    for (const auto& [method, perf] : performances) {
+        if (method == "Tt") continue;
+        method_angle_runid_bin_content[method].resize(nbins);
+        method_distance_runid_bin_content[method].resize(nbins);
+        for (const MuonPerformance& mp : perf) {
+            int run_id = mp.run_id;
+            if (run_id < run_id_min || run_id_max <= run_id) continue;
+            int bin = run_id - run_id_min;
+            method_angle_runid_bin_content[method][bin].push_back(mp.angle);
+            method_distance_runid_bin_content[method][bin].push_back(mp.distance);
+        }
+        for (int i = 0; i < run_id_nbins; ++i) {
+            method_angle_runid_map[method]->SetBinContent(i + 1, get_quantile(method_angle_runid_bin_content[method][i].begin(), method_angle_runid_bin_content[method][i].end(), 0.682));
+            method_distance_runid_map[method]->SetBinContent(i + 1, get_quantile(method_distance_runid_bin_content[method][i].begin(), method_distance_runid_bin_content[method][i].end(), 0.682));
+            method_angle_runid_map[method]->SetBinError(i + 1, 0.0001);
+            method_distance_runid_map[method]->SetBinError(i + 1, 0.0001);
+        }
+    }
+
     std::map<std::string, Color_t> colors = {
         {"CdWpTtChi2", kBlack}, 
         {"CdClassify", kGreen + 2}, 
@@ -648,6 +689,75 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     c_distance_68p_r2->SetTicky();
     c_distance_68p_r2->SetGrid();
     c_distance_68p_r2->Update();
+
+    TCanvas* c_angle_runid = new TCanvas("c_angle_runid", "Angle runid", 1000, 1000);
+    c_angle_runid->cd();
+
+    TLegend* leg_angle_runid = new TLegend(0.15, 0.65, 0.55, 0.85);
+    bool is_first_angle_runid = true;
+
+    for (auto& [method, h] : method_angle_runid_map) {
+        h->SetMaximum(0.0);
+        h->SetMaximum(max_angle);
+        h->SetStats(0);
+        h->SetMarkerStyle(kFullCircle);
+        h->SetMarkerSize(2.0);
+        h->SetMarkerColor(colors[method]);
+        h->SetLineWidth(2);
+        h->SetLineColor(colors[method]);
+        h->GetXaxis()->CenterTitle(true);
+        h->GetYaxis()->CenterTitle(true);
+        h->GetYaxis()->SetTitleOffset(1.25);
+        if (is_first_angle_runid) {
+            is_first_angle_runid = false;
+            h->Draw("E P");
+        }
+        else {
+            h->Draw("P SAME");
+        }
+        leg_angle_runid->AddEntry(h, Form("%s", method.c_str()), "p");
+    }
+    leg_angle_runid->SetTextSize(0.02);
+    leg_angle_runid->Draw();
+
+    c_angle_runid->SetTickx();
+    c_angle_runid->SetTicky();
+    c_angle_runid->SetGrid();
+    c_angle_runid->Update();
+
+    TCanvas* c_distance_runid = new TCanvas("c_distance_runid", "Distance runid", 1000, 1000);
+    c_distance_runid->cd();
+
+    TLegend* leg_distance_runid = new TLegend(0.15, 0.65, 0.55, 0.85);
+    bool is_first_distance_runid = true;
+
+    for (auto& [method, h] : method_distance_runid_map) {
+        h->SetMaximum(0.0);
+        h->SetMaximum(max_distance);
+        h->SetStats(0);
+        h->SetMarkerStyle(kFullCircle);
+        h->SetMarkerSize(2.0);
+        h->SetMarkerColor(colors[method]);
+        h->SetLineWidth(2);
+        h->SetLineColor(colors[method]);
+        h->GetXaxis()->CenterTitle(true);
+        h->GetYaxis()->CenterTitle(true);
+        h->GetYaxis()->SetTitleOffset(1.25);
+        if (is_first_distance_runid) {
+            is_first_distance_runid = false;
+            h->Draw("E P");
+        }    else {
+            h->Draw("P SAME");
+        }
+        leg_distance_runid->AddEntry(h, Form("%s", method.c_str()), "p");
+    }
+    leg_distance_runid->SetTextSize(0.02);
+    leg_distance_runid->Draw();
+
+    c_distance_runid->SetTickx();
+    c_distance_runid->SetTicky();
+    c_distance_runid->SetGrid();
+    c_distance_runid->Update();
 
     return 0;
 }
