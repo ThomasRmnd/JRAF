@@ -563,7 +563,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         method_distance_r2_map[method]->GetXaxis()->ChangeLabel(nbins + 1, -1.0, -1.0, -1, -1, -1, Form("%0.1f^{2}", std::sqrt(r2_max)));
     }
 
-    int run_id_min = 9789, run_id_max = 11039 + 1;
+    int run_id_min = 9789, run_id_max = 12135 + 1;
     int run_id_nbins = run_id_max - run_id_min + 1;
     std::map<std::string, std::vector<std::vector<double>>> method_angle_runid_bin_content;
     std::map<std::string, std::vector<std::vector<double>>> method_distance_runid_bin_content;
