@@ -701,7 +701,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         h->SetMaximum(10.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
-        h->SetMarkerSize(2.0);
+        h->SetMarkerSize(1.0);
         h->SetMarkerColor(colors[method]);
         h->SetLineWidth(2);
         h->SetLineColor(colors[method]);
@@ -736,7 +736,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         h->SetMaximum(2.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
-        h->SetMarkerSize(2.0);
+        h->SetMarkerSize(1.0);
         h->SetMarkerColor(colors[method]);
         h->SetLineWidth(2);
         h->SetLineColor(colors[method]);
