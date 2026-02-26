@@ -698,7 +698,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     for (auto& [method, h] : method_angle_runid_map) {
         h->SetMaximum(0.0);
-        h->SetMaximum(max_angle);
+        h->SetMaximum(10.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
         h->SetMarkerSize(2.0);
@@ -733,7 +733,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     for (auto& [method, h] : method_distance_runid_map) {
         h->SetMaximum(0.0);
-        h->SetMaximum(max_distance);
+        h->SetMaximum(2.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
         h->SetMarkerSize(2.0);
