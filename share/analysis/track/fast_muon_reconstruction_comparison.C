@@ -715,7 +715,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         else {
             h->Draw("P SAME");
         }
-        leg_angle_runid->AddEntry(h, Form("%s", method.c_str()), "p");
+        leg_angle_runid->AddEntry(h, Form("%s: 68%% quantile = %.2f", method.c_str(), angle_quantiles.at(method)), "p");
     }
     leg_angle_runid->SetTextSize(0.02);
     leg_angle_runid->Draw();
@@ -749,7 +749,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         }    else {
             h->Draw("P SAME");
         }
-        leg_distance_runid->AddEntry(h, Form("%s", method.c_str()), "p");
+        leg_distance_runid->AddEntry(h, Form("%s: 68%% quantile = %.2f", method.c_str(), distance_quantiles.at(method)), "p");
     }
     leg_distance_runid->SetTextSize(0.02);
     leg_distance_runid->Draw();
