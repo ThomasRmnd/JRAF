@@ -581,8 +581,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     for (const auto& [method, perf] : performances) {
         if (method == "Tt") continue;
-        method_angle_runid_bin_content[method].resize(nbins);
-        method_distance_runid_bin_content[method].resize(nbins);
+        method_angle_runid_bin_content[method].resize(run_id_nbins);
+        method_distance_runid_bin_content[method].resize(run_id_nbins);
         for (const MuonPerformance& mp : perf) {
             int run_id = mp.run_id;
             if (run_id < run_id_min || run_id_max <= run_id) continue;
