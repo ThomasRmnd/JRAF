@@ -566,18 +566,18 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     std::map<std::string, std::vector<std::vector<double>>> method_distance_runid_bin_content;
 
     std::map<std::string, TH1D*> method_angle_runid_map;
-    method_angle_runid_map["CdWpTtChi2"] = new TH1D("h_angle_runid_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
-    method_angle_runid_map["CdClassify"] = new TH1D("h_angle_runid_cdclassify", "Angle between tracks direction (CdClassify);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
-    method_angle_runid_map["WpBasic"] = new TH1D("h_angle_runid_wpclassify", "Angle between tracks direction (WpBasic);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
-    method_angle_runid_map["Amber_v5.5"] = new TH1D("h_angle_runid_amber", "Angle between tracks direction (Amber);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
-    method_angle_runid_map["Edwin"] = new TH1D("h_angle_runid_edwin", "Angle between tracks direction (Edwin);RUN ID; 68% quantile of #alpha (deg);", run_id_bins, run_id_min, run_id_max);
+    method_angle_runid_map["CdWpTtChi2"] = new TH1D("h_angle_runid_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    method_angle_runid_map["CdClassify"] = new TH1D("h_angle_runid_cdclassify", "Angle between tracks direction (CdClassify);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    method_angle_runid_map["WpBasic"] = new TH1D("h_angle_runid_wpclassify", "Angle between tracks direction (WpBasic);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    method_angle_runid_map["Amber_v5.5"] = new TH1D("h_angle_runid_amber", "Angle between tracks direction (Amber);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    method_angle_runid_map["Edwin"] = new TH1D("h_angle_runid_edwin", "Angle between tracks direction (Edwin);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
     
     std::map<std::string, TH1D*> method_distance_runid_map;
-    method_distance_runid_map["CdWpTtChi2"] = new TH1D("h_distance_runid_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
-    method_distance_runid_map["CdClassify"] = new TH1D("h_distance_runid_cdclassify", "Distance between tracks middle point (CdClassify);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
-    method_distance_runid_map["WpBasic"] = new TH1D("h_distance_runid_wpclassify", "Distance between tracks middle point (WpBasic);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
-    method_distance_runid_map["Amber_v5.5"] = new TH1D("h_distance_runid_amber", "Distance between tracks middle point (Amber);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
-    method_distance_runid_map["Edwin"] = new TH1D("h_distance_runid_edwin", "Distance between tracks middle point (Edwin);RUN ID; 68% quantile of d_{mid} (m);", run_id_bins, run_id_min, run_id_max);
+    method_distance_runid_map["CdWpTtChi2"] = new TH1D("h_distance_runid_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    method_distance_runid_map["CdClassify"] = new TH1D("h_distance_runid_cdclassify", "Distance between tracks middle point (CdClassify);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    method_distance_runid_map["WpBasic"] = new TH1D("h_distance_runid_wpclassify", "Distance between tracks middle point (WpBasic);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    method_distance_runid_map["Amber_v5.5"] = new TH1D("h_distance_runid_amber", "Distance between tracks middle point (Amber);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    method_distance_runid_map["Edwin"] = new TH1D("h_distance_runid_edwin", "Distance between tracks middle point (Edwin);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
 
     for (const auto& [method, perf] : performances) {
         if (method == "Tt") continue;
