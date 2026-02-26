@@ -376,6 +376,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
 
     for (const auto& [method, track_set] : tracks) {
         if (method == "Tt") continue;
+        performances[method] = {};
 
         std::cout << "\n--- Correlating " << method << " with Tt ---" << std::endl;
 
