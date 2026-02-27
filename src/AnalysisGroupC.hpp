@@ -225,7 +225,8 @@ struct TtRecoFile {
     std::string filename;
     std::string treename = "TT";
     TChain* chain = nullptr;
-    int cur_idx = 0;
+    Long64_t cur_idx = 0;
+    bool first_search = true;
     
     Int_t evtID, NTotPoints, NTracks;
     Int_t NPoints[20];
@@ -264,10 +265,17 @@ struct TtRecoFile {
     }
 
     bool find(const TimeStamp& ts_) {
-        long nentries = chain->GetEntries();
+        if (first_search) {
+            return find_first(ts_);
+        }
+
+        Long64_t nentries = chain->GetEntries();
+        if (nentries == 0l) return false;
+
         TimeStamp lower_bound = ts_ - TimeStamp{0, 1000};
         TimeStamp upper_bound = ts_;
         upper_bound.Add(TimeStamp{0, 1000});
+
         for (; cur_idx < nentries; ++cur_idx) {
             chain->GetEntry(cur_idx);
             
@@ -278,6 +286,42 @@ struct TtRecoFile {
             return true;
         }
         return false;
+    }
+
+    bool find_first(const TimeStamp& ts_) {
+        Long64_t nentries = chain->GetEntries();
+        if (nentries == 0l) return false;
+
+        TimeStamp lower_bound = ts_ - TimeStamp{0, 1000};
+        TimeStamp upper_bound = ts_;
+        upper_bound.Add(TimeStamp{0, 1000});
+
+        Long64_t left = 0l;
+        Long64_t right = nentries - 1l;
+        Long64_t result = -1l;
+
+        while (left <= right) {
+            Long64_t mid = left + (right - left) / 2;
+            chain->GetEntry(mid);
+            TimeStamp cur_ts{start_TS->GetTimeSpec()};
+            
+            if (cur_ts < lower_bound) {
+                left = mid + 1;
+            }
+            else {
+                result = mid;
+                right = mid - 1;
+            }
+        
+        }
+        first_search = false;
+        if (result == -1l) return false;
+        
+        cur_idx = result;
+        chain->GetEntry(cur_idx);
+        TimeStamp cur_ts{start_TS->GetTimeSpec()};
+
+        return (lower_bound <= cur_ts) && (cur_ts <= upper_bound);
     }
 
 };
