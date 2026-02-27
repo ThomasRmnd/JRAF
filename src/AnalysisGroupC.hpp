@@ -18,6 +18,7 @@
 #include <TTree.h>
 
 #include "Context/TimeStamp.h"
+#include "Event/CalibPmtChannel.h"
 #include "Event/CdTrackRecHeader.h"
 #include "Event/CdVertexRecHeader.h"
 #include "Event/OecHeader.h"
@@ -31,6 +32,7 @@
 #include "RecTools/IRecMuonTool.h"
 #include "RecTools/PmtProp.h"
 #include "UtilsThomas/loader/Loader.hpp"
+#include "UtilsThomas/utils/DetectorType.hpp"
 
 #include "analysis/Analysis.hpp"
 #include "event/Event.hpp"
@@ -577,6 +579,8 @@ private:
     bool initLoader();
     bool initAnalyses();
 
+    calibration_context getCalibrationContext(const std::list<JM::CalibPmtChannel*>& clb_list);
+    DetectorType getDetectorType(JM::EvtNavigator* nav);
     int getTtLayerId(double z);
     void addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts);
     void addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id);

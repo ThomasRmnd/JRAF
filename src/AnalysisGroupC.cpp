@@ -178,6 +178,57 @@ void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string
     }
 }
 
+calibration_context AnalysisGroupC::getCalibrationContext(const std::list<JM::CalibPmtChannel*>& clb_list) {
+    calibration_context calib;
+    for (JM::CalibPmtChannel* clb : clb_list) {
+        if (!clb) continue;
+        for (float t : clb->time()) {
+            calib.meant += static_cast<double>(t);
+        }
+        ++calib.npmt;
+        calib.nhit += clb->time().size();
+        double totq = static_cast<double>(clb->sumCharge());
+        calib.totq += totq;
+        if (totq < calib.minq) calib.minq = totq;
+        if (totq > calib.maxq) calib.maxq = totq;
+    }
+    if (calib.npmt > 0) {
+        calib.meanq = calib.totq / static_cast<double>(calib.npmt);
+        calib.meant = calib.meant / static_cast<double>(calib.nhit);
+        calib.meanhit = static_cast<double>(calib.nhit) / static_cast<double>(calib.npmt);
+    }
+    double sqq = 0.0;
+    double sqt = 0.0;
+    double sqhit = 0.0;
+    for (JM::CalibPmtChannel* clb : clb_list) {
+        if (!clb) continue;
+        double totq = static_cast<double>(clb->sumCharge());
+        sqq += (totq - calib.meanq) * (totq - calib.meanq);
+        for (float t : clb->time()) {
+            sqt += (static_cast<double>(t) - calib.meant) * (static_cast<double>(t) - calib.meant);
+        }
+        sqhit += (static_cast<double>(clb->time().size()) - calib.meanhit) * (static_cast<double>(clb->time().size()) - calib.meanhit);
+    }
+    if (calib.npmt > 1) {
+        calib.stdq = std::sqrt(sqq / static_cast<double>(calib.npmt - 1ul));
+        calib.stdt = std::sqrt(sqt / static_cast<double>(calib.nhit - 1ul));
+        calib.stdhit = std::sqrt(sqhit / static_cast<double>(calib.npmt - 1ul));
+    }
+    return calib;
+}
+
+DetectorType AnalysisGroupC::getDetectorType(JM::EvtNavigator* nav) {
+    DetectorType type = DetectorType::UNKNOWN;
+
+    JM::EvtNavigator::DetectorType evt_type = nav->getDetectorType();
+
+    if (evt_type == JM::EvtNavigator::DetectorType::CD) type |= DetectorType::CD;
+    if (evt_type == JM::EvtNavigator::DetectorType::WP) type |= DetectorType::WP;
+    if (evt_type == JM::EvtNavigator::DetectorType::TT) type |= DetectorType::TT;
+
+    return type;
+}
+
 int AnalysisGroupC::getTtLayerId(double z) {
     if (24000.0 <= z && z <= 25000.0) return 0;  // main
     if (25500.0 <= z && z <= 26500.0) return 1;  // main
@@ -346,64 +397,73 @@ bool AnalysisGroupC::execute() {
     for (; bufwrap.current() != bufwrap.end(); bufwrap.next()) {
         if (EventCache::contains(bufwrap.curEvt())) continue;
 
+        JM::EvtNavigator* curnav = bufwrap.curEvt();
+        if (!curnav) {
+            LogError << "EvtNavigator is nullptr\n";
+            return false;
+        }
+
         std::shared_ptr<Event> evt = std::make_shared<Event>();
 
         if (!m_loader->load(&bufwrap)) return false;
 
-        TimeStamp curts{bufwrap.curEvt()->TimeStamp().GetTimeSpec()};
-
-        calibration_context calib;
-        double totq_wp = 0.0;
-        for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
-            if (!it->used) continue;
-            if ( (it->type & PmtType::PMT_20INCH) == it->type ) {
-                for (float t : it->hittime) {
-                    calib.meant += static_cast<double>(t);
-                }
-                ++calib.npmt;
-                calib.nhit += it->hittime.size();
-                calib.totq += it->q;
-                if (it->q < calib.minq) calib.minq = it->q;
-                if (it->q > calib.maxq) calib.maxq = it->q;
-            }
-            else if ( (it->type & PmtType::PMT_WP) == it->type ) {
-                totq_wp += it->q;
-            }
-        }
-        if (calib.npmt > 0) {
-            calib.meanq = calib.totq / static_cast<double>(calib.npmt);
-            calib.meant = calib.meant / static_cast<double>(calib.nhit);
-            calib.meanhit = static_cast<double>(calib.nhit) / static_cast<double>(calib.npmt);
-        }
-        double sqq = 0.0;
-        double sqt = 0.0;
-        double sqhit = 0.0;
-        for (PmtTable::const_iterator it = m_pmtTable.begin(); it != m_pmtTable.end(); ++it) {
-            if (!it->used) continue;
-            if ( (it->type & PmtType::PMT_20INCH) != it->type ) continue;
-            sqq += (it->q - calib.meanq) * (it->q - calib.meanq);
-            for (float t : it->hittime) {
-                sqt += (static_cast<double>(t) - calib.meant) * (static_cast<double>(t) - calib.meant);
-            }
-            sqhit += (static_cast<double>(it->hittime.size()) - calib.meanhit) * (static_cast<double>(it->hittime.size()) - calib.meanhit);
-        }
-        if (calib.npmt > 1) {
-            calib.stdq = std::sqrt(sqq / static_cast<double>(calib.npmt - 1ul));
-            calib.stdt = std::sqrt(sqt / static_cast<double>(calib.nhit - 1ul));
-            calib.stdhit = std::sqrt(sqhit / static_cast<double>(calib.npmt - 1ul));
+        TimeStamp curts{curnav->TimeStamp().GetTimeSpec()};
+        DetectorType curdet = getDetectorType(curnav);
+        if (curdet == DetectorType::UNKNOWN) {
+            LogError << "Unknown detector type\n";
+            return false;
         }
 
-        LogInfo << "TotQ: CD = " << calib.totq << ", WP = " << totq_wp << '\n';
+        calibration_context calib_cd, calib_wp;
+
+        JM::CdLpmtCalibHeader* cdl_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(curnav);
+        if (cdl_calib_hdr && cdl_calib_hdr->event()) {
+            calib_cd = getCalibrationContext(cdl_calib_hdr->event()->calibPMTCol());
+        }
+        JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(curnav);
+        if (wp_calib_hdr && wp_calib_hdr->event()) {
+            calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
+        }
+
+        DetectorType jointdet = curdet;
+        for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
+            if (it == bufwrap.current()) continue;
+            JM::EvtNavigator* othernav = it->get();
+            if (!othernav) {
+                LogError << "EvtNavigator is nullptr\n";
+                return false;
+            }
+            TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
+            DetectorType otherdet = getDetectorType(othernav);
+            if (otherdet == DetectorType::UNKNOWN) {
+                LogError << "Unknown detector type\n";
+                return false;
+            }
+            if ( (jointdet & otherdet) != DetectorType::UNKNOWN ) continue;
+            if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
+            cdl_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(othernav);
+            if (cdl_calib_hdr && cdl_calib_hdr->event()) {
+                calib_cd = getCalibrationContext(cdl_calib_hdr->event()->calibPMTCol());
+            }
+            wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(othernav);
+            if (wp_calib_hdr && wp_calib_hdr->event()) {
+                calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
+            }
+            // Could change the reference time but not necessary here (only necessary for joint loader)
+            jointdet |= otherdet;
+        }
+
+        LogInfo << "TotQ: CD = " << calib_cd.totq << ", WP = " << calib_wp.totq << '\n';
 
         bool is_possibly_cd_muon = false;
         bool is_possibly_wp_muon = false;
 
-        evt->run_id = bufwrap.curEvt()->RunID();
+        evt->run_id = curnav->RunID();
         evt->ts = curts;
 
         if (
-            calib.totq >= m_cd_muon_totq_thold && 
-            totq_wp >= m_wp_muon_totq_thold && 
+            calib_cd.totq >= m_cd_muon_totq_thold && 
+            calib_wp.totq >= m_wp_muon_totq_thold && 
             curts - m_cd_last_muon > m_cd_afterpulse_thold &&
             curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
@@ -411,27 +471,27 @@ bool AnalysisGroupC::execute() {
             m_wp_last_muon = curts;
             is_possibly_cd_muon = true;
             is_possibly_wp_muon = true;
-            evt->totq_cd = calib.totq;
-            evt->totq_wp = totq_wp;
+            evt->totq_cd = calib_cd.totq;
+            evt->totq_wp = calib_wp.totq;
         }
         else if (
-            calib.totq < m_cd_muon_totq_thold && 
-            totq_wp >= m_wp_muon_totq_thold &&
+            calib_cd.totq < m_cd_muon_totq_thold && 
+            calib_wp.totq >= m_wp_muon_totq_thold &&
             curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
             m_wp_last_muon = curts;
             is_possibly_wp_muon = true;
             evt->totq_cd = 0.0;
-            evt->totq_wp = totq_wp;
+            evt->totq_wp = calib_wp.totq;
         }
         else if (
-            calib.totq >= m_cd_only_muon_totq_thold && 
-            totq_wp < m_wp_muon_totq_thold &&
+            calib_cd.totq >= m_cd_only_muon_totq_thold && 
+            calib_wp.totq < m_wp_muon_totq_thold &&
             curts - (m_cd_last_muon > m_wp_last_muon ? m_cd_last_muon : m_wp_last_muon) > TimeStamp{0, 2000000}
         ) {
             m_cd_last_muon = curts;
             is_possibly_cd_muon = true;
-            evt->totq_cd = calib.totq;
+            evt->totq_cd = calib_cd.totq;
             evt->totq_wp = 0.0;
         }
 
@@ -440,35 +500,45 @@ bool AnalysisGroupC::execute() {
         std::vector<track> tracks;
         if (is_possibly_cd_muon || is_possibly_wp_muon) {
             for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
-                TimeStamp otherts = it->get()->TimeStamp().GetTimeSpec();
+                JM::EvtNavigator* othernav = it->get();
+                if (!othernav) {
+                    LogError << "EvtNavigator is nullptr\n";
+                    return false;
+                }
+                TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
+                DetectorType otherdet = getDetectorType(othernav);
+                if (otherdet == DetectorType::UNKNOWN) {
+                    LogError << "Unknown detector type\n";
+                    return false;
+                }
                 if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
-                LogInfo << "Current detector: " << bufwrap.curEvt()->getDetectorType() << ", other detector: " << it->get()->getDetectorType() << '\n';
-                if (is_possibly_cd_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::CD) {
-                    JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(it->get());
+                LogInfo << "Current detector: " << static_cast<int>(curdet) << ", other detector: " << static_cast<int>(otherdet) << '\n';
+                if (is_possibly_cd_muon && otherdet == DetectorType::CD) {
+                    JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav);
                     addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
                     LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
-                    JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(it->get(), "/Event/CdTrackRecClassify");
+                    JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav, "/Event/CdTrackRecClassify");
                     addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
                     LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
                     RecTrks rtrks;
                     if (!m_recTool->reconstruct(&rtrks)) {
                         LogWarn << "Could not reconstruct the event with reconstruction tool\n";
                     }
-                    addTrack(rtrks, "CdWpTtChi2", calib.totq, totq_wp, curts, track::loc::cd, tracks);
+                    addTrack(rtrks, "CdWpTtChi2", calib_cd.totq, calib_wp.totq, curts, track::loc::cd, tracks);
                     LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
                 }
-                if (is_possibly_wp_muon && it->get()->getDetectorType() == JM::EvtNavigator::DetectorType::WP) {
-                    JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(it->get());
+                if (is_possibly_wp_muon && otherdet == DetectorType::WP) {
+                    JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav);
                     addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
                     LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
-                    JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(it->get(), "/Event/WpTrackRecClassify");
+                    JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav, "/Event/WpTrackRecClassify");
                     addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
                     // TODO NOT FOR NOW: Add track saver for WpClassify
                 }
             }
             addTtToTrack(tracks, curts);
             if (tracks.empty()) {
-                tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib.totq, totq_wp, curts, track::loc::cd, -1.0});
+                tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib_cd.totq, calib_wp.totq, curts, track::loc::cd, -1.0});
             }
         }
 
@@ -477,18 +547,18 @@ bool AnalysisGroupC::execute() {
         }
 
         std::vector<vertex> vertices;
-        // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(bufwrap.curEvt());
+        // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(curnav);
         // addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
-        // JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt());
+        // JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav);
         // addVertex(basic_cdv_hdr, "Basic", curts, totq_cd, vertices);
-        // JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecJVertex");
+        // JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecJVertex");
         // addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecMixedPhase");
-        addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, calib, vertices);
-        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC");
-        addVertex(omilrec_cdv_hdr, "OMILREC", curts, calib, vertices);
-        JM::CdVertexRecHeader* omilrec_jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(bufwrap.curEvt(), "/Event/CdVertexRecOMILREC_JVtx");
-        addVertex(omilrec_jvertex_cdv_hdr, "OMILREC_JVtx", curts, calib, vertices);
+        JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecMixedPhase");
+        addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, calib_cd, vertices);
+        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecOMILREC");
+        addVertex(omilrec_cdv_hdr, "OMILREC", curts, calib_cd, vertices);
+        JM::CdVertexRecHeader* omilrec_jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecOMILREC_JVtx");
+        addVertex(omilrec_jvertex_cdv_hdr, "OMILREC_JVtx", curts, calib_cd, vertices);
 
         evt->tracks = tracks;
         evt->vertices = vertices;

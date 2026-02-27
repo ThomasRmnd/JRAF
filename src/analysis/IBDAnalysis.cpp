@@ -94,9 +94,10 @@ void IBDAnalysis::process(const EventContext::View& events) {
         mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
     }
 
-    FiducialVolumeSelection fiducial_vol_cut{17700.0 /* 16500.0 */};
-    EnergyRangeSelection prompt_energy_cut {0.6, 20.0 /* 0.7, 12.0 */};
-    EnergyRangeSelection delayed_energy_cut{0.6, 3.0 /* 2.0, 2.5 */};
+    FiducialVolumeSelection fiducial_vol_cut{17700.0};
+    EnergyRangeSelection prompt_energy_cut {0.6, 20.0};
+    EnergyRangeSelection delayed_energy_cut_hydrogen{0.6, 3.0};
+    EnergyRangeSelection delayed_energy_cut_carbon{4.0, 6.0};
     // EnergyRangeSelection spa_neu_energy_cut{1.5, 20.0};
     // EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
@@ -155,7 +156,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
             }
             ++cf_pair_delayed_fv;
 
-            if (!delayed_energy_cut.isIn(delayed)) {
+            if (!delayed_energy_cut_hydrogen.isIn(delayed) && !delayed_energy_cut_carbon.isIn(delayed)) {
                 LogInfo << "Delayed not in energy range\n";
                 continue;
             }

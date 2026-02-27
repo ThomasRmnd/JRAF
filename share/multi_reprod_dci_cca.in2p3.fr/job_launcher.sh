@@ -33,7 +33,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 # Configuration defaults
 #==============================
 
-TIME_WINDOW=("-2.0" "2.0")
+TIME_WINDOW=("-10.0" "10.0")
 LOG_LEVEL=4
 
 SKIP_MISSING_FILES=0
