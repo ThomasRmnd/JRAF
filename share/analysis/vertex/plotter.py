@@ -525,7 +525,7 @@ class MuonVetoDistributionPlotter:
     def __init__(self):
         pass
 
-    def plot(self, dt : np.ndarray, dlat : np.ndarray, xbins : np.ndarray, ybins : np.ndarray, xlabel = None, ylabel = None, fit_ignore_first_bin = True):
+    def plot(self, dt : np.ndarray, dlat : np.ndarray, xbins : np.ndarray, ybins : np.ndarray, xlabel = None, ylabel = None, is_signal_region = True):
         h, xedges, yedges = np.histogram2d(dt, dlat / 1e3, bins=(xbins, ybins))
 
         fig= plt.figure(figsize=(7, 6))
@@ -562,45 +562,67 @@ class MuonVetoDistributionPlotter:
 
         # Top axis
 
-        if fit_ignore_first_bin:
+        if is_signal_region:
             mask = np.logical_and(proj_x > 0, centers_x > 0.06)
+            x_fit = centers_x[mask]
+            y_fit = proj_x[mask]
+            y_err = np.sqrt(y_fit)
+
+            exp_decay_cste = lambda x, A, tau, c: A * np.exp(-x / tau) + c
+            A0 = y_fit[0]
+            tau0 = np.std(np.repeat(x_fit, y_fit.astype(int)))
+            c0 = y_fit[-1]
+            p0 = [A0, tau0, c0]
+
+            popt, pcov = curve_fit(exp_decay_cste, x_fit, y_fit, p0=p0, sigma=y_err, absolute_sigma=True)
+            A, tau, c = popt
+            A_err, tau_err, c_err = np.sqrt(np.diag(pcov))
+
+            residuals = y_fit - exp_decay_cste(x_fit, *popt)
+            chisq = np.sum(residuals**2 / y_err**2)
+            ndf = len(y_fit) - len(popt)
+            prob = chi2.sf(chisq, ndf)
+
+            x_smooth = np.linspace(0.06, xedges[-1], 500)
+            y_smooth = exp_decay_cste(x_smooth, *popt)
+        
         else:
             mask = proj_x > 0
-        x_fit = centers_x[mask]
-        y_fit = proj_x[mask]
-        y_err = np.sqrt(y_fit)
+            x_fit = centers_x[mask]
+            y_fit = proj_x[mask]
+            y_err = np.sqrt(y_fit)
 
-        exp_decay_cste = lambda x, A, tau, c: A * np.exp(-x / tau) + c
+            cste = lambda x, c: x * 0.0 + c
+            c0 = y_fit[0]
+            p0 = [c0]
 
-        A0 = y_fit[0]
-        tau0 = np.std(np.repeat(x_fit, y_fit.astype(int)))
-        c0 = y_fit[-1]
-        p0 = [A0, tau0, c0]
+            popt, pcov = curve_fit(cste, x_fit, y_fit, p0=p0, sigma=y_err, absolute_sigma=True)
+            c = popt[0]
+            c_err = np.sqrt(np.diag(pcov))[0]
 
-        popt, pcov = curve_fit(exp_decay_cste, x_fit, y_fit, p0=p0, sigma=y_err, absolute_sigma=True)
-        A, tau, c = popt
-        A_err, tau_err, c_err = np.sqrt(np.diag(pcov))
-
-        residuals = y_fit - exp_decay_cste(x_fit, *popt)
-        chisq = np.sum(residuals**2 / y_err**2)
-        ndf = len(y_fit) - len(popt)
-        prob = chi2.sf(chisq, ndf)
-
-        if fit_ignore_first_bin:
-            x_smooth = np.linspace(0.06, xedges[-1], 500)
-        else:
+            residuals = y_fit - cste(x_fit, *popt)
+            chisq = np.sum(residuals**2 / y_err**2)
+            ndf = len(y_fit) - len(popt)
+            prob = chi2.sf(chisq, ndf) 
+            
             x_smooth = np.linspace(xedges[0], xedges[-1], 500)
-        y_smooth = exp_decay_cste(x_smooth, *popt)
+            y_smooth = cste(x_smooth, *popt)
 
         ax_top.bar(centers_x, proj_x, width=np.diff(xedges), color="#90b4ff", edgecolor="#90b4ff")
         ax_top.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.2, color="#000000")
-        
-        fit_text = (
-            r"$P(\chi^2/\mathrm{ndf} = %.1f / %d) = %.3f$" "\n"
-            r"$A = %.3f \pm %.3f$" "\n"
-            r"$\tau = %.3f \pm %.3f~\mathrm{s}$" "\n"
-            r"$c = %.3f \pm %.3f$"
-        ) % (chisq, ndf, prob, A, A_err, tau, tau_err, c, c_err)
+
+        if is_signal_region:
+            fit_text = (
+                r"$P(\chi^2/\mathrm{ndf} = %.1f / %d) = %.3f$" "\n"
+                r"$A = %.3f \pm %.3f$" "\n"
+                r"$\tau = %.3f \pm %.3f~\mathrm{s}$" "\n"
+                r"$c = %.3f \pm %.3f$"
+            ) % (chisq, ndf, prob, A, A_err, tau, tau_err, c, c_err)
+        else:
+            fit_text = (
+                r"$P(\chi^2/\mathrm{ndf} = %.1f / %d) = %.3f$" "\n"
+                r"$c = %.3f \pm %.3f$"
+            ) % (chisq, ndf, prob, c, c_err)
 
         ax_top.text(
             0.95, 0.85,
@@ -767,11 +789,18 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
     elif "_4m_" in filepath:
         ybins = np.linspace(0.0, 4.0, 51)
 
+    if "_1_2s_" in filepath:
+        xbins_bkg = np.linspace(-1.2, 0.0, 51)
+        xbins_sig = np.linspace(0.0, 1.2, 51)
+    elif "_2s_" in filepath:
+        xbins_bkg = np.linspace(-2.0, 0.0, 51)
+        xbins_sig = np.linspace(0.0, 2.0, 51)
+
     muon_veto_plotter = MuonVetoDistributionPlotter()
-    muon_veto_plotter.plot(data_sig["dt_mu2p"], data_sig["dlat_mu2p"], xbins_sig, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=True)
+    muon_veto_plotter.plot(data_sig["dt_mu2p"], data_sig["dlat_mu2p"], xbins_sig, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", is_signal_region=True)
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_sig.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_sig.png')}")
-    muon_veto_plotter.plot(data_bkg["dt_mu2p"], data_bkg["dlat_mu2p"], xbins_bkg, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=False)
+    muon_veto_plotter.plot(data_bkg["dt_mu2p"], data_bkg["dlat_mu2p"], xbins_bkg, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", is_signal_region=False)
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p_bkg.png')}")
 
