@@ -94,7 +94,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
         mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
     }
 
-    FiducialVolumeSelection fiducial_vol_cut{17700.0};
+    FiducialVolumeSelection fiducial_vol_cut{18000.0};
     EnergyRangeSelection prompt_energy_cut {0.6, 20.0};
     EnergyRangeSelection delayed_energy_cut_hydrogen{0.6, 3.0};
     EnergyRangeSelection delayed_energy_cut_carbon{4.0, 6.0};
