@@ -77,12 +77,12 @@ private:
 
     std::vector<std::string> method_mu;
     std::vector<int> loc_mu;
-    std::vector<double> posx_mu;
-    std::vector<double> posy_mu;
-    std::vector<double> posz_mu;
-    std::vector<double> dirx_mu;
-    std::vector<double> diry_mu;
-    std::vector<double> dirz_mu;
+    std::vector<double> iposx_mu;
+    std::vector<double> iposy_mu;
+    std::vector<double> iposz_mu;
+    std::vector<double> fposx_mu;
+    std::vector<double> fposy_mu;
+    std::vector<double> fposz_mu;
     std::vector<double> totq_cd_mu;
     std::vector<double> totq_wp_mu;
     std::vector<time_t> sec_mu;

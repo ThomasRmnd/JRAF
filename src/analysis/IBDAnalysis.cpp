@@ -58,12 +58,12 @@ bool IBDAnalysis::initialize() {
 
     m_tree->Branch("method_mu", &method_mu);
     m_tree->Branch("loc_mu", &loc_mu);
-    m_tree->Branch("posx_mu", &posx_mu);
-    m_tree->Branch("posy_mu", &posy_mu);
-    m_tree->Branch("posz_mu", &posz_mu);
-    m_tree->Branch("dirx_mu", &dirx_mu);
-    m_tree->Branch("diry_mu", &diry_mu);
-    m_tree->Branch("dirz_mu", &dirz_mu);
+    m_tree->Branch("iposx_mu", &iposx_mu);
+    m_tree->Branch("iposy_mu", &iposy_mu);
+    m_tree->Branch("iposz_mu", &iposz_mu);
+    m_tree->Branch("fposx_mu", &fposx_mu);
+    m_tree->Branch("fposy_mu", &fposy_mu);
+    m_tree->Branch("fposz_mu", &fposz_mu);
     m_tree->Branch("totq_cd_mu", &totq_cd_mu);
     m_tree->Branch("totq_wp_mu", &totq_wp_mu);
     m_tree->Branch("sec_mu", &sec_mu);
@@ -230,12 +230,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
 
     method_mu.clear();
     loc_mu.clear();
-    posx_mu.clear();
-    posy_mu.clear();
-    posz_mu.clear();
-    dirx_mu.clear();
-    diry_mu.clear();
-    dirz_mu.clear();
+    iposx_mu.clear();
+    iposy_mu.clear();
+    iposz_mu.clear();
+    fposx_mu.clear();
+    fposy_mu.clear();
+    fposz_mu.clear();
     totq_cd_mu.clear();
     totq_wp_mu.clear();
     sec_mu.clear();
@@ -243,15 +243,14 @@ void IBDAnalysis::process(const EventContext::View& events) {
     quality_mu.clear();
 
     for (const track& trk : events.tracks()) {
-        vec3 dir = unit(trk.fpos - trk.ipos);
         method_mu.push_back(trk.method);
         loc_mu.push_back(trk.det);
-        posx_mu.push_back(trk.ipos.x);
-        posy_mu.push_back(trk.ipos.y);
-        posz_mu.push_back(trk.ipos.z);
-        dirx_mu.push_back(dir.x);
-        diry_mu.push_back(dir.y);
-        dirz_mu.push_back(dir.z);
+        iposx_mu.push_back(trk.ipos.x);
+        iposy_mu.push_back(trk.ipos.y);
+        iposz_mu.push_back(trk.ipos.z);
+        fposx_mu.push_back(trk.fpos.x);
+        fposy_mu.push_back(trk.fpos.y);
+        fposz_mu.push_back(trk.fpos.z);
         totq_cd_mu.push_back(trk.totq_cd);
         totq_wp_mu.push_back(trk.totq_wp);
         sec_mu.push_back(trk.ts.GetSec());
