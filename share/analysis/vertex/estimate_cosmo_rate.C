@@ -6,11 +6,11 @@
 #include <TTree.h>
 
 TTimeStamp operator+(const TTimeStamp& lhs, const TTimeStamp& rhs) {
-    return TTimeStamp(lhs.GetSec() + rhs.GetSec(), lhs.GetNSec() + rhs.GetNSec());
+    return TTimeStamp(lhs.GetSec() + rhs.GetSec(), lhs.GetNanoSec() + rhs.GetNanoSec());
 }
 
 TTimeStamp operator-(const TTimeStamp& lhs, const TTimeStamp& rhs) {
-    return TTimeStamp(lhs.GetSec() - rhs.GetSec(), lhs.GetNSec() - rhs.GetNSec());
+    return TTimeStamp(lhs.GetSec() - rhs.GetSec(), lhs.GetNanoSec() - rhs.GetNanoSec());
 }
 
 struct vertex {
