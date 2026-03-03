@@ -27,6 +27,8 @@ struct OBranches {
     double fposx, fposy, fposz;
     unsigned int ntracks_cdclassify;
     unsigned int ntracks_wpclassify;
+    unsigned int nstoppings_cdclassify;
+    unsigned int nstoppings_wpclassify;
 };
 
 int extract_cdwpttchi2(const char* ipath, const char* opath) {
@@ -80,6 +82,10 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
     otree->Branch("fposx", &ob.fposx);
     otree->Branch("fposy", &ob.fposy);
     otree->Branch("fposz", &ob.fposz);
+    otree->Branch("ntracks_cdclassify", &ob.ntracks_cdclassify);
+    otree->Branch("ntracks_wpclassify", &ob.ntracks_wpclassify);
+    otree->Branch("nstoppings_cdclassify", &ob.nstoppings_cdclassify);
+    otree->Branch("nstoppings_wpclassify", &ob.nstoppings_wpclassify);
 
     long nentries = itree->GetEntries();
     std::cout << "Info: Found " << nentries << " entries in input file\n";
@@ -94,12 +100,22 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
         ob.totq_wp = ib.totq_wp;
         unsigned int ntracks_cdclassify = 0u;
         unsigned int ntracks_wpclassify = 0u;
+        unsigned int nstoppings_cdclassify = 0u;
+        unsigned int nstoppings_wpclassify = 0u;
         for (std::size_t i = 0ul; i < ib.method->size(); ++i) {
             if ((*ib.method)[i] == "CdClassify") {
                 ++ntracks_cdclassify;
+                TVector3 fpos((*ib.fposx)[i], (*ib.fposy)[i], (*ib.fposz)[i]);
+                if (fpos.Mag() > 40000.0) {
+                    ++nstoppings_cdclassify;
+                }
             } 
             else if ((*ib.method)[i] == "WpBasic") {
                 ++ntracks_wpclassify;
+                TVector3 fpos((*ib.fposx)[i], (*ib.fposy)[i], (*ib.fposz)[i]);
+                if (fpos.Mag() > 40000.0) {
+                    ++nstoppings_wpclassify;
+                }
             }
             else if ((*ib.method)[i] == "CdWpTtChi2") {
                 ob.chi2 = (*ib.quality)[i];
@@ -118,6 +134,10 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
                 found = true;
             }
         }
+        ob.ntracks_cdclassify = ntracks_cdclassify;
+        ob.ntracks_wpclassify = ntracks_wpclassify;
+        ob.nstoppings_cdclassify = nstoppings_cdclassify;
+        ob.nstoppings_wpclassify = nstoppings_wpclassify;
         if (found) {
             otree->Fill();
         }
