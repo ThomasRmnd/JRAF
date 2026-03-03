@@ -17,6 +17,7 @@ bool NeutronAnalysis::initialize() {
     m_tree->Branch("posx", &posx);
     m_tree->Branch("posy", &posy);
     m_tree->Branch("posz", &posz);
+    m_tree->Branch("e", &e);
     m_tree->Branch("sec", &sec);
     m_tree->Branch("nsec", &nsec);
 
@@ -57,6 +58,7 @@ void NeutronAnalysis::process(const EventContext::View& events) {
         posx = neu.pos.x;
         posy = neu.pos.y;
         posz = neu.pos.z;
+        e = neu.energy;
         sec = neu.ts.GetSec();
         nsec = neu.ts.GetNanoSec();
 

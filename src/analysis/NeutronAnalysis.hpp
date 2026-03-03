@@ -21,6 +21,7 @@ private:
     double posx;
     double posy;
     double posz;
+    double e;
     time_t sec;
     int nsec;
 

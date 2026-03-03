@@ -25,6 +25,8 @@ struct OBranches {
     double chi2;
     double iposx, iposy, iposz;
     double fposx, fposy, fposz;
+    unsigned int ntracks_cdclassify;
+    unsigned int ntracks_wpclassify;
 };
 
 int extract_cdwpttchi2(const char* ipath, const char* opath) {
@@ -84,13 +86,22 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
 
     for (long k = 0l; k < nentries; ++k) {
         itree->GetEntry(k);
+        bool found = false;
         ob.run_id = ib.run_id;
         ob.sec = ib.sec;
         ob.nsec = ib.nsec;
         ob.totq_cd = ib.totq_cd;
         ob.totq_wp = ib.totq_wp;
+        unsigned int ntracks_cdclassify = 0u;
+        unsigned int ntracks_wpclassify = 0u;
         for (std::size_t i = 0ul; i < ib.method->size(); ++i) {
-            if ((*ib.method)[i] == "CdWpTtChi2") {
+            if ((*ib.method)[i] == "CdClassify") {
+                ++ntracks_cdclassify;
+            } 
+            else if ((*ib.method)[i] == "WpBasic") {
+                ++ntracks_wpclassify;
+            }
+            else if ((*ib.method)[i] == "CdWpTtChi2") {
                 ob.chi2 = (*ib.quality)[i];
                 ob.iposx = (*ib.iposx)[i];
                 ob.iposy = (*ib.iposy)[i];
@@ -104,8 +115,11 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
                 ) {
                     continue;
                 }
-                otree->Fill();
+                found = true;
             }
+        }
+        if (found) {
+            otree->Fill();
         }
     }
 
