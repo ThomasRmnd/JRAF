@@ -5,6 +5,14 @@
 #include <TFile.h>
 #include <TTree.h>
 
+TTimeStamp operator+(const TTimeStamp& lhs, const TTimeStamp& rhs) {
+    return TTimeStamp(lhs.GetSec() + rhs.GetSec(), lhs.GetNSec() + rhs.GetNSec());
+}
+
+TTimeStamp operator-(const TTimeStamp& lhs, const TTimeStamp& rhs) {
+    return TTimeStamp(lhs.GetSec() - rhs.GetSec(), lhs.GetNSec() - rhs.GetNSec());
+}
+
 struct vertex {
     TVector3 pos;
     TTimeStamp ts;
@@ -152,6 +160,18 @@ int estimate_cosmo_rate(const char* datapath, const char* muonpath) {
     }
     std::sort(muons.begin(), muons.end());
     std::cout << "Info: " << muons.size() << " muons event retrieved\n";
+
+    std::size_t j = 0ul;
+    for (const ibd& event : ibds) {
+        std::vector<muon>::const_iterator it = std::upper_bound(muons.begin(), muons.end(), event.prompt.ts, [](const TTimeStamp& ts, const muon& mu) { return ts < mu.ts; });
+        if (it == muons.begin()) {
+            std::cout << "IBD has no prior muon\n";
+            continue;
+        }
+        --it;
+        TTimeStamp dt = event.prompt.ts - it->ts;
+        std::cout << "dt = " << dt.AsDouble() << " s\n";
+    }
 
     return 0;
 }
