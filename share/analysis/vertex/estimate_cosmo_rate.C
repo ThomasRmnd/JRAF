@@ -105,6 +105,7 @@ int estimate_cosmo_rate(const char* datapath, const char* muonpath) {
         });
     }
     std::sort(ibds.begin(), ibds.end());
+    std::cout << "Info: " << ibds.size() << " IBDs event retrieved\n";
 
     time_t sec;
     int nsec;
@@ -150,6 +151,7 @@ int estimate_cosmo_rate(const char* datapath, const char* muonpath) {
         muons.push_back(mu);
     }
     std::sort(muons.begin(), muons.end());
+    std::cout << "Info: " << muons.size() << " muons event retrieved\n";
 
     return 0;
 }
