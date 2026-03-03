@@ -98,6 +98,12 @@ int extract_cdwpttchi2(const char* ipath, const char* opath) {
                 ob.fposx = (*ib.fposx)[i];
                 ob.fposy = (*ib.fposy)[i];
                 ob.fposz = (*ib.fposz)[i];
+                if (std::isnan(ob.chi2) || 
+                    std::isnan(ob.iposx) || std::isnan(ob.iposy) || std::isnan(ob.iposz) || 
+                    std::isnan(ob.fposx) || std::isnan(ob.fposy) || std::isnan(ob.fposz)
+                ) {
+                    continue;
+                }
                 otree->Fill();
             }
         }

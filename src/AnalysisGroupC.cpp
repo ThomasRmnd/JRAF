@@ -17,6 +17,7 @@
 #include "EvtNavigator/EvtNavHelper.h"
 
 #include "analysis/IBDAnalysis.hpp"
+#include "analysis/NeutronAnalysis.hpp"
 #include "event/EventCache.hpp"
 
 DECLARE_ALGORITHM(AnalysisGroupC);
@@ -112,6 +113,7 @@ bool AnalysisGroupC::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDAnalysis>("IBDAnalysis__OMILREC", "OMILREC"));
     m_analyses.push_back(std::make_shared<IBDAnalysis>("IBDAnalysis__MixedPhase", "MixedPhase"));
     m_analyses.push_back(std::make_shared<IBDAnalysis>("IBDAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
+    m_analyses.push_back(std::make_shared<NeutronAnalysis>("NeutronAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
 
     for (std::shared_ptr<Analysis>& analysis : m_analyses) {
         if (!analysis->initialize()) return false;

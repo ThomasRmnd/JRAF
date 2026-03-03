@@ -6,6 +6,7 @@ FILES
 
     src/analysis/Analysis.cpp
     src/analysis/IBDAnalysis.cpp
+    src/analysis/NeutronAnalysis.cpp
 
     src/event/Event.cpp
     src/event/EventCache.cpp
