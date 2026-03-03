@@ -2,7 +2,9 @@
 #include <string>
 #include <vector>
 
+#include <TCanvas.h>
 #include <TFile.h>
+#include <TH1D.h>
 #include <TTree.h>
 
 TTimeStamp operator+(const TTimeStamp& lhs, const TTimeStamp& rhs) {
@@ -161,7 +163,7 @@ int estimate_cosmo_rate(const char* datapath, const char* muonpath) {
     std::sort(muons.begin(), muons.end());
     std::cout << "Info: " << muons.size() << " muons event retrieved\n";
 
-    std::size_t j = 0ul;
+    TH1D* h_dt_closest_muon = new TH1D("h_dt_closest_muon", "h_dt_closest_muon", 100, 0.0, 10.0);
     for (const ibd& event : ibds) {
         std::vector<muon>::const_iterator it = std::upper_bound(muons.begin(), muons.end(), event.prompt.ts, [](const TTimeStamp& ts, const muon& mu) { return ts < mu.ts; });
         if (it == muons.begin()) {
@@ -170,8 +172,13 @@ int estimate_cosmo_rate(const char* datapath, const char* muonpath) {
         }
         --it;
         TTimeStamp dt = event.prompt.ts - it->ts;
-        std::cout << "dt = " << dt.AsDouble() << " s\n";
+        h_dt_closest_muon->Fill(dt.AsDouble());
     }
+
+    TCanvas* c_dt_closest_muon = new TCanvas("c_dt_closest_muon", "c_dt_closest_muon");
+    c_dt_closest_muon->SetLogy();
+    h_dt_closest_muon->Draw();
+    c_dt_closest_muon->Update();
 
     return 0;
 }
