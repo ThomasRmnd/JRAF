@@ -882,6 +882,7 @@ def ibd_analysis_plot(filepath: str, **meta):
     tree = file["events"]
 
     branches = [
+        "run_id",
         "posx_p", "posy_p", "posz_p", "sec_p", "nsec_p", "e_p",
         "posx_d", "posy_d", "posz_d", "sec_d", "nsec_d", "e_d",
         "dt_last_mu", "dt_mu2p", "dlat_mu2p"
@@ -901,6 +902,10 @@ def ibd_analysis_plot(filepath: str, **meta):
     z_d = pos_d[:, 2] / 1000.0
 
     print(f"Loaded {len(data['posx_p'])} events in {filepath}")
+
+    mask_reprod25d = data["run_id"] >= 11049
+    data["e_p"][mask_reprod25d] *= 1.00950656406
+    data["e_d"][mask_reprod25d] *= 1.00950656406
 
     e_p_plotter = PromptEnergyPlotter(binmode="nmo")
     e_p_plotter.add(data["e_p"], linecolor="#648fff", fillcolor="#eff3ff")
@@ -943,7 +948,7 @@ def ibd_analysis_plot(filepath: str, **meta):
     xbins = np.linspace(0.0, 1.2, 51)
     ybins = np.linspace(0.0, 3.0, 51)
     muon_veto_plotter = MuonVetoDistributionPlotter()
-    muon_veto_plotter.plot(data["dt_mu2p"], data["dlat_mu2p"], xbins, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", fit_ignore_first_bin=True)
+    muon_veto_plotter.plot(data["dt_mu2p"], data["dlat_mu2p"], xbins, ybins, r"$\Delta t_{\mu-p}$ (s)", r"$d_{\mu-p}$ (m)", is_signal_region=True)
     plt.savefig(f"pdf/{os.path.basename(filepath).replace('.root', '_dt_dlat_p.pdf')}")
     plt.savefig(f"png/{os.path.basename(filepath).replace('.root', '_dt_dlat_p.png')}")
 

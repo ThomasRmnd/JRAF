@@ -44,7 +44,11 @@ public:
     typedef std::vector<vertex>::const_iterator         const_iterator;
     typedef std::vector<vertex>::const_reverse_iterator const_reverse_iterator;
 
-    EventContextVertexRange(JM::NavBuffer* buf, const std::string& method);
+    EventContextVertexRange(std::vector<vertex>&& vertices, std::size_t fcur, std::size_t lcur) :
+        m_vertices{std::move(vertices)},
+        m_fcur{m_vertices.begin() + fcur},
+        m_lcur{m_vertices.begin() + lcur}
+    {}
 
     const_iterator begin() const { return m_vertices.begin(); }
     const_iterator cbegin() const { return m_vertices.cbegin(); }

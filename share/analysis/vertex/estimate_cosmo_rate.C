@@ -144,7 +144,6 @@ int estimate_cosmo_rate(const char* datapath, const char* muonpath) {
     std::vector<muon> muons;
     for (int i = 0; i < chain_muon->GetEntries(); ++i) {
         chain_muon->GetEntry(i);
-        if (totq_cd <= 0) continue;
         muon mu;
         mu.run_id = run_id;
         mu.ts = TTimeStamp(sec, nsec);
