@@ -22,7 +22,7 @@ struct ibd {
 };
 
 bool operator<(const ibd& lhs, const ibd& rhs) {
-    return lhs.prompt < rhs.prompt.
+    return lhs.prompt < rhs.prompt;
 }
 
 struct track {
