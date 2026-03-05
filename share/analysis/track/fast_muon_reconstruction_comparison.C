@@ -18,6 +18,7 @@ struct track {
     TVector3 fpos;
 
     bool is_single;
+    bool is_stopping;
 
 };
 
@@ -151,7 +152,8 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
             .quality = 0.0,
             .ipos = TVector3(xin, yin, zin),
             .fpos = fpos,
-            .is_single = (muonType == 0)
+            .is_single = (muonType == 0),
+            .is_stopping = false
         });
     }
     std::cout << "Info: Number of stopping tracks for Amber: " << nstoppins << '\n';
@@ -205,7 +207,8 @@ std::set<track> open_edwin_user_chain(const char* path) {
             .quality = 0.0,
             .ipos = TVector3(enterX, enterY, enterZ),
             .fpos = fpos,
-            .is_single = true
+            .is_single = true,
+            .is_stopping = false
         });
     }
     std::cout << "Info: Number of stopping tracks for Edwin: " << nstoppins << '\n';
@@ -257,7 +260,8 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
             .quality = chi2,
             .ipos = TVector3(iposx, iposy, iposz),
             .fpos = TVector3(fposx, fposy, fposz),
-            .is_single = (ntracks_wpclassify == 1)
+            .is_single = (ntracks_wpclassify == 1),
+            .is_stopping = (nstoppings_wpclassify > 0)
         });
     }
     return tracks;
@@ -345,7 +349,8 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
                 .quality = (*quality)[i],
                 .ipos = TVector3((*iposx)[i], (*iposy)[i], (*iposz)[i]),
                 .fpos = TVector3((*fposx)[i], (*fposy)[i], (*fposz)[i]),
-                .is_single = (ntracks_wpclassify == 1)
+                .is_single = (ntracks_wpclassify == 1),
+                .is_stopping = (stopping_wpclassify > 0)
             });
         }
     }
@@ -468,6 +473,7 @@ struct MuonClassification {
     TVector3 ipos, fpos;
     bool is_single_cdwpttchi2;
     bool is_single_amber;
+    bool is_stopping_cdwpttchi2;
 };
 
 std::vector<MuonClassification> compute_global_correlations_classification(std::map<std::string, std::set<track>>& tracks) {
@@ -484,6 +490,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         bool all_found = true;
         bool is_single_cdwpttchi2 = true;
         bool is_single_amber = true;
+        bool is_stopping_cdwpttchi2 = false;
 
         for (const auto& [method, track_set] : tracks) {
             if (method == "Tt") continue;
@@ -497,6 +504,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
                 found_in_method = true;
                 if (method == "CdWpTtChi2") {
                     is_single_cdwpttchi2 = it->is_single;
+                    is_stopping_cdwpttchi2 = it->is_stopping;
                 }
                 if (method == "Amber_v5.5") {
                     is_single_amber = it->is_single;
@@ -516,7 +524,8 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
                 .ipos = tt_muon.ipos,
                 .fpos = tt_muon.fpos,
                 .is_single_cdwpttchi2 = is_single_cdwpttchi2,
-                .is_single_amber = is_single_amber
+                .is_single_amber = is_single_amber,
+                .is_stopping_cdwpttchi2 = is_stopping_cdwpttchi2
             });
         }
     }
@@ -915,6 +924,23 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_classification_single_wp_bundle_amber->SetLineWidth(3);
     h_classification_single_wp_bundle_amber->Draw();
     c_classification_single_wp_bundle_amber->Update();
+
+    TCanvas* c_classification_bundle_wp_single_amber_stopping = new TCanvas("c_classification_bundle_wp_single_amber_stopping", "Classification bundle Wp single Amber stopping", 1000, 1000);
+    c_classification_bundle_wp_single_amber_stopping->cd();
+
+    TH1D* h_classification_bundle_wp_single_amber_stopping = new TH1D("h_classification_bundle_wp_single_amber_stopping", "Classification: [bundle Wp] [single Amber] [stopping]", 2, 0.0, 2.0);
+    h_classification_bundle_wp_single_amber_stopping->SetStats(0);
+    for (const MuonClassification& clas : classifications) {
+        if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
+            h_classification_bundle_wp_single_amber_stopping->Fill(clas.is_stopping_cdwpttchi2 ? 1.5 : 0.5);
+        }
+    }
+    h_classification_bundle_wp_single_amber_stopping->GetXaxis()->SetTitle("Is stopping WpClassify");
+    h_classification_bundle_wp_single_amber_stopping->GetYaxis()->SetTitle("Entries");
+    h_classification_bundle_wp_single_amber_stopping->SetLineColor(kBlue);
+    h_classification_bundle_wp_single_amber_stopping->SetLineWidth(3);
+    h_classification_bundle_wp_single_amber_stopping->Draw();
+    c_classification_bundle_wp_single_amber_stopping->Update();
 
     return 0;
 }
