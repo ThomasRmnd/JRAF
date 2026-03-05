@@ -892,7 +892,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         }
     }
     h_classification_bundle_wp_single_amber->GetXaxis()->SetTitle("L (m)");
-    h_classification_bundle_wp_single_amber->GetYaxis()->SetTitel("Entries");
+    h_classification_bundle_wp_single_amber->GetYaxis()->SetTitle("Entries");
     h_classification_bundle_wp_single_amber->Draw();
     c_classification_bundle_wp_single_amber->Update();
     
