@@ -42,8 +42,10 @@ struct DAQTimeSaver {
 
     TTree* tree = nullptr;
     int run_id = 0;
-    time_t sec = 0l;
-    int nsec = 0;
+    time_t start_sec = 0l;
+    int start_nsec = 0;
+    time_t duration_sec = 0l;
+    int duration_nsec = 0;
 
     bool is_initialized = false;
     TimeStamp last_ts{0, 0};
@@ -55,8 +57,10 @@ struct DAQTimeSaver {
             return false;
         }
         tree->Branch("run_id", &run_id);
-        tree->Branch("sec", &sec);
-        tree->Branch("nsec", &nsec);
+        tree->Branch("start_sec", &start_sec);
+        tree->Branch("start_nsec", &start_nsec);
+        tree->Branch("duration_sec", &duration_sec);
+        tree->Branch("duration_nsec", &duration_nsec);
         return true;
     }
 
@@ -64,14 +68,16 @@ struct DAQTimeSaver {
         run_id = run;
         if (!is_initialized) {
             last_ts = ts;
+            start_sec = ts.GetSec();
+            start_nsec = ts.GetNanoSec();
             is_initialized = true;
             return true;
         }
         TimeStamp diff = ts - last_ts;
-        TimeStamp daqtime{sec, nsec};
+        TimeStamp daqtime{duration_sec, duration_nsec};
         daqtime.Add(diff);
-        sec = daqtime.GetSec();
-        nsec = daqtime.GetNanoSec();
+        duration_sec = daqtime.GetSec();
+        duration_nsec = daqtime.GetNanoSec();
         last_ts = ts;
         return true;
     };

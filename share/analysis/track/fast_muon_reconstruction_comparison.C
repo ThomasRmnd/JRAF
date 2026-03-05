@@ -17,6 +17,8 @@ struct track {
     TVector3 ipos;
     TVector3 fpos;
 
+    bool is_single;
+
 };
 
 bool operator<(const track& a, const track& b) {
@@ -138,7 +140,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
         chain->GetEntry(k);
         if (muonType != 0) continue; // SELECTION! only single
         TVector3 fpos(xout, yout, zout);
-        if (fpos.Mag() > 40000.0) {
+        if (fpos.Mag() < 17700.0) {
             ++nstoppins;
         }
         tracks.insert(track{
@@ -148,7 +150,8 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
             .totq_wp = charge,
             .quality = 0.0,
             .ipos = TVector3(xin, yin, zin),
-            .fpos = fpos
+            .fpos = fpos,
+            .is_single = (muonType == 0)
         });
     }
     std::cout << "Info: Number of stopping tracks for Amber: " << nstoppins << '\n';
@@ -191,7 +194,7 @@ std::set<track> open_edwin_user_chain(const char* path) {
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
         TVector3 fpos(exitX, exitY, exitZ);
-        if (fpos.Mag() > 40000.0) {
+        if (fpos.Mag() < 17700.0) {
             ++nstoppins;
         }
         tracks.insert(track{
@@ -201,7 +204,8 @@ std::set<track> open_edwin_user_chain(const char* path) {
             .totq_wp = wp_totalPE,
             .quality = 0.0,
             .ipos = TVector3(enterX, enterY, enterZ),
-            .fpos = fpos
+            .fpos = fpos,
+            .is_single = true
         });
     }
     std::cout << "Info: Number of stopping tracks for Edwin: " << nstoppins << '\n';
@@ -221,6 +225,8 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
     double chi2;
     double iposx, iposy, iposz;
     double fposx, fposy, fposz;
+    int ntracks_cdclassify, ntracks_wpclassify;
+    int nstoppings_cdclassify, nstoppings_wpclassify;
 
     chain->SetBranchAddress("run_id", &run_id);
     chain->SetBranchAddress("sec", &sec);
@@ -234,6 +240,10 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
     chain->SetBranchAddress("fposx", &fposx);
     chain->SetBranchAddress("fposy", &fposy);
     chain->SetBranchAddress("fposz", &fposz);
+    chain->SetBranchAddress("ntracks_cdclassify", &ntracks_cdclassify);
+    chain->SetBranchAddress("ntracks_wpclassify", &ntracks_wpclassify);
+    chain->SetBranchAddress("nstoppings_cdclassify", &nstoppings_cdclassify);
+    chain->SetBranchAddress("nstoppings_wpclassify", &nstoppings_wpclassify);
 
     long nentries = chain->GetEntries();
     std::cout << "Info: Found " << nentries << " entries in CdWpTtChi2 files\n";
@@ -246,7 +256,8 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
             .totq_wp = totq_wp,
             .quality = chi2,
             .ipos = TVector3(iposx, iposy, iposz),
-            .fpos = TVector3(fposx, fposy, fposz)
+            .fpos = TVector3(fposx, fposy, fposz),
+            .is_single = (ntracks_wpclassify == 1)
         });
     }
     return tracks;
@@ -333,7 +344,8 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
                 .totq_wp = totq_wp,
                 .quality = (*quality)[i],
                 .ipos = TVector3((*iposx)[i], (*iposy)[i], (*iposz)[i]),
-                .fpos = TVector3((*fposx)[i], (*fposy)[i], (*fposz)[i])
+                .fpos = TVector3((*fposx)[i], (*fposy)[i], (*fposz)[i]),
+                .is_single = (ntracks_wpclassify == 1)
             });
         }
     }
@@ -451,14 +463,70 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
     return performances;
 }
 
+struct MuonClassification {
+    int run_id;
+    TVector3 ipos, fpos;
+    bool is_single_cdwpttchi2;
+    bool is_single_amber;
+};
+
+std::vector<MuonClassification> compute_global_correlations_classification(std::map<std::string, std::set<track>>& tracks) {
+    if (tracks.find("Tt") == tracks.end()) {
+        std::cerr << "Error: Tt tracks not found in map.\n";
+        return {};
+    }
+    const std::set<track>& tt_tracks = tracks["Tt"];
+
+    std::vector<MuonClassification> performances;
+
+    for (const track& tt_muon : tt_tracks) {
+        std::map<std::string, track> coincident_map;
+        bool all_found = true;
+        bool is_single_cdwpttchi2 = true;
+        bool is_single_amber = true;
+
+        for (const auto& [method, track_set] : tracks) {
+            if (method == "Tt") continue;
+            performances[method] = {};
+            bool found_in_method = false;
+            TTimeStamp lower_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
+            TTimeStamp upper_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
+            std::set<track>::const_iterator it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
+            
+            while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
+                coincident_map[method] = *it;
+                found_in_method = true;
+                break;
+            }
+
+            if (!found_in_method) {
+                all_found = false;
+                break; 
+            }
+        }
+
+        if (all_found) {
+            performances.push_back(MuonClassification{
+                .run_id = tt_muon.run_id,
+                .ipos = tt_muon.ipos,
+                .fpos = tt_muon.fpos,
+                .is_single_cdwpttchi2 = is_single_cdwpttchi2,
+                .is_single_amber = is_single_amber
+            });
+        }
+    }
+    return performances;
+}
+
 int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
     std::map<std::string, std::set<track>> tracks = open_joint_reco_user_chain(path_joint);
     tracks["CdWpTtChi2"] = open_cdwpttchi2_user_chain(path_cdwpttchi2);
     tracks["Amber_v5.5"] = open_amber_v5_5_user_chain(path_amber);
     tracks["Edwin"] = open_edwin_user_chain(path_edwin);
 
-    std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
-    // std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
+    // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
+    std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
+    std::map<std::string, std::vector<MuonClassification>> classifications = compute_global_correlations_classification(tracks);
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
@@ -600,6 +668,22 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             method_distance_runid_map[method]->SetBinError(i + 1, 0.0001);
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     std::map<std::string, Color_t> colors = {
         {"CdWpTtChi2", kBlack}, 
@@ -761,6 +845,36 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     c_distance_runid->SetTicky();
     c_distance_runid->SetGrid();
     c_distance_runid->Update();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    TCanvas* c_classification_compariron = new TCanvas("c_classification_compariron", "Classification compariron", 1000, 1000);
+    c_classification_compairon->cd();
+
+    TH2D* h_classification_comparison = new TH2D("h_classification_comparison", "Classification compairson", 2, 0.0, 2.0, 2, 0.0, 2.0);
+    h_classification_comparison->SetStats(0);
+    for (const MuonClassification& clas : classifications) {
+        h_classification_comparison->Fill(static_cast<double>(clas.is_single_cdwpttchi2), static_cast<double>(clas.is_single_amber));
+    }
+    h_classification_comparison->Draw("COLZ");
+    c_classification_compariron->SetTickx();
+    c_classification_compariron->SetTicky();
+    c_classification_compariron->SetGrid();
+    c_classification_compariron->Update();
 
     return 0;
 }
