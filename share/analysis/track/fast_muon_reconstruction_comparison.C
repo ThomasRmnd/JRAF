@@ -861,8 +861,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
 
 
-    TCanvas* c_classification_compariron = new TCanvas("c_classification_compariron", "Classification compariron", 1000, 1000);
-    c_classification_compairon->cd();
+    TCanvas* c_classification_comparison = new TCanvas("c_classification_comparison", "Classification comparison", 1000, 1000);
+    c_classification_comparison->cd();
 
     TH2D* h_classification_comparison = new TH2D("h_classification_comparison", "Classification compairson", 2, 0.0, 2.0, 2, 0.0, 2.0);
     h_classification_comparison->SetStats(0);
@@ -870,10 +870,10 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         h_classification_comparison->Fill(static_cast<double>(clas.is_single_cdwpttchi2), static_cast<double>(clas.is_single_amber));
     }
     h_classification_comparison->Draw("COLZ");
-    c_classification_compariron->SetTickx();
-    c_classification_compariron->SetTicky();
-    c_classification_compariron->SetGrid();
-    c_classification_compariron->Update();
+    c_classification_comparison->SetTickx();
+    c_classification_comparison->SetTicky();
+    c_classification_comparison->SetGrid();
+    c_classification_comparison->Update();
 
     return 0;
 }
