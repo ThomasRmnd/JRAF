@@ -350,7 +350,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
                 .ipos = TVector3((*iposx)[i], (*iposy)[i], (*iposz)[i]),
                 .fpos = TVector3((*fposx)[i], (*fposy)[i], (*fposz)[i]),
                 .is_single = (ntracks_wpclassify == 1),
-                .is_stopping = (stopping_wpclassify > 0)
+                .is_stopping = stopping_wpclassify
             });
         }
     }
@@ -493,6 +493,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         bool is_single_amber = true;
         bool is_stopping_cdwpttchi2 = false;
         TVector3 ipos_wp, fpos_wp;
+        double maxdistance = std::numerical_limits<double>::infinity();
 
         for (const auto& [method, track_set] : tracks) {
             if (method == "Tt") continue;
@@ -512,8 +513,12 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
                     is_single_amber = it->is_single;
                 }
                 else if (method == "WpBasic") {
-                    ipos_wp = it->ipos;
-                    fpos_wp = it->fpos;
+                    double distance = compute_distance_between_track(tt_muon, *it);
+                    if (distance < maxdistance) {
+                        maxdistance = distance;
+                        ipos_wp = it->ipos;
+                        fpos_wp = it->fpos;
+                    }
                 }
                 break;
             }
