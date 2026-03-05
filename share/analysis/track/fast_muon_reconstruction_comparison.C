@@ -867,12 +867,9 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     TH2D* h_classification_comparison = new TH2D("h_classification_comparison", "Classification compairson", 2, 0.0, 2.0, 2, 0.0, 2.0);
     h_classification_comparison->SetStats(0);
     for (const MuonClassification& clas : classifications) {
-        h_classification_comparison->Fill(static_cast<double>(clas.is_single_cdwpttchi2), static_cast<double>(clas.is_single_amber));
+        h_classification_comparison->Fill(clas.is_single_cdwpttchi2 ? 1.5 : 0.5, clas.is_single_amber ? 1.5 : 0.5);
     }
     h_classification_comparison->Draw("COLZ");
-    c_classification_comparison->SetTickx();
-    c_classification_comparison->SetTicky();
-    c_classification_comparison->SetGrid();
     c_classification_comparison->Update();
 
     return 0;
