@@ -525,7 +525,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
-    std::map<std::string, std::vector<MuonClassification>> classifications = compute_global_correlations_classification(tracks);
+    std::vector<MuonClassification> classifications = compute_global_correlations_classification(tracks);
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
