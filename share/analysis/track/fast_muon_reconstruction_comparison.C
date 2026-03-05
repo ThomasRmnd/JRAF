@@ -452,6 +452,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
             }
         }
 
+        std::cout << all_found << '\n';
+
         if (all_found) {
             for (const auto& [method, muon] : coincident_map) {
                 performances[method].push_back(MuonPerformance{
