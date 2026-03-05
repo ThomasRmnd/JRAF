@@ -877,7 +877,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
     h_classification_comparison->GetXaxis()->SetTitle("Is single WpClassify"),
     h_classification_comparison->GetYaxis()->SetTitle("Is single Amber");
-    h_classification_comparison->Draw("COLZ");
+    h_classification_comparison->Draw("COLZ TEXT");
     c_classification_comparison->Update();
 
     TCanvas* c_classification_bundle_wp_single_amber = new TCanvas("c_classification_bundle_wp_single_amber", "Classification bundle Wp single Amber", 1000, 1000);
