@@ -880,5 +880,37 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_classification_comparison->Draw("COLZ");
     c_classification_comparison->Update();
 
+    TCanvas* c_classification_bundle_wp_single_amber = new TCanvas("c_classification_bundle_wp_single_amber", "Classification bundle Wp single Amber", 1000, 1000);
+    c_classification_bundle_wp_single_amber->cd();
+
+    TH1D* h_classification_bundle_wp_single_amber = new TH1D("h_classification_bundle_wp_single_amber", "Classification bundle Wp single Amber", 100, 0.0, 20050.0);
+    h_classification_bundle_wp_single_amber->SetStats(0);
+    for (const MuonClassification& clas : classifications) {
+        if (!clas.is_single_cdwpttchi2 && clas.is_single_amber) {
+            TVector3 dir = (clas.fpos - clas.ipos).Unit(); 
+            h_classification_bundle_wp_single_amber->Fill(dir.Cross(-clas.ipos).Mag());
+        }
+    }
+    h_classification_bundle_wp_single_amber->GetXaxis()->SetTitle("L (m)");
+    h_classification_bundle_wp_single_amber->GetYaxis()->SetTitel("Entries");
+    h_classification_bundle_wp_single_amber->Draw();
+    c_classification_bundle_wp_single_amber->Update();
+    
+    TCanvas* c_classification_single_wp_bundle_amber = new TCanvas("c_classification_single_wp_bundle_amber", "Classification single Wp bundle Amber", 1000, 1000);
+    c_classification_single_wp_bundle_amber->cd();
+
+    TH1D* h_classification_single_wp_bundle_amber = new TH1D("h_classification_single_wp_bundle_amber", "Classification single Wp bundle Amber", 100, 0.0, 20050.0);
+    h_classification_single_wp_bundle_amber->SetStats(0);
+    for (const MuonClassification& clas : classifications) {
+        if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
+            TVector3 dir = (clas.fpos - clas.ipos).Unit(); 
+            h_classification_single_wp_bundle_amber->Fill(dir.Cross(-clas.ipos).Mag());
+        }
+    }
+    h_classification_single_wp_bundle_amber->GetXaxis()->SetTitle("L (m)");
+    h_classification_single_wp_bundle_amber->GetYaxis()->SetTitel("Entries");
+    h_classification_single_wp_bundle_amber->Draw();
+    c_classification_single_wp_bundle_amber->Update();
+
     return 0;
 }
