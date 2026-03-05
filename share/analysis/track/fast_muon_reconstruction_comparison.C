@@ -453,6 +453,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
         }
 
         if (all_found) {
+            std::cout << "All found!\n";
             for (const auto& [method, muon] : coincident_map) {
                 performances[method].push_back(MuonPerformance{
                     .angle = compute_angle_between_track(tt_muon, muon),
