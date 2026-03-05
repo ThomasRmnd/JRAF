@@ -957,7 +957,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_classification_bundle_wp_single_amber_ipos_xy->SetStats(0);
     for (const MuonClassification& clas : classifications) {
         if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
-            h_classification_bundle_wp_single_amber_ipos_xy->Fill(clas.ipos_wp.X(), clas.ipos_wp.Y());
+            h_classification_bundle_wp_single_amber_ipos_xy->Fill(clas.ipos_wp.X() / 1000.0, clas.ipos_wp.Y() / 1000.0);
         }
     }
     h_classification_bundle_wp_single_amber_ipos_xy->GetXaxis()->SetTitle("X (mm)");
