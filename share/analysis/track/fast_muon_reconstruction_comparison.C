@@ -434,7 +434,6 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
 
         for (const auto& [method, track_set] : tracks) {
             if (method == "Tt") continue;
-            performances[method] = {};
             bool found_in_method = false;
             TTimeStamp lower_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
             TTimeStamp upper_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
@@ -462,7 +461,6 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .quality = muon.quality,
                     .tt_quality = tt_muon.quality
                 });
-                std::cout << performances[method].size() << '\n';
             }
         }
     }
