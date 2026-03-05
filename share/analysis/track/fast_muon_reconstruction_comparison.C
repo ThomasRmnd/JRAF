@@ -493,7 +493,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         bool is_single_amber = true;
         bool is_stopping_cdwpttchi2 = false;
         TVector3 ipos_wp, fpos_wp;
-        double maxdistance = std::numerical_limits<double>::infinity();
+        double maxdistance = std::numeric_limits<double>::infinity();
 
         for (const auto& [method, track_set] : tracks) {
             if (method == "Tt") continue;
