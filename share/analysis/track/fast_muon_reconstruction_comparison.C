@@ -225,8 +225,8 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
     double chi2;
     double iposx, iposy, iposz;
     double fposx, fposy, fposz;
-    int ntracks_cdclassify, ntracks_wpclassify;
-    int nstoppings_cdclassify, nstoppings_wpclassify;
+    unsigned int ntracks_cdclassify, ntracks_wpclassify;
+    unsigned int nstoppings_cdclassify, nstoppings_wpclassify;
 
     chain->SetBranchAddress("run_id", &run_id);
     chain->SetBranchAddress("sec", &sec);
