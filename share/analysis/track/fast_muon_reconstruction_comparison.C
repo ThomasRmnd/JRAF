@@ -495,6 +495,12 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
             while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
                 coincident_map[method] = *it;
                 found_in_method = true;
+                if (method == "CdWpTtChi2") {
+                    is_single_cdwpttchi2 = it->is_single;
+                }
+                if (method == "Amber_v5.5") {
+                    is_single_amber = it->is_single;
+                }
                 break;
             }
 
