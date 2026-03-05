@@ -470,7 +470,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
 
 struct MuonClassification {
     int run_id;
-    TVector3 ipos, fpos;
+    TVector3 ipos_tt, fpos_tt;
+    TVector3 ipos_wp, fpos_wp;
     bool is_single_cdwpttchi2;
     bool is_single_amber;
     bool is_stopping_cdwpttchi2;
@@ -491,6 +492,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         bool is_single_cdwpttchi2 = true;
         bool is_single_amber = true;
         bool is_stopping_cdwpttchi2 = false;
+        TVector3 ipos_wp, fpos_wp;
 
         for (const auto& [method, track_set] : tracks) {
             if (method == "Tt") continue;
@@ -506,8 +508,12 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
                     is_single_cdwpttchi2 = it->is_single;
                     is_stopping_cdwpttchi2 = it->is_stopping;
                 }
-                if (method == "Amber_v5.5") {
+                else if (method == "Amber_v5.5") {
                     is_single_amber = it->is_single;
+                }
+                else if (method == "WpBasic") {
+                    ipos_wp = it->ipos;
+                    fpos_wp = it->fpos;
                 }
                 break;
             }
@@ -521,8 +527,10 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         if (all_found) {
             classifications.push_back(MuonClassification{
                 .run_id = tt_muon.run_id,
-                .ipos = tt_muon.ipos,
-                .fpos = tt_muon.fpos,
+                .ipos_tt = tt_muon.ipos,
+                .fpos_tt = tt_muon.fpos,
+                .ipos_wp = ipos_wp,
+                .fpos_wp = fpos_wp,
                 .is_single_cdwpttchi2 = is_single_cdwpttchi2,
                 .is_single_amber = is_single_amber,
                 .is_stopping_cdwpttchi2 = is_stopping_cdwpttchi2
@@ -896,8 +904,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_classification_bundle_wp_single_amber->SetStats(0);
     for (const MuonClassification& clas : classifications) {
         if (!clas.is_single_cdwpttchi2 && clas.is_single_amber) {
-            TVector3 dir = (clas.fpos - clas.ipos).Unit(); 
-            h_classification_bundle_wp_single_amber->Fill(dir.Cross(-clas.ipos).Mag() / 1000.0);
+            TVector3 dir = (clas.fpos_tt - clas.ipos_tt).Unit(); 
+            h_classification_bundle_wp_single_amber->Fill(dir.Cross(-clas.ipos_tt).Mag() / 1000.0);
         }
     }
     h_classification_bundle_wp_single_amber->GetXaxis()->SetTitle("L (m)");
@@ -914,8 +922,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_classification_single_wp_bundle_amber->SetStats(0);
     for (const MuonClassification& clas : classifications) {
         if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
-            TVector3 dir = (clas.fpos - clas.ipos).Unit(); 
-            h_classification_single_wp_bundle_amber->Fill(dir.Cross(-clas.ipos).Mag() / 1000.0);
+            TVector3 dir = (clas.fpos_tt - clas.ipos_tt).Unit(); 
+            h_classification_single_wp_bundle_amber->Fill(dir.Cross(-clas.ipos_tt).Mag() / 1000.0);
         }
     }
     h_classification_single_wp_bundle_amber->GetXaxis()->SetTitle("L (m)");
@@ -941,6 +949,21 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_classification_bundle_wp_single_amber_stopping->SetLineWidth(3);
     h_classification_bundle_wp_single_amber_stopping->Draw();
     c_classification_bundle_wp_single_amber_stopping->Update();
+
+    TCanvas* c_classification_bundle_wp_single_amber_ipos_xy = new TCanvas("c_classification_bundle_wp_single_amber_ipos_xy", "Classification bundle Wp single Amber ipos xy", 1000, 1000);
+    c_classification_bundle_wp_single_amber_ipos_xy->cd();
+
+    TH2D* h_classification_bundle_wp_single_amber_ipos_xy = new TH2D("h_classification_bundle_wp_single_amber_ipos_xy", "Classification: [bundle Wp] [single Amber] [XY]", 100, -22.0, 22.0, 100, -22.0, 22.0);
+    h_classification_bundle_wp_single_amber_ipos_xy->SetStats(0);
+    for (const MuonClassification& clas : classifications) {
+        if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
+            h_classification_bundle_wp_single_amber_ipos_xy->Fill(clas.ipos_wp.X(), clas.ipos_wp.Y());
+        }
+    }
+    h_classification_bundle_wp_single_amber_ipos_xy->GetXaxis()->SetTitle("X (mm)");
+    h_classification_bundle_wp_single_amber_ipos_xy->GetYaxis()->SetTitle("Y (mm)");
+    h_classification_bundle_wp_single_amber_ipos_xy->Draw("COLZ");
+    c_classification_bundle_wp_single_amber_ipos_xy->Update();
 
     return 0;
 }
