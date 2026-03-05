@@ -477,7 +477,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
     }
     const std::set<track>& tt_tracks = tracks["Tt"];
 
-    std::vector<MuonClassification> performances;
+    std::vector<MuonClassification> classifications;
 
     for (const track& tt_muon : tt_tracks) {
         std::map<std::string, track> coincident_map;
@@ -511,7 +511,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         }
 
         if (all_found) {
-            performances.push_back(MuonClassification{
+            classifications.push_back(MuonClassification{
                 .run_id = tt_muon.run_id,
                 .ipos = tt_muon.ipos,
                 .fpos = tt_muon.fpos,
@@ -520,7 +520,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
             });
         }
     }
-    return performances;
+    return classifications;
 }
 
 int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
@@ -875,6 +875,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     for (const MuonClassification& clas : classifications) {
         h_classification_comparison->Fill(clas.is_single_cdwpttchi2 ? 1.5 : 0.5, clas.is_single_amber ? 1.5 : 0.5);
     }
+    h_classification_comparison->GetXaxis()->SetTitle("Is single WpClassify"),
+    h_classification_comparison->GetYaxis()->SetTitle("Is single Amber");
     h_classification_comparison->Draw("COLZ");
     c_classification_comparison->Update();
 
