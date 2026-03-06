@@ -218,7 +218,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
     }
 
     for (ibd_info& cand : ibds) {
-        for (VertexCorrelationSelection& cut : spa_neu_cut) {
+        for (const VertexCorrelationSelection& cut : spa_neu_cut) {
             if (!cut.isIn(cand.pair.prompt) && !cut.isIn(cand.pair.delayed)) continue;
             cand.neus.push_back(cut.c_vtx);
         }
