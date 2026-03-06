@@ -7,11 +7,6 @@ std::size_t EventCache::s_insert_counter = 0;
 constexpr std::size_t EventCache::s_clean_interval;
 
 std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
-    if (!nav) {
-        LogError << "EventCache::load: nullptr navigator\n";
-        return nullptr;
-    }
-
     TimeStamp ts{nav->TimeStamp().GetTimeSpec()};
     CacheType::iterator it = s_cache.find(ts);
     if (it != s_cache.end()) {
@@ -25,7 +20,7 @@ std::shared_ptr<Event> EventCache::load(JM::EvtNavigator* nav) {
     }
     insert(ts, evt);
 
-    LogInfo << "EventCache: loaded and cached event for nav=" << nav << '\n';
+    std::cout << "EventCache: loaded and cached event for nav=" << nav << '\n';
     return evt;
 }
 
@@ -39,12 +34,12 @@ void EventCache::insert(const TimeStamp& ts, const std::shared_ptr<Event>& evt) 
 }
 
 bool EventCache::contains(JM::EvtNavigator* nav) {
-    CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
+    CacheType::iterator it = s_cache.find(TimeStamp{nav->TimeStamp().GetTimeSpec()});
     return (it != s_cache.end());
 }
 
 std::shared_ptr<Event> EventCache::get(JM::EvtNavigator* nav) {
-    CacheType::iterator it = s_cache.find(nav->TimeStamp().GetTimeSpec());
+    CacheType::iterator it = s_cache.find(TimeStamp{nav->TimeStamp().GetTimeSpec()});
     if (it != s_cache.end()) {
         return it->second;
     }
@@ -64,6 +59,6 @@ void EventCache::clean(const TimeStamp& newest_ts, const TimeStamp& window) {
     std::size_t removed = std::distance(s_cache.begin(), it);
     s_cache.erase(s_cache.begin(), it);
 
-    LogInfo << "EventCache: cleaned " << removed << " old events (older than "
-             << window.GetSec() << "s, new size=" << s_cache.size() << ")\n";
+    std::cout << "EventCache: cleaned " << removed << " old events (older than "
+              << window.GetSec() << "s, new size=" << s_cache.size() << ")\n";
 }
