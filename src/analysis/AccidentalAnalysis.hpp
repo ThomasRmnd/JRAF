@@ -6,22 +6,8 @@
 #include "analysis/Analysis.hpp"
 #include "event/IBD.hpp"
 
-struct mult_info {
-    vertex vtx;
-    int type;
-};
-
-struct ibd_info {
-
-    ibd pair;
-    std::vector<vertex> neus;
-    std::vector<mult_info> mults;
-
-    ibd_info(const vertex& prompt, const vertex& delayed) :
-        pair{prompt, delayed}
-    {}
-
-};
+struct mult_info;
+struct ibd_info;
 
 class AccidentalAnalysis : public Analysis {
 
