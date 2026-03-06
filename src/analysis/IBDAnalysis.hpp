@@ -1,27 +1,8 @@
 #ifndef ANALYSISGROUPC_ANALYSIS_IBDANALYSIS_HPP_
 #define ANALYSISGROUPC_ANALYSIS_IBDANALYSIS_HPP_
 
-#include <vector>
-
 #include "analysis/Analysis.hpp"
-#include "event/IBD.hpp"
-
-struct mult_info {
-    vertex vtx;
-    int type;
-};
-
-struct ibd_info {
-
-    ibd pair;
-    std::vector<vertex> neus;
-    std::vector<mult_info> mults;
-
-    ibd_info(const vertex& prompt, const vertex& delayed) :
-        pair{prompt, delayed}
-    {}
-
-};
+#include "utils/event_info.hpp"
 
 class IBDAnalysis : public Analysis {
 

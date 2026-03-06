@@ -1,13 +1,8 @@
 #ifndef ANALYSISGROUPC_ANALYSIS_ACCIDENTALANALYSIS_HPP_
 #define ANALYSISGROUPC_ANALYSIS_ACCIDENTALANALYSIS_HPP_
 
-#include <vector>
-
 #include "analysis/Analysis.hpp"
-#include "event/IBD.hpp"
-
-struct mult_info;
-struct ibd_info;
+#include "utils/event_info.hpp"
 
 class AccidentalAnalysis : public Analysis {
 
