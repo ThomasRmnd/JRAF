@@ -158,11 +158,11 @@ void AccidentalAnalysis::process(const EventContext::View& events) {
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{2, 0}, TimeStamp{4, 0}};
 
         for (const vertex& delayed : events.after()) {
+            if (!correlation_cut.isIn(delayed)) continue;
+
             if (!fiducial_vol_cut.isIn(delayed)) continue;
 
             if (!delayed_energy_cut_hydrogen.isIn(delayed) && !delayed_energy_cut_carbon.isIn(delayed)) continue;
-
-            if (!correlation_cut.isIn(delayed)) continue;
 
             is_vetoed = false;
             for (const TimeRangeMuonVetoSelection& cut : mu_cut) {

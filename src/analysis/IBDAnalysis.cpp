@@ -164,16 +164,10 @@ void IBDAnalysis::process(const EventContext::View& events) {
         LogInfo << prompt << '\n';
         ++cf_prompt_total;
         
-        if (!fiducial_vol_cut.isIn(prompt)) {
-            LogInfo << "Prompt not in fiducial volume\n";
-            continue;
-        }
+        if (!fiducial_vol_cut.isIn(prompt)) continue;
         ++cf_prompt_fv;
 
-        if (!prompt_energy_cut.isIn(prompt)) {
-            LogInfo << "Prompt not in energy range\n";
-            continue;
-        }
+        if (!prompt_energy_cut.isIn(prompt)) continue;
         ++cf_prompt_energy;
 
         bool is_vetoed = false;
@@ -182,10 +176,8 @@ void IBDAnalysis::process(const EventContext::View& events) {
             is_vetoed = true;
             break;
         }
-        if (is_vetoed) {
-            LogInfo << "Prompt is muon vetoed\n";
-            continue;
-        }
+        if (is_vetoed) continue;
+
         ++cf_prompt_muon;
 
         VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
@@ -194,23 +186,15 @@ void IBDAnalysis::process(const EventContext::View& events) {
             LogInfo << delayed << '\n';
             ++cf_pair_total;
 
-            if (!fiducial_vol_cut.isIn(delayed)) {
-                LogInfo << "Delayed not in fiducial volume\n";
-                continue;
-            }
+            if (!correlation_cut.isIn(delayed)) continue;
+            ++cf_pair_corr;
+
+            if (!fiducial_vol_cut.isIn(delayed)) continue;
             ++cf_pair_delayed_fv;
 
-            if (!delayed_energy_cut_hydrogen.isIn(delayed) && !delayed_energy_cut_carbon.isIn(delayed)) {
-                LogInfo << "Delayed not in energy range\n";
-                continue;
-            }
-            ++cf_pair_delayed_energy;
+            if (!delayed_energy_cut_hydrogen.isIn(delayed) && !delayed_energy_cut_carbon.isIn(delayed)) continue;
 
-            if (!correlation_cut.isIn(delayed)) {
-                LogInfo << "Delayed not correlated\n";
-                continue;
-            }
-            ++cf_pair_corr;
+            ++cf_pair_delayed_energy;
 
             is_vetoed = false;
             for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
@@ -218,10 +202,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
                 is_vetoed = true;
                 break;
             }
-            if (is_vetoed) {
-                LogInfo << "Delayed is muon vetoed\n";
-                continue;
-            }
+            if (is_vetoed) continue;
             ++cf_pair_delayed_muon;
 
             ++cf_ibd_final;
