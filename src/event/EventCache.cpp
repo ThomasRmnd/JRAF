@@ -34,7 +34,7 @@ void EventCache::insert(const TimeStamp& ts, const std::shared_ptr<Event>& evt) 
     ++s_insert_counter;
 
     if (s_insert_counter % s_clean_interval == 0 && !s_cache.empty()) {
-        clean(ts, TimeStamp{5, 0});
+        clean(ts, TimeStamp{20, 0});
     }
 }
 
