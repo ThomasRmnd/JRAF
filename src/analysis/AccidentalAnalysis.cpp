@@ -127,19 +127,6 @@ void AccidentalAnalysis::process(const EventContext::View& events) {
     // EnergyRangeSelection spa_neu_energy_cut{1.5, 20.0};
     // EnergyRangeSelection multiplicity_energy_cut{2.0, 12.0};
 
-    std::vector<VertexCorrelationSelection> spa_neu_cut;
-    for (const vertex& neu : events.vertices()) {
-        if (!prompt_energy_cut.isIn(neu)) continue;
-        bool is_in_veto = false;
-        for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
-            if (!cut.isIn(neu)) continue;
-            is_in_veto = true;
-            break;
-        }
-        if (!is_in_veto) continue;
-        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{0, -2000000000} /* TimeStamp{0, 0} */, TimeStamp{0, 2000000000});
-    }
-
     std::vector<ibd_info> ibds;
 
     for (const vertex& prompt : events.current()) {
@@ -174,47 +161,60 @@ void AccidentalAnalysis::process(const EventContext::View& events) {
 
             ibd_info cand(prompt, delayed);
             LogInfo << "Accidental event detected!\n";
-
-            for (const VertexCorrelationSelection& cut : spa_neu_cut) {
-                if (!cut.isIn(cand.pair.prompt) && !cut.isIn(cand.pair.delayed)) continue;
-                cand.neus.push_back(cut.c_vtx);
-            }
-
-            TimeRangeSelection multi_prompt_time{prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
-            TimeRangeSelection multi_between_time{prompt.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
-            TimeRangeSelection multi_delayed_time{delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
-            for (const vertex& mult : events.vertices()) {
-                if (mult.ts == cand.pair.prompt.ts) continue;
-                if (mult.ts == cand.pair.delayed.ts) continue;
-
-                // if (!fiducial_vol_cut.isIn(mult)) continue;
-                // if (chimney_cut.isIn(mult)) continue;
-
-                if (!prompt_energy_cut.isIn(mult)) continue;
-
-                is_vetoed = false;
-                for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
-                    if (!cut.isIn(mult)) continue;
-                    is_vetoed = true;
-                    break;
-                }
-                if (is_vetoed) continue;
-
-                if (multi_prompt_time.isIn(mult)) {
-                    cand.mults.push_back({mult, 0});
-                }
-                else if (multi_between_time.isIn(mult)) {
-                    cand.mults.push_back({mult, 1});
-                }
-                else if (multi_delayed_time.isIn(mult)) {
-                    cand.mults.push_back({mult, 2});
-                }
-                else {
-
-                }
-            }
-
             ibds.push_back(std::move(cand));
+        }
+    }
+
+    std::vector<VertexCorrelationSelection> spa_neu_cut;
+    for (const vertex& neu : events.vertices()) {
+        if (!prompt_energy_cut.isIn(neu)) continue;
+        bool is_in_veto = false;
+        for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
+            if (!cut.isIn(neu)) continue;
+            is_in_veto = true;
+            break;
+        }
+        if (!is_in_veto) continue;
+        spa_neu_cut.emplace_back(neu, 40000.0, TimeStamp{0, -2000000000} /* TimeStamp{0, 0} */, TimeStamp{0, 2000000000});
+    }
+
+    for (ibd_info& cand : ibds) {
+        for (const VertexCorrelationSelection& cut : spa_neu_cut) {
+            if (!cut.isIn(cand.pair.prompt) && !cut.isIn(cand.pair.delayed)) continue;
+            cand.neus.push_back(cut.c_vtx);
+        }
+
+        TimeRangeSelection multi_prompt_time{cand.pair.prompt.ts, TimeStamp{0, -1000000}, TimeStamp{0, 0}};
+        TimeRangeSelection multi_between_time{cand.pair.prompt.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
+        TimeRangeSelection multi_delayed_time{cand.pair.delayed.ts, TimeStamp{0, 0}, TimeStamp{0, 1000000}};
+        for (const vertex& mult : events.vertices()) {
+            if (mult.ts == cand.pair.prompt.ts) continue;
+            if (mult.ts == cand.pair.delayed.ts) continue;
+
+            // if (!fiducial_vol_cut.isIn(mult)) continue;
+            // if (chimney_cut.isIn(mult)) continue;
+
+            if (!prompt_energy_cut.isIn(mult)) continue;
+
+            bool is_vetoed = false;
+            for (const TimeRangeMuonVetoSelection& cut : mu_cut) {
+                if (!cut.isIn(mult)) continue;
+                is_vetoed = true;
+                break;
+            }
+            if (is_vetoed) continue;
+
+            if (multi_prompt_time.isIn(mult)) {
+                cand.mults.push_back({mult, 0});
+            }
+            else if (multi_between_time.isIn(mult)) {
+                cand.mults.push_back({mult, 1});
+            }
+            else if (multi_delayed_time.isIn(mult)) {
+                cand.mults.push_back({mult, 2});
+            }
+            else {
+            }
         }
     }
 
