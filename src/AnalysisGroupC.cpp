@@ -423,12 +423,16 @@ bool AnalysisGroupC::execute() {
         calibration_context calib_cd, calib_wp;
 
         JM::CdLpmtCalibHeader* cdl_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(curnav);
+        JM::EvtNavigator* cdl_evt_nav = nullptr;
         if (cdl_calib_hdr && cdl_calib_hdr->event()) {
             calib_cd = getCalibrationContext(cdl_calib_hdr->event()->calibPMTCol());
+            cdl_evt_nav = curnav;
         }
         JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(curnav);
+        JM::EvtNavigator* wp_evt_nav = nullptr;
         if (wp_calib_hdr && wp_calib_hdr->event()) {
             calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
+            wp_evt_nav = curnav;
         }
 
         DetectorType jointdet = curdet;
@@ -440,20 +444,22 @@ bool AnalysisGroupC::execute() {
                 return false;
             }
             TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
+            if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
             DetectorType otherdet = getDetectorType(othernav);
             if (otherdet == DetectorType::UNKNOWN) {
                 LogError << "Unknown detector type\n";
                 return false;
             }
             if ( (jointdet & otherdet) != DetectorType::UNKNOWN ) continue;
-            if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
             cdl_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(othernav);
             if (cdl_calib_hdr && cdl_calib_hdr->event()) {
                 calib_cd = getCalibrationContext(cdl_calib_hdr->event()->calibPMTCol());
+                cdl_evt_nav = othernav;
             }
             wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(othernav);
             if (wp_calib_hdr && wp_calib_hdr->event()) {
                 calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
+                wp_evt_nav = othernav;
             }
             // Could change the reference time but not necessary here (only necessary for joint loader)
             jointdet |= otherdet;
@@ -505,48 +511,77 @@ bool AnalysisGroupC::execute() {
 
         std::vector<track> tracks;
         if (is_possibly_cd_muon || is_possibly_wp_muon) {
-            for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
-                JM::EvtNavigator* othernav = it->get();
-                if (!othernav) {
-                    LogError << "EvtNavigator is nullptr\n";
-                    return false;
+            if (cdl_evt_nav) {
+                JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(cdl_evt_nav);
+                addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
+                LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
+                JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(cdl_evt_nav, "/Event/CdTrackRecClassify");
+                addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
+                LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
+                RecTrks rtrks;
+                if (!m_recTool->reconstruct(&rtrks)) {
+                    LogWarn << "Could not reconstruct the event with reconstruction tool\n";
                 }
-                TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
-                DetectorType otherdet = getDetectorType(othernav);
-                if (otherdet == DetectorType::UNKNOWN) {
-                    LogError << "Unknown detector type\n";
-                    return false;
-                }
-                if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
-                LogInfo << "Current detector: " << static_cast<int>(curdet) << ", other detector: " << static_cast<int>(otherdet) << '\n';
-                if (is_possibly_cd_muon && otherdet == DetectorType::CD) {
-                    JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav);
-                    addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
-                    LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
-                    JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav, "/Event/CdTrackRecClassify");
-                    addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
-                    LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
-                    RecTrks rtrks;
-                    if (!m_recTool->reconstruct(&rtrks)) {
-                        LogWarn << "Could not reconstruct the event with reconstruction tool\n";
-                    }
-                    addTrack(rtrks, "CdWpTtChi2", calib_cd.totq, calib_wp.totq, curts, track::loc::cd, tracks);
-                    LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
-                }
-                if (is_possibly_wp_muon && otherdet == DetectorType::WP) {
-                    JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav);
-                    addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
-                    LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
-                    JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav, "/Event/WpTrackRecClassify");
-                    addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
-                    // TODO NOT FOR NOW: Add track saver for WpClassify
-                }
+                addTrack(rtrks, "CdWpTtChi2", calib_cd.totq, calib_wp.totq, curts, track::loc::cd, tracks);
+                LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
+            }
+            if (wp_evt_nav) {
+                JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(wp_evt_nav);
+                addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
+                LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
+                JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(wp_evt_nav, "/Event/WpTrackRecClassify");
+                addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
+                // TODO NOT FOR NOW: Add track saver for WpClassify
             }
             addTtToTrack(tracks, curts);
             if (tracks.empty()) {
                 tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib_cd.totq, calib_wp.totq, curts, track::loc::cd, -1.0});
             }
         }
+
+        // {
+        //     for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
+        //         JM::EvtNavigator* othernav = it->get();
+        //         if (!othernav) {
+        //             LogError << "EvtNavigator is nullptr\n";
+        //             return false;
+        //         }
+        //         TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
+        //         if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
+        //         DetectorType otherdet = getDetectorType(othernav);
+        //         if (otherdet == DetectorType::UNKNOWN) {
+        //             LogError << "Unknown detector type\n";
+        //             return false;
+        //         }
+        //         LogInfo << "Current detector: " << static_cast<int>(curdet) << ", other detector: " << static_cast<int>(otherdet) << '\n';
+        //         if (is_possibly_cd_muon && otherdet == DetectorType::CD) {
+        //             JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav);
+        //             addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
+        //             LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
+        //             JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav, "/Event/CdTrackRecClassify");
+        //             addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
+        //             LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
+        //             RecTrks rtrks;
+        //             if (!m_recTool->reconstruct(&rtrks)) {
+        //                 LogWarn << "Could not reconstruct the event with reconstruction tool\n";
+        //             }
+        //             addTrack(rtrks, "CdWpTtChi2", calib_cd.totq, calib_wp.totq, curts, track::loc::cd, tracks);
+        //             LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
+        //         }
+        //         if (is_possibly_wp_muon && otherdet == DetectorType::WP) {
+        //             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav);
+        //             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
+        //             LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
+        //             JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav, "/Event/WpTrackRecClassify");
+        //             addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
+        //             // TODO NOT FOR NOW: Add track saver for WpClassify
+        //         }
+        //     }
+        //     addTtToTrack(tracks, curts);
+        //     if (tracks.empty()) {
+        //         tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib_cd.totq, calib_wp.totq, curts, track::loc::cd, -1.0});
+        //     }
+        // }
 
         if (m_tsEvt <= curts) {
             addFeature(tracks, curts, runId);
