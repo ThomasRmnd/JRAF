@@ -1,5 +1,7 @@
 #include "event/EventContext.hpp"
 
+#include <chrono>
+
 #include "event/EventCache.hpp"
 
 EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& methods) {
@@ -11,6 +13,11 @@ EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& m
         std::size_t lcur = 0;
     };
 
+    // DEBUG --- Timing
+    using clock = std::chrono::steady_clock;
+    auto t_before_reserve = clock::now();
+    // DEBUG --- Timing
+
     std::unordered_map<std::string, MethodData> temp;
     temp.reserve(methods.size());
     for (const std::string& m : methods) {
@@ -18,6 +25,10 @@ EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& m
         temp[m].vertices.reserve(buf->size());
     }
     m_tracks.reserve(buf->size());
+
+    // DEBUG --- Timing
+    auto t_before_filling = clock::now();
+    // DEBUG --- Timing
 
     for (JM::NavBuffer::Iterator it = buf->begin(); it != buf->end(); ++it) {
         JM::EvtNavigator* nav = it->get();
@@ -39,6 +50,10 @@ EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& m
         }
     }
 
+    // DEBUG --- Timing
+    auto t_before_moving = clock::now();
+    // DEBUG --- Timing
+
     for (auto& [method, data] : temp) {
         m_vertices.emplace(
             method,
@@ -49,4 +64,17 @@ EventContext::EventContext(JM::NavBuffer* buf, const std::vector<std::string>& m
             }
         );
     }
+
+    // DEBUG --- Timing
+    auto t_end = clock::now();
+    // DEBUG --- Timing
+
+    auto t_reserve_ms  = std::chrono::duration_cast<std::chrono::milliseconds>(t_before_filling - t_before_reserve).count();
+    auto t_filling_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_before_moving - t_before_filling).count();
+    auto t_moving_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_before_moving).count();
+    std::cout << "\n=== Context time ===\n";
+    std::cout << "1. Reserve:  " << t_reserve_ms << " ms\n";
+    std::cout << "2. Filling: " << t_filling_ms << " ms\n";
+    std::cout << "3. Moving: " << t_moving_ms << " ms\n";
+    std::cout << "=====================\n\n";
 }
