@@ -145,7 +145,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
             bool found_in_method = false;
             TTimeStamp lower_bound_ts(wp_clas.ts.GetSec(), wp_clas.ts.GetNanoSec() - 1000);
             TTimeStamp upper_bound_ts(wp_clas.ts.GetSec(), wp_clas.ts.GetNanoSec() + 1000);
-            std::set<classification>::const_iterator it = clas_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
+            std::set<classification>::const_iterator it = clas_set.lower_bound({0, lower_bound_ts, 0.0, 0.0, 0ul});
             
             while (it != clas_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
                 coincident_map[method] = *it;
