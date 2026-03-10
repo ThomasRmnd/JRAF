@@ -725,16 +725,9 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     TLegend* leg_angle_68p_r2 = new TLegend(0.15, 0.65, 0.55, 0.85);
     bool is_first_angle = true;
 
-    double max_angle = 0.0;
-    for (auto& [method, h] : method_angle_r2_map) {
-        if (h->GetMaximum() > max_angle) {
-            max_angle = h->GetMaximum();
-        }
-    }
-
     for (auto& [method, h] : method_angle_r2_map) {
         h->SetMaximum(0.0);
-        h->SetMaximum(10.0);
+        h->SetMaximum(5.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
         h->SetMarkerSize(2.0);
@@ -763,13 +756,6 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     TCanvas* c_distance_68p_r2 = new TCanvas("c_distance_68p_r2", "Distance 68% quantile", 1000, 1000);
     c_distance_68p_r2->cd();
-
-    double max_distance = 0.0;
-    for (auto& [method, h] : method_distance_r2_map) {
-        if (h->GetMaximum() > max_distance) {
-            max_distance = h->GetMaximum();
-        }
-    }
 
     TLegend* leg_distance_68p_r2 = new TLegend(0.15, 0.65, 0.55, 0.85);
     bool is_first_distance = true;
