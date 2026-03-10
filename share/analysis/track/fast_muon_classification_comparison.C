@@ -139,6 +139,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
         std::map<std::string, classification> coincident_map;
         std::size_t ntracks_cdclassify = 0ul;
         std::size_t ntracks_amber = 0ul;
+        bool all_found = true;
 
         for (const auto& [method, clas_set] : classifications) {
             if (method == "WpBasic") continue;
