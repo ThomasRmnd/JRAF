@@ -178,7 +178,7 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
     return results;
 }
 
-int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
+int fast_muon_classification_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
     std::map<std::string, std::set<classification>> classifications = open_joint_reco_user_chain(path_joint);
     classifications["Amber_v5.5"] = open_amber_v5_5_user_chain(path_amber);
 
