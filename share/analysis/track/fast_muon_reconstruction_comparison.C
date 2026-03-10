@@ -565,12 +565,12 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     std::map<std::string, TH1D*> method_angle_map;
     std::map<std::string, TH1D*> method_distance_map;
 
-    double xmin_angle = 0.0, xmax_angle = 180.0;
-    double xmin_distance = 0.0, xmax_distance = 40.0;
-    int nbins_angle = 200, nbins_distance = 200;
-    // double xmin_angle = 0.0, xmax_angle = 5.0;
-    // double xmin_distance = 0.0, xmax_distance = 2.0;
-    // int nbins_angle = 50, nbins_distance = 50;
+    // double xmin_angle = 0.0, xmax_angle = 180.0;
+    // double xmin_distance = 0.0, xmax_distance = 40.0;
+    // int nbins_angle = 200, nbins_distance = 200;
+    double xmin_angle = 0.0, xmax_angle = 5.0;
+    double xmin_distance = 0.0, xmax_distance = 2.0;
+    int nbins_angle = 50, nbins_distance = 50;
 
     method_angle_map["CdWpTtChi2"] = new TH1D("h_angle_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
     method_distance_map["CdWpTtChi2"] = new TH1D("h_distance_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
@@ -726,7 +726,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     bool is_first_angle = true;
 
     for (auto& [method, h] : method_angle_r2_map) {
-        h->SetMaximum(0.0);
+        h->SetMinimum(0.0);
         h->SetMaximum(5.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
@@ -761,7 +761,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     bool is_first_distance = true;
 
     for (auto& [method, h] : method_distance_r2_map) {
-        h->SetMaximum(0.0);
+        h->SetMinimum(0.0);
         h->SetMaximum(2.0);
         h->SetStats(0);
         h->SetMarkerStyle(kFullCircle);
