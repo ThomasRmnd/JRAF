@@ -105,7 +105,7 @@ std::map<std::string, std::set<classification>> open_joint_reco_user_chain(const
             }
         }
         for (std::size_t i = 0ul; i < method->size(); ++i) {
-            if ((*method)[i] != "CdClassify" || (*method)[i] != "WpBasic") continue;
+            if ((*method)[i] != "CdClassify" && (*method)[i] != "WpBasic") continue;
             classifications[(*method)[i]].insert(classification{
                 .run_id = run_id,
                 .ts = TTimeStamp(sec, nsec),
