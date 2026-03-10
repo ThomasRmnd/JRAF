@@ -186,5 +186,41 @@ int fast_muon_classification_comparison(const char* path_joint, const char* path
 
     std::cout << "Results size: " << results.size() << '\n';
 
+    int min_run_id = classifications["WpBasic"].begin()->run_id;
+    int max_run_id = classifications["WpBasic"].rbegin()->run_id;
+    
+    TH1D* h_nb_of_single_per_run_wpclassify = new TH1D("h_nb_of_single_per_run_wpclassify", "Number of single muons per run (WpClassify)", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
+    TH1D* h_nb_of_bundle_per_run_wpclassify = new TH1D("h_nb_of_bundle_per_run_wpclassify", "Number of bundle muons per run (WpClassify)", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
+    
+    for (const classification& clas : classifications["WpBasic"]) {
+        if (clas.ntracks == 1) {
+            h_nb_of_single_per_run_wpclassify->Fill(clas.run_id);
+        }
+        else {
+            h_nb_of_bundle_per_run_wpclassify->Fill(clas.run_id);
+        }
+    }
+
+    TCanvas* c_per_run_wpclassify = new TCanvas("c_per_run_wpclassify", "Number of single muons per run (WpClassify)", 1000, 1000);
+    c_per_run_wpclassify->cd();
+    h_nb_of_single_per_run_wpclassify->SetStats(0);
+    h_nb_of_single_per_run_wpclassify->GetXaxis()->SetTitle("Run ID");
+    h_nb_of_single_per_run_wpclassify->GetYaxis()->SetTitle("Entries");
+    h_nb_of_single_per_run_wpclassify->SetMarkerStyle(kFullCircle);
+    h_nb_of_single_per_run_wpclassify->SetMarkerColor(kBlue);
+    h_nb_of_single_per_run_wpclassify->SetMarkerSize(2.0);
+    h_nb_of_single_per_run_wpclassify->Draw();
+    h_nb_of_bundle_per_run_wpclassify->SetStats(0);
+    h_nb_of_bundle_per_run_wpclassify->GetXaxis()->SetTitle("Run ID");
+    h_nb_of_bundle_per_run_wpclassify->GetYaxis()->SetTitle("Entries");
+    h_nb_of_bundle_per_run_wpclassify->SetMarkerStyle(kFullCircle);
+    h_nb_of_bundle_per_run_wpclassify->SetMarkerColor(kRed);
+    h_nb_of_bundle_per_run_wpclassify->SetMarkerSize(2.0);
+    h_nb_of_bundle_per_run_wpclassify->Draw("SAME");
+    c_per_run_wpclassify->SetTickx();
+    c_per_run_wpclassify->SetTicky();
+    c_per_run_wpclassify->SetGrid();
+    c_per_run_wpclassify->Update();
+
     return 0;
 }
