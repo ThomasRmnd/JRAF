@@ -539,50 +539,6 @@ bool AnalysisGroupC::execute() {
             }
         }
 
-        // {
-        //     for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
-        //         JM::EvtNavigator* othernav = it->get();
-        //         if (!othernav) {
-        //             LogError << "EvtNavigator is nullptr\n";
-        //             return false;
-        //         }
-        //         TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
-        //         if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
-        //         DetectorType otherdet = getDetectorType(othernav);
-        //         if (otherdet == DetectorType::UNKNOWN) {
-        //             LogError << "Unknown detector type\n";
-        //             return false;
-        //         }
-        //         LogInfo << "Current detector: " << static_cast<int>(curdet) << ", other detector: " << static_cast<int>(otherdet) << '\n';
-        //         if (is_possibly_cd_muon && otherdet == DetectorType::CD) {
-        //             JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav);
-        //             addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
-        //             LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
-        //             JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(othernav, "/Event/CdTrackRecClassify");
-        //             addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
-        //             LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
-        //             RecTrks rtrks;
-        //             if (!m_recTool->reconstruct(&rtrks)) {
-        //                 LogWarn << "Could not reconstruct the event with reconstruction tool\n";
-        //             }
-        //             addTrack(rtrks, "CdWpTtChi2", calib_cd.totq, calib_wp.totq, curts, track::loc::cd, tracks);
-        //             LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
-        //         }
-        //         if (is_possibly_wp_muon && otherdet == DetectorType::WP) {
-        //             JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav);
-        //             addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
-        //             LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
-        //             JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(othernav, "/Event/WpTrackRecClassify");
-        //             addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
-        //             // TODO NOT FOR NOW: Add track saver for WpClassify
-        //         }
-        //     }
-        //     addTtToTrack(tracks, curts);
-        //     if (tracks.empty()) {
-        //         tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib_cd.totq, calib_wp.totq, curts, track::loc::cd, -1.0});
-        //     }
-        // }
-
         if (m_tsEvt <= curts) {
             addFeature(tracks, curts, runId);
         }
