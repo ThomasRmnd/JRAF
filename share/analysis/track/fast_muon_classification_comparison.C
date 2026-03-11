@@ -23,11 +23,6 @@ int fast_muon_classification_comparison(const char* filepath) {
         return 1;
     }
     chain->Add(path);
-    TTree* tree = file->Get<TTree>("muons");
-    if (!tree) {
-        std::cerr << "Cannot retrieve tree muons in file " << filepath << '\n';
-        return 1;
-    }
 
     int run_id;
     time_t sec;
