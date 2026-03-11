@@ -75,6 +75,8 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     double chi2;
     double iposx, iposy, iposz; 
     double fposx, fposy, fposz;
+    unsigned int ntracks_cdclassify, ntracks_wpclassify;
+    unsigned int nstoppings_cdclassify, nstoppings_wpclassify;
     tree->SetBranchAddress("run_id", &run_id);
     tree->SetBranchAddress("sec", &sec);
     tree->SetBranchAddress("nsec", &nsec);
@@ -87,10 +89,20 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     tree->SetBranchAddress("fposx", &fposx);
     tree->SetBranchAddress("fposy", &fposy);
     tree->SetBranchAddress("fposz", &fposz);
+    tree->SetBranchAddress("ntracks_cdclassify", &ntracks_cdclassify);
+    tree->SetBranchAddress("ntracks_wpclassify", &ntracks_wpclassify);
+    tree->SetBranchAddress("nstoppings_cdclassify", &nstoppings_cdclassify);
+    tree->SetBranchAddress("nstoppings_wpclassify", &nstoppings_wpclassify);
 
     std::unordered_map<int, TH1D*> h_time_to_previous_muon;
+    std::unordered_map<int, TTimeStamp> h_time_to_previous_muon_single;
+    std::unordered_map<int, TTimeStamp> h_time_to_previous_muon_bundle;
     std::unordered_map<int, TTimeStamp> prvts;
+    std::unordered_map<int, TTimeStamp> prvts_single;
+    std::unordered_map<int, TTimeStamp> prvts_bundle;
     std::unordered_map<int, TF1*> fit_res;
+    std::unordered_map<int, TF1*> fit_res_single;
+    std::unordered_map<int, TF1*> fit_res_bundle;
 
     // TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
     // TTimeStamp prvts{0, 0};
@@ -111,16 +123,52 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
         TTimeStamp ts{sec, nsec};
         h_time_to_previous_muon[run_id]->Fill(ts - prvts[run_id]);
         prvts[run_id] = ts;
+        if (ntracks_wpclassify == 1) {
+            if (prvts_single.find(run_id) == prvts_single.end()) {
+                prvts_single[run_id] = TTimeStamp{sec, nsec};
+                h_time_to_previous_muon_single[run_id] = new TH1D(Form("h_time_to_previous_muon_single_%d", run_id), Form("Time to previous muon for run %d; #Delta t (s); Entries;", run_id), 100, 0.0, 5.0);
+                continue;
+            }
+            TTimeStamp ts{sec, nsec};
+            h_time_to_previous_muon_single[run_id]->Fill(ts - prvts_single[run_id]);
+            prvts_single[run_id] = ts;
+        }
+        if (ntracks_wpclassify > 1) {
+            if (prvts_bundle.find(run_id) == prvts_bundle.end()) {
+                prvts_bundle[run_id] = TTimeStamp{sec, nsec};
+                h_time_to_previous_muon_bundle[run_id] = new TH1D(Form("h_time_to_previous_muon_bundle_%d", run_id), Form("Time to previous muon for run %d; #Delta t (s); Entries;", run_id), 100, 0.0, 5.0);
+                continue;
+            }
+            TTimeStamp ts{sec, nsec};
+            h_time_to_previous_muon_bundle[run_id]->Fill(ts - prvts_bundle[run_id]);
+            prvts_bundle[run_id] = ts;
+        }
     }
 
     for (const auto& [run_id, h] : h_time_to_previous_muon) {
         fit_res[run_id] = fit_rate(h);
     }
+    for (const auto& [run_id, h] : h_time_to_previous_muon_single) {
+        fit_res_single[run_id] = fit_rate(h);
+    }
+    for (const auto& [run_id, h] : h_time_to_previous_muon_bundle) {
+        fit_res_bundle[run_id] = fit_rate(h);
+    }
 
     TH1D* h_rate_per_run = new TH1D("h_rate_per_run", "Rate per run;RUN ID;Rate (cps);", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
+    TH1D* h_rate_per_run_single = new TH1D("h_rate_per_run_single", "Rate per run for single;RUN ID;Rate (cps);", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
+    TH1D* h_rate_per_run_bundle = new TH1D("h_rate_per_run_bundle", "Rate per run for bundle;RUN ID;Rate (cps);", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
     for (const auto& [run_id, h] : h_time_to_previous_muon) {
         h_rate_per_run->SetBinContent(run_id - min_run_id + 1, fit_res[run_id]->GetParameter(1));
         h_rate_per_run->SetBinError(run_id - min_run_id + 1, fit_res[run_id]->GetParError(1));
+    }
+    for (const auto& [run_id, h] : h_time_to_previous_muon_single) {
+        h_rate_per_run_single->SetBinContent(run_id - min_run_id + 1, fit_res_single[run_id]->GetParameter(1));
+        h_rate_per_run_single->SetBinError(run_id - min_run_id + 1, fit_res_single[run_id]->GetParError(1));
+    }
+    for (const auto& [run_id, h] : h_time_to_previous_muon_bundle) {
+        h_rate_per_run_bundle->SetBinContent(run_id - min_run_id + 1, fit_res_bundle[run_id]->GetParameter(1));
+        h_rate_per_run_bundle->SetBinError(run_id - min_run_id + 1, fit_res_bundle[run_id]->GetParError(1));
     }
 
     TCanvas* c_rate_per_run = new TCanvas("c_rate_per_run", "Rate per run", 1000, 1000);
@@ -137,6 +185,36 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     h_rate_per_run->SetLineColor(kBlue);
     h_rate_per_run->SetMinimum(0.0);
     h_rate_per_run->Draw();
+    c_rate_per_run->Update();
+    h_rate_per_run_single->SetStats(0);
+    h_rate_per_run_single->GetYaxis()->SetMaxDigits(3);
+    h_rate_per_run_single->GetXaxis()->CenterTitle(true);
+    h_rate_per_run_single->GetYaxis()->CenterTitle(true);
+    h_rate_per_run_single->GetYaxis()->SetTitleOffset(1.25);
+    h_rate_per_run_single->SetMarkerStyle(kFullCircle);
+    h_rate_per_run_single->SetMarkerColor(kViolet);
+    h_rate_per_run_single->SetMarkerSize(1.0);
+    h_rate_per_run_single->SetLineWidth(2);
+    h_rate_per_run_single->SetLineColor(kViolet);
+    h_rate_per_run_single->SetMinimum(0.0);
+    h_rate_per_run_single->Draw("SAME");
+    c_rate_per_run->Update();
+    h_rate_per_run_bundle->SetStats(0);
+    h_rate_per_run_bundle->GetYaxis()->SetMaxDigits(3);
+    h_rate_per_run_bundle->GetXaxis()->CenterTitle(true);
+    h_rate_per_run_bundle->GetYaxis()->CenterTitle(true);
+    h_rate_per_run_bundle->GetYaxis()->SetTitleOffset(1.25);
+    h_rate_per_run_bundle->SetMarkerStyle(kFullCircle);
+    h_rate_per_run_bundle->SetMarkerColor(kRed);
+    h_rate_per_run_bundle->SetMarkerSize(1.0);
+    h_rate_per_run_bundle->SetLineWidth(2);
+    h_rate_per_run_bundle->SetLineColor(kRed);
+    h_rate_per_run_bundle->SetMinimum(0.0);
+    h_rate_per_run_bundle->Draw("SAME");
+    c_rate_per_run->Update();
+    c_rate_per_run->SetTickx();
+    c_rate_per_run->SetTicky();
+    c_rate_per_run->SetGrid();
     c_rate_per_run->Update();
 
     // if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
