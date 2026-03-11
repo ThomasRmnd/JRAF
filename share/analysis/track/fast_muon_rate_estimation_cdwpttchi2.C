@@ -51,7 +51,8 @@ TF1* fit_rate(TH1D* h) {
     TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * exp(-[1] * x)", h->GetXaxis()->GetXmin(), h->GetXaxis()->GetXmax());
     f->SetParameter(0, h->GetBinContent(1));
     f->SetParameter(1, h->GetRMS());
-    return h->Fit(f, "R");
+    h->Fit(f, "R");
+    return f;
 }
 
 int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
