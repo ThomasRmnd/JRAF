@@ -22,7 +22,7 @@ int fast_muon_classification_comparison(const char* filepath) {
         std::cerr << "Cannot create chain muons\n";
         return 1;
     }
-    chain->Add(path);
+    chain->Add(filepath);
 
     int run_id;
     time_t sec;
