@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 
 #include <TFile.h>
 #include <TTimeStamp.h>
@@ -45,6 +46,13 @@ int fit_and_plot_rate(TH1D* h) {
     return 0;
 }
 
+TFitResultPtr fit_rate(TH1D* h) {
+    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * exp(-[1] * x)", 0.0, 2.0);
+    f->SetParameter(0, h->GetBinContent(1));
+    f->SetParameter(1, h->GetRMS());
+    return h->Fit(f, "R");
+}
+
 int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     TFile* file = TFile::Open(filepath, "READ");
     if (!file) {
@@ -78,18 +86,31 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     tree->SetBranchAddress("fposy", &fposy);
     tree->SetBranchAddress("fposz", &fposz);
 
-    TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
+    std::unrordered_map<int, TH1D*> h_time_to_previous_muon;
+    std::unrodered_map<int, TTimeStamp> prvts;
+    std::unrordered_map<int, TFitResultPtr> fit_res;
 
-    TTimeStamp prvts{0, 0};
-    long nentries = tree->GetEntries();
-    for (long k = 0l; k < nentries; ++k) {
+    // TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
+    // TTimeStamp prvts{0, 0};
+
+    Long64_t nentries = tree->GetEntries();
+    for (Long64_t k = 0l; k < nentries; ++k) {
         tree->GetEntry(k);
+        if (prvts.find(run_id) == prvts.end()) {
+            prvts[run_id] = TTimeStamp{sec, nsec};
+            h_time_to_previous_muon[run_id] = new TH1D(Form("h_time_to_previous_muon_%d", run_id), Form("Time to previous muon for run %d; #Delta t (s); Entries;", run_id), 100, 0.0, 5.0);
+            continue;
+        }
         TTimeStamp ts{sec, nsec};
-        h_time_to_previous_muon_cdwpttchi2->Fill(ts - prvts);
-        prvts = ts;
+        h_time_to_previous_muon[run_id]->Fill(ts - prvts[run_id]);
+        prvts[run_id] = ts;
     }
 
-    if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
+    for (const auto& [run_id, h] : h_time_to_previous_muon) {
+        fit_res[run_id] = fit_rate(h);
+    }
+
+    // if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
 
     return 0;
 }
