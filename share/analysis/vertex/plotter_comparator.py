@@ -247,7 +247,7 @@ class Histogram1DPlotter(BasePlotter):
 
 class PromptEnergyPlotter(Histogram1DPlotter):
     def __init__(self, binmode="nmo", **kwargs):
-        bins = nmo_analysis_bins() if binmode == "nmo" else np.linspace(0, 12, 51)
+        bins = nmo_analysis_bins() if binmode == "nmo" else np.linspace(0, 12, 101)
         super().__init__(
             bins=bins, 
             xlabel=r"$E_{p}$ (MeV)", ylabel="Entries", xlim=(0, 12.5),
@@ -509,8 +509,26 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
 
     if "IBD_all_reprod" in filepath1:
         data1["run_number"] = np.round(data1["run_number"]).astype(int)
+        data1["run_id"] = data1["run_number"]
+        data1["e_p"] = data1["energy_p_omilrec"]
+        data1["e_d"] = data1["energy_d_omilrec"]
+        data1["posx_p"] = data1["vertex_x_p_omilrec"] * 1000.0
+        data1["posy_p"] = data1["vertex_y_p_omilrec"] * 1000.0
+        data1["posz_p"] = data1["vertex_z_p_omilrec"] * 1000.0
+        data1["posx_d"] = data1["vertex_x_d_omilrec"] * 1000.0
+        data1["posy_d"] = data1["vertex_y_d_omilrec"] * 1000.0
+        data1["posz_d"] = data1["vertex_z_d_omilrec"] * 1000.0
     if "IBD_all_reprod" in filepath2: 
         data2["run_number"] = np.round(data2["run_number"]).astype(int)
+        data2["run_id"] = data2["run_number"]
+        data2["e_p"] = data2["energy_p_omilrec"]
+        data2["e_d"] = data2["energy_d_omilrec"]
+        data2["posx_p"] = data2["vertex_x_p_omilrec"] * 1000.0
+        data2["posy_p"] = data2["vertex_y_p_omilrec"] * 1000.0
+        data2["posz_p"] = data2["vertex_z_p_omilrec"] * 1000.0
+        data2["posx_d"] = data2["vertex_x_d_omilrec"] * 1000.0
+        data2["posy_d"] = data2["vertex_y_d_omilrec"] * 1000.0
+        data2["posz_d"] = data2["vertex_z_d_omilrec"] * 1000.0
 
     max_run_id = 11039
     failed_jobs = [
@@ -519,17 +537,17 @@ def plot_comparator(filepath1 : str, filepath2 : str, label1 : str, label2 : str
         11027, 11237, 11410, 11397, 11788
     ]
 
-    # mask1 = (data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"]) <= max_run_id 
-    # mask2 = (data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"]) <= max_run_id 
-    # data1 = {k: v[mask1] for k, v in data1.items()} 
-    # data2 = {k: v[mask2] for k, v in data2.items()}
+    mask1 = (data1["run_id"] <= max_run_id)
+    mask2 = (data2["run_id"] <= max_run_id)
+    data1 = {k: v[mask1] for k, v in data1.items()} 
+    data2 = {k: v[mask2] for k, v in data2.items()}
 
     # mask1 = ~np.isin(data1["run_id"] if "IBD_all_reprod" not in filepath1 else data1["run_number"], failed_jobs) 
     # mask2 = ~np.isin(data2["run_id"] if "IBD_all_reprod" not in filepath2 else data2["run_number"], failed_jobs)
     # data1 = {k: v[mask1] for k, v in data1.items()} 
     # data2 = {k: v[mask2] for k, v in data2.items()}
 
-    e_p_plotter = PromptEnergyPlotter(binmode="normal")
+    e_p_plotter = PromptEnergyPlotter(binmode="nmo")
     e_p_plotter.add(data1["e_p"] if "IBD_all_reprod" not in filepath1 else data1["energy_p_omilrec"], linecolor="#648fff", fillcolor="#eff3ff", label=label1)
     e_p_plotter.add(data2["e_p"] if "IBD_all_reprod" not in filepath2 else data2["energy_p_omilrec"], linecolor="#ff6464", fillcolor="#ffefef", label=label2)
     e_p_plotter.plot()
