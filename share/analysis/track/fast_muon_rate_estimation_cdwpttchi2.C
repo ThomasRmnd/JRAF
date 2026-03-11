@@ -126,11 +126,16 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     TCanvas* c_rate_per_run = new TCanvas("c_rate_per_run", "Rate per run", 1000, 1000);
     c_rate_per_run->cd();
     h_rate_per_run->SetStats(0);
-    h_rate_per_run->GetXaxis()->SetMaxDigits(3);
     h_rate_per_run->GetYaxis()->SetMaxDigits(3);
     h_rate_per_run->GetXaxis()->CenterTitle(true);
     h_rate_per_run->GetYaxis()->CenterTitle(true);
     h_rate_per_run->GetYaxis()->SetTitleOffset(1.25);
+    h_rate_per_run->SetMarkerStyle(kFullCircle);
+    h_rate_per_run->SetMarkerColor(kBlue);
+    h_rate_per_run->SetMarkerSize(2.0);
+    h_rate_per_run->SetLineWidth(3);
+    h_rate_per_run->SetLineColor(kBlue);
+    h_rate_per_run->SetMinimum(0.0);
     h_rate_per_run->Draw();
     c_rate_per_run->Update();
 
