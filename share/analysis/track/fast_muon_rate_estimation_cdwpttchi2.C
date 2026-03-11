@@ -86,9 +86,9 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     tree->SetBranchAddress("fposy", &fposy);
     tree->SetBranchAddress("fposz", &fposz);
 
-    std::unrordered_map<int, TH1D*> h_time_to_previous_muon;
-    std::unrodered_map<int, TTimeStamp> prvts;
-    std::unrordered_map<int, TFitResultPtr> fit_res;
+    std::unordered_map<int, TH1D*> h_time_to_previous_muon;
+    std::unordered_map<int, TTimeStamp> prvts;
+    std::unordered_map<int, TFitResultPtr> fit_res;
 
     // TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
     // TTimeStamp prvts{0, 0};
