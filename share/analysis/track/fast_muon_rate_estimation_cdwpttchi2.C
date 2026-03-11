@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <unordered_map>
 
 #include <TFile.h>
@@ -46,8 +47,8 @@ int fit_and_plot_rate(TH1D* h) {
     return 0;
 }
 
-TFitResultPtr fit_rate(TH1D* h) {
-    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * exp(-[1] * x)", 0.0, 2.0);
+TF1* fit_rate(TH1D* h) {
+    TF1* f = new TF1(Form("f_%s", h->GetName()), "[0] * exp(-[1] * x)", h->GetXaxis()->GetXmin(), h->GetXaxis()->GetXmax());
     f->SetParameter(0, h->GetBinContent(1));
     f->SetParameter(1, h->GetRMS());
     return h->Fit(f, "R");
@@ -88,14 +89,19 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
 
     std::unordered_map<int, TH1D*> h_time_to_previous_muon;
     std::unordered_map<int, TTimeStamp> prvts;
-    std::unordered_map<int, TFitResultPtr> fit_res;
+    std::unordered_map<int, TF1*> fit_res;
 
     // TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
     // TTimeStamp prvts{0, 0};
 
+    int min_run_id = std::numeric_limits<int>::max();
+    int max_run_id = std::numeric_limits<int>::min();
+
     Long64_t nentries = tree->GetEntries();
     for (Long64_t k = 0l; k < nentries; ++k) {
         tree->GetEntry(k);
+        min_run_id = std::min(min_run_id, run_id);
+        max_run_id = std::max(max_run_id, run_id);
         if (prvts.find(run_id) == prvts.end()) {
             prvts[run_id] = TTimeStamp{sec, nsec};
             h_time_to_previous_muon[run_id] = new TH1D(Form("h_time_to_previous_muon_%d", run_id), Form("Time to previous muon for run %d; #Delta t (s); Entries;", run_id), 100, 0.0, 5.0);
@@ -108,6 +114,12 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
 
     for (const auto& [run_id, h] : h_time_to_previous_muon) {
         fit_res[run_id] = fit_rate(h);
+    }
+
+    TH1D* h_rate_per_run = new TH1D("h_rate_per_run", "Rate per run;RUN ID;Rate (cps);", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
+    for (const auto& [run_id, h] : h_time_to_previous_muon) {
+        h_rate_per_run->SetBinContent(run_id - min_run_id + 1, fit_res[run_id]->GetParameter(1));
+        h_rate_per_run->SetBinError(run_id - min_run_id + 1, fit_res[run_id]->GetParError(1));
     }
 
     // if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
