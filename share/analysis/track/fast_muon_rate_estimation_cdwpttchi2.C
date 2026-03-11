@@ -95,8 +95,8 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     tree->SetBranchAddress("nstoppings_wpclassify", &nstoppings_wpclassify);
 
     std::unordered_map<int, TH1D*> h_time_to_previous_muon;
-    std::unordered_map<int, TTimeStamp> h_time_to_previous_muon_single;
-    std::unordered_map<int, TTimeStamp> h_time_to_previous_muon_bundle;
+    std::unordered_map<int, TH1D*> h_time_to_previous_muon_single;
+    std::unordered_map<int, TH1D*> h_time_to_previous_muon_bundle;
     std::unordered_map<int, TTimeStamp> prvts;
     std::unordered_map<int, TTimeStamp> prvts_single;
     std::unordered_map<int, TTimeStamp> prvts_bundle;
