@@ -122,6 +122,17 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
         h_rate_per_run->SetBinError(run_id - min_run_id + 1, fit_res[run_id]->GetParError(1));
     }
 
+    TCanvas* c_rate_per_run = new TCanvas("c_rate_per_run", "Rate per run", 1000, 1000);
+    c_rate_per_run->cd();
+    h_rate_per_run->SetStats(0);
+    h_rate_per_run->GetXaxis()->SetMaxDigits(3);
+    h_rate_per_run->GetYaxis()->SetMaxDigits(3);
+    h_rate_per_run->GetXaxis()->CenterTitle(true);
+    h_rate_per_run->GetYaxis()->CenterTitle(true);
+    h_rate_per_run->GetYaxis()->SetTitleOffset(1.25);
+    h_rate_per_run->Draw();
+    c_rate_per_run->Update();
+
     // if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
 
     return 0;
