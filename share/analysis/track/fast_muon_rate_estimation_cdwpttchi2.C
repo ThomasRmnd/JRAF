@@ -133,10 +133,9 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     h_rate_per_run->SetMarkerStyle(kFullCircle);
     h_rate_per_run->SetMarkerColor(kBlue);
     h_rate_per_run->SetMarkerSize(1.0);
-    h_rate_per_run->SetLineWidth(3);
+    h_rate_per_run->SetLineWidth(2);
     h_rate_per_run->SetLineColor(kBlue);
-    h_rate_per_run->SetMinimum(4.0);
-    h_rate_per_run->SetMaximum(6.0);
+    h_rate_per_run->SetMinimum(0.0);
     h_rate_per_run->Draw();
     c_rate_per_run->Update();
 
