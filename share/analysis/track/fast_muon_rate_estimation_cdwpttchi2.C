@@ -257,6 +257,28 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     h_chi2_per_run->SetMinimum(0.0);
     h_chi2_per_run->Draw();
     c_chi2_per_run->Update();
+    // Add the WP flasher run period: 11283 - 11357
+    TLine* line_wpflasher_start = new TLine(11283, 0.0, 11283, h_chi2_per_run->GetMaximum() * 1.1);
+    line_wpflasher_start->SetLineStyle(kDashed);
+    line_wpflasher_start->SetLineWidth(2);
+    line_wpflasher_start->SetLineColor(kRed);
+    line_wpflasher_start->Draw("SAME");
+    TLine* line_wpflasher_end = new TLine(11357, 0.0, 11357, h_chi2_per_run->GetMaximum() * 1.1);
+    line_wpflasher_end->SetLineStyle(kDashed);
+    line_wpflasher_end->SetLineWidth(2);
+    line_wpflasher_end->SetLineColor(kRed);
+    line_wpflasher_end->Draw("SAME");
+    // Add the TT bad reco period: 11263 - 12129
+    TLine* line_badtt_start = new TLine(11263, 0.0, 11263, h_chi2_per_run->GetMaximum() * 1.1);
+    line_badtt_start->SetLineStyle(kDashed);
+    line_badtt_start->SetLineWidth(2);
+    line_badtt_start->SetLineColor(kRed);
+    line_badtt_start->Draw("SAME");
+    TLine* line_badtt_end = new TLine(12129, 0.0, 12129, h_chi2_per_run->GetMaximum() * 1.1);
+    line_badtt_end->SetLineStyle(kDashed);
+    line_badtt_end->SetLineWidth(2);
+    line_badtt_end->SetLineColor(kRed);
+    line_badtt_end->Draw("SAME");
     c_chi2_per_run->SetTickx();
     c_chi2_per_run->SetTicky();
     c_chi2_per_run->SetGrid();
