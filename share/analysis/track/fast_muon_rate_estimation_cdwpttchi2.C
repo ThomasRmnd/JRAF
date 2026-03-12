@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <unordered_map>
@@ -104,6 +105,11 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     std::unordered_map<int, TF1*> fit_res_single;
     std::unordered_map<int, TF1*> fit_res_bundle;
 
+    std::unordered_map<int, double> sum_chi2;
+    std::unordered_map<int, double> sum_chi2sq;
+    std::unordered_map<int, std::size_t> ntracks;
+    std::unrodered_map<int, TH1D*> h_clippingness;
+
     // TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
     // TTimeStamp prvts{0, 0};
 
@@ -115,6 +121,12 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
         tree->GetEntry(k);
         min_run_id = std::min(min_run_id, run_id);
         max_run_id = std::max(max_run_id, run_id);
+        sum_chi2[run_id] += chi2;
+        sum_chi2sq[run_id] += chi2 * chi2;
+        ntracks[run_id] += 1ul;
+        // if (h_clippingness.find(run_id) == h_clippingness.end()) {
+        //     h_clippingness[run_id] = new TH1D(Form("h_clippingness_%d", run_id), Form("Clippingness for run %d; Clippingness; Entries;", run_id), 100, 0.0, 20000.0);
+        // }
         if (prvts.find(run_id) == prvts.end()) {
             prvts[run_id] = TTimeStamp{sec, nsec};
             h_time_to_previous_muon[run_id] = new TH1D(Form("h_time_to_previous_muon_%d", run_id), Form("Time to previous muon for run %d; #Delta t (s); Entries;", run_id), 100, 0.0, 5.0);
@@ -216,6 +228,31 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     c_rate_per_run->SetTicky();
     c_rate_per_run->SetGrid();
     c_rate_per_run->Update();
+
+    TCanvas* c_chi2_per_run = new TCanvas("c_chi2_per_run", "Chi2 per run", 1000, 1000);
+    c_chi2_per_run->cd();
+    TH1D* h_chi2_per_run = new TH1D("h_chi2_per_run", "Chi2 per run;RUN ID;Chi2;", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
+    for (const auto& [run_id, h] : h_time_to_previous_muon) {
+        h_chi2_per_run->SetBinContent(run_id - min_run_id + 1, sum_chi2[run_id] / ntracks[run_id]);
+        h_chi2_per_run->SetBinError(run_id - min_run_id + 1, sqrt(sum_chi2sq[run_id] / ntracks[run_id] - std::pow(sum_chi2[run_id] / ntracks[run_id], 2.0)));
+    }
+    h_chi2_per_run->SetStats(0);
+    h_chi2_per_run->GetYaxis()->SetMaxDigits(3);
+    h_chi2_per_run->GetXaxis()->CenterTitle(true);
+    h_chi2_per_run->GetYaxis()->CenterTitle(true);
+    h_chi2_per_run->GetYaxis()->SetTitleOffset(1.25);
+    h_chi2_per_run->SetMarkerStyle(kFullCircle);
+    h_chi2_per_run->SetMarkerColor(kBlue);
+    h_chi2_per_run->SetMarkerSize(1.0);
+    h_chi2_per_run->SetLineWidth(2);
+    h_chi2_per_run->SetLineColor(kBlue);
+    h_chi2_per_run->SetMinimum(0.0);
+    h_chi2_per_run->Draw();
+    c_chi2_per_run->Update();
+    c_chi2_per_run->SetTickx();
+    c_chi2_per_run->SetTicky();
+    c_chi2_per_run->SetGrid();
+    c_chi2_per_run->Update();
 
     // if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
 
