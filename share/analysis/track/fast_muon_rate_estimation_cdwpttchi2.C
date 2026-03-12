@@ -121,9 +121,11 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
         tree->GetEntry(k);
         min_run_id = std::min(min_run_id, run_id);
         max_run_id = std::max(max_run_id, run_id);
-        sum_chi2[run_id] += chi2;
-        sum_chi2sq[run_id] += chi2 * chi2;
-        ntracks[run_id] += 1ul;
+        if (!std::isnan(chi2)) {
+            sum_chi2[run_id] += chi2;
+            sum_chi2sq[run_id] += chi2 * chi2;
+            ntracks[run_id] += 1ul;
+        }
         // if (h_clippingness.find(run_id) == h_clippingness.end()) {
         //     h_clippingness[run_id] = new TH1D(Form("h_clippingness_%d", run_id), Form("Clippingness for run %d; Clippingness; Entries;", run_id), 100, 0.0, 20000.0);
         // }
