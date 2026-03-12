@@ -237,7 +237,7 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     for (const auto& [run_id, h] : h_time_to_previous_muon) {
         if (ntracks[run_id] == 0) continue;
         h_chi2_per_run->SetBinContent(run_id - min_run_id + 1, sum_chi2[run_id] / ntracks[run_id]);
-        h_chi2_per_run->SetBinError(run_id - min_run_id + 1, sqrt(sum_chi2sq[run_id] / ntracks[run_id] - std::pow(sum_chi2[run_id] / ntracks[run_id], 2.0)));
+        // h_chi2_per_run->SetBinError(run_id - min_run_id + 1, sqrt(sum_chi2sq[run_id] / ntracks[run_id] - std::pow(sum_chi2[run_id] / ntracks[run_id], 2.0)));
     }
     h_chi2_per_run->SetStats(0);
     h_chi2_per_run->GetYaxis()->SetMaxDigits(3);
