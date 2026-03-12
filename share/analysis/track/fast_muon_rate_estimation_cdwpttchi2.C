@@ -110,6 +110,8 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     std::unordered_map<int, std::size_t> ntracks;
     std::unordered_map<int, TH1D*> h_clippingness;
 
+    TH2D* h_chi2_vs_clippingness = new TH2D("h_chi2_vs_clippingness", "Chi2 vs Clippingness;L (m);#chi^{2};", 100, 0.0, 20000.0, 100, 0.0, 20.0);
+
     // TH1D* h_time_to_previous_muon_cdwpttchi2 = new TH1D("h_time_to_previous_muon_cdwpttchi2", "Time to previous muon for CdWpTtChi2; #Delta t (s); Entries;", 100, 0.0, 5.0);
     // TTimeStamp prvts{0, 0};
 
@@ -130,6 +132,7 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
             sum_chi2[run_id] += chi2;
             sum_chi2sq[run_id] += chi2 * chi2;
             ntracks[run_id] += 1ul;
+            h_chi2_vs_clippingness->Fill((TVector3(fposx, fposy, fposz) - TVector3(iposx, iposy, iposz)).Unit().Cross(-TVector3(iposx, iposy, iposz)).Mag(), chi2);
         }
         // if (h_clippingness.find(run_id) == h_clippingness.end()) {
         //     h_clippingness[run_id] = new TH1D(Form("h_clippingness_%d", run_id), Form("Clippingness for run %d; Clippingness; Entries;", run_id), 100, 0.0, 20000.0);
@@ -283,6 +286,19 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
     c_chi2_per_run->SetTicky();
     c_chi2_per_run->SetGrid();
     c_chi2_per_run->Update();
+
+    TCanvas* c_chi2_vs_clippingness = new TCanvas("c_chi2_vs_clippingness", "Chi2 vs Clippingness", 1000, 1000);
+    c_chi2_vs_clippingness->cd();
+    h_chi2_vs_clippingness->SetStats(0);
+    h_chi2_vs_clippingness->GetXaxis()->CenterTitle(true);
+    h_chi2_vs_clippingness->GetYaxis()->CenterTitle(true);
+    h_chi2_vs_clippingness->GetYaxis()->SetTitleOffset(1.25);
+    h_chi2_vs_clippingness->Draw("COLZ");
+    c_chi2_vs_clippingness->Update();
+    c_chi2_vs_clippingness->SetTickx();
+    c_chi2_vs_clippingness->SetTicky();
+    c_chi2_vs_clippingness->SetGrid();
+    c_chi2_vs_clippingness->Update();
 
     // if (int res = fit_and_plot_rate(h_time_to_previous_muon_cdwpttchi2)) return res;
 
