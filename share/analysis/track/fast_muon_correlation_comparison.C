@@ -122,11 +122,11 @@ int fast_muon_correlation_comparison(const char* filepath_cdwpttchi2, const char
             min_run_id = std::min(min_run_id, it->run_id);
             max_run_id = std::max(max_run_id, it->run_id);
             if (prvts.find(it->run_id) == prvts.end()) {
-                prvts[it->run_id] = TTimeStamp{sec, nsec};
+                prvts[it->run_id] = it->ts;
                 h_time_to_previous_muon[it->run_id] = new TH1D(Form("h_time_to_previous_muon_%d", it->run_id), Form("Time to previous muon for run %d; #Delta t (s); Entries;", it->run_id), 100, 0.0, 5.0);
                 continue;
             }
-            TTimeStamp ts{sec, nsec};
+            TTimeStamp ts = it->ts;
             h_time_to_previous_muon[it->run_id]->Fill(ts - prvts[it->run_id]);
             prvts[it->run_id] = ts;
         }
