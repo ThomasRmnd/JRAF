@@ -121,7 +121,7 @@ int fast_muon_rate_estimation_cdwpttchi2(const char* filepath) {
         tree->GetEntry(k);
         min_run_id = std::min(min_run_id, run_id);
         max_run_id = std::max(max_run_id, run_id);
-        if (!std::isnan(chi2)) {
+        if (!std::isnan(chi2) && !std::isinf(chi2)) {
             if (sum_chi2.find(run_id) == sum_chi2.end()) {
                 sum_chi2[run_id] = 0.0;
                 sum_chi2sq[run_id] = 0.0;
