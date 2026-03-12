@@ -133,13 +133,13 @@ int fast_muon_correlation_comparison(const char* filepath_cdwpttchi2, const char
     }
 
     for (const auto& [run_id, h] : h_time_to_previous_muon) {
-        fit_res_single[run_id] = fit_rate(h);
+        fit_res[run_id] = fit_rate(h);
     }
 
     TH1D* h_rate_per_run = new TH1D("h_rate_per_run", "Rate per run;RUN ID;Rate (cps);", max_run_id - min_run_id + 1, min_run_id, max_run_id + 1);
     for (const auto& [run_id, h] : h_time_to_previous_muon) {
-        h_rate_per_run->SetBinContent(run_id - min_run_id + 1, fit_res_single[run_id]->GetParameter(1));
-        h_rate_per_run->SetBinError(run_id - min_run_id + 1, fit_res_single[run_id]->GetParError(1));
+        h_rate_per_run->SetBinContent(run_id - min_run_id + 1, fit_res[run_id]->GetParameter(1));
+        h_rate_per_run->SetBinError(run_id - min_run_id + 1, fit_res[run_id]->GetParError(1));
     }
 
     TCanvas* c_rate_per_run = new TCanvas("c_rate_per_run", "Rate per run", 1000, 1000);
