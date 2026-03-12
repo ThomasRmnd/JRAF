@@ -63,7 +63,7 @@ int fast_muon_correlation_comparison(const char* filepath_cdwpttchi2, const char
     chain_cdwpttchi2->SetBranchAddress("nstoppings_cdclassify", &nstoppings_cdclassify);
     chain_cdwpttchi2->SetBranchAddress("nstoppings_wpclassify", &nstoppings_wpclassify);
 
-    std::<set> tracks_cdwpttchi2;
+    std::set<track> tracks_cdwpttchi2;
     Long64_t nentries = chain_cdwpttchi2->GetEntries();
     for (Long64_t k = 0l; k < nentries; ++k) {
         chain_cdwpttchi2->GetEntry(k);
