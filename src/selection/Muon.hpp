@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_SELECTION_MUON_HPP_
-#define ANALYSISGROUPC_SELECTION_MUON_HPP_
+#ifndef JRAF_SELECTION_MUON_HPP_
+#define JRAF_SELECTION_MUON_HPP_
 
 #include "selection/Selection.hpp"
 
@@ -54,4 +54,4 @@ private:
 
 };
 
-#endif // ANALYSISGROUPC_SELECTION_MUON_HPP_
+#endif // JRAF_SELECTION_MUON_HPP_

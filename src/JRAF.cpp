@@ -1,4 +1,4 @@
-#include "AnalysisGroupC.hpp"
+#include "JRAF.hpp"
 
 #include <cmath>
 #include <numeric>
@@ -21,10 +21,11 @@
 #include "analysis/MultiplicityAnalysis.hpp"
 #include "analysis/NeutronAnalysis.hpp"
 #include "event/EventCache.hpp"
+#include "utils/NavBufferWrapper.hpp"
 
-DECLARE_ALGORITHM(AnalysisGroupC);
+DECLARE_ALGORITHM(JRAF);
 
-AnalysisGroupC::AnalysisGroupC(const std::string& name) : 
+JRAF::JRAF(const std::string& name) : 
     AlgBase{name}
 {
     declProp("Loader", m_loaderName = "JointLoader");
@@ -43,7 +44,7 @@ AnalysisGroupC::AnalysisGroupC(const std::string& name) :
     declProp("FeatureOutputFilename", m_featureSaver.filename = "");
 }
 
-bool AnalysisGroupC::initialize() {
+bool JRAF::initialize() {
     if (!initBufSvc()) return false;
 
     SniperPtr<RootInputSvc> iptSvc(getParent(), "InputSvc");
@@ -64,7 +65,7 @@ bool AnalysisGroupC::initialize() {
     return true;
 }
 
-bool AnalysisGroupC::initBufSvc() {
+bool JRAF::initBufSvc() {
     SniperDataPtr<JM::NavBuffer> navBuf(getParent(), "/Event");
     if (navBuf.invalid()) {
         LogError << "Cannot get the NavBuffer @ /Event\n";
@@ -74,7 +75,7 @@ bool AnalysisGroupC::initBufSvc() {
     return true; 
 }
 
-bool AnalysisGroupC::initLoader() {
+bool JRAF::initLoader() {
     m_loader = tool<Loader>(m_loaderName);
     if (!m_loader) {
         LogError << "Failed to retrieve reconstruction tool named " << m_loaderName << '\n';
@@ -88,7 +89,7 @@ bool AnalysisGroupC::initLoader() {
     return true;
 }
 
-bool AnalysisGroupC::initRecTool() {
+bool JRAF::initRecTool() {
     m_recTool = tool<IRecMuonTool>(m_recToolName);
     if (!m_recTool) {
         LogError << "Failed to retrieve reconstruction tool named " << m_recToolName << '\n';
@@ -99,7 +100,7 @@ bool AnalysisGroupC::initRecTool() {
     return true;
 }
 
-bool AnalysisGroupC::initAnalyses() {
+bool JRAF::initAnalyses() {
     m_file = TFile::Open(m_ofilename.c_str(), "RECREATE");
     if (!m_file) {
         LogError << "Failed to create output file: " << m_ofilename << '\n';
@@ -125,7 +126,7 @@ bool AnalysisGroupC::initAnalyses() {
     return true;
 }
 
-void AnalysisGroupC::addTrack(RecTrks& rec_tracks, const std::string& method, double totq_cd, double totq_wp, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks) {
+void JRAF::addTrack(RecTrks& rec_tracks, const std::string& method, double totq_cd, double totq_wp, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks) {
     for (int k = 0; k < rec_tracks.size(); ++k) {
         tracks.push_back(track{
             method, vec3{rec_tracks.getStart(k)}, vec3{rec_tracks.getEnd(k)}, totq_cd, totq_wp, ts, det, rec_tracks.getQuality(k)
@@ -133,7 +134,7 @@ void AnalysisGroupC::addTrack(RecTrks& rec_tracks, const std::string& method, do
     }
 }
 
-void AnalysisGroupC::addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
+void JRAF::addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
     if (!cdt_hdr || !cdt_hdr->event()) return;
     const std::vector<JM::RecTrack*>& rec_tracks = cdt_hdr->event()->tracks();
     for (JM::RecTrack* t : rec_tracks) {
@@ -143,7 +144,7 @@ void AnalysisGroupC::addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& 
     }
 }
 
-void AnalysisGroupC::addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
+void JRAF::addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
     if (!wpt_hdr || !wpt_hdr->event()) return;
     const std::vector<JM::RecTrack*>& rec_tracks = wpt_hdr->event()->tracks();
     for (JM::RecTrack* t : rec_tracks) {
@@ -153,7 +154,7 @@ void AnalysisGroupC::addTrack(JM::WpRecHeader* wpt_hdr, const std::string& metho
     }
 }
 
-void AnalysisGroupC::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
+void JRAF::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
     if (!ttt_hdr || !ttt_hdr->event()) return;
     JM::TtRecEvt* ttt_evt = ttt_hdr->event();
     for (int k = 0; k < ttt_evt->nTracks(); ++k) {
@@ -166,7 +167,7 @@ void AnalysisGroupC::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& metho
     }
 }
 
-void AnalysisGroupC::addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
+void JRAF::addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
     if (!oec_hdr || !oec_hdr->event("JM::OecEvt")) return;
     JM::OecEvt* oec_evt = dynamic_cast<JM::OecEvt*>(oec_hdr->event("JM::OecEvt"));
     vertices.push_back(vertex{
@@ -174,7 +175,7 @@ void AnalysisGroupC::addVertex(JM::OecHeader* oec_hdr, const std::string& method
     });
 }
 
-void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
+void JRAF::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
     if (!cdv_hdr || !cdv_hdr->event()) return;
     const std::vector<JM::RecVertex*>& rec_vertices = cdv_hdr->event()->vertices();
     for (JM::RecVertex* v : rec_vertices) {
@@ -184,7 +185,7 @@ void AnalysisGroupC::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string
     }
 }
 
-calibration_context AnalysisGroupC::getCalibrationContext(const std::list<JM::CalibPmtChannel*>& clb_list) {
+calibration_context JRAF::getCalibrationContext(const std::list<JM::CalibPmtChannel*>& clb_list) {
     calibration_context calib;
     for (JM::CalibPmtChannel* clb : clb_list) {
         if (!clb) continue;
@@ -223,7 +224,7 @@ calibration_context AnalysisGroupC::getCalibrationContext(const std::list<JM::Ca
     return calib;
 }
 
-DetectorType AnalysisGroupC::getDetectorType(JM::EvtNavigator* nav) {
+DetectorType JRAF::getDetectorType(JM::EvtNavigator* nav) {
     DetectorType type = DetectorType::UNKNOWN;
 
     JM::EvtNavigator::DetectorType evt_type = nav->getDetectorType();
@@ -235,7 +236,7 @@ DetectorType AnalysisGroupC::getDetectorType(JM::EvtNavigator* nav) {
     return type;
 }
 
-int AnalysisGroupC::getTtLayerId(double z) {
+int JRAF::getTtLayerId(double z) {
     if (24000.0 <= z && z <= 25000.0) return 0;  // main
     if (25500.0 <= z && z <= 26500.0) return 1;  // main
     if (27000.0 <= z && z <= 28000.0) return 2;  // main
@@ -246,7 +247,7 @@ int AnalysisGroupC::getTtLayerId(double z) {
     return -1; // not inside any valid layer
 };
 
-void AnalysisGroupC::addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts) {
+void JRAF::addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts) {
     if (!m_ttRecoFile.find(curts)) return;
     
     if (m_ttRecoFile.NTracks != 1) {
@@ -277,7 +278,7 @@ void AnalysisGroupC::addTtToTrack(std::vector<track>& tracks, const TimeStamp& c
     });
 }
 
-void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
+void JRAF::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
     m_featureSaver.reset();
     
     if (!m_ttRecoFile.find(curts)) return;
@@ -380,8 +381,8 @@ void AnalysisGroupC::addFeature(const std::vector<track>& tracks, const TimeStam
     m_featureSaver.fill();
 }
 
-bool AnalysisGroupC::execute() {
-    LogInfo << "---------- Processing event by AnalysisGroupC: " << ++m_iEvt << " ----------\n";
+bool JRAF::execute() {
+    LogInfo << "---------- Processing event by JRAF: " << ++m_iEvt << " ----------\n";
 
     JM::EvtNavigator* nav = m_buf->curEvt();
     if (!nav) {
@@ -399,8 +400,7 @@ bool AnalysisGroupC::execute() {
     auto t_start = clock::now();
     // DEBUG --- Timing
 
-    NavBufferWrapper bufwrap(*m_buf);
-    for (; bufwrap.current() != bufwrap.end(); bufwrap.next()) {
+    for (NavBufferWrapper bufwrap(*m_buf); bufwrap.current() != bufwrap.end(); bufwrap.next()) {
         if (EventCache::contains(bufwrap.curEvt())) continue;
 
         JM::EvtNavigator* curnav = bufwrap.curEvt();
@@ -648,7 +648,7 @@ bool AnalysisGroupC::execute() {
     return true;
 }
 
-bool AnalysisGroupC::finalize() {
+bool JRAF::finalize() {
     if (m_loader && !m_loader->finalize()) return false;
     if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
     

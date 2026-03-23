@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_EVENT_EVENT_HPP_
-#define ANALYSISGROUPC_EVENT_EVENT_HPP_
+#ifndef JRAF_EVENT_EVENT_HPP_
+#define JRAF_EVENT_EVENT_HPP_
 
 #include <vector>
 
@@ -51,4 +51,4 @@ std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits
     return os;
 }
 
-#endif // ANALYSISGROUPC_EVENT_EVENT_HPP_
+#endif // JRAF_EVENT_EVENT_HPP_

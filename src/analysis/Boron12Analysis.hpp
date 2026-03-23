@@ -1,15 +1,15 @@
-#ifndef JRAF_ANALYSIS_NEUTRONANALYSIS_HPP_
-#define JRAF_ANALYSIS_NEUTRONANALYSIS_HPP_
+#ifndef JRAF_ANALYSIS_BORON12ANALYSIS_HPP_
+#define JRAF_ANALYSIS_BORON12ANALYSIS_HPP_
 
 #include "analysis/Analysis.hpp"
 
-class NeutronAnalysis : public Analysis {
+class Boron12Analysis : public Analysis {
 
 public:
 
-    NeutronAnalysis(const std::string& name, const std::string& method);
+    Boron12Analysis(const std::string& name, const std::string& method);
 
-    ~NeutronAnalysis() override = default;
+    ~Boron12Analysis() override = default;
 
     bool initialize() override;
     void process(const EventContext::View& events) override;
@@ -39,4 +39,4 @@ private:
 
 };
 
-#endif // JRAF_ANALYSIS_NEUTRONANALYSIS_HPP_
+#endif // JRAF_ANALYSIS_BORON12ANALYSIS_HPP_

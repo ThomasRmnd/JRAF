@@ -1,4 +1,4 @@
-PKG(AnalysisGroupC
+PKG(JRAF
 
 MODULE
 

@@ -44,7 +44,7 @@ SKIP_MISSING_FILES=0
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") --iste <str> --campaign <str> --run <int> --list-base <str> --range <int> [options]
+Usage: $(basename "$0") --site <str> --campaign <str> --run <int> --list-base <str> --range <int> [options]
 
 Required:
   --site <str>                  Storage site selection {EOS|CNAF}

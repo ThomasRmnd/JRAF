@@ -1,5 +1,5 @@
-#ifndef ANALYSIS_EVENT_EVENTCACHE_HPP_
-#define ANALYSIS_EVENT_EVENTCACHE_HPP_
+#ifndef JRAF_EVENT_EVENTCACHE_HPP_
+#define JRAF_EVENT_EVENTCACHE_HPP_
 
 #include <map>
 #include <memory>
@@ -65,4 +65,4 @@ private:
     EventCache() = default;
 };
 
-#endif // ANALYSIS_EVENT_EVENTCACHE_HPP_
+#endif // JRAF_EVENT_EVENTCACHE_HPP_

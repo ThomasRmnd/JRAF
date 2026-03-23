@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_EVENT_IBD_HPP_
-#define ANALYSISGROUPC_EVENT_IBD_HPP_
+#ifndef JRAF_EVENT_IBD_HPP_
+#define JRAF_EVENT_IBD_HPP_
 
 #include "event/Vertex.hpp"
 
@@ -17,4 +17,4 @@ std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits
     return os << "prompt: {" << ibd.prompt << "}, delayed: {" << ibd.delayed << "}";
 }
 
-#endif // ANALYSISGROUPC_EVENT_IBD_HPP_
+#endif // JRAF_EVENT_IBD_HPP_

@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_VETO_VETO_HPP_
-#define ANALYSISGROUPC_VETO_VETO_HPP_
+#ifndef JRAF_VETO_VETO_HPP_
+#define JRAF_VETO_VETO_HPP_
 
 #include "Event/CdLpmtCalibHeader.h"
 #include "Event/CdTriggerHeader.h"
@@ -105,4 +105,4 @@ struct MuonVetoTracker {
 
 };
 
-#endif // ANALYSISGROUPC_VETO_VETO_HPP_
+#endif // JRAF_VETO_VETO_HPP_

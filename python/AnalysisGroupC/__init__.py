@@ -1,6 +1,6 @@
 import Sniper as sn
 import types
-sn.loadDll("libAnalysisGroupC.so")
+sn.loadDll("libJRAF.so")
 sn.loadDll("libCLHEPDict.so")
 
 def useLoader(self, name):
@@ -28,7 +28,7 @@ def useRecTool(self, name):
     self.property("RecTool").set(name)
     self.rectool = rectool
 
-def createAlg(task, name="AnalysisGroupC"):
+def createAlg(task, name="JRAF"):
     alg = task.createAlg(name)
     alg.useLoader = types.MethodType(useLoader, alg)
     alg.useCdFiller = types.MethodType(useCdFiller, alg)

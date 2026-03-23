@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_SELECTION_TIME_HPP_
-#define ANALYSISGROUPC_SELECTION_TIME_HPP_
+#ifndef JRAF_SELECTION_TIME_HPP_
+#define JRAF_SELECTION_TIME_HPP_
 
 #include "selection/Selection.hpp"
 
@@ -21,4 +21,4 @@ private:
 
 };
 
-#endif // ANALYSISGROUPC_SELECTION_TIME_HPP_
+#endif // JRAF_SELECTION_TIME_HPP_

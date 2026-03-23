@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_EVENT_VERTEX_HPP_
-#define ANALYSISGROUPC_EVENT_VERTEX_HPP_
+#ifndef JRAF_EVENT_VERTEX_HPP_
+#define JRAF_EVENT_VERTEX_HPP_
 
 #include <iostream>
 
@@ -35,4 +35,4 @@ std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits
     return os << "method: " << vtx.method << ", pos: " << vtx.pos << ", energy: " << vtx.energy << ", ts: " << vtx.ts;
 }
 
-#endif // ANALYSISGROUPC_EVENT_VERTEX_HPP_
+#endif // JRAF_EVENT_VERTEX_HPP_

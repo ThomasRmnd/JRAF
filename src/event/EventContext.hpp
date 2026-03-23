@@ -1,5 +1,5 @@
-#ifndef ANALYSIS_EVENT_EVENTCONTEXT_HPP_
-#define ANALYSIS_EVENT_EVENTCONTEXT_HPP_
+#ifndef JRAF_EVENT_EVENTCONTEXT_HPP_
+#define JRAF_EVENT_EVENTCONTEXT_HPP_
 
 #include <unordered_map>
 #include <vector>
@@ -113,4 +113,4 @@ private:
 
 };
 
-#endif // ANALYSIS_EVENT_EVENTCONTEXT_HPP_
+#endif // JRAF_EVENT_EVENTCONTEXT_HPP_

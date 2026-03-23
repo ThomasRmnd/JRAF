@@ -1,5 +1,5 @@
-#ifndef ANALYSISGROUPC_EVENT_TRACK_HPP_
-#define ANALYSISGROUPC_EVENT_TRACK_HPP_
+#ifndef JRAF_EVENT_TRACK_HPP_
+#define JRAF_EVENT_TRACK_HPP_
 
 #include <iostream> 
 
@@ -53,4 +53,4 @@ inline track::loc operator&=(track::loc& lhs, const track::loc& rhs) {
     return lhs;
 }
 
-#endif // ANALYSISGROUPC_EVENT_TRACK_HPP_
+#endif // JRAF_EVENT_TRACK_HPP_

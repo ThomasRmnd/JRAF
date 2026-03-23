@@ -54,9 +54,9 @@ ri_svc.property("InputFile").set(ifilepath)
 if args.input_correlation:
     ri_svc.property("InputCorrelationFile").set(args.input_correlation)
 
-# ~~~~~~~~~~ AnalysisGroupC ~~~~~~~~~~
-import AnalysisGroupC
-alg = AnalysisGroupC.createAlg(task)
+# ~~~~~~~~~~ JRAF ~~~~~~~~~~
+import JRAF
+alg = JRAF.createAlg(task)
 alg.setLogLevel(loglevel)
 
 alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
