@@ -364,7 +364,7 @@ void JRAF::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, 
 
     for (const PmtProp& pmt : m_pmtTable) {
         if (!pmt.used) continue;
-        if ( ( (pmt.type & PmtType::PMT_20INCH) != pmt.type ) && ( (pmt.type & PmtType::PMT_WP) != pmt.type ) ) continue;
+        if (pmt.type != Pmttype::_PMTINCH20 || (pmt.loc != 1 && pmt.loc != 2)) continue;
         m_featureSaver.id.push_back(pmt.pmtid);
         m_featureSaver.fht.push_back(pmt.fht);
         m_featureSaver.totq.push_back(pmt.q);
@@ -411,7 +411,8 @@ bool JRAF::execute() {
 
         std::shared_ptr<Event> evt = std::make_shared<Event>();
 
-        if (!m_loader->load(&bufwrap)) return false;
+        LoadingResult loadres = m_loader->load(&bufwrap);
+        if (!loadres.ok) return false;
 
         TimeStamp curts{curnav->TimeStamp().GetTimeSpec()};
         DetectorType curdet = getDetectorType(curnav);
