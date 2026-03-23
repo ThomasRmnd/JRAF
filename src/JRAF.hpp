@@ -39,6 +39,8 @@
 #include "veto/Veto.hpp"
 #include "veto/VetoTimeSaver.hpp"
 
+// JUNO Reactor Analysis Framework (JRAF) 🦒
+
 class JRAF : public AlgBase {
 
 public:
