@@ -82,16 +82,22 @@ import CdWpTtChi2RecTool
 
 alg.useRecTool("CdWpTtChi2RecTool")
 
-if args.property_file:
-    try:
-        with open(args.property_file, "r") as f:
-            props = json.load(f)
-        for key, value in props.items():
-            print(f"[INFO] Setting alg.rectool.property('{key}') = {value}")
-            alg.rectool.property(key).set(value)
-    except Exception as e:
-        print(f"[ERROR] Failed to load or parse property file: {e}", file=sys.stderr)
-        sys.exit(1)
+alg.rectool.property("UseAutomaticFactory").set(False)
+alg.rectool.property("WaterPhase").set(False)
+alg.rectool.property("ManualReconstructionMode").set(1)
+alg.rectool.property("ConfigFile").set(args.property_file)
+
+
+# if args.property_file:
+#     try:
+#         with open(args.property_file, "r") as f:
+#             props = json.load(f)
+#         for key, value in props.items():
+#             print(f"[INFO] Setting alg.rectool.property('{key}') = {value}")
+#             alg.rectool.property(key).set(value)
+#     except Exception as e:
+#         print(f"[ERROR] Failed to load or parse property file: {e}", file=sys.stderr)
+#         sys.exit(1)
 
 task.setEvtMax(-1)
 if not task.run():
