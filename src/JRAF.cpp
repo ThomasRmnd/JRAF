@@ -411,9 +411,6 @@ bool JRAF::execute() {
 
         std::shared_ptr<Event> evt = std::make_shared<Event>();
 
-        LoadingResult loadres = m_loader->load(&bufwrap);
-        if (!loadres.ok) return false;
-
         TimeStamp curts{curnav->TimeStamp().GetTimeSpec()};
         DetectorType curdet = getDetectorType(curnav);
         if (curdet == DetectorType::UNKNOWN) {
@@ -444,7 +441,7 @@ bool JRAF::execute() {
                 LogError << "EvtNavigator is nullptr\n";
                 return false;
             }
-            TimeStamp otherts = othernav->TimeStamp().GetTimeSpec();
+            TimeStamp otherts{othernav->TimeStamp().GetTimeSpec()};
             if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
             DetectorType otherdet = getDetectorType(othernav);
             if (otherdet == DetectorType::UNKNOWN) {
@@ -462,7 +459,7 @@ bool JRAF::execute() {
                 calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
                 wp_evt_nav = othernav;
             }
-            // Could change the reference time but not necessary here (only necessary for joint loader)
+            // Could change the reference time for PMT hits but not necessary here (only necessary for joint loader)
             jointdet |= otherdet;
         }
 
@@ -512,6 +509,9 @@ bool JRAF::execute() {
 
         std::vector<track> tracks;
         if (is_possibly_cd_muon || is_possibly_wp_muon) {
+            LoadingResult loadres = m_loader->load(&bufwrap);
+            if (!loadres.ok) return false;
+
             if (cdl_evt_nav) {
                 JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(cdl_evt_nav);
                 addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
@@ -534,14 +534,16 @@ bool JRAF::execute() {
                 addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
                 // TODO NOT FOR NOW: Add track saver for WpClassify
             }
+            
             addTtToTrack(tracks, curts);
+            
             if (tracks.empty()) {
                 tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib_cd.totq, calib_wp.totq, curts, track::loc::cd, -1.0});
             }
-        }
-
-        if (m_tsEvt <= curts) {
-            addFeature(tracks, curts, runId);
+            
+            if (m_tsEvt <= curts) {
+                addFeature(tracks, curts, runId);
+            }
         }
 
         std::vector<vertex> vertices;
