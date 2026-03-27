@@ -190,8 +190,14 @@ def calculate_muon_rate(filepath : str, plot=False):
             rates.append(lam)
             rates_err.append(lam_err)
 
+    print(f"Run ID: {data['run_id'][0]}")
+    print(f"Timestamp: {datetime.datetime.fromtimestamp(data["sec"][0]).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"CD-WP rate: {rates[0]:.2f} +/- {rates_err[0]:.2f} cps")
+    print(f"CD only rate: {rates[1]:.2f} +/- {rates_err[1]:.2f} cps")
+    print(f"WP only rate: {rates[2]:.2f} +/- {rates_err[2]:.2f} cps")
+
     if not plot:
-        return data["run_id"][0], rates, rates_err
+        return data["run_id"][0], data["sec"][0], rates, rates_err
 
     linecolors = ["#000000", "#648fff", "#ff6464"]
     fillcolors = ["#e5e5e5", "#eff3ff", "#ffefef"]
@@ -236,13 +242,14 @@ def calculate_muon_rate(filepath : str, plot=False):
     fig.tight_layout()
     plt.show()
 
-    return data["run_id"][0], rates, rates_err
+    return data["run_id"][0], data["sec"][0], rates, rates_err
 
 if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
     
     run_ids = []
+    timestamps = []
     rates_cd_wp = []
     rates_cd_only = []
     rates_wp_only = []
@@ -251,8 +258,9 @@ if __name__ == "__main__":
     rates_err_wp_only = []
     
     for filepath in args.input:
-        run_id, rates, rates_err = calculate_muon_rate(filepath, plot=False)
+        run_id, ts, rates, rates_err = calculate_muon_rate(filepath, plot=False)
         run_ids.append(run_id)
+        timestamps.append(ts)
         rates_cd_wp.append(rates[0])
         rates_cd_only.append(rates[1])
         rates_wp_only.append(rates[2])
