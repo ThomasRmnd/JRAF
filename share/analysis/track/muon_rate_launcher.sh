@@ -69,8 +69,16 @@ parse_args() {
 #==============================
 
 load_run_list() {
-    log INFO "Fetching run list"
-    mapfile -t RUN_LIST < <(cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    log INFO "Fetching run lists (ReProd25C + ReProd25D)"
+
+    mapfile -t RUN_LIST < <(
+        cat "${RUN_LIST_REPROD25C}" "${RUN_LIST_REPROD25D}" \
+        | tr -d '\r' \
+        | sed '/^$/d' \
+        | sort -n -u
+    )
+
+    log INFO "Total runs loaded: ${#RUN_LIST[@]}"
 }
 
 #==============================
