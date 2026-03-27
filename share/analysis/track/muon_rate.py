@@ -205,12 +205,8 @@ def calculate_muon_rate(run : int, plot=False):
         f["rates"] = {
             "run_id": np.full(len(rates), data["run_id"][0], dtype=np.int32),
             "sec": np.full(len(rates), data["sec"][0], dtype=np.int64),
-            "rate_cd_wp": rates[0].astype(np.float64),
-            "rate_cd_wp_err": rates_err[0].astype(np.float64),
-            "rate_cd_only": rates[1].astype(np.float64),
-            "rate_cd_only_err": rates_err[1].astype(np.float64),
-            "rate_wp_only": rates[2].astype(np.float64),
-            "rate_wp_only_err": rates_err[2].astype(np.float64)
+            "rates": np.array(rates, dtype=np.float64),
+            "rates_err": np.array(rates_err, dtype=np.float64)
         }
 
     if not plot:
