@@ -191,7 +191,7 @@ def calculate_muon_rate(filepath : str, plot=False):
             rates_err.append(lam_err)
 
     print(f"Run ID: {data['run_id'][0]}")
-    print(f"Timestamp: {datetime.datetime.fromtimestamp(data["sec"][0]).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Timestamp: {datetime.datetime.fromtimestamp(data['sec'][0]).strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"CD-WP rate: {rates[0]:.2f} +/- {rates_err[0]:.2f} cps")
     print(f"CD only rate: {rates[1]:.2f} +/- {rates_err[1]:.2f} cps")
     print(f"WP only rate: {rates[2]:.2f} +/- {rates_err[2]:.2f} cps")
