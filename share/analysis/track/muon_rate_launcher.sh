@@ -118,7 +118,7 @@ launch_jobs() {
         log INFO ">>> Launching job for run ${run}"
 
         sbatch \
-            --job-name="murate_${TAG}" \
+            --job-name="murate_%j" \
             --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/log/murate_%j.log" \
             --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/err/murate_%j.err" \
             --partition="htc" \
