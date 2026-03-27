@@ -124,20 +124,15 @@ def fit_exponential_decay(x, y, yerr):
 def calculate_muon_rate(filepath : str, plot=False):
     file = uproot.open(filepath)
     tree = file["muons"]
-    branches = [
-        "run_id", "sec", "nsec", "totq_cd", "totq_wp", 
-        "method", "det", "quality",
-        "iposx", "iposy", "iposz", 
-        "fposx", "fposy", "fposz"
-    ]
+    branches = ["run_id", "sec", "nsec", "totq_cd", "totq_wp"]
     data = tree.arrays(branches, library="np")
 
     # mask_cd = np.array([np.any((arr & 1) == 1) for arr in data["det"]])
     # mask_wp = np.array([np.any((arr & 2) == 2) for arr in data["det"]])
 
     mask_cd_wp = np.logical_and(data["totq_cd"] > 0, data["totq_wp"] > 0)
-    mask_cd_only = np.logical_and(data["totq_cd"] > 0, data["totq_wp"] <= 0)
-    mask_wp_only = np.logical_and(data["totq_cd"] <= 0, data["totq_wp"] > 0)
+    mask_cd_only = np.logical_and(data["totq_cd"] > 0, data["totq_wp"] == 0)
+    mask_wp_only = np.logical_and(data["totq_cd"] == 0, data["totq_wp"] > 0)
 
     data_cd_wp = {key: val[mask_cd_wp] for key, val in data.items()}
     data_cd_only = {key: val[mask_cd_only] for key, val in data.items()}
