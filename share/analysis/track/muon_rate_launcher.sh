@@ -117,7 +117,7 @@ launch_jobs() {
     for run in "${RUN_LIST[@]}"; do
         log INFO ">>> Launching job for run ${run}"
 
-        sbatch \
+        if sbatch \
             --job-name="murate_${run}" \
             --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/log/murate_${run}.log" \
             --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/err/murate_${run}.err" \
@@ -130,8 +130,7 @@ launch_jobs() {
             --mail-type="FAIL" \
             muon_rate_worker.sh \
             --run "${run}"
-
-        if "${cmd[@]}"; then
+        then
             log INFO "Run ${run} submitted successfully"
         else
             log ERROR "Submission failed for run ${run}"
