@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime
+from pathlib import Path
 
 import matplotlib as mpl
 from matplotlib.colors import LogNorm
@@ -53,8 +54,8 @@ def set_latex_style():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--run", type=int, help="Run number")
-    # parser.add_argument("--input", type=str, nargs="+", help="Filepath")
+    parser.add_argument("--run", type=int, default=0, help="Run number")
+    parser.add_argument("--input", type=str, nargs="+", help="Filepath")
     return parser.parse_args()
 
 class timestamp:
@@ -122,10 +123,28 @@ def fit_exponential_decay(x, y, yerr):
 
     return chisq, ndf, prob, A, lam, A_err, lam_err
 
-# def calculate_muon_rate(filepath : str, plot=False):
+def find_run_file(run: int) -> Path:
+    base_dir = Path("/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary")
+    
+    pattern = f"RUN.{run}.output.reprod*.cca.root"
+    matches = list(base_dir.glob(pattern))
+
+    if len(matches) == 0:
+        raise FileNotFoundError(f"No file found for run {run} with pattern {pattern}")
+    
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Multiple files found for run {run}:\n" +
+            "\n".join(str(m) for m in matches)
+        )
+
+    return matches[0]
+
 def calculate_muon_rate(run : int, plot=False):
-    # file = uproot.open(filepath)
-    file = uproot.open(f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/RUN.{run}.output.reprod25c.cca.root")
+    filepath = find_run_file(run)
+    print(f"Using file: {filepath}")
+
+    file = uproot.open(filepath)
     tree = file["muons"]
     branches = ["run_id", "sec", "nsec", "totq_cd", "totq_wp"]
     data = tree.arrays(branches, library="np")
@@ -261,9 +280,11 @@ if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
 
-    calculate_muon_rate(args.run, plot=False)
+    if args.run > 0:
+        calculate_muon_rate(args.run, plot=False)
+        exit(0)
     
-    '''
+
     run_ids = []
     timestamps = []
     rates_cd_wp = []
@@ -274,7 +295,14 @@ if __name__ == "__main__":
     rates_err_wp_only = []
     
     for filepath in args.input:
-        run_id, ts, rates, rates_err = calculate_muon_rate(filepath, plot=False)
+        file = uproot.open(filepath)
+        tree = file["rates"]
+        branches = ["run_id", "sec", "rates", "rates_err"]
+        data = tree.arrays(branches, library="np")
+        run_id = data["run_id"]
+        ts = data["sec"]
+        rates = data["rates"]
+        rates_err = data["rates_err"]
         run_ids.append(run_id)
         timestamps.append(ts)
         rates_cd_wp.append(rates[0])
@@ -317,4 +345,3 @@ if __name__ == "__main__":
 
     fig.tight_layout()
     plt.show()
-    '''
