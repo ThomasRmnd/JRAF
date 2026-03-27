@@ -128,7 +128,7 @@ launch_jobs() {
             --time="0-00:01:00" \
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
-            job_worker.sh \
+            muon_rate_worker.sh \
             --run "${run}"
 
         if "${cmd[@]}"; then
