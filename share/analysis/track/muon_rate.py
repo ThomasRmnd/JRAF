@@ -16,7 +16,7 @@ import uproot
 
 def set_latex_style():
     mpl.rcParams.update({
-        "text.usetex": False, # TODO: need to be changed for good plots
+        "text.usetex": True, # TODO: need to be changed for good plots
         "font.family": "serif", 
         "font.serif": ["Computer Modern Serif"], 
         "mathtext.fontset": "cm", 
@@ -55,7 +55,7 @@ def set_latex_style():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--run", type=int, default=0, help="Run number")
-    parser.add_argument("--input", type=str, nargs="+", help="Filepath")
+    parser.add_argument("--input", type=str, default="", help="Filepath")
     return parser.parse_args()
 
 class timestamp:
@@ -192,18 +192,19 @@ def calculate_muon_rate(run : int, plot=False):
     hist_wp_only, _ = np.histogram(ts_diff_wp_only, bins=bins)
     err_wp_only = np.sqrt(hist_wp_only)
 
+    names = ["CD+WP", "CD only", "WP only"]
     ts_diffs = [ts_diff_cd_wp, ts_diff_cd_only, ts_diff_wp_only]
     hists = [hist_cd_wp, hist_cd_only, hist_wp_only]
     errs = [err_cd_wp, err_cd_only, err_wp_only]
     rates = []
     rates_err = []
-    for diff, h, e in zip(ts_diffs, hists, errs):
+    for name, diff, h, e in zip(names, ts_diffs, hists, errs):
         mask = h > 0
         x_fit = centers[mask]
         y_fit = h[mask]
         yerr_fit = e[mask]
 
-        if len(x_fit) < 2:
+        if name == "CD only":
             # number of counts divided by (ts_max - ts_min).to_sec()
             rates.append(len(diff) / (ts_max - ts_min).to_sec())
             rates_err.append(np.sqrt(len(diff)) / (ts_max - ts_min).to_sec())
@@ -258,7 +259,7 @@ def calculate_muon_rate(run : int, plot=False):
         #     r"$\chi^2/\mathrm{ndf} = %.1f / %d$" "\n"
         #     r"$p = %.3f$" "\n\n"
         #     r"$A = %.2f \pm %.2f$" "\n"
-        #     r"$\lambda = %.2f \pm %.2f~\mathrm{Hz}$"
+        #     r"$\lambda = %.2f \pm %.2f~\mathrm{cps}$"
         # ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
         # ax.text(0.6, 0.9, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
 
@@ -284,6 +285,9 @@ if __name__ == "__main__":
         calculate_muon_rate(args.run, plot=False)
         exit(0)
     
+    if args.input == "":
+        print("No input file specified")
+        exit(1)
 
     run_ids = []
     timestamps = []
@@ -293,34 +297,43 @@ if __name__ == "__main__":
     rates_err_cd_wp = []
     rates_err_cd_only = []
     rates_err_wp_only = []
-    
-    for filepath in args.input:
-        file = uproot.open(filepath)
-        tree = file["rates"]
-        branches = ["run_id", "sec", "rates", "rates_err"]
-        data = tree.arrays(branches, library="np")
-        run_id = data["run_id"]
-        ts = data["sec"]
-        rates = data["rates"]
-        rates_err = data["rates_err"]
-        run_ids.append(run_id)
-        timestamps.append(ts)
-        rates_cd_wp.append(rates[0])
-        rates_cd_only.append(rates[1])
-        rates_wp_only.append(rates[2])
-        rates_err_cd_wp.append(rates_err[0])
-        rates_err_cd_only.append(rates_err[1])
-        rates_err_wp_only.append(rates_err[2])
 
-    rates_total = np.array(rates_cd_wp) + np.array(rates_cd_only) + np.array(rates_wp_only)
-    err_total = np.sqrt(np.array(rates_err_cd_wp)**2 + np.array(rates_err_cd_only)**2 + np.array(rates_err_wp_only)**2)
+    file = uproot.open(args.input)
+    tree = file["rates"]
+    branches = ["run_id", "sec", "rates", "rates_err"]
+    data = tree.arrays(branches, library="np")
+    run_id = data["run_id"]
+    sec = data["sec"]
+    rates = data["rates"]
+    rates_err = data["rates_err"]
+    for i in range(len(run_id) // 3):
+        run_ids.append(run_id[i * 3])
+        timestamps.append(sec[i * 3])
+        rates_cd_wp.append(rates[i * 3])
+        rates_cd_only.append(rates[i * 3 + 1])
+        rates_wp_only.append(rates[i * 3 + 2])
+        rates_err_cd_wp.append(rates_err[i * 3])
+        rates_err_cd_only.append(rates_err[i * 3 + 1])
+        rates_err_wp_only.append(rates_err[i * 3 + 2])
+
+    run_ids = np.array(run_ids)
+    timestamps = np.array(timestamps)
+    rates_cd_wp = np.array(rates_cd_wp)
+    rates_cd_only = np.array(rates_cd_only)
+    rates_wp_only = np.array(rates_wp_only)
+    rates_err_cd_wp = np.array(rates_err_cd_wp)
+    rates_err_cd_only = np.array(rates_err_cd_only)
+    rates_err_wp_only = np.array(rates_err_wp_only)
+
+    rates_total = rates_cd_wp + rates_cd_only + rates_wp_only
+    err_total = np.sqrt(rates_err_cd_wp**2 + rates_err_cd_only**2 + rates_err_wp_only**2)
 
     config = [
-        (rates_total, err_total, "#000000", f"Total: {np.mean(rates_total):.2f} +/- {np.std(rates_total):.2f} Hz"),
-        (rates_cd_wp, rates_err_cd_wp, "#e69f00", f"CD+WP: {np.mean(rates_cd_wp):.2f} +/- {np.std(rates_cd_wp):.2f} Hz"),
-        (rates_cd_only, rates_err_cd_only, "#009e73", f"CD only: {np.mean(rates_cd_only):.2f} +/- {np.std(rates_cd_only):.2f} Hz"),
-        (rates_wp_only, rates_err_wp_only, "#56b4e9", f"WP only: {np.mean(rates_wp_only):.2f} +/- {np.std(rates_wp_only):.2f} Hz"),
-    ]
+        (rates_total, err_total, "#000000", rf"$\mathrm{{Total}}: {np.mean(rates_total):.2f} \pm {np.std(rates_total):.2f}\ \mathrm{{cps}}$"),
+        (rates_cd_wp, rates_err_cd_wp, "#ffa500", rf"$\mathrm{{CD+WP}}: {np.mean(rates_cd_wp):.2f} \pm {np.std(rates_cd_wp):.2f}\ \mathrm{{cps}}$"),
+        (rates_cd_only, rates_err_cd_only, "#1ea50d", rf"$\mathrm{{CD\ only}}: {np.mean(rates_cd_only):.2f} \pm {np.std(rates_cd_only):.2f}\ \mathrm{{cps}}$"),
+        (rates_wp_only, rates_err_wp_only, "#3d80e6", rf"$\mathrm{{WP\ only}}: {np.mean(rates_wp_only):.2f} \pm {np.std(rates_wp_only):.2f}\ \mathrm{{cps}}$"),
+]
 
     fig, ax = plt.subplots(figsize=(16, 6))
 
@@ -329,8 +342,8 @@ if __name__ == "__main__":
         mean_val = np.mean(data)
         ax.axhline(mean_val, color=color, linestyle="--", linewidth=2.0, zorder=2)
 
-    ax.set_xlabel("Run Number", fontsize=14)
-    ax.set_ylabel("Muon Rate [Hz]", fontsize=14)
+    ax.set_xlabel(r"Run Number", fontsize=14)
+    ax.set_ylabel(r"Muon Rate (cps)", fontsize=14)
     ax.set_ylim(-0.1, 10)
 
     ax.tick_params(direction='in', which='both', top=True, right=True, labelsize=12)
