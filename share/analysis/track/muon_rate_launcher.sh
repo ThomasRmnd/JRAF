@@ -118,9 +118,9 @@ launch_jobs() {
         log INFO ">>> Launching job for run ${run}"
 
         sbatch \
-            --job-name="murate_%j" \
-            --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/log/murate_%j.log" \
-            --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/err/murate_%j.err" \
+            --job-name="murate_${run}" \
+            --output="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/log/murate_${run}.log" \
+            --error="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/err/murate_${run}.err" \
             --partition="htc" \
             --ntasks=1 \
             --cpus-per-task=1 \
