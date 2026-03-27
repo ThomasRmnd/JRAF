@@ -53,7 +53,8 @@ def set_latex_style():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, nargs="+", help="Filepath")
+    parser.add_argument("--run", type=int, help="Run number")
+    # parser.add_argument("--input", type=str, nargs="+", help="Filepath")
     return parser.parse_args()
 
 class timestamp:
@@ -121,8 +122,10 @@ def fit_exponential_decay(x, y, yerr):
 
     return chisq, ndf, prob, A, lam, A_err, lam_err
 
-def calculate_muon_rate(filepath : str, plot=False):
-    file = uproot.open(filepath)
+# def calculate_muon_rate(filepath : str, plot=False):
+def calculate_muon_rate(run : int, plot=False):
+    # file = uproot.open(filepath)
+    file = uproot.open(f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/RUN.{run}.output.reprod25c.cca.root")
     tree = file["muons"]
     branches = ["run_id", "sec", "nsec", "totq_cd", "totq_wp"]
     data = tree.arrays(branches, library="np")
@@ -196,6 +199,20 @@ def calculate_muon_rate(filepath : str, plot=False):
     print(f"CD only rate: {rates[1]:.2f} +/- {rates_err[1]:.2f} cps")
     print(f"WP only rate: {rates[2]:.2f} +/- {rates_err[2]:.2f} cps")
 
+    # Save the rates in file
+    ofile=f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/rates/RUN.{run}.rates.root"
+    with uproot.recreate(ofile) as f:
+        f["rates"] = {
+            "run_id": np.full(len(rates), data["run_id"][0], dtype=np.int32),
+            "sec": np.full(len(rates), data["sec"][0], dtype=np.int64),
+            "rate_cd_wp": rates[0].astype(np.float64),
+            "rate_cd_wp_err": rates_err[0].astype(np.float64),
+            "rate_cd_only": rates[1].astype(np.float64),
+            "rate_cd_only_err": rates_err[1].astype(np.float64),
+            "rate_wp_only": rates[2].astype(np.float64),
+            "rate_wp_only_err": rates_err[2].astype(np.float64)
+        }
+
     if not plot:
         return data["run_id"][0], data["sec"][0], rates, rates_err
 
@@ -247,7 +264,10 @@ def calculate_muon_rate(filepath : str, plot=False):
 if __name__ == "__main__":
     args = parse_args()
     set_latex_style()
+
+    calculate_muon_rate(args.run, plot=True)
     
+    '''
     run_ids = []
     timestamps = []
     rates_cd_wp = []
@@ -301,3 +321,4 @@ if __name__ == "__main__":
 
     fig.tight_layout()
     plt.show()
+    '''
