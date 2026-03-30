@@ -146,7 +146,6 @@ def apply_veto(ts_target : np.ndarray, ts_all : np.ndarray, veto_window : timest
     veto_window_full = np.full(len(ts_all), veto_window)
     for i, ts in enumerate(ts_target):
         dt = ts_all - ts
-        print(dt)
         if np.any((veto_window_full < dt) & (dt < veto_window_full) & (dt != timestamp())):
             mask_keep[i] = False
     return ts_target[mask_keep]
@@ -240,17 +239,17 @@ def calculate_muon_rate(run : int, plot=False):
     print(f"CD-WP rate: {rates[0]:.2f} +/- {rates_err[0]:.2f} cps")
     print(f"CD only rate: {rates[1]:.2f} +/- {rates_err[1]:.2f} cps")
     print(f"WP only rate: {rates[2]:.2f} +/- {rates_err[2]:.2f} cps")
-    print(f"WP tagging efficiency: {wp_tagging_efficiency:.2f}")
+    print(f"WP tagging efficiency: {wp_tagging_efficiency * 100.0:.2f}")
 
     # Save the rates in file
     ofile=f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/rates/RUN.{run}.rates.root"
     with uproot.recreate(ofile) as f:
         f["rates"] = {
-            "run_id": np.full(len(rates), data["run_id"][0], dtype=np.int32),
-            "sec": np.full(len(rates), data["sec"][0], dtype=np.int64),
+            "run_id": data["run_id"][0],
+            "sec": data["sec"][0],
             "rates": np.array(rates, dtype=np.float64),
             "rates_err": np.array(rates_err, dtype=np.float64),
-            "wp_tagging_efficiency": np.array(wp_tagging_efficiency, dtype=np.float64)
+            "wp_tagging_efficiency": wp_tagging_efficiency
         }
 
     if not plot:
