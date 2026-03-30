@@ -143,10 +143,11 @@ def find_run_file(run: int) -> Path:
 
 def apply_veto(ts_target : np.ndarray, ts_all : np.ndarray, veto_window : timestamp = timestamp(0, 10000000)) -> np.ndarray:
     mask_keep = np.ones(len(ts_target), dtype=bool)
+    veto_window_full = np.full(len(ts_all), veto_window)
     for i, ts in enumerate(ts_target):
         dt = ts_all - ts
         print(dt)
-        if np.any((veto_window < dt) & (dt < veto_window) & (dt != timestamp())):
+        if np.any((veto_window_full < dt) & (dt < veto_window_full) & (dt != timestamp())):
             mask_keep[i] = False
     return ts_target[mask_keep]
 
