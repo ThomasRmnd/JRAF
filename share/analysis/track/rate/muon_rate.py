@@ -145,6 +145,7 @@ def apply_veto(ts_target : np.ndarray, ts_all : np.ndarray, veto_window : timest
     mask_keep = np.ones(len(ts_target), dtype=bool)
     for i, ts in enumerate(ts_target):
         dt = ts_all - ts
+        print(dt)
         if np.any((veto_window < dt) & (dt < veto_window) & (dt != timestamp())):
             mask_keep[i] = False
     return ts_target[mask_keep]
