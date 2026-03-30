@@ -245,11 +245,11 @@ def calculate_muon_rate(run : int, plot=False):
     ofile=f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/rates/RUN.{run}.rates.root"
     with uproot.recreate(ofile) as f:
         f["rates"] = {
-            "run_id": data["run_id"][0],
-            "sec": data["sec"][0],
+            "run_id": np.full(len(rates), data["run_id"][0], dtype=np.int32),
+            "sec": np.full(len(rates), data["sec"][0], dtype=np.int64),
             "rates": np.array(rates, dtype=np.float64),
             "rates_err": np.array(rates_err, dtype=np.float64),
-            "wp_tagging_efficiency": wp_tagging_efficiency
+            "wp_tagging_efficiency": np.full(len(rates), wp_tagging_efficiency, dtype=np.float64)
         }
 
     if not plot:
