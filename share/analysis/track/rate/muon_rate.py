@@ -236,7 +236,7 @@ def calculate_muon_rate(run : int, plot=False):
     err_wp_only = np.sqrt(hist_wp_only)
 
     names = ["CD+WP", "CD only", "WP only"]
-    intervals = [None, None, [0.15, 2]]
+    intervals = [None, None, [0.1, 2.0]]
     ts_diffs = [ts_diff_cd_wp, ts_diff_cd_only, ts_diff_wp_only]
     hists = [hist_cd_wp, hist_cd_only, hist_wp_only]
     errs = [err_cd_wp, err_cd_only, err_wp_only]
