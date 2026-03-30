@@ -249,7 +249,7 @@ def calculate_muon_rate(run : int, plot=False):
     ts_all = np.concatenate([ts_cd_wp, ts_cd_only, ts_wp_only])
     mask_high_charge = data["totq_cd"] > 30000
     mask_cd_wp_high = np.logical_and(mask_cd_wp, mask_high_charge)
-    wp_tagging_efficiency, wp_tagging_efficiency_err = calculate_wp_tagging_efficiency(ts_all, ts_cd_only, rates[0] + rates[1], np.sum(mask_cd_wp_high))
+    wp_tagging_efficiency, wp_tagging_efficiency_err = calculate_wp_tagging_efficiency(ts_all, ts_cd_only, rates[0] + rates[1], np.sqrt(rates_err[0]**2 + rates_err[1]**2), np.sum(mask_cd_wp_high))
 
     print(f"Run ID: {data['run_id'][0]}")
     print(f"Timestamp: {datetime.fromtimestamp(data['sec'][0]).strftime('%Y-%m-%d %H:%M:%S')}")
