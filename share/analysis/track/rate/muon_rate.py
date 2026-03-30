@@ -236,7 +236,7 @@ def calculate_muon_rate(run : int, plot=False):
     err_wp_only = np.sqrt(hist_wp_only)
 
     names = ["CD+WP", "CD only", "WP only"]
-    intervals = [None, None, [0.05, 2]]
+    intervals = [None, None, [0.15, 2]]
     ts_diffs = [ts_diff_cd_wp, ts_diff_cd_only, ts_diff_wp_only]
     hists = [hist_cd_wp, hist_cd_only, hist_wp_only]
     errs = [err_cd_wp, err_cd_only, err_wp_only]
@@ -448,25 +448,26 @@ if __name__ == "__main__":
     err_total = np.sqrt(rates_err_cd_wp**2 + rates_err_cd_only**2 + rates_err_wp_only**2)
 
     rates_total_mean = np.mean(rates_total)
-    rates_total_std = np.std(rates_total)
+    rates_total_std = np.std(rates_total) / np.sqrt(len(rates_total))
     rates_cd_wp_mean = np.mean(rates_cd_wp)
-    rates_cd_wp_std = np.std(rates_cd_wp)
+    rates_cd_wp_std = np.std(rates_cd_wp) / np.sqrt(len(rates_cd_wp))
     rates_cd_only_mean = np.mean(rates_cd_only)
-    rates_cd_only_std = np.std(rates_cd_only)
+    rates_cd_only_std = np.std(rates_cd_only) / np.sqrt(len(rates_cd_only))
     rates_wp_only_mean = np.mean(rates_wp_only)
-    rates_wp_only_std = np.std(rates_wp_only)
+    rates_wp_only_std = np.std(rates_wp_only) / np.sqrt(len(rates_wp_only))
     wp_tagging_efficiencies_mean = np.mean(wp_tagging_efficiencies)
-    wp_tagging_efficiencies_std = np.std(wp_tagging_efficiencies)
+    wp_tagging_efficiencies_std = np.std(wp_tagging_efficiencies) / np.sqrt(len(wp_tagging_efficiencies))
+
 
     exp = int(np.floor(np.log10(rates_cd_only_mean)))
     mantissa_mean = rates_cd_only_mean / 10**exp
     mantissa_std = rates_cd_only_std / 10**exp
 
     config = [
-        (rates_total,   err_total,         rates_total_mean,   rates_total_std,   "#000000", rf"$\mathrm{{Total}}: {np.mean(rates_total):.2f} \pm {np.std(rates_total):.2f}\ \mathrm{{cps}}$"),
-        (rates_cd_wp,   rates_err_cd_wp,   rates_cd_wp_mean,   rates_cd_wp_std,   "#ffa500", rf"$\mathrm{{CD+WP}}: {np.mean(rates_cd_wp):.2f} \pm {np.std(rates_cd_wp):.2f}\ \mathrm{{cps}}$"),
+        (rates_total,   err_total,         rates_total_mean,   rates_total_std,   "#000000", rf"$\mathrm{{Total}}: {rates_total_mean:.2f} \pm {rates_total_std:.2f}\ \mathrm{{cps}}$"),
+        (rates_cd_wp,   rates_err_cd_wp,   rates_cd_wp_mean,   rates_cd_wp_std,   "#ffa500", rf"$\mathrm{{CD+WP}}: {rates_cd_wp_mean:.2f} \pm {rates_cd_wp_std:.2f}\ \mathrm{{cps}}$"),
         (rates_cd_only, rates_err_cd_only, rates_cd_only_mean, rates_cd_only_std, "#1ea50d", rf"$\mathrm{{CD\ only}}: ({mantissa_mean:.2f} \pm {mantissa_std:.2f}) \times 10^{{{exp}}}\ \mathrm{{cps}}$"),
-        (rates_wp_only, rates_err_wp_only, rates_wp_only_mean, rates_wp_only_std, "#3d80e6", rf"$\mathrm{{WP\ only}}: {np.mean(rates_wp_only):.2f} \pm {np.std(rates_wp_only):.2f}\ \mathrm{{cps}}$"),
+        (rates_wp_only, rates_err_wp_only, rates_wp_only_mean, rates_wp_only_std, "#3d80e6", rf"$\mathrm{{WP\ only}}: {rates_wp_only_mean:.2f} \pm {rates_wp_only_std:.2f}\ \mathrm{{cps}}$"),
     ]
 
     # Run ID vs muon rate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
