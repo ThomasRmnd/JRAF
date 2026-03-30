@@ -108,24 +108,34 @@ class timestamp:
 def exponential_decay(x, A, lam):
     return A * np.exp(-lam * x)
 
-def fit_exponential_decay(x, y, yerr):
+def fit_exponential_decay(x, y, yerr, interval=None):
     A0 = np.max(y)
     lam0 = np.std(np.repeat(x, y.astype(int)))
     p0 = [A0, lam0]
 
-    popt, pcov = curve_fit(exponential_decay, x, y, p0=p0, sigma=yerr, absolute_sigma=True)
+    if interval is not None:
+        x_fit = x[(x >= interval[0]) & (x <= interval[1])]
+        y_fit = y[(x >= interval[0]) & (x <= interval[1])]
+        yerr_fit = yerr[(x >= interval[0]) & (x <= interval[1])]
+    else:
+        x_fit = x
+        y_fit = y
+        yerr_fit = yerr
+
+    popt, pcov = curve_fit(exponential_decay, x_fit, y_fit, p0=p0, sigma=yerr_fit, absolute_sigma=True)
     A, lam = popt
     A_err, lam_err = np.sqrt(np.diag(pcov))
 
-    y_model = exponential_decay(x, A, lam)
-    chisq = np.sum(((y_model - y) / yerr)**2)
-    ndf = len(y) - len(popt)
+    y_model = exponential_decay(x_fit, A, lam)
+    chisq = np.sum(((y_model - y_fit) / yerr_fit)**2)
+    ndf = len(y_fit) - len(popt)
     prob = chi2.sf(chisq, ndf)
 
     return chisq, ndf, prob, A, lam, A_err, lam_err
 
 def find_run_file(run: int) -> Path:
     base_dir = Path("/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary")
+    # base_dir = Path("/home/traymond/Documents/test/reconstruction_summary")
     
     pattern = f"RUN.{run}.output.reprod*.cca.root"
     matches = list(base_dir.glob(pattern))
@@ -226,12 +236,13 @@ def calculate_muon_rate(run : int, plot=False):
     err_wp_only = np.sqrt(hist_wp_only)
 
     names = ["CD+WP", "CD only", "WP only"]
+    intervals = [None, None, [0.05, 2]]
     ts_diffs = [ts_diff_cd_wp, ts_diff_cd_only, ts_diff_wp_only]
     hists = [hist_cd_wp, hist_cd_only, hist_wp_only]
     errs = [err_cd_wp, err_cd_only, err_wp_only]
     rates = []
     rates_err = []
-    for name, diff, h, e in zip(names, ts_diffs, hists, errs):
+    for name, diff, h, e, inter in zip(names, ts_diffs, hists, errs, intervals):
         mask = h > 0
         x_fit = centers[mask]
         y_fit = h[mask]
@@ -242,7 +253,7 @@ def calculate_muon_rate(run : int, plot=False):
             rates.append(len(diff) / duration)
             rates_err.append(np.sqrt(len(diff)) / duration)
         else:
-            chisq, ndf, prob, A, lam, A_err, lam_err = fit_exponential_decay(x_fit, y_fit, yerr_fit)
+            chisq, ndf, prob, A, lam, A_err, lam_err = fit_exponential_decay(x_fit, y_fit, yerr_fit, inter)
             rates.append(lam)
             rates_err.append(lam_err)
 
@@ -258,8 +269,8 @@ def calculate_muon_rate(run : int, plot=False):
     print(f"WP only rate: {rates[2]:.2f} +/- {rates_err[2]:.2f} cps")
     print(f"WP tagging efficiency: {wp_tagging_efficiency * 100.0:.2f} +/- {wp_tagging_efficiency_err * 100.0:.2f} %")
 
-    # Save the rates in file
     ofile=f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/rates/RUN.{run}.rates.root"
+    # ofile=f"/home/traymond/Documents/test/reconstruction_summary/RUN.{run}.rates.root"
     with uproot.recreate(ofile) as f:
         f["rates"] = {
             "run_id": np.full(len(rates), data["run_id"][0], dtype=np.int32),
@@ -273,14 +284,14 @@ def calculate_muon_rate(run : int, plot=False):
     if not plot:
         return data["run_id"][0], data["sec"][0], rates, rates_err
 
-    linecolors = ["#000000", "#648fff", "#ff6464"]
-    fillcolors = ["#e5e5e5", "#eff3ff", "#ffefef"]
+    linecolors = ["#ffa500", "#1ea50d", "#3d80e6"]
+    fillcolors = ["#fdeed3", "#8fa78c", "#b8ccec"]
 
-    fig, ax = plt.subplots(figsize=(7, 6))
+    for h, e, inter, lcolor, fcolor in zip(hists, errs, intervals, linecolors, fillcolors):
+        fig, ax = plt.subplots(figsize=(7, 6))
 
-    for h, e, lcolor, fcolor in zip(hists, errs, linecolors, fillcolors):
         ax.fill_between(bins, np.r_[h, h[-1]], step="post", color=fcolor, zorder=1)
-        ax.errorbar(centers, h, yerr=e, xerr=widths/2, fmt="o", color=lcolor, markersize=4.5, zorder=3)
+        ax.errorbar(centers, h, yerr=e, xerr=widths/2, fmt="o", color=lcolor, markersize=4.5, label=rf"$\mathrm{{Data}}$", zorder=3)
 
         mask = h > 0
         x_fit = centers[mask]
@@ -290,30 +301,35 @@ def calculate_muon_rate(run : int, plot=False):
         if len(x_fit) < 2:
             continue
 
-        chisq, ndf, prob, A, lam, A_err, lam_err = fit_exponential_decay(x_fit, y_fit, yerr_fit)
+        chisq, ndf, prob, A, lam, A_err, lam_err = fit_exponential_decay(x_fit, y_fit, yerr_fit, inter)
 
         x_smooth = np.linspace(bins[0], bins[-1], 500)
         y_smooth = exponential_decay(x_smooth, A, lam)
 
-        ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.6, color=lcolor, zorder=4)
-        # text = (
-        #     r"$\chi^2/\mathrm{ndf} = %.1f / %d$" "\n"
-        #     r"$p = %.3f$" "\n\n"
-        #     r"$A = %.2f \pm %.2f$" "\n"
-        #     r"$\lambda = %.2f \pm %.2f~\mathrm{cps}$"
-        # ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
-        # ax.text(0.6, 0.9, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
+        ax.plot(x_smooth, y_smooth, linestyle="--", linewidth=1.6, color=lcolor, label=rf"$\mathrm{{Fit:}}\ A e^{{-\lambda t}}$", zorder=4)
+        text = (
+            r"$P(\chi^2/\mathrm{ndf} = %.1f / %d) = %.3f$" "\n"
+            r"$A = %.2f \pm %.2f$" "\n"
+            r"$\lambda = %.2f \pm %.2f~\mathrm{cps}$"
+        ) % (chisq, ndf, prob, A, A_err, lam, lam_err)
+        ax.text(0.47, 0.8, text, transform=ax.transAxes, fontsize=15, verticalalignment="top", horizontalalignment="left")
 
-    ax.set_xlabel(r"$\Delta t_{\mu}$ (s)")
-    ax.set_ylabel(r"Entries")
-    ax.minorticks_on()
-    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
-    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
-    ax.tick_params(direction="in", which="both", top=True, right=True)
-    ax.set_xlim(0.0, 2.0)
-    ax.set_yscale("log")
+        handles, labels = plt.gca().get_legend_handles_labels()
+        order = [1, 0]
+        ax.legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc='upper center', bbox_to_anchor=(0.6, 0.98), ncols=1, frameon=False, handletextpad=0.1)
 
-    fig.tight_layout()
+        ax.set_xlabel(r"$\Delta t_{\mu}$ (s)")
+        ax.set_ylabel(r"Entries")
+        ax.minorticks_on()
+        ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+        ax.tick_params(direction="in", which="both", top=True, right=True)
+        ax.set_xlim(0.0, 2.0)
+        ax.set_yscale("log")
+
+        fig.tight_layout()
+        fig.show()
+
     plt.show()
 
     return data["run_id"][0], data["sec"][0], rates, rates_err
@@ -397,7 +413,7 @@ if __name__ == "__main__":
 
     file = uproot.open(args.input)
     tree = file["rates"]
-    branches = ["run_id", "sec", "rates", "rates_err"]
+    branches = ["run_id", "sec", "rates", "rates_err", "wp_tagging_efficiency", "wp_tagging_efficiency_err"]
     data = tree.arrays(branches, library="np")
     run_id = data["run_id"]
     sec = data["sec"]
@@ -431,32 +447,35 @@ if __name__ == "__main__":
     rates_total = rates_cd_wp + rates_cd_only + rates_wp_only
     err_total = np.sqrt(rates_err_cd_wp**2 + rates_err_cd_only**2 + rates_err_wp_only**2)
 
-    mean_cd = np.mean(rates_cd_only)
-    std_cd = np.std(rates_cd_only)
+    rates_total_mean = np.mean(rates_total)
+    rates_total_std = np.std(rates_total)
+    rates_cd_wp_mean = np.mean(rates_cd_wp)
+    rates_cd_wp_std = np.std(rates_cd_wp)
+    rates_cd_only_mean = np.mean(rates_cd_only)
+    rates_cd_only_std = np.std(rates_cd_only)
+    rates_wp_only_mean = np.mean(rates_wp_only)
+    rates_wp_only_std = np.std(rates_wp_only)
+    wp_tagging_efficiencies_mean = np.mean(wp_tagging_efficiencies)
+    wp_tagging_efficiencies_std = np.std(wp_tagging_efficiencies)
 
-    exp = int(np.floor(np.log10(mean_cd)))
-    mantissa_mean = mean_cd / 10**exp
-    mantissa_std = std_cd / 10**exp
-
-    cd_label = (
-        rf"$\mathrm{{CD\ only}}: "
-        rf"({mantissa_mean:.2f} \pm {mantissa_std:.2f})"
-        rf"\times 10^{{{exp}}}\ \mathrm{{cps}}$"
-    )
+    exp = int(np.floor(np.log10(rates_cd_only_mean)))
+    mantissa_mean = rates_cd_only_mean / 10**exp
+    mantissa_std = rates_cd_only_std / 10**exp
 
     config = [
-        (rates_total, err_total, "#000000", rf"$\mathrm{{Total}}: {np.mean(rates_total):.2f} \pm {np.std(rates_total):.2f}\ \mathrm{{cps}}$"),
-        (rates_cd_wp, rates_err_cd_wp, "#ffa500", rf"$\mathrm{{CD+WP}}: {np.mean(rates_cd_wp):.2f} \pm {np.std(rates_cd_wp):.2f}\ \mathrm{{cps}}$"),
-        (rates_cd_only, rates_err_cd_only, "#1ea50d", cd_label),
-        (rates_wp_only, rates_err_wp_only, "#3d80e6", rf"$\mathrm{{WP\ only}}: {np.mean(rates_wp_only):.2f} \pm {np.std(rates_wp_only):.2f}\ \mathrm{{cps}}$"),
-]
+        (rates_total,   err_total,         rates_total_mean,   rates_total_std,   "#000000", rf"$\mathrm{{Total}}: {np.mean(rates_total):.2f} \pm {np.std(rates_total):.2f}\ \mathrm{{cps}}$"),
+        (rates_cd_wp,   rates_err_cd_wp,   rates_cd_wp_mean,   rates_cd_wp_std,   "#ffa500", rf"$\mathrm{{CD+WP}}: {np.mean(rates_cd_wp):.2f} \pm {np.std(rates_cd_wp):.2f}\ \mathrm{{cps}}$"),
+        (rates_cd_only, rates_err_cd_only, rates_cd_only_mean, rates_cd_only_std, "#1ea50d", rf"$\mathrm{{CD\ only}}: ({mantissa_mean:.2f} \pm {mantissa_std:.2f}) \times 10^{{{exp}}}\ \mathrm{{cps}}$"),
+        (rates_wp_only, rates_err_wp_only, rates_wp_only_mean, rates_wp_only_std, "#3d80e6", rf"$\mathrm{{WP\ only}}: {np.mean(rates_wp_only):.2f} \pm {np.std(rates_wp_only):.2f}\ \mathrm{{cps}}$"),
+    ]
+
+    # Run ID vs muon rate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     fig, ax = plt.subplots(figsize=(16, 6))
 
-    for data, err, color, label in config:
-        ax.errorbar(run_ids, data, yerr=err, fmt="o", color=color, markersize=5.0, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.5, label=label, zorder=3)
-        mean_val = np.mean(data)
-        ax.axhline(mean_val, color=color, linestyle="--", linewidth=2.0, zorder=2)
+    for data, err, rates_mean, rates_std, color, label in config:
+        ax.errorbar(run_ids, data, yerr=err, fmt="o", color=color, markersize=7.5, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.5, label=label, zorder=3)
+        ax.axhline(rates_mean, color=color, linestyle="--", linewidth=2.0, zorder=2)
 
     ax.set_xlabel(r"Run Number")
     ax.set_ylabel(r"Muon rate (cps)")
@@ -476,26 +495,44 @@ if __name__ == "__main__":
     fig.show()
     fig.savefig("muon_rate_vs_run.pdf")
 
+    # Run ID vs WP tagging efficiency ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     fig, ax = plt.subplots(figsize=(16, 6))
 
-    ax.errorbar(run_ids, wp_tagging_efficiencies, yerr=wp_tagging_efficiencies_err, fmt="o", color="#000000", markersize=5.0, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.5, label="WP tagging efficiency", zorder=3)
-    mean_val = np.mean(wp_tagging_efficiencies)
-    ax.axhline(mean_val, color="#000000", linestyle="--", linewidth=2.0, zorder=2)
+    ax.errorbar(
+        run_ids,
+        wp_tagging_efficiencies,
+        yerr=wp_tagging_efficiencies_err,
+        fmt="o",
+        color="#8e39b6",
+        markersize=7.5,
+        capsize=0,
+        elinewidth=1.0,
+        markeredgecolor="k",
+        markeredgewidth=0.5,
+        label=rf"$\mathrm{{WP\ tagging\ efficiency}}: {wp_tagging_efficiencies_mean:.2f} \pm {wp_tagging_efficiencies_std:.2f}\ \%$",
+        zorder=3
+    )
 
     ax.set_xlabel(r"Run Number")
     ax.set_ylabel(r"WP tagging efficiency (\%)")
-    ax.set_ylim(99.8, 100.0)
+    ax.set_ylim(99.8, 100.05)
 
     ax.tick_params(direction='in', which='both', top=True, right=True)
     ax.minorticks_on()
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
 
+    # title_str = f"Run range: {min(run_ids)} - {max(run_ids)}" # exposure: {exposure_days:.1f} days"
+    # ax.set_title(title_str, loc='right', color='grey', pad=20)
+
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
-    
+
     fig.tight_layout()
     fig.show()
     fig.savefig("wp_tagging_efficiency_vs_run.pdf")
+
+    # Muon rate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
@@ -511,18 +548,20 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.show()
 
+    # Date vs muon rate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     dates = [datetime.fromtimestamp(ts, tz=timezone.utc) for ts in timestamps]
 
     fig, ax = plt.subplots(figsize=(16, 6))
 
-    for data, err, color, label in config:
+    for data, err, rates_mean, rates_std, color, label in config:
         ax.errorbar(
             dates,
             data,
             yerr=err,
             fmt="o",
             color=color,
-            markersize=5.0,
+            markersize=7.5,
             capsize=0,
             elinewidth=1.0,
             markeredgecolor="k",
@@ -530,8 +569,7 @@ if __name__ == "__main__":
             label=label,
             zorder=3
         )
-        mean_val = np.mean(data)
-        ax.axhline(mean_val, color=color, linestyle="--", linewidth=2.0, zorder=2)
+        ax.axhline(rates_mean, color=color, linestyle="--", linewidth=2.0, zorder=2)
 
     ax.xaxis.set_major_formatter(FuncFormatter(date_formatter))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
@@ -549,5 +587,42 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.show()
     fig.savefig("muon_rate_vs_date.pdf")
+
+    # Date vs WP tagging effiency ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    ax.errorbar(
+        dates,
+        wp_tagging_efficiencies,
+        yerr=wp_tagging_efficiencies_err,
+        fmt="o",
+        color="#8e39b6",
+        markersize=7.5,
+        capsize=0,
+        elinewidth=1.0,
+        markeredgecolor="k",
+        markeredgewidth=0.5,
+        label=rf"$\mathrm{{WP\ tagging\ efficiency}}: {wp_tagging_efficiencies_mean:.2f} \pm {wp_tagging_efficiencies_std:.2f}\ \%$",
+        zorder=3
+    )
+    ax.axhline(wp_tagging_efficiencies_mean, color="#8e39b6", linestyle="--", linewidth=2.0, zorder=2)
+
+    ax.xaxis.set_major_formatter(FuncFormatter(date_formatter))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+
+    ax.set_ylabel(r"WP tagging efficiency (\%)")
+    ax.set_ylim(99.8, 100.05)
+
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+    ax.minorticks_on()
+    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
+
+    # fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.show()
+    fig.savefig("wp_tagging_efficiency_vs_date.pdf")
 
     plt.show()
