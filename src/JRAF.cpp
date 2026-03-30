@@ -486,7 +486,7 @@ bool JRAF::execute() {
         }
         else if (
             calib_cd.totq < m_cd_muon_totq_thold && 
-            calib_wp.totq >= m_wp_muon_totq_thold &&
+            calib_wp.totq >= m_wp_only_muon_totq_thold &&
             curts - m_wp_last_muon > m_wp_afterpulse_thold
         ) {
             m_wp_last_muon = curts;
