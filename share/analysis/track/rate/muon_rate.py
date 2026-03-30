@@ -150,11 +150,28 @@ def apply_veto(ts_target : np.ndarray, ts_all : np.ndarray, veto_window : timest
             mask_keep[i] = False
     return ts_target[mask_keep]
 
-def calculate_wp_tagging_efficiency(ts_all : np.ndarray, ts_cd_only : np.ndarray, rate_total_cd : float, nb_cd_wp_high : int, veto_window : timestamp = timestamp(0, 10000000)):
+def calculate_wp_tagging_efficiency(ts_all : np.ndarray, ts_cd_only : np.ndarray, rate_total_cd : float, rate_total_cd_err : float, nb_cd_wp_high : int, veto_window : timestamp = timestamp(0, 10000000)):
+    # Calculation
     prob_veto = 1.0 - np.exp(-rate_total_cd * veto_window.to_sec())
-    ts_cd_only_corr = apply_veto(ts_cd_only, ts_all, veto_window)
-    nb_cd_only_corr = len(ts_cd_only_corr) * (1.0 - prob_veto)
-    return 1.0 - (nb_cd_only_corr / nb_cd_wp_high)
+    ts_cd_only_veto = apply_veto(ts_cd_only, ts_all, veto_window)
+    nb_cd_only_veto = len(ts_cd_only_veto)
+    nb_cd_only_corr = nb_cd_only_veto * (1.0 - prob_veto)
+    wp_tagging_efficiency = 1.0 - (nb_cd_only_corr / nb_cd_wp_high)
+
+    # Error propogation
+    nb_cd_only_veto_err = np.sqrt(nb_cd_only_veto)
+    prob_veto_err = veto_window.to_sec() * np.exp(-rate_total_cd * veto_window.to_sec()) * rate_total_cd_err
+    nb_cd_only_corr_err = np.sqrt(
+        ((1 - prob_veto) * nb_cd_only_veto_err)**2 + 
+        (nb_cd_only_veto * prob_veto_err)**2
+    )
+    nb_cd_wp_high_err = np.sqrt(nb_cd_wp_high)
+    wp_tagging_efficiency_err = np.sqrt(
+        (nb_cd_only_corr_err / nb_cd_wp_high)**2 +
+        (nb_cd_only_corr * nb_cd_wp_high_err / nb_cd_wp_high**2)**2
+    )
+
+    return wp_tagging_efficiency, wp_tagging_efficiency_err
 
 def calculate_muon_rate(run : int, plot=False):
     filepath = find_run_file(run)
@@ -232,14 +249,14 @@ def calculate_muon_rate(run : int, plot=False):
     ts_all = np.concatenate([ts_cd_wp, ts_cd_only, ts_wp_only])
     mask_high_charge = data["totq_cd"] > 30000
     mask_cd_wp_high = np.logical_and(mask_cd_wp, mask_high_charge)
-    wp_tagging_efficiency = calculate_wp_tagging_efficiency(ts_all, ts_cd_only, rates[0] + rates[1], np.sum(mask_cd_wp_high))
+    wp_tagging_efficiency, wp_tagging_efficiency_err = calculate_wp_tagging_efficiency(ts_all, ts_cd_only, rates[0] + rates[1], np.sum(mask_cd_wp_high))
 
     print(f"Run ID: {data['run_id'][0]}")
     print(f"Timestamp: {datetime.fromtimestamp(data['sec'][0]).strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"CD-WP rate: {rates[0]:.2f} +/- {rates_err[0]:.2f} cps")
     print(f"CD only rate: {rates[1]:.2f} +/- {rates_err[1]:.2f} cps")
     print(f"WP only rate: {rates[2]:.2f} +/- {rates_err[2]:.2f} cps")
-    print(f"WP tagging efficiency: {wp_tagging_efficiency * 100.0:.2f}")
+    print(f"WP tagging efficiency: {wp_tagging_efficiency * 100.0:.2f} +/- {wp_tagging_efficiency_err * 100.0:.2f} %")
 
     # Save the rates in file
     ofile=f"/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/summary/rates/RUN.{run}.rates.root"
@@ -249,7 +266,8 @@ def calculate_muon_rate(run : int, plot=False):
             "sec": np.full(len(rates), data["sec"][0], dtype=np.int64),
             "rates": np.array(rates, dtype=np.float64),
             "rates_err": np.array(rates_err, dtype=np.float64),
-            "wp_tagging_efficiency": np.full(len(rates), wp_tagging_efficiency, dtype=np.float64)
+            "wp_tagging_efficiency": np.full(len(rates), wp_tagging_efficiency, dtype=np.float64),
+            "wp_tagging_efficiency_err": np.full(len(rates), wp_tagging_efficiency_err, dtype=np.float64)
         }
 
     if not plot:
@@ -374,6 +392,8 @@ if __name__ == "__main__":
     rates_err_cd_wp = []
     rates_err_cd_only = []
     rates_err_wp_only = []
+    wp_tagging_efficiencies = []
+    wp_tagging_efficiencies_err = []
 
     file = uproot.open(args.input)
     tree = file["rates"]
@@ -383,6 +403,8 @@ if __name__ == "__main__":
     sec = data["sec"]
     rates = data["rates"]
     rates_err = data["rates_err"]
+    wp_tagging_efficiency = data["wp_tagging_efficiency"]
+    wp_tagging_efficiency_err = data["wp_tagging_efficiency_err"]
     for i in range(len(run_id) // 3):
         run_ids.append(run_id[i * 3])
         timestamps.append(sec[i * 3])
@@ -392,6 +414,8 @@ if __name__ == "__main__":
         rates_err_cd_wp.append(rates_err[i * 3])
         rates_err_cd_only.append(rates_err[i * 3 + 1])
         rates_err_wp_only.append(rates_err[i * 3 + 2])
+        wp_tagging_efficiencies.append(wp_tagging_efficiency[i * 3] * 100.0)
+        wp_tagging_efficiencies_err.append(wp_tagging_efficiency_err[i * 3] * 100.0)
 
     run_ids = np.array(run_ids)
     timestamps = np.array(timestamps)
@@ -401,6 +425,8 @@ if __name__ == "__main__":
     rates_err_cd_wp = np.array(rates_err_cd_wp)
     rates_err_cd_only = np.array(rates_err_cd_only)
     rates_err_wp_only = np.array(rates_err_wp_only)
+    wp_tagging_efficiencies = np.array(wp_tagging_efficiencies)
+    wp_tagging_efficiencies_err = np.array(wp_tagging_efficiencies_err)
 
     rates_total = rates_cd_wp + rates_cd_only + rates_wp_only
     err_total = np.sqrt(rates_err_cd_wp**2 + rates_err_cd_only**2 + rates_err_wp_only**2)
@@ -449,6 +475,27 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.show()
     fig.savefig("muon_rate_vs_run.pdf")
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    ax.errorbar(run_ids, wp_tagging_efficiencies, yerr=wp_tagging_efficiencies_err, fmt="o", color="#000000", markersize=5.0, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.5, label="WP tagging efficiency", zorder=3)
+    mean_val = np.mean(wp_tagging_efficiencies)
+    ax.axhline(mean_val, color="#000000", linestyle="--", linewidth=2.0, zorder=2)
+
+    ax.set_xlabel(r"Run Number")
+    ax.set_ylabel(r"WP tagging efficiency (\%)")
+    ax.set_ylim(99.8, 100.0)
+
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+    ax.minorticks_on()
+    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
+    
+    fig.tight_layout()
+    fig.show()
+    fig.savefig("wp_tagging_efficiency_vs_run.pdf")
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
