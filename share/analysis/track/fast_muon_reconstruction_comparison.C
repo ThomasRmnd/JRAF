@@ -464,7 +464,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .angle = compute_angle_between_track(tt_muon, muon),
                     .distance = compute_distance_between_track(tt_muon, muon),
                     .clippingness = compute_clippingness(tt_muon),
-                    .clippingness_trk = compute_clippingness(trk),
+                    .clippingness_trk = compute_clippingness(muon),
                     .run_id = muon.run_id,
                     .quality = muon.quality,
                     .tt_quality = tt_muon.quality
