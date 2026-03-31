@@ -255,7 +255,8 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
         TVector3 ipos(iposx, iposy, iposz);
         TVector3 fpos(fposx, fposy, fposz);
         TVector3 mpos = ipos + 0.5 * (fpos - ipos);
-        TVector3 mposp = 1.005 * mpos;
+        // TVector3 mposp = 1.005 * mpos;
+        TVector3 mposp = mpos;
         if (mposp.Mag() > 17700.0) {
             mposp = mpos;
         }
@@ -737,7 +738,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_angle_vs_r_cdwpttchi2->Draw("COLZ");
     c_angle_vs_r_cdwpttchi2->Update();
 
-    TH2D* h_rtrk_vs_r_cdwpttchi2 = new TH2D("h_rtrk_vs_r_cdwpttchi2", "h_rtrk_vs_r_cdwpttchi2", nbins_angle, r2_min, r2_max, nbins_angle, r2_min, r2_max);
+    TH2D* h_rtrk_vs_r_cdwpttchi2 = new TH2D("h_rtrk_vs_r_cdwpttchi2", "h_rtrk_vs_r_cdwpttchi2", 200, r2_min, r2_max, 200, r2_min, r2_max);
     for (const auto& [method, perf] : performances) {
         if (method != "CdWpTtChi2") continue;
         for (const MuonPerformance& mp : perf) {
