@@ -255,16 +255,25 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
         TVector3 ipos(iposx, iposy, iposz);
         TVector3 fpos(fposx, fposy, fposz);
         TVector3 mpos = ipos + 0.5 * (fpos - ipos);
-        // double r = mpos.Mag();
-        // if (mpos.Mag() < 17700.0) {
+        TVector3 mposp = 1.05 * mpos;
+        if (mposp.Mag() > 17700.0) {
+            mposp = mpos;
+        }
+        TVector3 dir = (mposp - ipos).Unit();
+        double b_half = dir * ipos;
+        double c = ipos.Mag2() - 17700.0 * 17700.0;
+        double discr = b_half * b_half - c;
+        if (discr < 0.0) continue;
+        double d = -b_half + std::sqrt(discr);
+        fpos = ipos + d * dir;
         tracks.insert(track{
             .run_id = run_id,
             .ts = TTimeStamp(sec, nsec),
             .totq_cd = totq_cd,
             .totq_wp = totq_wp,
             .quality = chi2,
-            .ipos = TVector3(iposx, iposy, iposz),
-            .fpos = TVector3(fposx, fposy, fposz),
+            .ipos = ipos,
+            .fpos = fpos,
             .is_single = (ntracks_wpclassify == 1),
             .is_stopping = (nstoppings_wpclassify > 0)
         });
