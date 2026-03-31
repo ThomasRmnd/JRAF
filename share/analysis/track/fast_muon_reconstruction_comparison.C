@@ -255,7 +255,7 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
         TVector3 ipos(iposx, iposy, iposz);
         TVector3 fpos(fposx, fposy, fposz);
         TVector3 mpos = ipos + 0.5 * (fpos - ipos);
-        TVector3 mposp = 1.05 * mpos;
+        TVector3 mposp = 1.0001 * mpos;
         if (mposp.Mag() > 17700.0) {
             mposp = mpos;
         }
