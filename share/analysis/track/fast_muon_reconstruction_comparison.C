@@ -725,7 +725,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
 
 
-    TH2D* h_angle_vs_r_cdwpttchi2 = new TH2D("h_angle_vs_r_cdwpttchi2", "h_angle_vs_r_cdwpttchi2", nbins_angle, xmin_angle, xmax_angle, nbins_angle, r2_min, r2_max);
+    TH2D* h_angle_vs_r_cdwpttchi2 = new TH2D("h_angle_vs_r_cdwpttchi2", "h_angle_vs_r_cdwpttchi2", 200, 0.0, 20.0, 200, r2_min, r2_max);
     for (const auto& [method, perf] : performances) {
         if (method != "CdWpTtChi2") continue;
         for (const MuonPerformance& mp : perf) {
