@@ -738,6 +738,19 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_angle_vs_r_cdwpttchi2->Draw("COLZ");
     c_angle_vs_r_cdwpttchi2->Update();
 
+    TH2D* h_angle_vs_rtrk_cdwpttchi2 = new TH2D("h_angle_vs_rtrk_cdwpttchi2", "h_angle_vs_rtrk_cdwpttchi2", 200, 0.0, 20.0, 200, r2_min, r2_max);
+    for (const auto& [method, perf] : performances) {
+        if (method != "CdWpTtChi2") continue;
+        for (const MuonPerformance& mp : perf) {
+            h_angle_vs_rtrk_cdwpttchi2->Fill(mp.angle, mp.clippingness_trk * mp.clippingness_trk);
+        }
+    }
+    TCanvas* c_angle_vs_rtrk_cdwpttchi2 = new TCanvas("c_angle_vs_rtrk_cdwpttchi2", "Angle vs r", 1000, 1000);
+    c_angle_vs_rtrk_cdwpttchi2->cd();
+    h_angle_vs_rtrk_cdwpttchi2->SetStats(0);
+    h_angle_vs_rtrk_cdwpttchi2->Draw("COLZ");
+    c_angle_vs_rtrk_cdwpttchi2->Update();
+
     TH2D* h_rtrk_vs_r_cdwpttchi2 = new TH2D("h_rtrk_vs_r_cdwpttchi2", "h_rtrk_vs_r_cdwpttchi2", 200, r2_min, r2_max, 200, r2_min, r2_max);
     for (const auto& [method, perf] : performances) {
         if (method != "CdWpTtChi2") continue;
