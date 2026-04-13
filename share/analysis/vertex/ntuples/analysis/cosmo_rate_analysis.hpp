@@ -2,6 +2,7 @@
 #define ANALYSIS_COSMO_RATE_ANALYSIS_HPP_
 
 #include <TFitResult.h>
+#include <TF1.h>
 
 #include "analysis/basic_analysis.hpp"
 #include "utils/plot.hpp"

@@ -448,15 +448,15 @@ if __name__ == "__main__":
     err_total = np.sqrt(rates_err_cd_wp**2 + rates_err_cd_only**2 + rates_err_wp_only**2)
 
     rates_total_mean = np.mean(rates_total)
-    rates_total_std = np.std(rates_total) / np.sqrt(len(rates_total))
+    rates_total_std = np.sqrt(np.mean(err_total**2)) # np.std(rates_total) / np.sqrt(len(rates_total))
     rates_cd_wp_mean = np.mean(rates_cd_wp)
-    rates_cd_wp_std = np.std(rates_cd_wp) / np.sqrt(len(rates_cd_wp))
+    rates_cd_wp_std = np.sqrt(np.mean(rates_err_cd_wp**2)) # std(rates_cd_wp) / np.sqrt(len(rates_cd_wp))
     rates_cd_only_mean = np.mean(rates_cd_only)
-    rates_cd_only_std = np.std(rates_cd_only) / np.sqrt(len(rates_cd_only))
+    rates_cd_only_std = np.sqrt(np.mean(rates_err_cd_only**2)) # std(rates_cd_only) / np.sqrt(len(rates_cd_only))
     rates_wp_only_mean = np.mean(rates_wp_only)
-    rates_wp_only_std = np.std(rates_wp_only) / np.sqrt(len(rates_wp_only))
+    rates_wp_only_std = np.sqrt(np.mean(rates_err_wp_only**2)) # std(rates_wp_only) / np.sqrt(len(rates_wp_only))
     wp_tagging_efficiencies_mean = np.mean(wp_tagging_efficiencies)
-    wp_tagging_efficiencies_std = np.std(wp_tagging_efficiencies) / np.sqrt(len(wp_tagging_efficiencies))
+    wp_tagging_efficiencies_std = np.sqrt(np.mean(wp_tagging_efficiencies_err**2)) # std(wp_tagging_efficiencies) / np.sqrt(len(wp_tagging_efficiencies))
 
 
     exp = int(np.floor(np.log10(rates_cd_only_mean)))
@@ -472,17 +472,36 @@ if __name__ == "__main__":
 
     # Run ID vs muon rate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    fig, ax = plt.subplots(figsize=(16, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
     for data, err, rates_mean, rates_std, color, label in config:
-        ax.errorbar(run_ids, data, yerr=err, fmt="o", color=color, markersize=7.5, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.5, label=label, zorder=3)
+        ax.errorbar(run_ids, data, yerr=err, fmt="o", color=color, markersize=7.5, capsize=0, elinewidth=1.0, markeredgecolor="k", markeredgewidth=0.25, label=label, zorder=3)
         ax.axhline(rates_mean, color=color, linestyle="--", linewidth=2.0, zorder=2)
+        ax.add_patch(Rectangle(
+            (0, rates_mean - rates_std),
+            1,
+            2 * rates_std,
+            transform=ax.get_yaxis_transform(),
+            color=color,
+            alpha=0.2,
+            zorder=1
+        ))
 
-    ax.set_xlabel(r"Run Number")
-    ax.set_ylabel(r"Muon rate (cps)")
+    ax.set_xlabel(
+        r"Run Number",
+        fontdict={
+            "size": 22
+        }
+    )
+    ax.set_ylabel(
+        r"Muon rate (cps)",
+        fontdict={
+            "size": 22
+        }
+    )
     ax.set_ylim(-0.1, 10)
 
-    ax.tick_params(direction='in', which='both', top=True, right=True)
+    ax.tick_params(direction='in', which='both', top=True, right=True, labelsize=22)
     ax.minorticks_on()
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
@@ -490,7 +509,16 @@ if __name__ == "__main__":
     # title_str = f"Run range: {min(run_ids)} - {max(run_ids)}" # exposure: {exposure_days:.1f} days"
     # ax.set_title(title_str, loc='right', color='grey', pad=20)
 
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
+    ax.legend(
+        loc='upper center',
+        bbox_to_anchor=(0.5, 1.30),
+        ncol=2,
+        frameon=False,
+        handletextpad=0.3,
+        columnspacing=0.9,
+        borderaxespad=0.2,
+        fontsize=22
+    )
 
     fig.tight_layout()
     fig.show()
@@ -498,7 +526,7 @@ if __name__ == "__main__":
 
     # Run ID vs WP tagging efficiency ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    fig, ax = plt.subplots(figsize=(16, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
     ax.errorbar(
         run_ids,
@@ -510,16 +538,36 @@ if __name__ == "__main__":
         capsize=0,
         elinewidth=1.0,
         markeredgecolor="k",
-        markeredgewidth=0.5,
+        markeredgewidth=0.25,
         label=rf"$\mathrm{{WP\ tagging\ efficiency}}: {wp_tagging_efficiencies_mean:.2f} \pm {wp_tagging_efficiencies_std:.2f}\ \%$",
         zorder=3
     )
+    ax.axhline(wp_tagging_efficiencies_mean, color="#8e39b6", linestyle="--", linewidth=2.0, zorder=2)
+    ax.add_patch(Rectangle(
+        (0, wp_tagging_efficiencies_mean - wp_tagging_efficiencies_std),
+        1,
+        2 * wp_tagging_efficiencies_std,
+        transform=ax.get_yaxis_transform(),
+        color="#8e39b6",
+        alpha=0.2,
+        zorder=1
+    ))
 
-    ax.set_xlabel(r"Run Number")
-    ax.set_ylabel(r"WP tagging efficiency (\%)")
+    ax.set_xlabel(
+        r"Run Number",
+        fontdict={
+            "size": 22
+        }
+    )
+    ax.set_ylabel(
+        r"WP tagging efficiency (\%)",
+        fontdict={
+            "size": 22
+        }
+    )
     ax.set_ylim(99.8, 100.05)
 
-    ax.tick_params(direction='in', which='both', top=True, right=True)
+    ax.tick_params(direction='in', which='both', top=True, right=True, labelsize=22)
     ax.minorticks_on()
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
@@ -527,7 +575,7 @@ if __name__ == "__main__":
     # title_str = f"Run range: {min(run_ids)} - {max(run_ids)}" # exposure: {exposure_days:.1f} days"
     # ax.set_title(title_str, loc='right', color='grey', pad=20)
 
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1, fontsize=22)
 
     fig.tight_layout()
     fig.show()
@@ -553,7 +601,7 @@ if __name__ == "__main__":
 
     dates = [datetime.fromtimestamp(ts, tz=timezone.utc) for ts in timestamps]
 
-    fig, ax = plt.subplots(figsize=(16, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
     for data, err, rates_mean, rates_std, color, label in config:
         ax.errorbar(
@@ -566,23 +614,52 @@ if __name__ == "__main__":
             capsize=0,
             elinewidth=1.0,
             markeredgecolor="k",
-            markeredgewidth=0.5,
+            markeredgewidth=0.25,
             label=label,
             zorder=3
         )
         ax.axhline(rates_mean, color=color, linestyle="--", linewidth=2.0, zorder=2)
+        ax.add_patch(Rectangle(
+            (0, rates_mean - rates_std),
+            1,
+            2 * rates_std,
+            transform=ax.get_yaxis_transform(),
+            color=color,
+            alpha=0.2,
+            zorder=1
+        ))
 
     ax.xaxis.set_major_formatter(FuncFormatter(date_formatter))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
 
-    ax.set_ylabel(r"Muon rate (cps)")
+    ax.set_xlabel(
+        r"",
+        fontdict={
+            "size": 22
+        }
+    )
+    ax.set_ylabel(
+        r"Muon rate (cps)",
+        fontdict={
+            "size": 22
+        }
+    )
     ax.set_ylim(-0.1, 10)
 
-    ax.tick_params(direction='in', which='both', top=True, right=True)
+    ax.tick_params(direction='in', which='both', top=True, right=True, labelsize=22)
     ax.minorticks_on()
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
 
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
+    ax.legend(
+        loc='upper center',
+        bbox_to_anchor=(0.5, 1.30),
+        ncol=2,
+        frameon=False,
+        handletextpad=0.3,
+        columnspacing=0.9,
+        borderaxespad=0.2,
+        fontsize=22
+    )
 
     # fig.autofmt_xdate()
     fig.tight_layout()
@@ -591,7 +668,7 @@ if __name__ == "__main__":
 
     # Date vs WP tagging effiency ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    fig, ax = plt.subplots(figsize=(16, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
     ax.errorbar(
         dates,
@@ -603,23 +680,43 @@ if __name__ == "__main__":
         capsize=0,
         elinewidth=1.0,
         markeredgecolor="k",
-        markeredgewidth=0.5,
+        markeredgewidth=0.25,
         label=rf"$\mathrm{{WP\ tagging\ efficiency}}: {wp_tagging_efficiencies_mean:.2f} \pm {wp_tagging_efficiencies_std:.2f}\ \%$",
         zorder=3
     )
     ax.axhline(wp_tagging_efficiencies_mean, color="#8e39b6", linestyle="--", linewidth=2.0, zorder=2)
+    ax.add_patch(Rectangle(
+        (0, wp_tagging_efficiencies_mean - wp_tagging_efficiencies_std),
+        1,
+        2 * wp_tagging_efficiencies_std,
+        transform=ax.get_yaxis_transform(),
+        color="#8e39b6",
+        alpha=0.2,
+        zorder=1
+    ))
 
     ax.xaxis.set_major_formatter(FuncFormatter(date_formatter))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
 
-    ax.set_ylabel(r"WP tagging efficiency (\%)")
+    ax.set_xlabel(
+        r"",
+        fontdict={
+            "size": 22
+        }
+    )
+    ax.set_ylabel(
+        r"WP tagging efficiency (\%)",
+        fontdict={
+            "size": 22
+        }
+    )
     ax.set_ylim(99.8, 100.05)
 
-    ax.tick_params(direction='in', which='both', top=True, right=True)
+    ax.tick_params(direction='in', which='both', top=True, right=True, labelsize=22)
     ax.minorticks_on()
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
 
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, frameon=False, handletextpad=0.1, fontsize=22)
 
     # fig.autofmt_xdate()
     fig.tight_layout()
