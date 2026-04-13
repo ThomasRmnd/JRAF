@@ -18,7 +18,7 @@ if [[ "${HOSTNAME}" =~ ^cc.*\.in2p3\.fr$ ]]; then
     CLUSTER="CC-IN2P3"
     source /pbs/home/t/traymond/share/bash/logging.sh
     TEMPDIR=${TMPDIR}
-    SOURCE_JUNOSW_PATH="/pbs/home/t/traymond/J25.6.1_Modified/git_junosw_J25_load.sh"
+    SOURCE_JUNOSW_PATH="/pbs/home/t/traymond/J25.7.4/git_junosw_load_J25_7_4.sh"
 elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
     # Detect IHEP cluster
     CLUSTER="IHEP"

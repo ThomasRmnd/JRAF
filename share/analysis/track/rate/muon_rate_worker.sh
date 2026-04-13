@@ -28,5 +28,5 @@ if [[ -z "${RUN:-}" ]]; then
     exit 1
 fi
 
-source /pbs/home/t/traymond/J25.6.1_Modified/git_junosw_J25_load.sh
+source /pbs/home/t/traymond/J25.7.4/git_junosw_load_J25_7_4.sh
 python muon_rate.py --run "${RUN}"
