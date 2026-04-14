@@ -577,8 +577,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     // double xmin_angle = 0.0, xmax_angle = 180.0;
     // double xmin_distance = 0.0, xmax_distance = 40.0;
     // int nbins_angle = 500, nbins_distance = 500;
-    double xmin_angle = 0.0, xmax_angle = 180.0;
-    double xmin_distance = 0.0, xmax_distance = 40.0;
+    double xmin_angle = 0.0, xmax_angle = 5.0;
+    double xmin_distance = 0.0, xmax_distance = 2.0;
     int nbins_angle = 50, nbins_distance = 50;
 
     method_angle_map["CdWpTtChi2"] = new TH1D("h_angle_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
@@ -737,7 +737,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
 
 
-    TH2D* h_angle_vs_r_cdwpttchi2 = new TH2D("h_angle_vs_r_cdwpttchi2", "h_angle_vs_r_cdwpttchi2", 200, 0.0, 20.0, 200, r2_min, r2_max);
+    TH2D* h_angle_vs_r_cdwpttchi2 = new TH2D("h_angle_vs_r_cdwpttchi2", "h_angle_vs_r_cdwpttchi2", 200, 0.0, 180.0, 200, r2_min, r2_max);
     for (const auto& [method, perf] : performances) {
         if (method != "CdWpTtChi2") continue;
         for (const MuonPerformance& mp : perf) {
@@ -750,7 +750,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     h_angle_vs_r_cdwpttchi2->Draw("COLZ");
     c_angle_vs_r_cdwpttchi2->Update();
 
-    TH2D* h_angle_vs_rtrk_cdwpttchi2 = new TH2D("h_angle_vs_rtrk_cdwpttchi2", "h_angle_vs_rtrk_cdwpttchi2", 200, 0.0, 20.0, 200, r2_min, r2_max);
+    TH2D* h_angle_vs_rtrk_cdwpttchi2 = new TH2D("h_angle_vs_rtrk_cdwpttchi2", "h_angle_vs_rtrk_cdwpttchi2", 200, 0.0, 180.0, 200, r2_min, r2_max);
     for (const auto& [method, perf] : performances) {
         if (method != "CdWpTtChi2") continue;
         for (const MuonPerformance& mp : perf) {
