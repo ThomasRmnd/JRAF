@@ -252,16 +252,14 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in CdWpTtChi2 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        TVector3 ipos(iposx, iposy, iposz);
-        TVector3 fpos(fposx, fposy, fposz);
         tracks.insert(track{
             .run_id = run_id,
             .ts = TTimeStamp(sec, nsec),
             .totq_cd = totq_cd,
             .totq_wp = totq_wp,
             .quality = chi2,
-            .ipos = ipos,
-            .fpos = fpos,
+            .ipos = TVector3(iposx, iposy, iposz),
+            .fpos = TVector3(fposx, fposy, fposz),
             .is_single = (ntracks_wpclassify == 1),
             .is_stopping = (nstoppings_wpclassify > 0)
         });
@@ -623,7 +621,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     plot_metrics(method_angle_map, angle_quantiles);
     plot_metrics(method_distance_map, distance_quantiles);
 
-    double r2_min = 0.0 * 0.0, r2_max = 18.0 * 18.0;
+    // double r2_min = 0.0 * 0.0, r2_max = 18.0 * 18.0;
+    double r2_min = 0.0 * 0.0, r2_max = 21.0 * 21.0;
     int nbins = 9;
     std::map<std::string, std::vector<std::vector<double>>> method_angle_r2_bin_content;
     std::map<std::string, std::vector<std::vector<double>>> method_distance_r2_bin_content;
