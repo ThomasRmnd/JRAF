@@ -565,8 +565,14 @@ std::vector<MuonClassification> compute_global_correlations_classification(std::
 int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
     std::map<std::string, std::set<track>> tracks = open_joint_reco_user_chain(path_joint);
     tracks["CdWpTtChi2"] = open_cdwpttchi2_user_chain(path_cdwpttchi2);
-    tracks["Amber_v5.5"] = open_amber_v5_5_user_chain(path_amber);
-    tracks["Edwin"] = open_edwin_user_chain(path_edwin);
+    std::set<track> amber_v5_5_tracks = open_amber_v5_5_user_chain(path_amber);
+    if (!amber_v5_5_tracks.empty()) {
+        tracks["Amber_v5.5"] = amber_v5_5_tracks;
+    }
+    std::set<track> edwin_tracks = open_edwin_user_chain(path_edwin);
+    if (!edwin_tracks.empty()) {
+        tracks["Edwin"] = edwin_tracks;
+    }
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
