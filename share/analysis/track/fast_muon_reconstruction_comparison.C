@@ -419,7 +419,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
             
             std::set<track>::const_iterator it_tt = tt_tracks.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
 
-            while (it_tt != track_set.end() && lower_bound_ts <= it_tt->ts && it_tt->ts <= upper_bound_ts) {
+            while (it_tt != tt_tracks.end() && lower_bound_ts <= it_tt->ts && it_tt->ts <= upper_bound_ts) {
                 performances[method].push_back(MuonPerformance{
                     .angle = compute_angle_between_track(trk, *it_tt),
                     .distance = compute_distance_between_track(trk, *it_tt),
@@ -602,10 +602,14 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_distance_map["CdClassify"] = new TH1D("h_distance_cdclassify", "Distance between tracks middle point (CdClassify);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
     method_angle_map["WpBasic"] = new TH1D("h_angle_wpclassify", "Angle between tracks direction (WpClassify);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
     method_distance_map["WpBasic"] = new TH1D("h_distance_wpclassify", "Distance between tracks middle point (WpClassify);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
-    method_angle_map["Amber_v5.5"] = new TH1D("h_angle_amber", "Angle between tracks direction (Amber);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
-    method_distance_map["Amber_v5.5"] = new TH1D("h_distance_amber", "Distance between tracks middle point (Amber);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
-    method_angle_map["Edwin"] = new TH1D("h_angle_edwin", "Angle between tracks direction (Edwin);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
-    method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    if (!amber_v5_5_tracks.empty()) {
+        method_angle_map["Amber_v5.5"] = new TH1D("h_angle_amber", "Angle between tracks direction (Amber);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+        method_distance_map["Amber_v5.5"] = new TH1D("h_distance_amber", "Distance between tracks middle point (Amber);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    }
+    if (!edwin_tracks.empty()) {
+        method_angle_map["Edwin"] = new TH1D("h_angle_edwin", "Angle between tracks direction (Edwin);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+        method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    }
 
     for (const auto& [method, perf] : performances) {
         for (const MuonPerformance& mp : perf) {
@@ -641,8 +645,12 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_angle_r2_map["CdWpTtChi2"] = new TH1D("h_angle_r2_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     method_angle_r2_map["CdClassify"] = new TH1D("h_angle_r2_cdclassify", "Angle between tracks direction (CdClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     method_angle_r2_map["WpBasic"] = new TH1D("h_angle_r2_wpclassify", "Angle between tracks direction (WpClassify);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
-    method_angle_r2_map["Amber_v5.5"] = new TH1D("h_angle_r2_amber", "Angle between tracks direction (Amber);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
-    method_angle_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Angle between tracks direction (Edwin);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    if (!amber_v5_5_tracks.empty()) {
+        method_angle_r2_map["Amber_v5.5"] = new TH1D("h_angle_r2_amber", "Angle between tracks direction (Amber);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    }
+    if (!edwin_tracks.empty()) {
+        method_angle_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Angle between tracks direction (Edwin);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    }
     for (auto& [method, h] : method_angle_r2_map) {
         h->GetXaxis()->SetNdivisions(nbins, false);
     }
@@ -651,8 +659,12 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_distance_r2_map["CdWpTtChi2"] = new TH1D("h_distance_r2_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
     method_distance_r2_map["CdClassify"] = new TH1D("h_distance_r2_cdclassify", "Distance between tracks middle point (CdClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
     method_distance_r2_map["WpBasic"] = new TH1D("h_distance_r2_wpclassify", "Distance between tracks middle point (WpClassify);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
-    method_distance_r2_map["Amber_v5.5"] = new TH1D("h_distance_r2_amber", "Distance between tracks middle point (Amber);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
-    method_distance_r2_map["Edwin"] = new TH1D("h_distance_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    if (!amber_v5_5_tracks.empty()) {
+        method_distance_r2_map["Amber_v5.5"] = new TH1D("h_distance_r2_amber", "Distance between tracks middle point (Amber);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    }
+    if (!edwin_tracks.empty()) {
+        method_distance_r2_map["Edwin"] = new TH1D("h_distance_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    }
     for (auto& [method, h] : method_distance_r2_map) {
         h->GetXaxis()->SetNdivisions(nbins, false);
     }
@@ -690,15 +702,23 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     method_angle_runid_map["CdWpTtChi2"] = new TH1D("h_angle_runid_cdwpttchi2", "Angle between tracks direction (CdWpTtChi2);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
     method_angle_runid_map["CdClassify"] = new TH1D("h_angle_runid_cdclassify", "Angle between tracks direction (CdClassify);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
     method_angle_runid_map["WpBasic"] = new TH1D("h_angle_runid_wpclassify", "Angle between tracks direction (WpBasic);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
-    method_angle_runid_map["Amber_v5.5"] = new TH1D("h_angle_runid_amber", "Angle between tracks direction (Amber);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
-    method_angle_runid_map["Edwin"] = new TH1D("h_angle_runid_edwin", "Angle between tracks direction (Edwin);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    if (!amber_v5_5_tracks.empty()) {
+        method_angle_runid_map["Amber_v5.5"] = new TH1D("h_angle_runid_amber", "Angle between tracks direction (Amber);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    }
+    if (!edwin_tracks.empty()) {
+        method_angle_runid_map["Edwin"] = new TH1D("h_angle_runid_edwin", "Angle between tracks direction (Edwin);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    }
     
     std::map<std::string, TH1D*> method_distance_runid_map;
     method_distance_runid_map["CdWpTtChi2"] = new TH1D("h_distance_runid_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
     method_distance_runid_map["CdClassify"] = new TH1D("h_distance_runid_cdclassify", "Distance between tracks middle point (CdClassify);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
     method_distance_runid_map["WpBasic"] = new TH1D("h_distance_runid_wpclassify", "Distance between tracks middle point (WpBasic);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
-    method_distance_runid_map["Amber_v5.5"] = new TH1D("h_distance_runid_amber", "Distance between tracks middle point (Amber);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
-    method_distance_runid_map["Edwin"] = new TH1D("h_distance_runid_edwin", "Distance between tracks middle point (Edwin);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    if (!amber_v5_5_tracks.empty()) {
+        method_distance_runid_map["Amber_v5.5"] = new TH1D("h_distance_runid_amber", "Distance between tracks middle point (Amber);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    }
+    if (!edwin_tracks.empty()) {
+        method_distance_runid_map["Edwin"] = new TH1D("h_distance_runid_edwin", "Distance between tracks middle point (Edwin);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    }
 
     for (const auto& [method, perf] : performances) {
         if (method == "Tt") continue;
