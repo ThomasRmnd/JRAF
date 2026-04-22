@@ -470,83 +470,6 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
     return performances;
 }
 
-struct MuonClassification {
-    int run_id;
-    TVector3 ipos_tt, fpos_tt;
-    TVector3 ipos_wp, fpos_wp;
-    bool is_single_cdwpttchi2;
-    bool is_single_amber;
-    bool is_stopping_cdwpttchi2;
-};
-
-std::vector<MuonClassification> compute_global_correlations_classification(std::map<std::string, std::set<track>>& tracks) {
-    if (tracks.find("Tt") == tracks.end()) {
-        std::cerr << "Error: Tt tracks not found in map.\n";
-        return {};
-    }
-    const std::set<track>& tt_tracks = tracks["Tt"];
-
-    std::vector<MuonClassification> classifications;
-
-    for (const track& tt_muon : tt_tracks) {
-        std::map<std::string, track> coincident_map;
-        bool all_found = true;
-        bool is_single_cdwpttchi2 = true;
-        bool is_single_amber = true;
-        bool is_stopping_cdwpttchi2 = false;
-        TVector3 ipos_wp, fpos_wp;
-        double maxdistance = std::numeric_limits<double>::infinity();
-
-        for (const auto& [method, track_set] : tracks) {
-            if (method == "Tt") continue;
-            bool found_in_method = false;
-            TTimeStamp lower_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
-            TTimeStamp upper_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
-            std::set<track>::const_iterator it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
-            
-            while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
-                coincident_map[method] = *it;
-                found_in_method = true;
-                if (method == "CdWpTtChi2") {
-                    is_single_cdwpttchi2 = it->is_single;
-                    is_stopping_cdwpttchi2 = it->is_stopping;
-                }
-                else if (method == "Amber_v5.5") {
-                    is_single_amber = it->is_single;
-                }
-                else if (method == "WpBasic") {
-                    double distance = compute_distance_between_track(tt_muon, *it);
-                    if (distance < maxdistance) {
-                        maxdistance = distance;
-                        ipos_wp = it->ipos;
-                        fpos_wp = it->fpos;
-                    }
-                }
-                break;
-            }
-
-            if (!found_in_method) {
-                all_found = false;
-                break; 
-            }
-        }
-
-        if (all_found) {
-            classifications.push_back(MuonClassification{
-                .run_id = tt_muon.run_id,
-                .ipos_tt = tt_muon.ipos,
-                .fpos_tt = tt_muon.fpos,
-                .ipos_wp = ipos_wp,
-                .fpos_wp = fpos_wp,
-                .is_single_cdwpttchi2 = is_single_cdwpttchi2,
-                .is_single_amber = is_single_amber,
-                .is_stopping_cdwpttchi2 = is_stopping_cdwpttchi2
-            });
-        }
-    }
-    return classifications;
-}
-
 int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
     std::map<std::string, std::set<track>> tracks = open_joint_reco_user_chain(path_joint);
     tracks["CdWpTtChi2"] = open_cdwpttchi2_user_chain(path_cdwpttchi2);
@@ -561,7 +484,6 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
-    std::vector<MuonClassification> classifications = compute_global_correlations_classification(tracks);
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
@@ -621,8 +543,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     plot_metrics(method_angle_map, angle_quantiles);
     plot_metrics(method_distance_map, distance_quantiles);
 
-    // double r2_min = 0.0 * 0.0, r2_max = 18.0 * 18.0;
-    double r2_min = 0.0 * 0.0, r2_max = 21.0 * 21.0;
+    double r2_min = 0.0 * 0.0, r2_max = 18.0 * 18.0;
+    // double r2_min = 0.0 * 0.0, r2_max = 21.0 * 21.0;
     int nbins = 9;
     std::map<std::string, std::vector<std::vector<double>>> method_angle_r2_bin_content;
     std::map<std::string, std::vector<std::vector<double>>> method_distance_r2_bin_content;
@@ -925,103 +847,6 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     c_distance_runid->SetTicky();
     c_distance_runid->SetGrid();
     c_distance_runid->Update();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    TCanvas* c_classification_comparison = new TCanvas("c_classification_comparison", "Classification comparison", 1000, 1000);
-    c_classification_comparison->cd();
-
-    TH2D* h_classification_comparison = new TH2D("h_classification_comparison", "Classification compairson", 2, 0.0, 2.0, 2, 0.0, 2.0);
-    h_classification_comparison->SetStats(0);
-    for (const MuonClassification& clas : classifications) {
-        h_classification_comparison->Fill(clas.is_single_cdwpttchi2 ? 1.5 : 0.5, clas.is_single_amber ? 1.5 : 0.5);
-    }
-    h_classification_comparison->GetXaxis()->SetTitle("Is single WpClassify"),
-    h_classification_comparison->GetYaxis()->SetTitle("Is single Amber");
-    h_classification_comparison->Draw("COLZ TEXT");
-    c_classification_comparison->Update();
-
-    TCanvas* c_classification_bundle_wp_single_amber = new TCanvas("c_classification_bundle_wp_single_amber", "Classification bundle Wp single Amber", 1000, 1000);
-    c_classification_bundle_wp_single_amber->cd();
-
-    TH1D* h_classification_bundle_wp_single_amber = new TH1D("h_classification_bundle_wp_single_amber", "Classification: [bundle Wp] [single Amber]", 100, 0.0, 20.05);
-    h_classification_bundle_wp_single_amber->SetStats(0);
-    for (const MuonClassification& clas : classifications) {
-        if (!clas.is_single_cdwpttchi2 && clas.is_single_amber) {
-            TVector3 dir = (clas.fpos_tt - clas.ipos_tt).Unit(); 
-            h_classification_bundle_wp_single_amber->Fill(dir.Cross(-clas.ipos_tt).Mag() / 1000.0);
-        }
-    }
-    h_classification_bundle_wp_single_amber->GetXaxis()->SetTitle("L (m)");
-    h_classification_bundle_wp_single_amber->GetYaxis()->SetTitle("Entries");
-    h_classification_bundle_wp_single_amber->SetLineColor(kBlue);
-    h_classification_bundle_wp_single_amber->SetLineWidth(3);
-    h_classification_bundle_wp_single_amber->Draw();
-    c_classification_bundle_wp_single_amber->Update();
-    
-    TCanvas* c_classification_single_wp_bundle_amber = new TCanvas("c_classification_single_wp_bundle_amber", "Classification single Wp bundle Amber", 1000, 1000);
-    c_classification_single_wp_bundle_amber->cd();
-
-    TH1D* h_classification_single_wp_bundle_amber = new TH1D("h_classification_single_wp_bundle_amber", "Classification: [single Wp] [bundle Amber]", 100, 0.0, 20.05);
-    h_classification_single_wp_bundle_amber->SetStats(0);
-    for (const MuonClassification& clas : classifications) {
-        if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
-            TVector3 dir = (clas.fpos_tt - clas.ipos_tt).Unit(); 
-            h_classification_single_wp_bundle_amber->Fill(dir.Cross(-clas.ipos_tt).Mag() / 1000.0);
-        }
-    }
-    h_classification_single_wp_bundle_amber->GetXaxis()->SetTitle("L (m)");
-    h_classification_single_wp_bundle_amber->GetYaxis()->SetTitle("Entries");
-    h_classification_single_wp_bundle_amber->SetLineColor(kBlue);
-    h_classification_single_wp_bundle_amber->SetLineWidth(3);
-    h_classification_single_wp_bundle_amber->Draw();
-    c_classification_single_wp_bundle_amber->Update();
-
-    TCanvas* c_classification_bundle_wp_single_amber_stopping = new TCanvas("c_classification_bundle_wp_single_amber_stopping", "Classification bundle Wp single Amber stopping", 1000, 1000);
-    c_classification_bundle_wp_single_amber_stopping->cd();
-
-    TH1D* h_classification_bundle_wp_single_amber_stopping = new TH1D("h_classification_bundle_wp_single_amber_stopping", "Classification: [bundle Wp] [single Amber] [stopping]", 2, 0.0, 2.0);
-    h_classification_bundle_wp_single_amber_stopping->SetStats(0);
-    for (const MuonClassification& clas : classifications) {
-        if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
-            h_classification_bundle_wp_single_amber_stopping->Fill(clas.is_stopping_cdwpttchi2 ? 1.5 : 0.5);
-        }
-    }
-    h_classification_bundle_wp_single_amber_stopping->GetXaxis()->SetTitle("Is stopping WpClassify");
-    h_classification_bundle_wp_single_amber_stopping->GetYaxis()->SetTitle("Entries");
-    h_classification_bundle_wp_single_amber_stopping->SetLineColor(kBlue);
-    h_classification_bundle_wp_single_amber_stopping->SetLineWidth(3);
-    h_classification_bundle_wp_single_amber_stopping->Draw();
-    c_classification_bundle_wp_single_amber_stopping->Update();
-
-    TCanvas* c_classification_bundle_wp_single_amber_ipos_xy = new TCanvas("c_classification_bundle_wp_single_amber_ipos_xy", "Classification bundle Wp single Amber ipos xy", 1000, 1000);
-    c_classification_bundle_wp_single_amber_ipos_xy->cd();
-
-    TH2D* h_classification_bundle_wp_single_amber_ipos_xy = new TH2D("h_classification_bundle_wp_single_amber_ipos_xy", "Classification: [bundle Wp] [single Amber] [XY]", 100, -22.0, 22.0, 100, -22.0, 22.0);
-    h_classification_bundle_wp_single_amber_ipos_xy->SetStats(0);
-    for (const MuonClassification& clas : classifications) {
-        if (clas.is_single_cdwpttchi2 && !clas.is_single_amber) {
-            h_classification_bundle_wp_single_amber_ipos_xy->Fill(clas.ipos_wp.X() / 1000.0, clas.ipos_wp.Y() / 1000.0);
-        }
-    }
-    h_classification_bundle_wp_single_amber_ipos_xy->GetXaxis()->SetTitle("X (mm)");
-    h_classification_bundle_wp_single_amber_ipos_xy->GetYaxis()->SetTitle("Y (mm)");
-    h_classification_bundle_wp_single_amber_ipos_xy->Draw("COLZ");
-    c_classification_bundle_wp_single_amber_ipos_xy->Update();
 
     return 0;
 }
