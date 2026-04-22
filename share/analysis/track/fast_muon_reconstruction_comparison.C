@@ -363,6 +363,8 @@ struct MuonPerformance {
     double clippingness;
     double clippingness_trk;
     int run_id;
+    time_t sec;
+    int nsec;
     double quality;
     double tt_quality;
 };
@@ -411,6 +413,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
                     .clippingness = compute_clippingness(*it_tt),
                     .clippingness_trk = compute_clippingness(trk),
                     .run_id = trk.run_id,
+                    .sec = trk.ts.GetSec(),
+                    .nsec = trk.ts.GetNanoSec(),
                     .quality = trk.quality,
                     .tt_quality = it_tt->quality
                 });
@@ -461,6 +465,8 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .clippingness = compute_clippingness(tt_muon),
                     .clippingness_trk = compute_clippingness(muon),
                     .run_id = muon.run_id,
+                    .sec = muon.ts.GetSec(),
+                    .nsec = muon.ts.GetNanoSec(),
                     .quality = muon.quality,
                     .tt_quality = tt_muon.quality
                 });
@@ -524,12 +530,18 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         return 1;
     }
 
+    int run_id;
+    time_t sec;
+    int nsec;
     double angle;
     double chi2;
     double dist_center;
     double dist_mid_point;
 
     TTree* tout = new TTree("performance", "performance");
+    tout->Branch("run_id", &run_id);
+    tout->Branch("sec", &sec);
+    tout->Branch("nsec", &nsec);
     tout->Branch("angle", &angle);
     tout->Branch("chi2", &chi2);
     tout->Branch("dist_center", &dist_center);
@@ -542,6 +554,9 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         }
         if (method == "CdWpTtChi2") {
             for (const MuonPerformance& mp : perf) {
+                run_id = mp.run_id;
+                sec = mp.sec;
+                nsec = mp.nsec;
                 angle = mp.angle;
                 chi2 = mp.quality;
                 dist_center = mp.clippingness;
