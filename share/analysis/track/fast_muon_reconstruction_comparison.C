@@ -518,12 +518,42 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
     }
 
+    TFile* fout = TFile::Open("output.root", "RECREATE");
+    if (!fout) {
+        std::cerr << "Cannot open output file output.root\n";
+        return 1;
+    }
+
+    double angle;
+    double chi2;
+    double dist_center;
+    double dist_mid_point;
+
+    TTree* tout = new TTree("performance", "performance");
+    tout->Branch("angle", &angle);
+    tout->Branch("chi2", &chi2);
+    tout->Branch("dist_center", &dist_center);
+    tout->Branch("dist_mid_point", &dist_mid_point);
+
     for (const auto& [method, perf] : performances) {
         for (const MuonPerformance& mp : perf) {
             method_angle_map[method]->Fill(mp.angle);
             method_distance_map[method]->Fill(mp.distance);
         }
+        if (method == "CdWpTtChi2") {
+            for (const MuonPerformance& mp : perf) {
+                angle = mp.angle;
+                chi2 = mp.quality;
+                dist_center = mp.clippingness;
+                dist_mid_point = mp.distance;
+                tout->Fill();
+            }
+        }
     }
+
+    fout->cd();
+    tout->Write();
+    fout->Close();
 
     // std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) << '\n';
     // std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) << '\n';
