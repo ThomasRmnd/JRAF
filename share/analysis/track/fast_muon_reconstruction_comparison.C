@@ -59,6 +59,7 @@ void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std:
         {"WpBasic", kViolet}, 
         {"Amber_v5.5", kBlue},
         {"Edwin", kRed},
+        {"Janus", kMagenta},
     };
     TCanvas* c = new TCanvas(Form("c_%s", hists.at("CdWpTtChi2")->GetName()), "Metric", 1000, 1000);
     c->cd();
@@ -262,6 +263,46 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
             .fpos = TVector3(fposx, fposy, fposz),
             .is_single = (ntracks_wpclassify == 1),
             .is_stopping = (nstoppings_wpclassify > 0)
+        });
+    }
+    return tracks;
+}
+
+std::set<track> open_janus_user_chain(const char* path) {
+    TChain* chain = new TChain("janus");
+    chain->Add(path);
+    std::set<track> tracks;
+
+    int run_id;
+    time_t sec;
+    int nsec;
+    double iposx, iposy, iposz;
+    double fposx, fposy, fposz;
+
+    chain->SetBranchAddress("run_id", &run_id);
+    chain->SetBranchAddress("sec", &sec);
+    chain->SetBranchAddress("nsec", &nsec);
+    chain->SetBranchAddress("iposx", &iposx);
+    chain->SetBranchAddress("iposy", &iposy);
+    chain->SetBranchAddress("iposz", &iposz);
+    chain->SetBranchAddress("fposx", &fposx);
+    chain->SetBranchAddress("fposy", &fposy);
+    chain->SetBranchAddress("fposz", &fposz);
+
+    long nentries = chain->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in Janus files\n";
+    for (long k = 0l; k < nentries; ++k) {
+        chain->GetEntry(k);
+        tracks.insert(track{
+            .run_id = run_id,
+            .ts = TTimeStamp(sec, nsec),
+            .totq_cd = 0.0,
+            .totq_wp = 0.0,
+            .quality = 0.0,
+            .ipos = TVector3(iposx, iposy, ipos),
+            .fpos = TVector3(fposx, fposy, fposz),
+            .is_single = true,
+            .is_stopping = false
         });
     }
     return tracks;
@@ -476,7 +517,7 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
     return performances;
 }
 
-int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin) {
+int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin, const char* path_janus) {
     std::map<std::string, std::set<track>> tracks = open_joint_reco_user_chain(path_joint);
     tracks["CdWpTtChi2"] = open_cdwpttchi2_user_chain(path_cdwpttchi2);
     std::set<track> amber_v5_5_tracks = open_amber_v5_5_user_chain(path_amber);
@@ -486,6 +527,10 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     std::set<track> edwin_tracks = open_edwin_user_chain(path_edwin);
     if (!edwin_tracks.empty()) {
         tracks["Edwin"] = edwin_tracks;
+    }
+    std::set<track> janus_tracks = open_janus_user_chain(path_janus);
+    if (!janus_tracks.empty()) {
+        tracks["Janus"] = janus_tracks;
     }
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
@@ -523,6 +568,11 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         method_angle_map["Edwin"] = new TH1D("h_angle_edwin", "Angle between tracks direction (Edwin);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
         method_distance_map["Edwin"] = new TH1D("h_distance_edwin", "Distance between tracks middle point (Edwin);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
     }
+    if (!janus_tracks.empty()) {
+        method_angle_map["Janus"] = new TH1D("h_angle_janus", "Angle between tracks direction (Janus);#alpha (deg);Entries;", nbins_angle, xmin_angle, xmax_angle);
+        method_distance_map["Janus"] = new TH1D("h_distance_janus", "Distance between tracks middle point (Janus);d_{mid} (m);Entries;", nbins_distance, xmin_distance, xmax_distance);
+    }
+
 
     TFile* fout = TFile::Open("output.root", "RECREATE");
     if (!fout) {
@@ -604,6 +654,9 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     if (!edwin_tracks.empty()) {
         method_angle_r2_map["Edwin"] = new TH1D("h_angle_r2_edwin", "Angle between tracks direction (Edwin);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
     }
+    if (!janus_tracks.empty()) {
+        method_angle_r2_map["Janus"] = new TH1D("h_angle_r2_janus", "Angle between tracks direction (Janus);L (m); 68% quantile of #alpha (deg);", nbins, r2_min, r2_max);
+    }
     for (auto& [method, h] : method_angle_r2_map) {
         h->GetXaxis()->SetNdivisions(nbins, false);
     }
@@ -617,6 +670,9 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
     if (!edwin_tracks.empty()) {
         method_distance_r2_map["Edwin"] = new TH1D("h_distance_r2_edwin", "Distance between tracks middle point (Edwin);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
+    }
+    if (!janus_tracks.empty()) {
+        method_distance_r2_map["Janus"] = new TH1D("h_distance_r2_janus", "Distance between tracks middle point (Janus);L (m); 68% quantile of d_{mid} (m);", nbins, r2_min, r2_max);
     }
     for (auto& [method, h] : method_distance_r2_map) {
         h->GetXaxis()->SetNdivisions(nbins, false);
@@ -661,6 +717,10 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     if (!edwin_tracks.empty()) {
         method_angle_runid_map["Edwin"] = new TH1D("h_angle_runid_edwin", "Angle between tracks direction (Edwin);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
     }
+    if (!janus_tracks.empty()) {
+        method_angle_runid_map["Janus"] = new TH1D("h_angle_runid_janus", "Angle between tracks direction (Janus);RUN ID; 68% quantile of #alpha (deg);", run_id_nbins, run_id_min, run_id_max);
+    }
+
     
     std::map<std::string, TH1D*> method_distance_runid_map;
     method_distance_runid_map["CdWpTtChi2"] = new TH1D("h_distance_runid_cdwpttchi2", "Distance between tracks middle point (CdWpTtChi2);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
@@ -671,6 +731,9 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
     if (!edwin_tracks.empty()) {
         method_distance_runid_map["Edwin"] = new TH1D("h_distance_runid_edwin", "Distance between tracks middle point (Edwin);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
+    }
+    if (!janus_tracks.empty()) {
+        method_distance_runid_map["Janus"] = new TH1D("h_distance_runid_janus", "Distance between tracks middle point (Janus);RUN ID; 68% quantile of d_{mid} (m);", run_id_nbins, run_id_min, run_id_max);
     }
 
     for (const auto& [method, perf] : performances) {
