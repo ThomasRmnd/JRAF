@@ -299,7 +299,7 @@ std::set<track> open_janus_user_chain(const char* path) {
             .totq_cd = 0.0,
             .totq_wp = 0.0,
             .quality = 0.0,
-            .ipos = TVector3(iposx, iposy, ipos),
+            .ipos = TVector3(iposx, iposy, iposz),
             .fpos = TVector3(fposx, fposy, fposz),
             .is_single = true,
             .is_stopping = false
