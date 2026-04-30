@@ -608,7 +608,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             sec = mp.sec;
             nsec = mp.nsec;
             angle = mp.angle;
-            chi2 = np.quality;
+            chi2 = mp.quality;
             dist_center = mp.clippingness;
             dist_mid_point = mp.distance;
             trees[method]->Fill();
