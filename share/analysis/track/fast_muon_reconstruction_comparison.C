@@ -588,36 +588,37 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     double dist_center;
     double dist_mid_point;
 
-    TTree* tout = new TTree("performance", "performance");
-    tout->Branch("run_id", &run_id);
-    tout->Branch("sec", &sec);
-    tout->Branch("nsec", &nsec);
-    tout->Branch("angle", &angle);
-    tout->Branch("chi2", &chi2);
-    tout->Branch("dist_center", &dist_center);
-    tout->Branch("dist_mid_point", &dist_mid_point);
+    std::map<std::string, TTree*> trees;
+    for (const auto& [method, perf] : performances) {
+        trees[method] = new TTree(method.c_str(), method.c_str());
+        trees[method]->Branch("run_id", &run_id);
+        trees[method]->Branch("sec", &sec);
+        trees[method]->Branch("nsec", &nsec);
+        trees[method]->Branch("angle", &angle);
+        trees[method]->Branch("chi2", &chi2);
+        trees[method]->Branch("dist_center", &dist_center);
+        trees[method]->Branch("dist_mid_point", &dist_mid_point);
+    }
 
     for (const auto& [method, perf] : performances) {
         for (const MuonPerformance& mp : perf) {
             method_angle_map[method]->Fill(mp.angle);
             method_distance_map[method]->Fill(mp.distance);
-        }
-        if (method == "CdWpTtChi2") {
-            for (const MuonPerformance& mp : perf) {
-                run_id = mp.run_id;
-                sec = mp.sec;
-                nsec = mp.nsec;
-                angle = mp.angle;
-                chi2 = mp.quality;
-                dist_center = mp.clippingness;
-                dist_mid_point = mp.distance;
-                tout->Fill();
-            }
+            run_id = mp.run_id;
+            sec = mp.sec;
+            nsec = mp.nsec;
+            angle = mp.angle;
+            chi2 = np.quality;
+            dist_center = mp.clippingness;
+            dist_mid_point = mp.distance;
+            trees[method]->Fill();
         }
     }
 
     fout->cd();
-    tout->Write();
+    for (const auto& [method, t] : trees) {
+        t->Write();
+    }
     fout->Close();
 
     // std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) << '\n';
