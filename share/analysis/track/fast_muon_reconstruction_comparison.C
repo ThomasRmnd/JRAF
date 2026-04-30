@@ -162,57 +162,71 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
 }
 
 std::set<track> open_edwin_user_chain(const char* path) {
-    TChain* chain = new TChain("Single_Reco");
+    TChain* chain = new TChain("Edwin_Muon");
     chain->Add(path);
     std::set<track> tracks;
 
-    int run_number;
-    int cd_file;
-    int cd_time_s;
-    int cd_time_ns;
-    float cd_totalPE;
-    float enterX, enterY, enterZ;
-    float exitX, exitY, exitZ;
-    int wp_time_s;
-    int wp_time_ns;
-    float wp_totalPE;
-    chain->SetBranchAddress("run_number", &run_number);
-    chain->SetBranchAddress("cd_file", &cd_file);
+    long long cd_time_s;
+    long long cd_time_ns;
+    int muon_classification; // 0 = single, 1 = double, 2 = triple+
+    float Single_enterX;
+    float Single_enterY;
+    float Single_enterZ;
+    float Single_exit_X;
+    float Single_exit_Y;
+    float Single_exit_Z;
+    float Double_enterX_1;
+    float Double_enterY_1;
+    float Double_enterZ_1;
+    float Double_exitX_1;
+    float Double_exitY_1;
+    float Double_exitZ_1;
+    float Double_enterX_2;
+    float Double_enterY_2;
+    float Double_enterZ_2;
+    float Double_exitX_2;
+    float Double_exitY_2;
+    float Double_exitZ_2;
+
     chain->SetBranchAddress("cd_time_s", &cd_time_s);
     chain->SetBranchAddress("cd_time_ns", &cd_time_ns);
-    chain->SetBranchAddress("cd_totalPE", &cd_totalPE);
-    chain->SetBranchAddress("enterX", &enterX);
-    chain->SetBranchAddress("enterY", &enterY);
-    chain->SetBranchAddress("enterZ", &enterZ);
-    chain->SetBranchAddress("exitX", &exitX);
-    chain->SetBranchAddress("exitY", &exitY);
-    chain->SetBranchAddress("exitZ", &exitZ);
-    chain->SetBranchAddress("wp_time_s", &wp_time_s);
-    chain->SetBranchAddress("wp_time_ns", &wp_time_ns);
-    chain->SetBranchAddress("wp_totalPE", &wp_totalPE);
+    chain->SetBranchAddress("muon_classification", &muon_classification);
+    chain->SetBranchAddress("Single_enterX", &Single_enterX);
+    chain->SetBranchAddress("Single_enterY", &Single_enterY);
+    chain->SetBranchAddress("Single_enterZ", &Single_enterZ);
+    chain->SetBranchAddress("Single_exit_X", &Single_exit_X);
+    chain->SetBranchAddress("Single_exit_Y", &Single_exit_Y);
+    chain->SetBranchAddress("Single_exit_Z", &Single_exit_Z);
+    chain->SetBranchAddress("Double_enterX_1", &Double_enterX_1);
+    chain->SetBranchAddress("Double_enterY_1", &Double_enterY_1);
+    chain->SetBranchAddress("Double_enterZ_1", &Double_enterZ_1);
+    chain->SetBranchAddress("Double_exitX_1", &Double_exitX_1);
+    chain->SetBranchAddress("Double_exitY_1", &Double_exitY_1);
+    chain->SetBranchAddress("Double_exitZ_1", &Double_exitZ_1);
+    chain->SetBranchAddress("Double_enterX_2", &Double_enterX_2);
+    chain->SetBranchAddress("Double_enterY_2", &Double_enterY_2);
+    chain->SetBranchAddress("Double_enterZ_2", &Double_enterZ_2);
+    chain->SetBranchAddress("Double_exitX_2", &Double_exitX_2);
+    chain->SetBranchAddress("Double_exitY_2", &Double_exitY_2);
+    chain->SetBranchAddress("Double_exitZ_2", &Double_exitZ_2);
 
     long nentries = chain->GetEntries();
     std::size_t nstoppins = 0ul;
     std::cout << "Info: Found " << nentries << " entries in EDWIN files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        TVector3 fpos(exitX, exitY, exitZ);
-        if (fpos.Mag() < 17700.0) {
-            ++nstoppins;
-        }
         tracks.insert(track{
-            .run_id = run_number,
-            .ts = TTimeStamp(cd_time_s, cd_time_ns),
-            .totq_cd = cd_totalPE,
-            .totq_wp = wp_totalPE,
+            .run_id = 0,
+            .ts = TTimeStamp(static_cast<time_t>(cd_time_s), static_cast<int>(cd_time_ns)),
+            .totq_cd = 0.0,
+            .totq_wp = 0.0,
             .quality = 0.0,
-            .ipos = TVector3(enterX, enterY, enterZ),
-            .fpos = fpos,
-            .is_single = true,
+            .ipos = TVector3(Single_enterX, Single_enterY, Single_enterZ),
+            .fpos = TVector3(Single_exit_X, Single_exit_Y, Single_exit_Z),
+            .is_single = (muon_classification == 0),
             .is_stopping = false
         });
     }
-    std::cout << "Info: Number of stopping tracks for Edwin: " << nstoppins << '\n';
     return tracks;
 }
 
