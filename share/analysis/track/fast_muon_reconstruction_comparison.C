@@ -215,6 +215,7 @@ std::set<track> open_edwin_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in EDWIN files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
+        if (muon_classification != 0) continue; // SELECTION! only single
         tracks.insert(track{
             .run_id = 0,
             .ts = TTimeStamp(static_cast<time_t>(cd_time_s), static_cast<int>(cd_time_ns)),
@@ -422,6 +423,8 @@ struct MuonPerformance {
     int nsec;
     double quality;
     double tt_quality;
+    double zenith;
+    double azimuth;
 };
 
 std::vector<double> extract_angles_from_performances(const std::vector<MuonPerformance>& perf) {
@@ -471,7 +474,9 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
                     .sec = trk.ts.GetSec(),
                     .nsec = trk.ts.GetNanoSec(),
                     .quality = trk.quality,
-                    .tt_quality = it_tt->quality
+                    .tt_quality = it_tt->quality,
+                    .zenith = (trk.fpos - trk.ipos).Unit().Theta() * 180.0 / M_PI,
+                    .azimuth = (trk.fpos - trk.ipos).Unit().Phi() * 180.0 / M_PI
                 });
                 ++it_tt;
             }
@@ -523,7 +528,9 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .sec = muon.ts.GetSec(),
                     .nsec = muon.ts.GetNanoSec(),
                     .quality = muon.quality,
-                    .tt_quality = tt_muon.quality
+                    .tt_quality = tt_muon.quality,
+                    .zenith = (tt_muon.fpos - tt_muon.ipos).Unit().Theta() * 180.0 / M_PI,
+                    .azimuth = (tt_muon.fpos - tt_muon.ipos).Unit().Phi() * 180.0 / M_PI
                 });
             }
         }
@@ -601,6 +608,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     double chi2;
     double dist_center;
     double dist_mid_point;
+    double zenith;
+    double azimuth;
 
     std::map<std::string, TTree*> trees;
     for (const auto& [method, perf] : performances) {
@@ -612,6 +621,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         trees[method]->Branch("chi2", &chi2);
         trees[method]->Branch("dist_center", &dist_center);
         trees[method]->Branch("dist_mid_point", &dist_mid_point);
+        trees[method]->Branch("zenith", &zenith);
+        trees[method]->Branch("azimuth", &azimuth);
     }
 
     for (const auto& [method, perf] : performances) {
@@ -625,6 +636,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             chi2 = mp.quality;
             dist_center = mp.clippingness;
             dist_mid_point = mp.distance;
+            zenith = mp.zenith;
+            azimuth = mp.azimuth;
             trees[method]->Fill();
         }
     }
