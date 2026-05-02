@@ -485,24 +485,24 @@ std::map<std::string, std::vector<MuonPerformance>> compute_correlations(std::ma
     return performances;
 }
 
-std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks) {
-    if (tracks.find("Tt") == tracks.end()) {
-        std::cerr << "Error: Tt tracks not found in map.\n";
+std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(std::map<std::string, std::set<track>>& tracks, const std::string& refname) {
+    if (tracks.find(refname) == tracks.end()) {
+        std::cerr << "Error: " << refname << " tracks not found in map.\n";
         return {};
     }
-    const std::set<track>& tt_tracks = tracks["Tt"];
+    const std::set<track>& ref_tracks = tracks[refname];
 
     std::map<std::string, std::vector<MuonPerformance>> performances;
 
-    for (const track& tt_muon : tt_tracks) {
+    for (const track& ref_muon : ref_tracks) {
         std::map<std::string, track> coincident_map;
         bool all_found = true;
 
         for (const auto& [method, track_set] : tracks) {
-            if (method == "Tt") continue;
+            if (method == refname) continue;
             bool found_in_method = false;
-            TTimeStamp lower_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() - 1000);
-            TTimeStamp upper_bound_ts(tt_muon.ts.GetSec(), tt_muon.ts.GetNanoSec() + 1000);
+            TTimeStamp lower_bound_ts(ref_muon.ts.GetSec(), ref_muon.ts.GetNanoSec() - 1000);
+            TTimeStamp upper_bound_ts(ref_muon.ts.GetSec(), ref_muon.ts.GetNanoSec() + 1000);
             std::set<track>::const_iterator it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
             
             while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
@@ -520,17 +520,17 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
         if (all_found) {
             for (const auto& [method, muon] : coincident_map) {
                 performances[method].push_back(MuonPerformance{
-                    .angle = compute_angle_between_track(tt_muon, muon),
-                    .distance = compute_distance_between_track(tt_muon, muon),
-                    .clippingness = compute_clippingness(tt_muon),
+                    .angle = compute_angle_between_track(ref_muon, muon),
+                    .distance = compute_distance_between_track(ref_muon, muon),
+                    .clippingness = compute_clippingness(ref_muon),
                     .clippingness_trk = compute_clippingness(muon),
                     .run_id = muon.run_id,
                     .sec = muon.ts.GetSec(),
                     .nsec = muon.ts.GetNanoSec(),
                     .quality = muon.quality,
-                    .tt_quality = tt_muon.quality,
-                    .zenith = (tt_muon.fpos - tt_muon.ipos).Unit().Theta() * 180.0 / M_PI,
-                    .azimuth = (tt_muon.fpos - tt_muon.ipos).Unit().Phi() * 180.0 / M_PI
+                    .tt_quality = ref_muon.quality,
+                    .zenith = (ref_muon.fpos - ref_muon.ipos).Unit().Theta() * 180.0 / M_PI,
+                    .azimuth = (ref_muon.fpos - ref_muon.ipos).Unit().Phi() * 180.0 / M_PI
                 });
             }
         }
@@ -555,7 +555,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
-    std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks);
+    std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks, "Tt");
+    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt = compute_global_correlations(tracks, "CdWpTtChi2");
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
@@ -626,6 +627,59 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
 
     for (const auto& [method, perf] : performances) {
+        for (const MuonPerformance& mp : perf) {
+            method_angle_map[method]->Fill(mp.angle);
+            method_distance_map[method]->Fill(mp.distance);
+            run_id = mp.run_id;
+            sec = mp.sec;
+            nsec = mp.nsec;
+            angle = mp.angle;
+            chi2 = mp.quality;
+            dist_center = mp.clippingness;
+            dist_mid_point = mp.distance;
+            zenith = mp.zenith;
+            azimuth = mp.azimuth;
+            trees[method]->Fill();
+        }
+    }
+
+    fout->cd();
+    for (const auto& [method, t] : trees) {
+        t->Write();
+    }
+    fout->Close();
+
+    TFile* fout = TFile::Open("output_no_tt.root", "RECREATE");
+    if (!fout) {
+        std::cerr << "Cannot open output file output_no_tt.root\n";
+        return 1;
+    }
+
+    int run_id;
+    time_t sec;
+    int nsec;
+    double angle;
+    double chi2;
+    double dist_center;
+    double dist_mid_point;
+    double zenith;
+    double azimuth;
+
+    std::map<std::string, TTree*> trees;
+    for (const auto& [method, perf] : performances_no_tt) {
+        trees[method] = new TTree(method.c_str(), method.c_str());
+        trees[method]->Branch("run_id", &run_id);
+        trees[method]->Branch("sec", &sec);
+        trees[method]->Branch("nsec", &nsec);
+        trees[method]->Branch("angle", &angle);
+        trees[method]->Branch("chi2", &chi2);
+        trees[method]->Branch("dist_center", &dist_center);
+        trees[method]->Branch("dist_mid_point", &dist_mid_point);
+        trees[method]->Branch("zenith", &zenith);
+        trees[method]->Branch("azimuth", &azimuth);
+    }
+
+    for (const auto& [method, perf] : performances_no_tt) {
         for (const MuonPerformance& mp : perf) {
             method_angle_map[method]->Fill(mp.angle);
             method_distance_map[method]->Fill(mp.distance);
