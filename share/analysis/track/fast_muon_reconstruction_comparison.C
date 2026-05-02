@@ -140,7 +140,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        if (muonType != 0) continue; // SELECTION! only single
+        // if (muonType != 0) continue; // SELECTION! only single
         TVector3 fpos(xout, yout, zout);
         if (fpos.Mag() < 17700.0) {
             ++nstoppins;
