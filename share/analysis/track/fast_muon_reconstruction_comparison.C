@@ -140,7 +140,7 @@ std::set<track> open_amber_v5_5_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in Amber_v5.5 files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        // if (muonType != 0) continue; // SELECTION! only single
+        if (muonType != 0) continue; // SELECTION! only single
         TVector3 fpos(xout, yout, zout);
         if (fpos.Mag() < 17700.0) {
             ++nstoppins;
@@ -609,7 +609,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks, "Tt");
-    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt; //  = compute_global_correlations_no_tt(tracks, "CdWpTtChi2");
+    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt = compute_global_correlations_no_tt(tracks, "CdWpTtChi2");
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
@@ -720,6 +720,8 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         trees_no_tt[method]->Branch("dist_mid_point", &dist_mid_point);
         trees_no_tt[method]->Branch("zenith", &zenith);
         trees_no_tt[method]->Branch("azimuth", &azimuth);
+
+        std::cout << "Size performance no TT (" << method << "): " << perf.size() << '\n';
 
         for (const MuonPerformance& mp : perf) {
             run_id = mp.run_id;
