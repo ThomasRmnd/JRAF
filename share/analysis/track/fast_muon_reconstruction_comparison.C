@@ -649,7 +649,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
 
 
-    TFile* fout = TFile::Open("output.root", "RECREATE");
+    TFile* fout = TFile::Open("/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/performance/output.root", "RECREATE");
     if (!fout) {
         std::cerr << "Cannot open output file output.root\n";
         return 1;
@@ -701,7 +701,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
     fout->Close();
 
-    TFile* fout_no_tt = TFile::Open("output_no_tt.root", "RECREATE");
+    TFile* fout_no_tt = TFile::Open("/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/performance/output_no_tt.root", "RECREATE");
     if (!fout_no_tt) {
         std::cerr << "Cannot open output file output_no_tt.root\n";
         return 1;
