@@ -654,6 +654,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         std::cerr << "Cannot open output file output.root\n";
         return 1;
     }
+    fout->cd();
 
     int run_id;
     time_t sec;
@@ -705,6 +706,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         std::cerr << "Cannot open output file output_no_tt.root\n";
         return 1;
     }
+    fout_no_tt->cd();
 
     std::map<std::string, TTree*> trees_no_tt;
     for (const auto& [method, perf] : performances_no_tt) {
