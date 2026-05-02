@@ -529,8 +529,61 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations(
                     .nsec = muon.ts.GetNanoSec(),
                     .quality = muon.quality,
                     .tt_quality = ref_muon.quality,
-                    .zenith = (ref_muon.fpos - ref_muon.ipos).Unit().Theta() * 180.0 / M_PI,
-                    .azimuth = (ref_muon.fpos - ref_muon.ipos).Unit().Phi() * 180.0 / M_PI
+                    .zenith = (muon.fpos - muon.ipos).Unit().Theta() * 180.0 / M_PI,
+                    .azimuth = (muon.fpos - muon.ipos).Unit().Phi() * 180.0 / M_PI
+                });
+            }
+        }
+    }
+    return performances;
+}
+
+std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations_no_tt(std::map<std::string, std::set<track>>& tracks, const std::string& refname) {
+    if (tracks.find(refname) == tracks.end()) {
+        std::cerr << "Error: " << refname << " tracks not found in map.\n";
+        return {};
+    }
+    const std::set<track>& ref_tracks = tracks[refname];
+
+    std::map<std::string, std::vector<MuonPerformance>> performances;
+
+    for (const track& ref_muon : ref_tracks) {
+        std::map<std::string, track> coincident_map;
+        bool all_found = true;
+
+        for (const auto& [method, track_set] : tracks) {
+            if (method == "Tt") continue;
+            bool found_in_method = false;
+            TTimeStamp lower_bound_ts(ref_muon.ts.GetSec(), ref_muon.ts.GetNanoSec() - 1000);
+            TTimeStamp upper_bound_ts(ref_muon.ts.GetSec(), ref_muon.ts.GetNanoSec() + 1000);
+            std::set<track>::const_iterator it = track_set.lower_bound({0, lower_bound_ts, 0, 0, {}, {}});
+            
+            while (it != track_set.end() && lower_bound_ts <= it->ts && it->ts <= upper_bound_ts) {
+                coincident_map[method] = *it;
+                found_in_method = true;
+                break;
+            }
+
+            if (!found_in_method) {
+                all_found = false;
+                break; 
+            }
+        }
+
+        if (all_found) {
+            for (const auto& [method, muon] : coincident_map) {
+                performances[method].push_back(MuonPerformance{
+                    .angle = compute_angle_between_track(ref_muon, muon),
+                    .distance = compute_distance_between_track(ref_muon, muon),
+                    .clippingness = compute_clippingness(ref_muon),
+                    .clippingness_trk = compute_clippingness(muon),
+                    .run_id = muon.run_id,
+                    .sec = muon.ts.GetSec(),
+                    .nsec = muon.ts.GetNanoSec(),
+                    .quality = muon.quality,
+                    .tt_quality = ref_muon.quality,
+                    .zenith = (muon.fpos - muon.ipos).Unit().Theta() * 180.0 / M_PI,
+                    .azimuth = (muon.fpos - muon.ipos).Unit().Phi() * 180.0 / M_PI
                 });
             }
         }
@@ -556,7 +609,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks, "Tt");
-    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt = compute_global_correlations(tracks, "CdWpTtChi2");
+    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt = compute_global_correlations_no_tt(tracks, "CdWpTtChi2");
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
@@ -671,8 +724,6 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     for (const auto& [method, perf] : performances_no_tt) {
         for (const MuonPerformance& mp : perf) {
-            method_angle_map[method]->Fill(mp.angle);
-            method_distance_map[method]->Fill(mp.distance);
             run_id = mp.run_id;
             sec = mp.sec;
             nsec = mp.nsec;
