@@ -609,7 +609,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks, "Tt");
-    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt = compute_global_correlations_no_tt(tracks, "CdWpTtChi2");
+    std::map<std::string, std::vector<MuonPerformance>> performances_no_tt; //  = compute_global_correlations_no_tt(tracks, "CdWpTtChi2");
     
     std::map<std::string, std::vector<double>> angles;
     std::map<std::string, std::vector<double>> distances;
