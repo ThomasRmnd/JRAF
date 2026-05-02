@@ -215,7 +215,7 @@ std::set<track> open_edwin_user_chain(const char* path) {
     std::cout << "Info: Found " << nentries << " entries in EDWIN files\n";
     for (long k = 0l; k < nentries; ++k) {
         chain->GetEntry(k);
-        if (muon_classification != 0) continue; // SELECTION! only single
+        // if (muon_classification != 0) continue; // SELECTION! only single
         tracks.insert(track{
             .run_id = 0,
             .ts = TTimeStamp(static_cast<time_t>(cd_time_s), static_cast<int>(cd_time_ns)),
