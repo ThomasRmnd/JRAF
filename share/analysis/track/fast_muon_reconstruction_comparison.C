@@ -649,34 +649,24 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
     fout->Close();
 
-    TFile* fout = TFile::Open("output_no_tt.root", "RECREATE");
-    if (!fout) {
+    TFile* fout_no_tt = TFile::Open("output_no_tt.root", "RECREATE");
+    if (!fout_no_tt) {
         std::cerr << "Cannot open output file output_no_tt.root\n";
         return 1;
     }
 
-    int run_id;
-    time_t sec;
-    int nsec;
-    double angle;
-    double chi2;
-    double dist_center;
-    double dist_mid_point;
-    double zenith;
-    double azimuth;
-
-    std::map<std::string, TTree*> trees;
+    std::map<std::string, TTree*> trees_no_tt;
     for (const auto& [method, perf] : performances_no_tt) {
-        trees[method] = new TTree(method.c_str(), method.c_str());
-        trees[method]->Branch("run_id", &run_id);
-        trees[method]->Branch("sec", &sec);
-        trees[method]->Branch("nsec", &nsec);
-        trees[method]->Branch("angle", &angle);
-        trees[method]->Branch("chi2", &chi2);
-        trees[method]->Branch("dist_center", &dist_center);
-        trees[method]->Branch("dist_mid_point", &dist_mid_point);
-        trees[method]->Branch("zenith", &zenith);
-        trees[method]->Branch("azimuth", &azimuth);
+        trees_no_tt[method] = new TTree(method.c_str(), method.c_str());
+        trees_no_tt[method]->Branch("run_id", &run_id);
+        trees_no_tt[method]->Branch("sec", &sec);
+        trees_no_tt[method]->Branch("nsec", &nsec);
+        trees_no_tt[method]->Branch("angle", &angle);
+        trees_no_tt[method]->Branch("chi2", &chi2);
+        trees_no_tt[method]->Branch("dist_center", &dist_center);
+        trees_no_tt[method]->Branch("dist_mid_point", &dist_mid_point);
+        trees_no_tt[method]->Branch("zenith", &zenith);
+        trees_no_tt[method]->Branch("azimuth", &azimuth);
     }
 
     for (const auto& [method, perf] : performances_no_tt) {
@@ -692,15 +682,15 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
             dist_mid_point = mp.distance;
             zenith = mp.zenith;
             azimuth = mp.azimuth;
-            trees[method]->Fill();
+            trees_no_tt[method]->Fill();
         }
     }
 
-    fout->cd();
-    for (const auto& [method, t] : trees) {
+    fout_no_tt->cd();
+    for (const auto& [method, t] : trees_no_tt) {
         t->Write();
     }
-    fout->Close();
+    fout_no_tt->Close();
 
     // std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) << '\n';
     // std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) << '\n';
