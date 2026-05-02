@@ -391,7 +391,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
                 }
             }
         }
-        if (!has_tt_info) continue;
+        // if (!has_tt_info) continue;
         // if (!is_in_acrylic) continue; // SELECTION!
         if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
         if (ntracks_wpclassify != 1) continue; // SELECTION! || stopping_wpclassify
@@ -677,9 +677,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         trees[method]->Branch("dist_mid_point", &dist_mid_point);
         trees[method]->Branch("zenith", &zenith);
         trees[method]->Branch("azimuth", &azimuth);
-    }
 
-    for (const auto& [method, perf] : performances) {
         for (const MuonPerformance& mp : perf) {
             method_angle_map[method]->Fill(mp.angle);
             method_distance_map[method]->Fill(mp.distance);
@@ -710,7 +708,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
     std::map<std::string, TTree*> trees_no_tt;
     for (const auto& [method, perf] : performances_no_tt) {
-        trees_no_tt[method] = new TTree(method.c_str(), method.c_str());
+        trees_no_tt[method] = new TTree((method + "_no_tt").c_str(), (method + "_no_tt").c_str());
         trees_no_tt[method]->Branch("run_id", &run_id);
         trees_no_tt[method]->Branch("sec", &sec);
         trees_no_tt[method]->Branch("nsec", &nsec);
@@ -720,9 +718,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         trees_no_tt[method]->Branch("dist_mid_point", &dist_mid_point);
         trees_no_tt[method]->Branch("zenith", &zenith);
         trees_no_tt[method]->Branch("azimuth", &azimuth);
-    }
 
-    for (const auto& [method, perf] : performances_no_tt) {
         for (const MuonPerformance& mp : perf) {
             run_id = mp.run_id;
             sec = mp.sec;
