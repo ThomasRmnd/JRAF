@@ -750,7 +750,7 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
 
 
 
-{
+int test() {
 
     // std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) << '\n';
     // std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) << '\n';
