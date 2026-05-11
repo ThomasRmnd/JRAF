@@ -36,6 +36,7 @@ log INFO "Cluster detected: ${CLUSTER}"
 XRD_URL_EOS="root://junoeos01.ihep.ac.cn/"
 RUN_LIST_REPROD25C="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25C/physics_good.txt"
 RUN_LIST_REPROD25D="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25D/physics_good.txt"
+RUN_LIST_VALPROD26B="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ValProd26B/physics_good.txt"
 
 RANGE_BEFORE_11266=100
 RANGE_AFTER_11266=20
@@ -50,7 +51,7 @@ Usage: $(basename "$0") --site <str> --campaign <str> [options]
 
 Required:
   --site <str>          Storage site selection {EOS|CNAF}
-  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
+  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B}
 
 Optional:
   --lower <num>         Starting run number (inclusive)
@@ -115,6 +116,10 @@ parse_args() {
         ReProd25D)
             LIST_BASE="${RUN_LIST_REPROD25D%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
+            ;;
+        ValProd26B)
+            LIST_BASE="${RUN_LIST_VALPROD26B%/*}"
+            RUN_LIST_PATH="${RUN_LIST_VALPROD26B}"
             ;;
         *)
             log ERROR "Invalid --campaign: ${CAMPAIGN}"

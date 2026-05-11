@@ -393,8 +393,10 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         }
         // if (!has_tt_info) continue;
         // if (!is_in_acrylic) continue; // SELECTION!
-        // if (ntracks_cdclassify != 1) continue; // SELECTION! || stopping_cdclassify
-        if (ntracks_wpclassify != 1) continue; // SELECTION! || stopping_wpclassify
+        if (ntracks_cdclassify != 1) continue; // SELECTION!
+        // if (ntracks_wpclassify != 1) continue; // SELECTION! 
+        if (stopping_cdclassify) continue; // SELECTION!
+        // if (stopping_wpclassify) continue; // SELECTION!
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "CdWpTtChi2") continue;
             tracks[(*method)[i]].insert(track{
