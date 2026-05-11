@@ -609,6 +609,10 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
         tracks["Janus"] = janus_tracks;
     }
 
+    for (const auto& [method, track_set] : tracks) {
+        std::cout << method << " size: " << track_set.size() << '\n';
+    }
+
     // std::map<std::string, std::vector<MuonPerformance>> performances = compute_correlations(tracks);
     std::map<std::string, std::vector<MuonPerformance>> performances = compute_global_correlations(tracks, "Tt");
     std::map<std::string, std::vector<MuonPerformance>> performances_no_tt = compute_global_correlations_no_tt(tracks, "CdWpTtChi2");
