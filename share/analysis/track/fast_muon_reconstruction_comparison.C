@@ -745,6 +745,13 @@ int fast_muon_reconstruction_comparison(const char* path_joint, const char* path
     }
     fout_no_tt->Close();
 
+    return 0;
+}
+
+
+
+{
+
     // std::cout << "68.2% angle: " << get_quantile(angles.begin(), angles.end(), 0.682) << '\n';
     // std::cout << "95.4% angle: " << get_quantile(angles.begin(), angles.end(), 0.954) << '\n';
     // std::cout << "68.2% distance: " << get_quantile(distances.begin(), distances.end(), 0.682) << '\n';
