@@ -125,3 +125,5 @@ ax.legend(loc="upper right")
 
 fig.tight_layout()
 fig.show()
+
+plt.show()
