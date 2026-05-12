@@ -51,11 +51,12 @@ set_latex_style()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, required=True, help="Input filepath")
+parser.add_argument("--method", type=str, required=True, help="Method name")
 parser.add_argument("--label", type=str, required=True, help="Label name")
 args = parser.parse_args()
 
 with uproot.open(args.input) as f:
-    t              = f["performance"]
+    t              = f[args.method]
     angle          = t["angle"]
     dist_mid_point = t["dist_mid_point"]
     dist_center    = t["dist_center"]
