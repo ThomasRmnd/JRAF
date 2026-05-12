@@ -250,8 +250,8 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
     chain->SetBranchAddress("run_id", &run_id);
     chain->SetBranchAddress("sec", &sec);
     chain->SetBranchAddress("nsec", &nsec);
-    chain->SetBranchAddress("totq_cd", &totq_cd);
-    chain->SetBranchAddress("totq_wp", &totq_wp);
+    // chain->SetBranchAddress("totq_cd", &totq_cd);
+    // chain->SetBranchAddress("totq_wp", &totq_wp);
     chain->SetBranchAddress("chi2", &chi2);
     chain->SetBranchAddress("iposx", &iposx);
     chain->SetBranchAddress("iposy", &iposy);
@@ -259,10 +259,10 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
     chain->SetBranchAddress("fposx", &fposx);
     chain->SetBranchAddress("fposy", &fposy);
     chain->SetBranchAddress("fposz", &fposz);
-    chain->SetBranchAddress("ntracks_cdclassify", &ntracks_cdclassify);
-    chain->SetBranchAddress("ntracks_wpclassify", &ntracks_wpclassify);
-    chain->SetBranchAddress("nstoppings_cdclassify", &nstoppings_cdclassify);
-    chain->SetBranchAddress("nstoppings_wpclassify", &nstoppings_wpclassify);
+    // chain->SetBranchAddress("ntracks_cdclassify", &ntracks_cdclassify);
+    // chain->SetBranchAddress("ntracks_wpclassify", &ntracks_wpclassify);
+    // chain->SetBranchAddress("nstoppings_cdclassify", &nstoppings_cdclassify);
+    // chain->SetBranchAddress("nstoppings_wpclassify", &nstoppings_wpclassify);
 
     long nentries = chain->GetEntries();
     std::cout << "Info: Found " << nentries << " entries in CdWpTtChi2 files\n";
@@ -271,13 +271,13 @@ std::set<track> open_cdwpttchi2_user_chain(const char* path) {
         tracks.insert(track{
             .run_id = run_id,
             .ts = TTimeStamp(sec, nsec),
-            .totq_cd = totq_cd,
-            .totq_wp = totq_wp,
+            .totq_cd = 0.0, // totq_cd,
+            .totq_wp = 0.0, // totq_wp,
             .quality = chi2,
             .ipos = TVector3(iposx, iposy, iposz),
             .fpos = TVector3(fposx, fposy, fposz),
-            .is_single = (ntracks_wpclassify == 1),
-            .is_stopping = (nstoppings_wpclassify > 0)
+            .is_single = true, // (ntracks_wpclassify == 1),
+            .is_stopping = false // (nstoppings_wpclassify > 0)
         });
     }
     return tracks;
