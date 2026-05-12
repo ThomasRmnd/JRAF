@@ -91,7 +91,7 @@ bins = np.linspace(angle_full_xmin, angle_full_xmax, angle_full_nbin + 1)
 hist, edges = np.histogram(angle, bins=bins, density=True)
 p68 = np.quantile(angle, 0.68)
 ax.fill_between(bins, np.r_[hist, hist[-1]], step="post", color=angle_color, alpha=0.075, zorder=1)
-ax.step(bins, np.r_[hist, hist[-1]], where="post", color=angle_color, linestyle="-", linewidth=1.5, zorder=2, label=rf"{args.input}" + r", $68\%$ = " + f"{p68:.1f} deg")
+ax.step(bins, np.r_[hist, hist[-1]], where="post", color=angle_color, linestyle="-", linewidth=1.5, zorder=2, label=rf"{args.label}" + r", $68\%$ = " + f"{p68:.1f} deg")
 
 ax.set_xlabel(angle_label)
 ax.set_ylabel(r"P.D.F.")
@@ -112,7 +112,7 @@ bins = np.linspace(dist_mid_point_full_xmin, dist_mid_point_full_xmax, dist_mid_
 hist, edges = np.histogram(dist_mid_point, bins=bins, density=True)
 p68 = np.quantile(dist_mid_point, 0.68)
 ax.fill_between(bins, np.r_[hist, hist[-1]], step="post", color=dist_mid_point_color, alpha=0.075, zorder=1)
-ax.step(bins, np.r_[hist, hist[-1]], where="post", color=dist_mid_point_color, linestyle="-", linewidth=1.5, zorder=2, label=rf"{args.input}" + r", $68\%$ = " + f"{p68:.2f} m")
+ax.step(bins, np.r_[hist, hist[-1]], where="post", color=dist_mid_point_color, linestyle="-", linewidth=1.5, zorder=2, label=rf"{args.label}" + r", $68\%$ = " + f"{p68:.2f} m")
 
 ax.set_xlabel(dist_mid_point_label)
 ax.set_ylabel(r"P.D.F.")
