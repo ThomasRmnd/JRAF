@@ -232,7 +232,8 @@ std::set<track> open_edwin_user_chain(const char* path) {
 }
 
 std::set<track> open_cdwpttchi2_user_chain(const char* path) {
-    TChain* chain = new TChain("muons");
+    // TChain* chain = new TChain("muons");
+    TChain* chain = new TChain("tree");
     chain->Add(path);
     std::set<track> tracks;
 
