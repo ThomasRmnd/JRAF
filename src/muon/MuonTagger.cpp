@@ -1,5 +1,9 @@
 #include "muon/MuonTagger.hpp"
 
+#include "SniperKernel/ToolFactory.h"
+
+DECLARE_TOOL(MuonTagger);
+
 MuonTagger::MuonTagger(const std::string& name) :
     ToolBase{name}
 {

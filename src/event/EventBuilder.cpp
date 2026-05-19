@@ -4,12 +4,8 @@
 
 #include "Event/CdLpmtCalibHeader.h"
 #include "Event/CdSpmtCalibHeader.h"
-#include "Event/CdTrackRecHeader.h"
-#include "Event/CdVertexRecHeader.h"
 #include "Event/TtCalibHeader.h"
-#include "Event/TtRecHeader.h"
 #include "Event/WpCalibHeader.h"
-#include "Event/WpRecHeader.h"
 #include "EvtNavigator/EvtNavHelper.h"
 #include "UtilsThomas/utils/DetectorType.hpp"
 
@@ -19,7 +15,7 @@
 DECLARE_TOOL(EventBuilder);
 
 EventBuilder::EventBuilder(const std::string& name) : 
-    EventBuilder{name} 
+    ToolBase{name} 
 {
     declProp("MuonTagger", m_mutagger_name = "MuonTagger");
 
