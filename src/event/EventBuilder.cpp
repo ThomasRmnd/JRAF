@@ -29,7 +29,7 @@ EventBuilder::EventBuilder(const std::string& name) :
 }
 
 bool EventBuilder::initialize() {
-    AlgBase* alg = getParentAlg();
+    AlgBase* alg = dynamic_cast<AlgBase*>(m_par);
     if (!alg) {
         LogError << "Cannot retrieve parent algorithm\n";
         return false;
@@ -225,14 +225,6 @@ void EventBuilder::addTtToTrack(std::vector<track>& tracks, const TimeStamp& cur
 }
 
 bool EventBuilder::build(JM::NavBuffer* buf) {
-    JM::EvtNavigator* nav = buf->curEvt();
-    if (!nav) {
-        LogError << "EvtNavigator is nullptr\n";
-        return false;
-    }
-    TimeStamp tsevt = TimeStamp{nav->TimeStamp().GetTimeSpec()};
-    int runid = nav->RunID();
-
     for (NavBufferWrapper bufwrap(*buf); bufwrap.current() != bufwrap.end(); bufwrap.next()) {
         if (EventCache::contains(bufwrap.curEvt())) continue;
 
@@ -302,12 +294,9 @@ bool EventBuilder::build(JM::NavBuffer* buf) {
         evt->ts = curts;
 
         muon_tagging_context muctx{
-            .ts = curts,
-            .det = curdet,
-            .calid_cd = calib_cd,
-            .calid_wp = calib_wp,
-            .cd_nav = cdl_evt_nav,
-            .wp_nav = wp_evt_nav
+            curts, curdet,
+            calib_cd, calib_wp,
+            cdl_evt_nav, wp_evt_nav
         };
         muon_tagging_result mures = m_mutagger->tag(muctx);
 
