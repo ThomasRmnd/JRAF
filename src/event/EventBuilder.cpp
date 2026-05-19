@@ -336,9 +336,10 @@ bool EventBuilder::build(JM::NavBuffer* buf) {
             }
             if (wp_evt_nav) {
                 JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(wp_evt_nav);
-                addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
                 LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
+                addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
                 JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(wp_evt_nav, "/Event/WpTrackRecClassify");
+                LogInfo << "WpClassify: " << classify_wpt_hdr << '\n';
                 addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
                 // TODO NOT FOR NOW: Add track saver for WpClassify
             }
