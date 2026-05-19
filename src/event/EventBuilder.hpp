@@ -7,13 +7,19 @@
 #include "SniperKernel/ToolBase.h"
 
 #include "Event/CalibPmtChannel.h"
+#include "Event/CdTrackRecHeader.h"
+#include "Event/CdVertexRecHeader.h"
 #include "Event/OecHeader.h"
+#include "Event/TtRecHeader.h"
+#include "Event/WpRecHeader.h"
 #include "EvtNavigator/NavBuffer.h"
 #include "RecTools/IRecMuonTool.h"
 #include "UtilsThomas/loader/Loader.hpp"
 #include "UtilsThomas/utils/DetectorType.hpp"
 
 #include "event/CalibrationContext.hpp"
+#include "event/Track.hpp"
+#include "event/Vertex.hpp"
 #include "muon/MuonTagger.hpp"
 #include "utils/TtRecoFile.hpp"
 
