@@ -11,11 +11,14 @@ FILES
     src/analysis/NeutronAnalysis.cpp
 
     src/event/Event.cpp
+    src/event/EventBuilder.cpp
     src/event/EventCache.cpp
     src/event/EventContext.cpp
     src/event/IBD.cpp
     src/event/Track.cpp
     src/event/Vertex.cpp
+
+    src/muon/MuonTagger.cpp
 
     src/selection/Energy.cpp
     src/selection/Muon.cpp
