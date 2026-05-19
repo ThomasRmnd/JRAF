@@ -29,7 +29,7 @@ EventBuilder::EventBuilder(const std::string& name) :
 }
 
 bool EventBuilder::initialize() {
-    AlgBase* alg = dynamic_cast<AlgBase*>(m_par);
+    AlgBase* alg = m_par->findAlg("JRAF");
     if (!alg) {
         LogError << "Cannot retrieve parent algorithm\n";
         return false;
