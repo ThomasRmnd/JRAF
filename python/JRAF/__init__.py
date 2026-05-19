@@ -4,38 +4,38 @@ sn.loadDll("libJRAF.so")
 sn.loadDll("libCLHEPDict.so")
 
 def useEventBuilder(self, name):
-    evtbuilder = self.createTool(name)
+    eventbuilder = self.createTool(name)
     self.property("EventBuilder").set(name)
-    self.evtbuilder = evtbuilder
+    self.eventbuilder = eventbuilder
 
 def useMuonTagger(self, name):
     muontagger = self.createTool(name)
-    self.evtbuilder.property("MuonTagger").set(name)
+    self.eventbuilder.property("MuonTagger").set(name)
     self.muontagger = muontagger
 
 def useLoader(self, name):
     loader = self.createTool(name)
-    self.evtbuilder.property("Loader").set(name)
+    self.eventbuilder.property("Loader").set(name)
     self.loader = loader
 
 def useCdFiller(self, name):
     cdfiller = self.createTool(name)
-    self.evtbuilder.property("CdFiller").set(name)
+    self.eventbuilder.property("CdFiller").set(name)
     self.cdfiller = cdfiller
 
 def useWpFiller(self, name):
     wpfiller = self.createTool(name)
-    self.evtbuilder.property("WpFiller").set(name)
+    self.eventbuilder.property("WpFiller").set(name)
     self.wpfiller = wpfiller
 
 def useTtFiller(self, name):
     ttfiller = self.createTool(name)
-    self.evtbuilder.property("TtFiller").set(name)
+    self.eventbuilder.property("TtFiller").set(name)
     self.ttfiller = ttfiller
 
 def useRecTool(self, name):
     rectool = self.createTool(name)
-    self.evtbuilder.property("RecTool").set(name)
+    self.eventbuilder.property("RecTool").set(name)
     self.rectool = rectool
 
 def createAlg(task, name="JRAF"):
