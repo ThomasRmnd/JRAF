@@ -28,14 +28,9 @@ DECLARE_ALGORITHM(JRAF);
 JRAF::JRAF(const std::string& name) : 
     AlgBase{name}
 {
-    declProp("Loader", m_loaderName = "JointLoader");
-    declProp("CdFiller", m_cdFillerName = "CdRangeFiller");
-    declProp("WpFiller", m_wpFillerName = "WpRangeFiller");
-    declProp("TtFiller", m_ttFillerName = "TtRangeFiller");
 
-    declProp("RecTool", m_recToolName);
+    declProp("EventBuilder", m_eventBuilderName = "EventBuilder");
 
-    declProp("TtRecoFilepath", m_ttRecoFile.filename = "");
     declProp("ContextPreviousFilename", m_contextTracker.prevctx);
     declProp("ContextNextFilename", m_contextTracker.nextctx);
 
@@ -49,16 +44,21 @@ bool JRAF::initialize() {
 
     SniperPtr<RootInputSvc> iptSvc(getParent(), "InputSvc");
     if (iptSvc.invalid()) {
-        LogError << "Can't find InputSvc." << std::endl;
+        LogError << "Can't find InputSvc\n";
         return false;
     }
     m_iptSvc = iptSvc.data();
 
-    if (!m_ttRecoFile.init()) return false;
     if (!m_trkSaver.init()) return false;
     if (!m_featureSaver.init()) return false;
-    if (!initLoader()) return false;
-    if (!initRecTool()) return false;
+
+    m_eventBuilder = tool<EventBuilder>(m_eventBuilderName);
+    if (!m_eventBuilder) {
+        LogError << "Failed to retrieve EventBuilder tool named " << m_eventBuilderName << '\n';
+        return false;
+    }
+    if (!m_eventBuilder->initialize()) return false;
+
     if (!initAnalyses()) return false;
 
     LogInfo  << objName() << " initialized successfully\n"; 
@@ -68,36 +68,11 @@ bool JRAF::initialize() {
 bool JRAF::initBufSvc() {
     SniperDataPtr<JM::NavBuffer> navBuf(getParent(), "/Event");
     if (navBuf.invalid()) {
-        LogError << "Cannot get the NavBuffer @ /Event\n";
+        LogError << "Cannot get the NavBuffer at /Event\n";
         return false;
     }
     m_buf = navBuf.data();
     return true; 
-}
-
-bool JRAF::initLoader() {
-    m_loader = tool<Loader>(m_loaderName);
-    if (!m_loader) {
-        LogError << "Failed to retrieve reconstruction tool named " << m_loaderName << '\n';
-        return false;
-    }
-    RangeFiller<CdFillerTag>* cd_filler = tool<RangeFiller<CdFillerTag>>(m_cdFillerName);
-    RangeFiller<WpFillerTag>* wp_filler = tool<RangeFiller<WpFillerTag>>(m_wpFillerName);
-    RangeFiller<TtFillerTag>* tt_filler = tool<RangeFiller<TtFillerTag>>(m_ttFillerName);
-    if (!m_loader->configure(&m_pmtTable, cd_filler, wp_filler, tt_filler)) return false;
-	if (!m_loader->initialize()) return false;
-    return true;
-}
-
-bool JRAF::initRecTool() {
-    m_recTool = tool<IRecMuonTool>(m_recToolName);
-    if (!m_recTool) {
-        LogError << "Failed to retrieve reconstruction tool named " << m_recToolName << '\n';
-        return false;
-    }
-    if (!m_recTool->configure(&m_params, &m_pmtTable)) return false;
-	// if (!dynamic_cast<ToolBase*>(m_recTool)->initialize()) return false;
-    return true;
 }
 
 bool JRAF::initAnalyses() {
@@ -126,260 +101,108 @@ bool JRAF::initAnalyses() {
     return true;
 }
 
-void JRAF::addTrack(RecTrks& rec_tracks, const std::string& method, double totq_cd, double totq_wp, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks) {
-    for (int k = 0; k < rec_tracks.size(); ++k) {
-        tracks.push_back(track{
-            method, vec3{rec_tracks.getStart(k)}, vec3{rec_tracks.getEnd(k)}, totq_cd, totq_wp, ts, det, rec_tracks.getQuality(k)
-        });
-    }
-}
-
-void JRAF::addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
-    if (!cdt_hdr || !cdt_hdr->event()) return;
-    const std::vector<JM::RecTrack*>& rec_tracks = cdt_hdr->event()->tracks();
-    for (JM::RecTrack* t : rec_tracks) {
-        tracks.push_back(track{
-            method, *t, ts, track::loc::cd
-        });
-    }
-}
-
-void JRAF::addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
-    if (!wpt_hdr || !wpt_hdr->event()) return;
-    const std::vector<JM::RecTrack*>& rec_tracks = wpt_hdr->event()->tracks();
-    for (JM::RecTrack* t : rec_tracks) {
-        tracks.push_back(track{
-            method, *t, ts, track::loc::wp
-        });
-    }
-}
-
-void JRAF::addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks) {
-    if (!ttt_hdr || !ttt_hdr->event()) return;
-    JM::TtRecEvt* ttt_evt = ttt_hdr->event();
-    for (int k = 0; k < ttt_evt->nTracks(); ++k) {
-        vec3 ipos{ttt_evt->Coeff0()[k], ttt_evt->Coeff1()[k], ttt_evt->Coeff2()[k]};
-        vec3 dir = unit(vec3{ttt_evt->Coeff3()[k], ttt_evt->Coeff4()[k], ttt_evt->Coeff5()[k]});
-        vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
-        tracks.push_back(track{
-            method, ipos, fpos, 0.0, 0.0, ts, track::loc::tt, ttt_evt->Chi2()[k]
-        });
-    }
-}
-
-void JRAF::addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
-    if (!oec_hdr || !oec_hdr->event("JM::OecEvt")) return;
-    JM::OecEvt* oec_evt = dynamic_cast<JM::OecEvt*>(oec_hdr->event("JM::OecEvt"));
-    vertices.push_back(vertex{
-        method, vec3{oec_evt->getVertexX(), oec_evt->getVertexY(), oec_evt->getVertexZ()}, oec_evt->getEnergy(), ts, calib, "Unknown"
-    });
-}
-
-void JRAF::addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices) {
-    if (!cdv_hdr || !cdv_hdr->event()) return;
-    const std::vector<JM::RecVertex*>& rec_vertices = cdv_hdr->event()->vertices();
-    for (JM::RecVertex* v : rec_vertices) {
-        vertices.push_back(vertex{
-            method, vec3{v->x(), v->y(), v->z()}, v->energy(), ts, calib, "Unknown"
-        });
-    }
-}
-
-calibration_context JRAF::getCalibrationContext(const std::list<JM::CalibPmtChannel*>& clb_list) {
-    calibration_context calib;
-    for (JM::CalibPmtChannel* clb : clb_list) {
-        if (!clb) continue;
-        for (float t : clb->time()) {
-            calib.meant += static_cast<double>(t);
-        }
-        ++calib.npmt;
-        calib.nhit += clb->time().size();
-        double totq = static_cast<double>(clb->sumCharge());
-        calib.totq += totq;
-        if (totq < calib.minq) calib.minq = totq;
-        if (totq > calib.maxq) calib.maxq = totq;
-    }
-    if (calib.npmt > 0) {
-        calib.meanq = calib.totq / static_cast<double>(calib.npmt);
-        calib.meant = calib.meant / static_cast<double>(calib.nhit);
-        calib.meanhit = static_cast<double>(calib.nhit) / static_cast<double>(calib.npmt);
-    }
-    double sqq = 0.0;
-    double sqt = 0.0;
-    double sqhit = 0.0;
-    for (JM::CalibPmtChannel* clb : clb_list) {
-        if (!clb) continue;
-        double totq = static_cast<double>(clb->sumCharge());
-        sqq += (totq - calib.meanq) * (totq - calib.meanq);
-        for (float t : clb->time()) {
-            sqt += (static_cast<double>(t) - calib.meant) * (static_cast<double>(t) - calib.meant);
-        }
-        sqhit += (static_cast<double>(clb->time().size()) - calib.meanhit) * (static_cast<double>(clb->time().size()) - calib.meanhit);
-    }
-    if (calib.npmt > 1) {
-        calib.stdq = std::sqrt(sqq / static_cast<double>(calib.npmt - 1ul));
-        calib.stdt = std::sqrt(sqt / static_cast<double>(calib.nhit - 1ul));
-        calib.stdhit = std::sqrt(sqhit / static_cast<double>(calib.npmt - 1ul));
-    }
-    return calib;
-}
-
-DetectorType JRAF::getDetectorType(JM::EvtNavigator* nav) {
-    DetectorType type = DetectorType::UNKNOWN;
-
-    JM::EvtNavigator::DetectorType evt_type = nav->getDetectorType();
-
-    if (evt_type == JM::EvtNavigator::DetectorType::CD) type |= DetectorType::CD;
-    if (evt_type == JM::EvtNavigator::DetectorType::WP) type |= DetectorType::WP;
-    if (evt_type == JM::EvtNavigator::DetectorType::TT) type |= DetectorType::TT;
-
-    return type;
-}
-
-int JRAF::getTtLayerId(double z) {
-    if (24000.0 <= z && z <= 25000.0) return 0;  // main
-    if (25500.0 <= z && z <= 26500.0) return 1;  // main
-    if (27000.0 <= z && z <= 28000.0) return 2;  // main
-    if (30000.0 <= z && z <= 30200.0) return 3;  // chimney
-    if (30200.0 <= z && z <= 30400.0) return 4;  // chimney
-    if (30400.0 <= z && z <= 30600.0) return 5;  // chimney
-
-    return -1; // not inside any valid layer
-};
-
-void JRAF::addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts) {
-    if (!m_ttRecoFile.find(curts)) return;
+// void JRAF::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
+//     m_featureSaver.reset();
     
-    if (m_ttRecoFile.NTracks != 1) {
-        LogInfo << "No info or bundle muons reconstructed by the TT\n";
-        return;
-    }
-    if (m_ttRecoFile.NPoints[0] < 3) {
-        LogInfo << "Track has less than 3 points\n";
-        return;
-    }
-    std::unordered_set<int> layers_hit;
-    layers_hit.reserve(6);
-    for (int i = 0; i < m_ttRecoFile.NTotPoints; ++i) {
-        int lid = getTtLayerId(m_ttRecoFile.PointZ[i] + 26452.0);
-        if (lid < 0) continue;
-        layers_hit.insert(lid);
-    }
-    if (layers_hit.size() < 3) {
-        LogInfo << "Track is not in three different layers of the TT\n";
-        return;
-    }
+//     if (!m_ttRecoFile.find(curts)) return;
+//     if (m_ttRecoFile.NTracks != 1) {
+//         LogInfo << "Muon event is empty or a bundle considering TT (" << m_ttRecoFile.NTracks << " tracks, " << m_ttRecoFile.NTotPoints << " points)\n";
+//         return;
+//     }
+//     if (m_ttRecoFile.NPoints[0] < 3) {
+//         LogInfo << "Muon track has less than 3 points in the TT\n";
+//         return;
+//     }
 
-    vec3 ipos{m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0] + 26452.0};
-    vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
-    vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
-    tracks.push_back(track{
-        "Tt", ipos, fpos, 0.0, 0.0, curts, track::loc::tt, m_ttRecoFile.Chi2[0]
-    });
-}
+//     std::unordered_set<int> layers_hit;
+//     layers_hit.reserve(6);
 
-void JRAF::addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id) {
-    m_featureSaver.reset();
-    
-    if (!m_ttRecoFile.find(curts)) return;
-    if (m_ttRecoFile.NTracks != 1) {
-        LogInfo << "Muon event is empty or a bundle considering TT (" << m_ttRecoFile.NTracks << " tracks, " << m_ttRecoFile.NTotPoints << " points)\n";
-        return;
-    }
-    if (m_ttRecoFile.NPoints[0] < 3) {
-        LogInfo << "Muon track has less than 3 points in the TT\n";
-        return;
-    }
+//     for (int i = 0; i < m_ttRecoFile.NTotPoints; ++i) {
+//         int lid = getTtLayerId(m_ttRecoFile.PointZ[i] + 26452.0);
+//         if (lid >= 0) layers_hit.insert(lid);
+//     }
 
-    std::unordered_set<int> layers_hit;
-    layers_hit.reserve(6);
+//     if (layers_hit.size() < 3) {
+//         LogInfo << "Muon track is not in three different layers of the TT\n";
+//         return;
+//     }
 
-    for (int i = 0; i < m_ttRecoFile.NTotPoints; ++i) {
-        int lid = getTtLayerId(m_ttRecoFile.PointZ[i] + 26452.0);
-        if (lid >= 0) layers_hit.insert(lid);
-    }
+//     std::map<std::string, std::vector<std::vector<track>::const_iterator>> track_map;
+//     track_map["CdWpTtChi2"] = {};
+//     track_map["CdClassify"] = {};
+//     track_map["WpBasic"] = {};
+//     for (std::vector<track>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
+//         track_map[it->method].push_back(it);
+//     }
+//     if (track_map["CdWpTtChi2"].size() != 1 || track_map["CdClassify"].size() != 1 || track_map["WpBasic"].size() != 1) {
+//         LogInfo << "Muon event is empty or a bundle considering CdWpTtChi2 or CdClassify or WpBasic\n";
+//         return;
+//     }
+//     std::vector<track>::const_iterator trk_cdwpttchi2 = track_map["CdWpTtChi2"][0];
+//     std::vector<track>::const_iterator trk_cdclassify = track_map["CdClassify"][0];
+//     std::vector<track>::const_iterator trk_wpbasic = track_map["WpBasic"][0];
 
-    if (layers_hit.size() < 3) {
-        LogInfo << "Muon track is not in three different layers of the TT\n";
-        return;
-    }
+//     m_featureSaver.run_id = run_id;
+//     m_featureSaver.sec = curts.GetSec();
+//     m_featureSaver.nsec = curts.GetNanoSec();
 
-    std::map<std::string, std::vector<std::vector<track>::const_iterator>> track_map;
-    track_map["CdWpTtChi2"] = {};
-    track_map["CdClassify"] = {};
-    track_map["WpBasic"] = {};
-    for (std::vector<track>::const_iterator it = tracks.begin(); it != tracks.end(); ++it) {
-        track_map[it->method].push_back(it);
-    }
-    if (track_map["CdWpTtChi2"].size() != 1 || track_map["CdClassify"].size() != 1 || track_map["WpBasic"].size() != 1) {
-        LogInfo << "Muon event is empty or a bundle considering CdWpTtChi2 or CdClassify or WpBasic\n";
-        return;
-    }
-    std::vector<track>::const_iterator trk_cdwpttchi2 = track_map["CdWpTtChi2"][0];
-    std::vector<track>::const_iterator trk_cdclassify = track_map["CdClassify"][0];
-    std::vector<track>::const_iterator trk_wpbasic = track_map["WpBasic"][0];
+//     m_featureSaver.iposx.push_back(trk_cdwpttchi2->ipos.x);
+//     m_featureSaver.iposy.push_back(trk_cdwpttchi2->ipos.y);
+//     m_featureSaver.iposz.push_back(trk_cdwpttchi2->ipos.z);
+//     m_featureSaver.fposx.push_back(trk_cdwpttchi2->fpos.x);
+//     m_featureSaver.fposy.push_back(trk_cdwpttchi2->fpos.y);
+//     m_featureSaver.fposz.push_back(trk_cdwpttchi2->fpos.z);
+//     m_featureSaver.chi2.push_back(trk_cdwpttchi2->quality);
+//     m_featureSaver.det.push_back(0b001);
 
-    m_featureSaver.run_id = run_id;
-    m_featureSaver.sec = curts.GetSec();
-    m_featureSaver.nsec = curts.GetNanoSec();
+//     m_featureSaver.iposx.push_back(trk_wpbasic->ipos.x);
+//     m_featureSaver.iposy.push_back(trk_wpbasic->ipos.y);
+//     m_featureSaver.iposz.push_back(trk_wpbasic->ipos.z);
+//     m_featureSaver.fposx.push_back(trk_wpbasic->fpos.x);
+//     m_featureSaver.fposy.push_back(trk_wpbasic->fpos.y);
+//     m_featureSaver.fposz.push_back(trk_wpbasic->fpos.z);
+//     m_featureSaver.chi2.push_back(trk_wpbasic->quality);
+//     m_featureSaver.det.push_back(0b010);
 
-    m_featureSaver.iposx.push_back(trk_cdwpttchi2->ipos.x);
-    m_featureSaver.iposy.push_back(trk_cdwpttchi2->ipos.y);
-    m_featureSaver.iposz.push_back(trk_cdwpttchi2->ipos.z);
-    m_featureSaver.fposx.push_back(trk_cdwpttchi2->fpos.x);
-    m_featureSaver.fposy.push_back(trk_cdwpttchi2->fpos.y);
-    m_featureSaver.fposz.push_back(trk_cdwpttchi2->fpos.z);
-    m_featureSaver.chi2.push_back(trk_cdwpttchi2->quality);
-    m_featureSaver.det.push_back(0b001);
+//     m_featureSaver.iposx.push_back(trk_cdclassify->ipos.x);
+//     m_featureSaver.iposy.push_back(trk_cdclassify->ipos.y);
+//     m_featureSaver.iposz.push_back(trk_cdclassify->ipos.z);
+//     m_featureSaver.fposx.push_back(trk_cdclassify->fpos.x);
+//     m_featureSaver.fposy.push_back(trk_cdclassify->fpos.y);
+//     m_featureSaver.fposz.push_back(trk_cdclassify->fpos.z);
+//     m_featureSaver.chi2.push_back(trk_cdclassify->quality);
+//     m_featureSaver.det.push_back(0b011);
 
-    m_featureSaver.iposx.push_back(trk_wpbasic->ipos.x);
-    m_featureSaver.iposy.push_back(trk_wpbasic->ipos.y);
-    m_featureSaver.iposz.push_back(trk_wpbasic->ipos.z);
-    m_featureSaver.fposx.push_back(trk_wpbasic->fpos.x);
-    m_featureSaver.fposy.push_back(trk_wpbasic->fpos.y);
-    m_featureSaver.fposz.push_back(trk_wpbasic->fpos.z);
-    m_featureSaver.chi2.push_back(trk_wpbasic->quality);
-    m_featureSaver.det.push_back(0b010);
+//     vec3 ipos(m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0] + 26452.0);
+//     vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
+//     vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
+//     m_featureSaver.iposx.push_back(ipos.x);
+//     m_featureSaver.iposy.push_back(ipos.y);
+//     m_featureSaver.iposz.push_back(ipos.z);
+//     m_featureSaver.fposx.push_back(fpos.x);
+//     m_featureSaver.fposy.push_back(fpos.y);
+//     m_featureSaver.fposz.push_back(fpos.z);
+//     m_featureSaver.chi2.push_back(m_ttRecoFile.Chi2[0]);
+//     m_featureSaver.det.push_back(0b100);
 
-    m_featureSaver.iposx.push_back(trk_cdclassify->ipos.x);
-    m_featureSaver.iposy.push_back(trk_cdclassify->ipos.y);
-    m_featureSaver.iposz.push_back(trk_cdclassify->ipos.z);
-    m_featureSaver.fposx.push_back(trk_cdclassify->fpos.x);
-    m_featureSaver.fposy.push_back(trk_cdclassify->fpos.y);
-    m_featureSaver.fposz.push_back(trk_cdclassify->fpos.z);
-    m_featureSaver.chi2.push_back(trk_cdclassify->quality);
-    m_featureSaver.det.push_back(0b011);
+//     for (const PmtProp& pmt : m_pmtTable) {
+//         if (!pmt.used) continue;
+//         if (pmt.type != Pmttype::_PMTINCH20 || (pmt.loc != 1 && pmt.loc != 2)) continue;
+//         m_featureSaver.id.push_back(pmt.pmtid);
+//         m_featureSaver.fht.push_back(pmt.fht);
+//         m_featureSaver.totq.push_back(pmt.q);
+//         m_featureSaver.q.push_back(static_cast<double>(pmt.hitq[0]));
+//         m_featureSaver.nhit.push_back(pmt.hitq.size());
+//     }
 
-    vec3 ipos(m_ttRecoFile.Coeff0[0], m_ttRecoFile.Coeff1[0], m_ttRecoFile.Coeff2[0] + 26452.0);
-    vec3 dir = unit(vec3{m_ttRecoFile.Coeff3[0], m_ttRecoFile.Coeff4[0], m_ttRecoFile.Coeff5[0]});
-    vec3 fpos = ipos - 2.0 * dot(ipos, dir) * dir;
-    m_featureSaver.iposx.push_back(ipos.x);
-    m_featureSaver.iposy.push_back(ipos.y);
-    m_featureSaver.iposz.push_back(ipos.z);
-    m_featureSaver.fposx.push_back(fpos.x);
-    m_featureSaver.fposy.push_back(fpos.y);
-    m_featureSaver.fposz.push_back(fpos.z);
-    m_featureSaver.chi2.push_back(m_ttRecoFile.Chi2[0]);
-    m_featureSaver.det.push_back(0b100);
+//     for (Int_t k = 0; k < m_ttRecoFile.NTotPoints; ++k) {
+//         m_featureSaver.pointx.push_back(m_ttRecoFile.PointX[k]);
+//         m_featureSaver.pointy.push_back(m_ttRecoFile.PointY[k]);
+//         m_featureSaver.pointz.push_back(m_ttRecoFile.PointZ[k] + 26452.0);
+//     }
 
-    for (const PmtProp& pmt : m_pmtTable) {
-        if (!pmt.used) continue;
-        if (pmt.type != Pmttype::_PMTINCH20 || (pmt.loc != 1 && pmt.loc != 2)) continue;
-        m_featureSaver.id.push_back(pmt.pmtid);
-        m_featureSaver.fht.push_back(pmt.fht);
-        m_featureSaver.totq.push_back(pmt.q);
-        m_featureSaver.q.push_back(static_cast<double>(pmt.hitq[0]));
-        m_featureSaver.nhit.push_back(pmt.hitq.size());
-    }
-
-    for (Int_t k = 0; k < m_ttRecoFile.NTotPoints; ++k) {
-        m_featureSaver.pointx.push_back(m_ttRecoFile.PointX[k]);
-        m_featureSaver.pointy.push_back(m_ttRecoFile.PointY[k]);
-        m_featureSaver.pointz.push_back(m_ttRecoFile.PointZ[k] + 26452.0);
-    }
-
-    m_featureSaver.fill();
-}
+//     m_featureSaver.fill();
+// }
 
 bool JRAF::execute() {
     LogInfo << "---------- Processing event by JRAF: " << ++m_iEvt << " ----------\n";
@@ -400,171 +223,7 @@ bool JRAF::execute() {
     auto t_start = clock::now();
     // DEBUG --- Timing
 
-    for (NavBufferWrapper bufwrap(*m_buf); bufwrap.current() != bufwrap.end(); bufwrap.next()) {
-        if (EventCache::contains(bufwrap.curEvt())) continue;
-
-        JM::EvtNavigator* curnav = bufwrap.curEvt();
-        if (!curnav) {
-            LogError << "EvtNavigator is nullptr\n";
-            return false;
-        }
-
-        std::shared_ptr<Event> evt = std::make_shared<Event>();
-
-        TimeStamp curts{curnav->TimeStamp().GetTimeSpec()};
-        DetectorType curdet = getDetectorType(curnav);
-        if (curdet == DetectorType::UNKNOWN) {
-            LogError << "Unknown detector type\n";
-            return false;
-        }
-
-        calibration_context calib_cd, calib_wp;
-
-        JM::CdLpmtCalibHeader* cdl_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(curnav);
-        JM::EvtNavigator* cdl_evt_nav = nullptr;
-        if (cdl_calib_hdr && cdl_calib_hdr->event()) {
-            calib_cd = getCalibrationContext(cdl_calib_hdr->event()->calibPMTCol());
-            cdl_evt_nav = curnav;
-        }
-        JM::WpCalibHeader* wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(curnav);
-        JM::EvtNavigator* wp_evt_nav = nullptr;
-        if (wp_calib_hdr && wp_calib_hdr->event()) {
-            calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
-            wp_evt_nav = curnav;
-        }
-
-        DetectorType jointdet = curdet;
-        for (JM::NavBuffer::Iterator it = bufwrap.begin(); it != bufwrap.end(); ++it) {
-            if (it == bufwrap.current()) continue;
-            JM::EvtNavigator* othernav = it->get();
-            if (!othernav) {
-                LogError << "EvtNavigator is nullptr\n";
-                return false;
-            }
-            TimeStamp otherts{othernav->TimeStamp().GetTimeSpec()};
-            if (curts - otherts < TimeStamp{0, -500} || TimeStamp{0, 500} < curts - otherts) continue;
-            DetectorType otherdet = getDetectorType(othernav);
-            if (otherdet == DetectorType::UNKNOWN) {
-                LogError << "Unknown detector type\n";
-                return false;
-            }
-            if ( (jointdet & otherdet) != DetectorType::UNKNOWN ) continue;
-            cdl_calib_hdr = JM::getHeaderObject<JM::CdLpmtCalibHeader>(othernav);
-            if (cdl_calib_hdr && cdl_calib_hdr->event()) {
-                calib_cd = getCalibrationContext(cdl_calib_hdr->event()->calibPMTCol());
-                cdl_evt_nav = othernav;
-            }
-            wp_calib_hdr = JM::getHeaderObject<JM::WpCalibHeader>(othernav);
-            if (wp_calib_hdr && wp_calib_hdr->event()) {
-                calib_wp = getCalibrationContext(wp_calib_hdr->event()->calibPMTCol());
-                wp_evt_nav = othernav;
-            }
-            // Could change the reference time for PMT hits but not necessary here (only necessary for joint loader)
-            jointdet |= otherdet;
-        }
-
-        LogInfo << "TotQ: CD = " << calib_cd.totq << ", WP = " << calib_wp.totq << '\n';
-
-        bool is_possibly_cd_muon = false;
-        bool is_possibly_wp_muon = false;
-
-        evt->run_id = curnav->RunID();
-        evt->ts = curts;
-
-        if (
-            calib_cd.totq >= m_cd_muon_totq_thold && 
-            calib_wp.totq >= m_wp_muon_totq_thold && 
-            curts - m_cd_last_muon > m_cd_afterpulse_thold &&
-            curts - m_wp_last_muon > m_wp_afterpulse_thold
-        ) {
-            m_cd_last_muon = curts;
-            m_wp_last_muon = curts;
-            is_possibly_cd_muon = true;
-            is_possibly_wp_muon = true;
-            evt->totq_cd = calib_cd.totq;
-            evt->totq_wp = calib_wp.totq;
-        }
-        else if (
-            calib_cd.totq < m_cd_muon_totq_thold && 
-            calib_wp.totq >= m_wp_only_muon_totq_thold &&
-            curts - m_wp_last_muon > m_wp_afterpulse_thold
-        ) {
-            m_wp_last_muon = curts;
-            is_possibly_wp_muon = true;
-            evt->totq_cd = 0.0;
-            evt->totq_wp = calib_wp.totq;
-        }
-        else if (
-            calib_cd.totq >= m_cd_only_muon_totq_thold && 
-            calib_wp.totq < m_wp_muon_totq_thold &&
-            curts - (m_cd_last_muon > m_wp_last_muon ? m_cd_last_muon : m_wp_last_muon) > TimeStamp{0, 2000000}
-        ) {
-            m_cd_last_muon = curts;
-            is_possibly_cd_muon = true;
-            evt->totq_cd = calib_cd.totq;
-            evt->totq_wp = 0.0;
-        }
-
-        LogInfo << "Is possibly CD muon: " << is_possibly_cd_muon << ", is possibly WP muon: " << is_possibly_wp_muon << '\n';
-
-        std::vector<track> tracks;
-        if (is_possibly_cd_muon || is_possibly_wp_muon) {
-            LoadingResult loadres = m_loader->load(&bufwrap);
-            if (!loadres.ok) return false;
-
-            if (cdl_evt_nav) {
-                JM::CdTrackRecHeader* basic_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(cdl_evt_nav);
-                addTrack(basic_cdt_hdr, "CdBasic", curts, tracks);
-                LogInfo << "CdBasic: " << basic_cdt_hdr << '\n';
-                JM::CdTrackRecHeader* classify_cdt_hdr = JM::getHeaderObject<JM::CdTrackRecHeader>(cdl_evt_nav, "/Event/CdTrackRecClassify");
-                addTrack(classify_cdt_hdr, "CdClassify", curts, tracks);
-                LogInfo << "CdClassify: " << classify_cdt_hdr << '\n';
-                RecTrks rtrks;
-                if (!m_recTool->reconstruct(&rtrks)) {
-                    LogWarn << "Could not reconstruct the event with reconstruction tool\n";
-                }
-                addTrack(rtrks, "CdWpTtChi2", calib_cd.totq, calib_wp.totq, curts, track::loc::cd, tracks);
-                LogInfo << "CdWpTtChi2: " << rtrks.size() << '\n';
-            }
-            if (wp_evt_nav) {
-                JM::WpRecHeader* basic_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(wp_evt_nav);
-                addTrack(basic_wpt_hdr, "WpBasic", curts, tracks);
-                LogInfo << "WpBasic: " << basic_wpt_hdr << '\n';
-                JM::WpRecHeader* classify_wpt_hdr = JM::getHeaderObject<JM::WpRecHeader>(wp_evt_nav, "/Event/WpTrackRecClassify");
-                addTrack(classify_wpt_hdr, "WpClassify", curts, tracks);
-                // TODO NOT FOR NOW: Add track saver for WpClassify
-            }
-            
-            addTtToTrack(tracks, curts);
-            
-            if (tracks.empty()) {
-                tracks.push_back(track{"Default", vec3{0.0, 0.0, 20000.0}, vec3{0.0, 0.0, -20000.0}, calib_cd.totq, calib_wp.totq, curts, track::loc::cd, -1.0});
-            }
-            
-            if (m_tsEvt <= curts) {
-                addFeature(tracks, curts, runId);
-            }
-        }
-
-        std::vector<vertex> vertices;
-        // JM::OecHeader* oec_hdr = JM::getHeaderObject<JM::OecHeader>(curnav);
-        // addVertex(oec_hdr, "Oec", curts, totq_cd, vertices);
-        // JM::CdVertexRecHeader* basic_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav);
-        // addVertex(basic_cdv_hdr, "Basic", curts, totq_cd, vertices);
-        // JM::CdVertexRecHeader* jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecJVertex");
-        // addVertex(jvertex_cdv_hdr, "JVertex", curts, totq_cd, vertices);
-        JM::CdVertexRecHeader* mixedphase_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecMixedPhase");
-        addVertex(mixedphase_cdv_hdr, "MixedPhase", curts, calib_cd, vertices);
-        JM::CdVertexRecHeader* omilrec_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecOMILREC");
-        addVertex(omilrec_cdv_hdr, "OMILREC", curts, calib_cd, vertices);
-        JM::CdVertexRecHeader* omilrec_jvertex_cdv_hdr = JM::getHeaderObject<JM::CdVertexRecHeader>(curnav, "/Event/CdVertexRecOMILREC_JVtx");
-        addVertex(omilrec_jvertex_cdv_hdr, "OMILREC_JVtx", curts, calib_cd, vertices);
-
-        evt->tracks = tracks;
-        evt->vertices = vertices;
-        EventCache::insert(curts, evt);
-        LogInfo << *evt << '\n';
-    }
+    m_eventBuilder->build(m_buf);
 
     // DEBUG --- Timing
     auto t_after_load = clock::now();
@@ -652,8 +311,7 @@ bool JRAF::execute() {
 }
 
 bool JRAF::finalize() {
-    if (m_loader && !m_loader->finalize()) return false;
-    if (m_recTool && !(dynamic_cast<ToolBase*>(m_recTool))->finalize()) return false;
+    if (m_eventBuilder && !m_eventBuilder->finalize()) return false;
     
     if (!m_trkSaver.save()) return false;
     if (!m_featureSaver.save()) return false;

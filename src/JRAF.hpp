@@ -10,12 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <TChain.h>
 #include <TFile.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <TString.h>
-#include <TTree.h>
 
 #include "Context/TimeStamp.h"
 #include "Event/CalibPmtChannel.h"
@@ -31,6 +26,7 @@
 
 #include "analysis/Analysis.hpp"
 #include "event/Event.hpp"
+#include "event/EventBuilder.hpp"
 #include "utils/ContextFileTracker.hpp"
 #include "utils/DAQTimeSaver.hpp"
 #include "utils/FeatureSaver.hpp"
@@ -38,8 +34,6 @@
 #include "utils/TtRecoFile.hpp"
 #include "veto/Veto.hpp"
 #include "veto/VetoTimeSaver.hpp"
-
-// JUNO Reactor Analysis Framework (JRAF) 🦒
 
 class JRAF : public AlgBase {
 
@@ -61,30 +55,9 @@ private:
     JM::NavBuffer* m_buf;
     RootInputSvc* m_iptSvc;
 
-    // Reconstruction
+    std::string m_eventBuilderName;
+    EventBuilder* m_eventBuilder;
 
-    std::string m_recToolName;
-	IRecMuonTool* m_recTool;
-    std::string m_loaderName;
-    std::string m_cdFillerName;
-    std::string m_wpFillerName;
-    std::string m_ttFillerName;
-    Loader* m_loader;
-    PmtTable m_pmtTable;
-    Params m_params;
-
-    // Muon selection variable
-
-    double m_cd_muon_totq_thold = 1000.0;
-    double m_cd_only_muon_totq_thold = 30000.0;
-    double m_wp_muon_totq_thold = 400.0;
-    double m_wp_only_muon_totq_thold = 700.0;
-    TimeStamp m_cd_afterpulse_thold{0, 50000};
-    TimeStamp m_wp_afterpulse_thold{0, 4000};
-    TimeStamp m_cd_last_muon{0, 0};
-    TimeStamp m_wp_last_muon{0, 0};
-    
-    TtRecoFile m_ttRecoFile;
     ContextFileTracker m_contextTracker;
     BeginningOfJobVetoTracker m_begOfJobVetoTrkr;
     MissingHeaderVetoTracker m_missHdrVetoTrkr;
@@ -102,22 +75,9 @@ private:
     FeatureSaver m_featureSaver;
 
 	bool initBufSvc();
-    bool initRecTool();
-    bool initLoader();
     bool initAnalyses();
 
-    calibration_context getCalibrationContext(const std::list<JM::CalibPmtChannel*>& clb_list);
-    DetectorType getDetectorType(JM::EvtNavigator* nav);
-    int getTtLayerId(double z);
-    void addTtToTrack(std::vector<track>& tracks, const TimeStamp& curts);
-    void addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id);
-
-    void addTrack(RecTrks& rec_tracks, const std::string& method, double totq_cd, double totq_wp, const TimeStamp& ts, const track::loc& det, std::vector<track>& tracks);
-    void addTrack(JM::CdTrackRecHeader* cdt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
-    void addTrack(JM::WpRecHeader* wpt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
-    void addTrack(JM::TtRecHeader* ttt_hdr, const std::string& method, const TimeStamp& ts, std::vector<track>& tracks);
-    void addVertex(JM::OecHeader* oec_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices);
-    void addVertex(JM::CdVertexRecHeader* cdv_hdr, const std::string& method, const TimeStamp& ts, const calibration_context& calib, std::vector<vertex>& vertices);
+    // void addFeature(const std::vector<track>& tracks, const TimeStamp& curts, int run_id);
 
 };
 
