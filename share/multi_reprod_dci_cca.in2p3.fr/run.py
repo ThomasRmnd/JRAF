@@ -59,12 +59,15 @@ import JRAF
 alg = JRAF.createAlg(task)
 alg.setLogLevel(loglevel)
 
-alg.property("TtRecoFilepath").set(args.tt_reco_filepath)
 alg.property("ContextPreviousFilename").set(args.context_previous_filename)
 alg.property("ContextNextFilename").set(args.context_next_filename)
 alg.property("OutputFilename").set(ofilepath)
 alg.property("RecoTrackOutputFilename").set(args.reco_output)
 alg.property("FeatureOutputFilename").set(args.feature_output)
+
+alg.useEventBuilder("EventBuilder")
+
+alg.useMuonTagger("MuonTagger")
 
 alg.useLoader("JointLoader")
 alg.loader.property("TimeWindow").set([-500.0, 500.0]) # ns
