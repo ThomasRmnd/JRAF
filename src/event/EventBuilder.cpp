@@ -62,6 +62,8 @@ bool EventBuilder::initialize() {
     if (!m_rectool->configure(&m_params, &m_pmt_table)) return false;
 	// if (!dynamic_cast<ToolBase*>(m_recTool)->initialize()) return false;
 
+    if (!m_tt_reco_file.init()) return false;
+
     return true;
 }
 

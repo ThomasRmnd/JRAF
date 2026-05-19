@@ -66,6 +66,7 @@ alg.property("RecoTrackOutputFilename").set(args.reco_output)
 alg.property("FeatureOutputFilename").set(args.feature_output)
 
 alg.useEventBuilder("EventBuilder")
+alg.eventbuilder.property("TtReco").set(args.tt_reco_filepath)
 
 alg.useMuonTagger("MuonTagger")
 
