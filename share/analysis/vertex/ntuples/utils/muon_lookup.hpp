@@ -76,11 +76,13 @@ public:
         const vec3 dummy_point{-999999.0, -999999.0, -999999.0};
         for (std::size_t k = 0ul; k < nav->method_mu.size(); ++k) {
             if (nav->method_mu[k] != target) continue;
-            vec3 ipos{nav->posx_mu[k], nav->posy_mu[k], nav->posz_mu[k]};
-            vec3 dir = unit(vec3{nav->dirx_mu[k], nav->diry_mu[k], nav->dirz_mu[k]});
-            vec3 to_dummy = unit(dummy_point - ipos);
-            double alpha = angle(dir, to_dummy);
-            if (alpha > epsilon) continue;
+            vec3 ipos{nav->iposx_mu[k], nav->iposy_mu[k], nav->iposz_mu[k]};
+            vec3 fpos{nav->fposx_mu[k], nav->fposy_mu[k], nav->fposz_mu[k]};
+            if (mag(fpos) < 40000.0) continue; 
+            // vec3 dir = unit(vec3{nav->dirx_mu[k], nav->diry_mu[k], nav->dirz_mu[k]});
+            // vec3 to_dummy = unit(dummy_point - ipos);
+            // double alpha = angle(dir, to_dummy);
+            // if (alpha > epsilon) continue;
             m_times.push_back(timestamp{nav->sec_mu[k], nav->nsec_mu[k]});
         }
         std::sort(m_times.begin(), m_times.end());

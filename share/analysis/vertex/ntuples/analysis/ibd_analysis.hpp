@@ -156,8 +156,10 @@ protected:
 
             if (!is_in_sig) continue;
 
-            vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
-            vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
+            vec3 pos_mu{m_nav->iposx_mu[k], m_nav->iposy_mu[k], m_nav->iposz_mu[k]};
+            vec3 fpos_mu{m_nav->fposx_mu[k], m_nav->fposy_mu[k], m_nav->fposz_mu[k]};
+            vec3 dir_mu = unit(fpos_mu - pos_mu);
+            // vec3 dir_mu = unit(vec3{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]});
             if (
                 std::isnan(pos_mu.x) || std::isnan(pos_mu.y) || std::isnan(pos_mu.z) ||
                 std::isnan(dir_mu.x) || std::isnan(dir_mu.y) || std::isnan(dir_mu.z)

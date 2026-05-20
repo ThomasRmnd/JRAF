@@ -90,8 +90,10 @@ public:
             for (std::size_t idx : mu.indices) {
                 const std::string& method = m_nav->method_mu[idx];
                 if (method != "CdWpTtChi2" && method != "Tt") continue;
-                vec3 pos_mu{m_nav->posx_mu[idx], m_nav->posy_mu[idx], m_nav->posz_mu[idx]};
-                vec3 dir_mu{m_nav->dirx_mu[idx], m_nav->diry_mu[idx], m_nav->dirz_mu[idx]};
+                vec3 pos_mu{m_nav->iposx_mu[idx], m_nav->iposy_mu[idx], m_nav->iposz_mu[idx]};
+                vec3 fpos_mu{m_nav->fposx_mu[idx], m_nav->fposy_mu[idx], m_nav->fposz_mu[idx]};
+                vec3 dir_mu = unit(fpos_mu - pos_mu);
+                // vec3 dir_mu{m_nav->dirx_mu[idx], m_nav->diry_mu[idx], m_nav->dirz_mu[idx]};
                 double d = mag(cross(dir_mu, v.prompt.pos - pos_mu));
 
                 if (method == "CdWpTtChi2") assoc.dlat_cdwp.push_back(d);
