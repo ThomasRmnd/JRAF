@@ -74,11 +74,14 @@ public:
             timestamp ts_mu{m_nav->sec_mu[k], m_nav->nsec_mu[k]};
             if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             // if (has_stopping_in_wp_event[ts_mu]) continue;
-
+#ifdef __USE_MUON_IPOS_FPOS__
             vec3 pos_mu{m_nav->iposx_mu[k], m_nav->iposy_mu[k], m_nav->iposz_mu[k]};
             vec3 fpos_mu{m_nav->fposx_mu[k], m_nav->fposy_mu[k], m_nav->fposz_mu[k]};
             vec3 dir_mu = unit(fpos_mu - pos_mu);
-            // vec3 dir_mu{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]};
+#else
+            vec3 pos_mu{m_nav->posx_mu[k], m_nav->posy_mu[k], m_nav->posz_mu[k]};
+            vec3 dir_mu{m_nav->dirx_mu[k], m_nav->diry_mu[k], m_nav->dirz_mu[k]};
+#endif 
             
             bool is_in_ts_veto = (
                 ts_mu + m_ts_low < m_nav->prompt.ts && m_nav->prompt.ts < ts_mu + m_ts_high &&
