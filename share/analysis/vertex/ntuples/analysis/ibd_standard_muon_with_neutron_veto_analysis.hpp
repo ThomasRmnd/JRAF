@@ -1,13 +1,13 @@
-#ifndef ANLYSIS_IBD_STANDARD_MUON_VETO_ANALYSIS_HPP_
-#define ANLYSIS_IBD_STANDARD_MUON_VETO_ANALYSIS_HPP_
+#ifndef ANLYSIS_IBD_STANDARD_MUON_WITH_NEUTRON_VETO_ANALYSIS_HPP_
+#define ANLYSIS_IBD_STANDARD_MUON_WITH_NEUTRON_VETO_ANALYSIS_HPP_
 
 #include "analysis/ibd_analysis.hpp"
 
-class ibd_standard_muon_veto_analysis : public ibd_analysis {
+class ibd_standard_muon_with_neutron_veto_analysis : public ibd_analysis {
 
 public:
 
-    ibd_standard_muon_veto_analysis(
+    ibd_standard_muon_with_neutron_veto_analysis(
         const std::string& name, 
         const std::string& filepath, const std::string& suffix,
         const std::string& recname,
@@ -75,6 +75,14 @@ public:
             if (nb_muons_in_cd_event[ts_mu] > 1ul || nb_muons_in_wp_event[ts_mu] > 1ul) continue;
             // if (has_stopping_in_wp_event[ts_mu]) continue;
 
+            bool found_neutron = false;
+            for (std::size_t l = 0ul; l < m_nav->e_n.size() && !found_neutron; ++l) {
+                timestamp ts_n{m_nav->sec_n[l], m_nav->nsec_n[l]};
+                if (ts_n < ts_mu + timestamp{0, 20000} || ts_mu + timestamp{0, 2000000} < ts_n) continue;
+                found_neutron = true;
+            }
+            if (!found_neutron) continue;
+
             vec3 pos_mu{m_nav->iposx_mu[k], m_nav->iposy_mu[k], m_nav->iposz_mu[k]};
             vec3 fpos_mu{m_nav->fposx_mu[k], m_nav->fposy_mu[k], m_nav->fposz_mu[k]};
             vec3 dir_mu = unit(fpos_mu - pos_mu);
@@ -111,4 +119,4 @@ private:
 
 };  
 
-#endif // ANLYSIS_IBD_STANDARD_MUON_VETO_ANALYSIS_HPP_
+#endif // ANLYSIS_IBD_STANDARD_MUON_WITH_NEUTRON_VETO_ANALYSIS_HPP_
