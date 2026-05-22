@@ -31,6 +31,8 @@ OUTPUT_SUFFIX_REPROD25A="output.reprod25a.root"
 OUTPUT_SUFFIX_REPROD25B="output.reprod25b.root"
 OUTPUT_SUFFIX_REPROD25C="output.reprod25c.root"
 OUTPUT_SUFFIX_REPROD25D="output.reprod25d.root"
+OUTPUT_SUFFIX_VALPROD26B="output.valprod26b.root"
+OUTPUT_SUFFIX_REPROD26B="output.reprod26b.root"
 
 #==============================
 # Global Flags
@@ -52,7 +54,7 @@ Process a single range of files identified by run and file indices.
 
 Arguments:
   <str>                          Storage site selection {EOS|CNAF}
-  <str>                          Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
+  <str>                          Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
   <int>                          Run number to process
   <str>                          Basepath for the file list
   <int>                          Start index of the file range in the run list
@@ -138,8 +140,14 @@ parse_args() {
         ReProd25D)
             OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25D}"
             ;;
+        ValProd26B)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_VALPROD26B}"
+            ;;
+        ReProd26B)
+            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD26B}"
+            ;;
         *)
-            log ERROR "Invalid campaign argument: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C})"
+            log ERROR "Invalid campaign argument: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
             exit 1
             ;;
     esac
