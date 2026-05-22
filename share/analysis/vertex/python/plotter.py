@@ -744,6 +744,8 @@ def cosmo_shape_analysis_plot(filepath: str, **meta):
         ybins = np.linspace(0.0, 3.0, 51)
     elif "_4m_" in filepath:
         ybins = np.linspace(0.0, 4.0, 51)
+    elif "_1_5m_" in filepath:
+        ybins = np.linspace(0.0, 1.5, 51)
 
     if "_1_2s_" in filepath:
         xbins_bkg = np.linspace(-1.2, 0.0, 51)

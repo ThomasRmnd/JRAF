@@ -169,7 +169,7 @@ void IBDAnalysis::process(const EventContext::View& events) {
 
         ++cf_prompt_muon;
 
-        VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1000000}};
+        VertexCorrelationSelection correlation_cut{prompt, 1500.0, TimeStamp{0, 5000}, TimeStamp{0, 1500000}};
 
         for (const vertex& delayed : events.after()) {
             LogInfo << delayed << '\n';
