@@ -73,20 +73,13 @@ parse_args() {
             --output)       OUTPUT_DIR="$2"; shift 2 ;;
             --list-base)    LIST_BASE="$2"; shift 2 ;;
             --range)        RANGE_START="$2"; RANGE_END="$3"; shift 3 ;;
-            --local)
-                USE_LOCAL=1
-                ;;
-            --no-local-copy|--direct-io)
-                DIRECT_IO=1
-                ;;
-            --skip-if-exist)
-                SKIP_IF_EXIST=1
-                ;;
+            --local)        USE_LOCAL=1; shift 1 ;;
+            --no-local-copy|--direct-io) DIRECT_IO=1; shift 1 ;;
+            --skip-if-exist) SKIP_IF_EXIST=1; shift 1 ;;
+            --help|-h)      usage; exit 0 ;;
             *)
-                EXTRA_ARGS+=("$1")
-                ;;
+                EXTRA_ARGS+=("$1"); shift ;;
         esac
-        shift
     done
 
     if [[ -z "${SITE:-}" ]]; then
