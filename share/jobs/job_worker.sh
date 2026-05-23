@@ -89,6 +89,12 @@ parse_args() {
         shift
     done
 
+    if [[ -z "${SITE:-}" ]]; then
+        log ERROR "--site is required {EOS|CNAF}"
+        usage
+        exit 1
+    fi
+
     case "${SITE}" in
         EOS)
             XRD_URL="${XRD_URL_EOS}"
@@ -114,11 +120,41 @@ parse_args() {
             ;;
     esac
 
+    if [[ -z "${CAMPAIGN:-}" ]]; then
+        log ERROR "--campaign is required {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}"
+        usage
+        exit 1
+    fi
+
     case "${CAMPAIGN}" in
         Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B) ;;
         *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
            exit 1 ;;
     esac
+
+    if [[ -z "${RUN_NUMBER:-}" ]]; then
+        log ERROR "--run is required"
+        usage
+        exit 1
+    fi
+
+    if [[ -z "${OUTPUT_DIR:-}" ]]; then
+        log ERROR "--output is required"
+        usage
+        exit 1
+    fi
+
+    if [[ -z "${LIST_BASE:-}" ]]; then
+        log ERROR "--list-base is required"
+        usage
+        exit 1
+    fi
+
+    if [[ -z "${RANGE_START:-}" || -z "${RANGE_END:-}" ]]; then
+        log ERROR "--range is required"
+        usage
+        exit 1
+    fi
 
     log INFO "Job worker configuration:"
     log INFO "  SITE: ${SITE}"
