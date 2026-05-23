@@ -43,6 +43,8 @@ RANGE_BEFORE_11266=100
 RANGE_AFTER_11266=20
 RUN_CHANGE_RANGE=11266
 
+OUTPUT_DIR="/sps/juno/jdeandre/rtraw_ThomasRaymond"
+
 LOWER_BOUND=""
 UPPER_BOUND=""
 
@@ -51,12 +53,13 @@ usage() {
 Usage: $(basename "$0") --site <str> --campaign <str> [options]
 
 Required:
-  --site <str>          Storage site selection {EOS|CNAF}
-  --campaign <str>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
+  --site        <str>   Storage site selection {EOS|CNAF}
+  --campaign    <str>   Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
 
 Optional:
-  --lower <num>         Starting run number (inclusive)
-  --upper <num>         Ending run number (inclusive)
+  --lower       <num>   Starting run number (inclusive)
+  --upper       <num>   Ending run number (inclusive)
+  --output      <path>  Base output directory (default: ${OUTPUT_DIR})
   --help                Show this help message and exit
 EOF
 }
@@ -68,6 +71,7 @@ parse_args() {
             --campaign) CAMPAIGN="$2"; shift 2 ;;
             --lower)    LOWER_BOUND="$2"; shift 2 ;;
             --upper)    UPPER_BOUND="$2"; shift 2 ;;
+            --output)   OUTPUT_DIR="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
@@ -141,6 +145,7 @@ parse_args() {
 load_run_list() {
     log INFO "Fetching run list"
     mapfile -t RUN_LIST < <(cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    log INFO "Total runs to process: ${#RUN_LIST[@]}"
 }
 
 #==============================
@@ -168,7 +173,7 @@ filter_runs() {
         exit 0
     fi
 
-    log INFO "Runs selected: ${RUN_LIST[*]}"
+    log INFO "Total runs selected: ${#RUN_LIST[@]}"
 }
 
 #==============================
@@ -185,7 +190,7 @@ launch_jobs() {
             local RANGE="${RANGE_AFTER_11266}"
         fi
 
-        local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --list-base ${LIST_BASE} --range ${RANGE})
+        local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --output ${OUTPUT_DIR} --list-base ${LIST_BASE} --range ${RANGE})
 
         if "${cmd[@]}"; then
             log INFO "Run ${run} submitted successfully"

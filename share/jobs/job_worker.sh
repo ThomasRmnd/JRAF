@@ -26,13 +26,7 @@ XRD_BASEPATH_EOS="/eos"
 XRD_BASEPATH_CNAF="/production/storm/dirac"
 LOCAL_BASEPATH="/sps/juno/jdeandre/rtraw_ThomasRaymond"
 
-OUTPUT_SUFFIX_NORMAL="output.normal.root"
-OUTPUT_SUFFIX_REPROD25A="output.reprod25a.root"
-OUTPUT_SUFFIX_REPROD25B="output.reprod25b.root"
-OUTPUT_SUFFIX_REPROD25C="output.reprod25c.root"
-OUTPUT_SUFFIX_REPROD25D="output.reprod25d.root"
-OUTPUT_SUFFIX_VALPROD26B="output.valprod26b.root"
-OUTPUT_SUFFIX_REPROD26B="output.reprod26b.root"
+OUTPUT_SUFFIX="analysis.root"
 
 #==============================
 # Global Flags
@@ -48,41 +42,37 @@ USE_LOCAL=0 # default = use remote xrootd
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") <site> <campaign> <run> <list-base> <range-start> <range-end> [options...]
-
-Process a single range of files identified by run and file indices.
+Usage: $(basename "$0") --site <str> --campaign <str> --run <int> --output <path> --list-base <path> --range <int> <int> [options]
 
 Arguments:
-  <str>                          Storage site selection {EOS|CNAF}
-  <str>                          Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
-  <int>                          Run number to process
-  <str>                          Basepath for the file list
-  <int>                          Start index of the file range in the run list
-  <int>                          End index of the file range in the run list
+  --site        <str>               Storage site selection {EOS|CNAF}
+  --campaign    <str>               Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
+  --run         <int>               Run number to process
+  --output      <path>              Output directory
+  --list-base   <path>              Basepath for the file list
+  --range       <int> <int>         Start and end indices of the file range in the run list
 
 Options:
-  --local                        Use local files instead of remote xrootd
-  --no-local-copy | --direct-io  Use direct I/O (no copy to TMPDIR)
-  --skip-if-exist                Skip the job if the final output file already exists.
+  --local                           Use local files instead of remote xrootd
+  --no-local-copy | --direct-io     Use direct I/O (no copy to TMPDIR)
+  --skip-if-exist                   Skip the job if the final output file already exists.
 EOF
 }
 
 parse_args() {
-    if (( $# < 5 )); then
-        log ERROR "Missing required arguments"
-        usage >&2
+    if [[ $# -eq 0 ]]; then
+        usage
         exit 1
     fi
 
-    SITE="$1"; shift
-    CAMPAIGN="$1"; shift
-    RUN_NUMBER="$1"; shift
-    LIST_BASE="$1"; shift
-    RANGE_START="$1"; shift
-    RANGE_END="$1"; shift
-
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --site)         SITE="$2"; shift 2 ;;
+            --campaign)     CAMPAIGN="$2"; shift 2 ;;
+            --run)          RUN_NUMBER="$2"; shift 2 ;;
+            --output)       OUTPUT_DIR="$2"; shift 2 ;;
+            --list-base)    LIST_BASE="$2"; shift 2 ;;
+            --range)        RANGE_START="$2"; RANGE_END="$3"; shift 3 ;;
             --local)
                 USE_LOCAL=1
                 ;;
@@ -125,32 +115,18 @@ parse_args() {
     esac
 
     case "${CAMPAIGN}" in
-        Normal)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_NORMAL}"
-            ;;
-        ReProd25A)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25A}"
-            ;;
-        ReProd25B)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25B}"
-            ;;
-        ReProd25C)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25C}"
-            ;;
-        ReProd25D)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25D}"
-            ;;
-        ValProd26B)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_VALPROD26B}"
-            ;;
-        ReProd26B)
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD26B}"
-            ;;
-        *)
-            log ERROR "Invalid campaign argument: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
-            exit 1
-            ;;
+        Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B) ;;
+        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
+           exit 1 ;;
     esac
+
+    log INFO "Job worker configuration:"
+    log INFO "  SITE: ${SITE}"
+    log INFO "  CAMPAIGN: ${CAMPAIGN}"
+    log INFO "  RUN_NUMBER: ${RUN_NUMBER}"
+    log INFO "  OUTPUT_DIR: ${OUTPUT_DIR}"
+    log INFO "  LIST_BASE: ${LIST_BASE}"
+    log INFO "  RANGE: ${RANGE_START} - ${RANGE_END}"
 }
 
 #==============================
@@ -257,9 +233,9 @@ resolve_output_paths() {
         run_bucket="${BASH_REMATCH[3]}"
         run_group="${BASH_REMATCH[4]}"
         run_number="${BASH_REMATCH[5]}"
-        output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
-        reco_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
-        # feature_output_path="/sps/juno/jdeandre/rtraw_ThomasRaymond/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        output_path="${OUTPUT_DIR}/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        reco_output_path="${OUTPUT_DIR}/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        # feature_output_path="${OUTPUT_DIR}/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
     else
         log ERROR "Unrecognized ReProd path format: $input_reprod_file"
         exit 1

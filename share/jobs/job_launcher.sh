@@ -44,21 +44,22 @@ SKIP_MISSING_FILES=0
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") --site <str> --campaign <str> --run <int> --list-base <str> --range <int> [options]
+Usage: $(basename "$0") --site <str> --campaign <str> --run <int> --output <path> --list-base <path> --range <int> [options]
 
 Required:
-  --site <str>                  Storage site selection {EOS|CNAF}
-  --campaign <str>              Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
-  --run <int>                   Run number to process
-  --list-base <str>             Basepath for the file list
-  --range <int>                 Number of files to process per job
+  --site                <str>           Storage site selection {EOS|CNAF}
+  --campaign            <str>           Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
+  --run                 <int>           Run number to process
+  --output              <path>          Output directory (default: ${OUTPUT_DIR})
+  --list-base           <str>           Basepath for the file list
+  --range               <int>           Number of files to process per job
 
 Optional:
-  --property-file <path>        Path to property file
-  --time-window <float> <float> Time window (default: ${TIME_WINDOW[*]})
-  --log-level <int>             Logging level (default: $LOG_LEVEL)
-  --skip-missing-files          Skip missing files
-  --help                        Show this help message and exit
+  --property-file       <path>          Path to property file
+  --time-window         <float> <float> Time window (default: ${TIME_WINDOW[*]})
+  --log-level           <int>           Logging level (default: $LOG_LEVEL)
+  --skip-missing-files                  Skip missing files
+  --help                                Show this help message and exit
 EOF
 }
 
@@ -73,6 +74,7 @@ parse_args() {
             --site)          SITE="$2"; shift 2 ;;
             --campaign)      CAMPAIGN="$2"; shift 2 ;;
             --run)           RUN_NUMBER="$2"; shift 2 ;;
+            --output)        OUTPUT_DIR="$2"; shift 2 ;;
             --list-base)     LIST_BASE="$2"; shift 2 ;;
             --range)         RANGE="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
@@ -118,6 +120,12 @@ parse_args() {
         exit 1
     fi
 
+    if [[ -z "${OUTPUT_DIR:-}" ]]; then
+        log ERROR "--output is required"
+        usage
+        exit 1
+    fi
+
     if [[ -z "${LIST_BASE:-}" ]]; then
         log ERROR "--list-base is required"
         usage
@@ -129,6 +137,11 @@ parse_args() {
         usage
         exit 1
     fi
+
+    log INFO "Starting job submission for campaign ${CAMPAIGN} at site ${SITE}"
+    log INFO "Output directory: ${OUTPUT_DIR}"
+    log INFO "Run number: ${RUN_NUMBER}"
+    log INFO "List base: ${LIST_BASE}"
 }
 
 #==============================
@@ -252,7 +265,7 @@ submit_jobs() {
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
             job_worker.sh \
-            "${SITE}" "${CAMPAIGN}" "${RUN_NUMBER}" "${LIST_BASE}" "${start}" "${end}" "${EXTRA_ARGS[@]}"
+            --site "${SITE}" --campaign "${CAMPAIGN}" --run "${RUN_NUMBER}" --output "${OUTPUT_DIR}" --list-base "${LIST_BASE}" --range "${start}" "${end}" "${EXTRA_ARGS[@]}"
         # --local --no-local-copy --skip-if-exist
         # "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/log/agrpc_${RUN_NUMBER}_${start}_${end}.log"
     done
