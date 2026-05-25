@@ -238,10 +238,11 @@ prepare_extra_args() {
     # PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.default_configuration_hybrid.json}"
 
     EXTRA_ARGS=(
-        # "--property-file" "$PROPERTY_FILE"
         "--time-window" "${TIME_WINDOW[0]}" "${TIME_WINDOW[1]}"
         "--log-level" "$LOG_LEVEL"
     )
+    # "--property-file" "$PROPERTY_FILE"
+
     if [[ -z "${MINIESD:-}" ]]; then
         log INFO "No miniesd path provided"
     else
