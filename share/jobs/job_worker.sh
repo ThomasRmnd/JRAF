@@ -217,6 +217,11 @@ include_neighbor() {
 }
 
 include_miniesd() {
+    if [[ -z "${MINIESD:-}" ]]; then
+        log INFO "Miniesd input correlation not requested for campaign ${CAMPAIGN}"
+        return
+    fi
+
     local input_reprod_file="$1"
 
     if [[ "$input_reprod_file" =~ /juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
@@ -368,7 +373,7 @@ rtraw_to_reprod_filename() {
         run_bucket="${BASH_REMATCH[3]}"
         run_group="${BASH_REMATCH[4]}"
     else
-        echo "ERROR: can't extract run number or structure from path: $fpath" >&2
+        log ERROR "Can't extract run number or structure from path: $fpath" >&2
         exit 1
     fi
 
@@ -402,7 +407,7 @@ rtraw_to_reprod_filename() {
         reprod_path="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
     fi
 
-    echo "${reprod_path}"
+    log INFO "${reprod_path}"
 }
 
 
