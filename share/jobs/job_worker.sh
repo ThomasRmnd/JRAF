@@ -26,7 +26,8 @@ XRD_BASEPATH_EOS="/eos"
 XRD_BASEPATH_CNAF="/production/storm/dirac"
 LOCAL_BASEPATH="/sps/juno/jdeandre/rtraw_ThomasRaymond"
 
-OUTPUT_SUFFIX="analysis.root"
+OUTPUT_SUFFIX_ANALYSIS="analysis.root"
+OUTPUT_SUFFIX_RECONSTRUCTION="reconstruction.root"
 
 #==============================
 # Global Flags
@@ -53,6 +54,7 @@ Arguments:
   --range       <int> <int>         Start and end indices of the file range in the run list
 
 Options:
+  --miniesd     <path>              Use miniesd as a input correlation (for now only ReProd26B)
   --local                           Use local files instead of remote xrootd
   --no-local-copy | --direct-io     Use direct I/O (no copy to TMPDIR)
   --skip-if-exist                   Skip the job if the final output file already exists.
@@ -73,6 +75,7 @@ parse_args() {
             --output)       OUTPUT_DIR="$2"; shift 2 ;;
             --list-base)    LIST_BASE="$2"; shift 2 ;;
             --range)        RANGE_START="$2"; RANGE_END="$3"; shift 3 ;;
+            --miniesd)      MINIESD="$2"; shift 2 ;;
             --local)        USE_LOCAL=1; shift 1 ;;
             --no-local-copy|--direct-io) DIRECT_IO=1; shift 1 ;;
             --skip-if-exist) SKIP_IF_EXIST=1; shift 1 ;;
@@ -211,6 +214,50 @@ include_neighbor() {
 
     log INFO "Including $direction neighbor: $fname_neighbor (num=$num_neighbor)"
     indices_to_process+=("$neighbor")
+}
+
+include_miniesd() {
+    local input_reprod_file="$1"
+
+    if [[ "$input_reprod_file" =~ /juno/juno-reprod/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/RUN\.([0-9]+)\. ]]; then
+        campaign="${BASH_REMATCH[1]}"
+        stream="${BASH_REMATCH[2]}"
+        run_bucket="${BASH_REMATCH[3]}"
+        run_group="${BASH_REMATCH[4]}"
+        run_number="${BASH_REMATCH[5]}"
+        output_path="${OUTPUT_DIR}/analysis/ibd/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        reco_output_path="${OUTPUT_DIR}/reconstruction/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+        # feature_output_path="${OUTPUT_DIR}/features/reprod/${run_bucket}/${run_group}/${RUN_NUMBER}"
+    else
+        log ERROR "Unrecognized ReProd path format: $input_reprod_file"
+        exit 1
+    fi
+
+    miniesd_path="${MINIESD}/${stream}/${run_bucket}/${run_group}"
+
+    log INFO "Copying miniesd files from ${miniesd_path} to ${TMPDIR}..."
+    mapfile -t MINIESD_FILES < <(xrdfs "${XRD_URL}" ls "${miniesd_path}" 2>/dev/null | grep -E "run\.${RUN_NUMBER}\.*\.miniesd$")
+
+    if [[ ${#MINIESD_FILES[@]} -eq 0 ]]; then
+        log WARN "No miniesd files found at ${miniesd_path}"
+        return
+    fi
+    else        
+        log INFO "Found ${#MINIESD_FILES[@]} miniesd files for run ${RUN_NUMBER}"
+    fi
+
+    for remote_file in "${MINIESD_FILES[@]}"; do
+        local filename=$(basename "${remote_file}")
+        local local_file="${TMPDIR}/${filename}"
+        if (( USE_LOCAL == 1 )); then
+            cp "${remote_file}" "${local_file}"
+        else
+            xrdcp "${XRD_URL}${remote_file}" "${local_file}"
+        fi
+        MINIESD_LOCAL_FILES+=("${local_file}")
+    done
+
+    log INFO "Miniesd files copied: ${MINIESD_LOCAL_FILES[*]}"
 }
 
 
@@ -435,10 +482,12 @@ main() {
     resolve_input_paths "${input_reprod_file}"
     resolve_output_paths "${input_reprod_file}"
 
-    local_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.output.root"
+    include_miniesd "${input_reprod_file}"
+
+    local_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.${OUTPUT_SUFFIX_ANALYSIS}"
     output_file="$output_path/$(basename "${local_output_file}")"
 
-    local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.reco.output.root"
+    local_reco_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.${OUTPUT_SUFFIX_RECONSTRUCTION}"
     reco_output_file="${reco_output_path}/$(basename "${local_reco_output_file}")"
 
     # local_feature_output_file="${TMPDIR}/RUN.${RUN_NUMBER}.${RANGE_START}-${RANGE_END}.feature.output.root"
@@ -450,6 +499,7 @@ main() {
     log INFO "Running run.py..."
     python run.py \
         --input "${reprod_files[@]}" \
+        --input-correlation "${MINIESD_LOCAL_FILES[@]}" \
         --output "${local_output_file}" \
         --context-previous-filename "${prev_file_local}" \
         --context-next-filename "${next_file_local}" \

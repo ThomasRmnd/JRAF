@@ -55,6 +55,7 @@ Required:
   --range               <int>           Number of files to process per job
 
 Optional:
+  --miniesd             <path>          Use miniesd as a input correlation (for now only ReProd26B)
   --property-file       <path>          Path to property file
   --time-window         <float> <float> Time window (default: ${TIME_WINDOW[*]})
   --log-level           <int>           Logging level (default: $LOG_LEVEL)
@@ -77,6 +78,7 @@ parse_args() {
             --output)        OUTPUT_DIR="$2"; shift 2 ;;
             --list-base)     LIST_BASE="$2"; shift 2 ;;
             --range)         RANGE="$2"; shift 2 ;;
+            --miniesd)       MINIESD="$2"; shift 2 ;;
             --property-file) PROPERTY_FILE="$2"; shift 2 ;;
             --time-window)   TIME_WINDOW=("$2" "$3"); shift 3 ;;
             --log-level)     LOG_LEVEL="$2"; shift 2 ;;
@@ -142,6 +144,7 @@ parse_args() {
     log INFO "Output directory: ${OUTPUT_DIR}"
     log INFO "Run number: ${RUN_NUMBER}"
     log INFO "List base: ${LIST_BASE}"
+    log INFO "Miniesd path: ${MINIESD:-}"
 }
 
 #==============================
@@ -231,15 +234,20 @@ prepare_job_arrays() {
 #==============================
 
 prepare_extra_args() {
-    # PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.Properties.json}"
-    # PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.default_configuration.json}"
-    PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.default_configuration_hybrid.json}"
+    PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.default_configuration.json}"
+    # PROPERTY_FILE="${PROPERTY_FILE:-/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/Reconstruction/RecMuon/CdWpTtChi2RecTool/CdWpTtChi2RecTool.default_configuration_hybrid.json}"
 
     EXTRA_ARGS=(
         "--property-file" "$PROPERTY_FILE"
         "--time-window" "${TIME_WINDOW[0]}" "${TIME_WINDOW[1]}"
         "--log-level" "$LOG_LEVEL"
     )
+    if [[ -z "${MINIESD:-}" ]]; then
+        log INFO "No miniesd path provided"
+    else
+        EXTRA_ARGS+=("--miniesd" "${MINIESD}")
+        log INFO "Miniesd path provided: ${MINIESD}"
+    fi
 }
 
 #==============================

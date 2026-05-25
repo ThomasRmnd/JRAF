@@ -39,6 +39,9 @@ RUN_LIST_REPROD25D="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodLi
 RUN_LIST_VALPROD26B="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ValProd26B/physics_good.txt"
 RUN_LIST_REPROD26B="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd26B/physics_good.txt"
 
+MINIESD_PATH_REPROD26B="/production/storm/dirac/juno/juno-reprod/ReProd26B/miniesd-v1"
+MINIESD=false
+
 RANGE_BEFORE_11266=100
 RANGE_AFTER_11266=20
 RUN_CHANGE_RANGE=11266
@@ -60,6 +63,7 @@ Optional:
   --lower       <num>   Starting run number (inclusive)
   --upper       <num>   Ending run number (inclusive)
   --output      <path>  Base output directory (default: ${OUTPUT_DIR})
+  --miniesd             Use miniesd as a input correlation (for now only ReProd26B)
   --help                Show this help message and exit
 EOF
 }
@@ -72,6 +76,7 @@ parse_args() {
             --lower)    LOWER_BOUND="$2"; shift 2 ;;
             --upper)    UPPER_BOUND="$2"; shift 2 ;;
             --output)   OUTPUT_DIR="$2"; shift 2 ;;
+            --miniesd)  MINIESD=true ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
@@ -129,6 +134,7 @@ parse_args() {
         ReProd26B)
             LIST_BASE="${RUN_LIST_REPROD26B%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD26B}"
+            MINIESD_PATH="${MINIESD_PATH_REPROD26B}"
             ;;
         *)
             log ERROR "Invalid --campaign: ${CAMPAIGN}"
@@ -191,6 +197,9 @@ launch_jobs() {
         fi
 
         local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --output ${OUTPUT_DIR} --list-base ${LIST_BASE} --range ${RANGE})
+        if (( MINIESD == true )); then
+            cmd+=("--miniesd ${MINIESD_PATH}")
+        fi
 
         if "${cmd[@]}"; then
             log INFO "Run ${run} submitted successfully"
