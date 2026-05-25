@@ -197,8 +197,8 @@ launch_jobs() {
         fi
 
         local cmd=(sh job_launcher.sh --site ${SITE} --campaign ${CAMPAIGN} --run ${run} --output ${OUTPUT_DIR} --list-base ${LIST_BASE} --range ${RANGE})
-        if (( MINIESD == true )); then
-            cmd+=("--miniesd ${MINIESD_PATH}")
+        if [[ "${MINIESD}" == true ]]; then
+            cmd+=("--miniesd" "${MINIESD_PATH}")
         fi
 
         if "${cmd[@]}"; then
