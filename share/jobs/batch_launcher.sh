@@ -76,7 +76,7 @@ parse_args() {
             --lower)    LOWER_BOUND="$2"; shift 2 ;;
             --upper)    UPPER_BOUND="$2"; shift 2 ;;
             --output)   OUTPUT_DIR="$2"; shift 2 ;;
-            --miniesd)  MINIESD=true ;;
+            --miniesd)  MINIESD=true; shift 1 ;;
             --help|-h) usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
