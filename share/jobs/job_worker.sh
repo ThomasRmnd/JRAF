@@ -407,7 +407,7 @@ rtraw_to_reprod_filename() {
         reprod_path="${XRD_URL}${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}/${selected_group}/${run}/${output_reprod_filename}"
     fi
 
-    log INFO "${reprod_path}"
+    echo "${reprod_path}"
 }
 
 
@@ -501,15 +501,26 @@ main() {
     log INFO "Context next file: ${next_file_local:-<none>}"
 
     log INFO "Running run.py..."
-    python run.py \
-        --input "${reprod_files[@]}" \
-        --input-correlation "${MINIESD_LOCAL_FILES[@]}" \
-        --output "${local_output_file}" \
-        --context-previous-filename "${prev_file_local}" \
-        --context-next-filename "${next_file_local}" \
-        --tt-reco-filepath "${tt_reco_filepath}" \
-        --reco-output "${local_reco_output_file}" \
-        "${EXTRA_ARGS[@]}"
+    if [[ -z "${MINIESD}" ]]; then
+        python run.py \
+            --input "${reprod_files[@]}" \
+            --output "${local_output_file}" \
+            --context-previous-filename "${prev_file_local}" \
+            --context-next-filename "${next_file_local}" \
+            --tt-reco-filepath "${tt_reco_filepath}" \
+            --reco-output "${local_reco_output_file}" \
+            "${EXTRA_ARGS[@]}"
+    else
+        python run.py \
+            --input "${reprod_files[@]}" \
+            --input-correlation "${MINIESD_LOCAL_FILES[@]}" \
+            --output "${local_output_file}" \
+            --context-previous-filename "${prev_file_local}" \
+            --context-next-filename "${next_file_local}" \
+            --tt-reco-filepath "${tt_reco_filepath}" \
+            --reco-output "${local_reco_output_file}" \
+            "${EXTRA_ARGS[@]}"
+    fi
         # --tt-reco-filepath "${tt_reco_filepath}" \
         # --feature-output "${local_feature_output_file}" \
 
