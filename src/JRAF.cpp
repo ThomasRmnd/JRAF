@@ -216,6 +216,11 @@ bool JRAF::execute() {
     int runId = nav->RunID();
     LogInfo << "TimeStamp: " << m_tsEvt << ", RunID: " << runId << '\n';
 
+    LogInfo << "Headers:\n";
+    for (const std::string& path : nav->getPath()) {
+        LogInfo << "  " << path << ": " << nav->getHeader(path) << '\n';
+    }
+
     if (!m_contextTracker.isTarget(m_iptSvc)) return true;
 
     // DEBUG --- Timing
