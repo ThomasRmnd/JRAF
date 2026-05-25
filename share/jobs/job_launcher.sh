@@ -224,6 +224,7 @@ prepare_job_arrays() {
 
             RANGES+=("${start}-${end}")
         done
+
     fi
 
     log INFO "Generated ${#RANGES[@]} job ranges"
