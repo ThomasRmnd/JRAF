@@ -241,7 +241,6 @@ include_miniesd() {
     if [[ ${#MINIESD_FILES[@]} -eq 0 ]]; then
         log WARN "No miniesd files found at ${miniesd_path}"
         return
-    fi
     else        
         log INFO "Found ${#MINIESD_FILES[@]} miniesd files for run ${RUN_NUMBER}"
     fi
