@@ -501,7 +501,7 @@ main() {
     log INFO "Context next file: ${next_file_local:-<none>}"
 
     log INFO "Running run.py..."
-    if [[ -z "${MINIESD}" ]]; then
+    if [[ -z "${MINIESD:-}" ]]; then
         python run.py \
             --input "${reprod_files[@]}" \
             --output "${local_output_file}" \
