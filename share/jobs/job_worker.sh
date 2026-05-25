@@ -236,7 +236,7 @@ include_miniesd() {
     miniesd_path="${MINIESD}/${stream}/${run_bucket}/${run_group}"
 
     log INFO "Copying miniesd files from ${miniesd_path} to ${TMPDIR}..."
-    mapfile -t MINIESD_FILES < <(xrdfs "${XRD_URL}" ls "${miniesd_path}" 2>/dev/null | grep -E "run\.${RUN_NUMBER}\.*\.miniesd$")
+    mapfile -t MINIESD_FILES < <(xrdfs "${XRD_URL}" ls "${miniesd_path}" 2>/dev/null | grep -E "run\.${RUN_NUMBER}\..*\.miniesd$")
 
     if [[ ${#MINIESD_FILES[@]} -eq 0 ]]; then
         log WARN "No miniesd files found at ${miniesd_path}"
