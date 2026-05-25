@@ -11,7 +11,7 @@ parser.add_argument("--context-next-filename", type=str, default="", help="Conte
 parser.add_argument("--tt-reco-filepath", type=str, default="", help="TT reco filepath")
 parser.add_argument("--reco-output", type=str, default="", help="Muon reconstruction output filepath")
 parser.add_argument("--feature-output", type=str, default="", help="Feature output filepath")
-parser.add_argument("--property-file", type=str, default="", help="Filepath of the property file")
+parser.add_argument("--property-file", type=str, default="data/Reconstruction/RecMuon/CdWpTtChi2RecTool/default_configuration.json", help="Filepath of the property file")
 parser.add_argument("--time-window", nargs=2, type=float, default=(-2.0, 2.0), help="Buffer time window (default=[-2.0, 2.0])")
 parser.add_argument("--log-level", type=int, default=3, help="Log level (default: 3)")
 parser.add_argument("--cluster", type=str, choices=["CC-IN2P3", "IHEP"], help="Cluster name currently running on")
@@ -89,20 +89,7 @@ alg.useRecTool("CdWpTtChi2RecTool")
 alg.rectool.property("UseAutomaticFactory").set(False)
 alg.rectool.property("WaterPhase").set(False)
 alg.rectool.property("ManualReconstructionMode").set(1)
-if args.property_file:
-    alg.rectool.property("ConfigFile").set(args.property_file)
-
-
-# if args.property_file:
-#     try:
-#         with open(args.property_file, "r") as f:
-#             props = json.load(f)
-#         for key, value in props.items():
-#             print(f"[INFO] Setting alg.rectool.property('{key}') = {value}")
-#             alg.rectool.property(key).set(value)
-#     except Exception as e:
-#         print(f"[ERROR] Failed to load or parse property file: {e}", file=sys.stderr)
-#         sys.exit(1)
+alg.rectool.property("ConfigFile").set(args.property_file)
 
 task.setEvtMax(-1)
 if not task.run():
