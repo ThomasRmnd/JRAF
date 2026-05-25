@@ -173,7 +173,7 @@ prepare_job_arrays() {
     RANGES=()
     local total=${#RTRAW_LIST[@]}
 
-    if (( total == 0 )); then
+    if [[ "$total" -eq 0 ]]; then
         log WARN "RTRAW_LIST is empty"
         return
     fi
