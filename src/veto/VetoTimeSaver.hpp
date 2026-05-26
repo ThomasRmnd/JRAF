@@ -31,10 +31,7 @@ struct VetoTimeSaver {
     int run_id = 0;
     time_t sec = 0l;
     int nsec = 0;
-
     unsigned char veto_type = 0;
-    time_t veto_sec = 0l;
-    int veto_nsec = 0;
 
     bool init() {
         tree = new TTree("Veto", "Veto");
@@ -46,8 +43,6 @@ struct VetoTimeSaver {
         tree->Branch("sec", &sec);
         tree->Branch("nsec", &nsec);
         tree->Branch("veto_type", &veto_type);
-        tree->Branch("veto_sec", &veto_sec);
-        tree->Branch("veto_nsec", &veto_nsec);
         return true;
     }
 
@@ -65,8 +60,6 @@ struct VetoTimeSaver {
         sec = ts.GetSec();
         nsec = ts.GetNanoSec();
         veto_type = static_cast<unsigned char>(it->first);
-        veto_sec = duration.GetSec();
-        veto_nsec = duration.GetNanoSec();
         tree->Fill();
         
         return true;
@@ -82,8 +75,6 @@ struct VetoTimeSaver {
         sec = ts.GetSec();
         nsec = ts.GetNanoSec();
         veto_type = static_cast<unsigned char>(it->first);
-        veto_sec = it->second.GetSec();
-        veto_nsec = it->second.GetNanoSec();
         tree->Fill();
         
         return true;

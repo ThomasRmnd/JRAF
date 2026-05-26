@@ -277,16 +277,16 @@ class RunListFetcher(Module):
     """Fetches and filters list of runs to process"""
     
     def register_options(self, parser: argparse.ArgumentParser):
-        parser.add_argument("--xrootd-url", type=str, default=None, help="XRootD server URL")
         parser.add_argument("--lower-run", type=int, default=None, help="Process only runs newer")
         parser.add_argument("--upper-run", type=int, default=None, help="Process only runs older")
 
     def init(self, args: argparse.Namespace) -> bool:
-        self.xrootd = args.xrootd_url
         if args.campaign == "ReProd25C":
-            self.good_run_list = "/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6/Physics_good_run_list.txt"
+            self.good_run_list = "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25C/physics_good.txt"
         elif args.campaign == "ReProd25D":
-            self.good_run_list = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2/physics_good.txt"
+            self.good_run_list = "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25D/physics_good.txt"
+        elif args.campaign == "ReProd26B":
+            self.good_run_list = "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd26B/physics_good.txt"
         self.lower = args.lower_run
         self.upper = args.upper_run
         return True
@@ -295,12 +295,8 @@ class RunListFetcher(Module):
         """Load and filter run numbers"""
         logger.info("Loading run list...")
 
-        if self.xrootd is None:
-            with open(self.good_run_list) as f:
-                data = f.read().splitlines()
-        else:
-            cmd = f"xrdfs {self.xrootd} cat {self.good_run_list}"
-            data = run_cmd(cmd, shell=True, timeout=60.0).splitlines()
+        with open(self.good_run_list) as f:
+            data = f.read().splitlines()
 
         runs = []
         for line in data:
@@ -474,12 +470,14 @@ class JobLauncher(Module):
         parser.add_argument("--launcher-script", type=str, default="job_launcher.sh", help="File used to launch jobs")
         parser.add_argument("--site", type=str, help="Site used to get the data files")
         parser.add_argument("--campaign", type=str, help="Campaign used to get the data files")
+        parser.add_argument("--output", type=str, default="/sps/juno/jdeandre/rtraw_ThomasRaymond", help="Output directory")
         parser.add_argument("--dry-run", action="store_true", help="Don't actually submit jobs")
 
     def init(self, args : argparse.Namespace) -> bool:
         self.script = Path(args.launcher_script)
         self.site = args.site
         self.campaign = args.campaign
+        self.output = args.output
         self.dry_run = args.dry_run
         if not self.dry_run and not self.script.exists():
             logger.error(f"Launcher script not found: {self.script}")
@@ -495,9 +493,11 @@ class JobLauncher(Module):
         try:
             list_base = ""
             if self.campaign == "ReProd25C":
-                list_base = "/eos/juno/groups/DataQuality/P25A/Physics/goodrunlist_v3.6"
+                list_base = "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25C"
             elif self.campaign == "ReProd25D":
-                list_base = "/eos/juno/groups/DataQuality/ReProd25D/Physics/goodrunlist_v0.0-v2"
+                list_base = "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd25D"
+            elif self.campaign == "ReProd26B":
+                list_base = "/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList/ReProd26B"
             if not list_base:
                 raise ValueError(f"Unknown campaign: {self.campaign}")
             
@@ -507,7 +507,7 @@ class JobLauncher(Module):
             else:
                 file_range = 20
 
-            out = run_cmd(["sh", str(self.script), "--site", str(self.site), "--campaign", str(self.campaign), "--run", str(run), "--list-base", str(list_base), "--range", str(file_range)])
+            out = run_cmd(["sh", str(self.script), "--site", str(self.site), "--campaign", str(self.campaign), "--run", str(run), "--output", str(self.output), "--list-base", str(list_base), "--range", str(file_range)])
             jobids = []
             for line in out.splitlines():
                 if "Submitted batch job" in line:
