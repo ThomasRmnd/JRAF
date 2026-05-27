@@ -94,7 +94,7 @@ parse_args() {
 
 load_run_list() {
     log INFO "Fetching run list from EOS..."
-    mapfile -t RUN_LIST < <(cat "${LOCAL_RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
+    mapfile -t RUN_LIST < <(cat "${RUN_LIST_PATH}" | tr -d '\r' | sed '/^$/d')
 }
 
 #==============================
