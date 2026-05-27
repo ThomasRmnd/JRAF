@@ -43,36 +43,39 @@ void Boron12Analysis::process(const EventContext::View& events) {
         mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
     }
 
+    FiducialVolumeSelection fiducial_vol_cut{18000.0};
     EnergyRangeSelection prompt_energy_cut {0.6, 20.0};
 
-    for (const vertex& neu : events.current()) {
-        if (!prompt_energy_cut.isIn(neu)) continue;
+    for (const vertex& b12 : events.current()) {
+        if (!fiducial_vol_cut.isIn(b12)) continue;
+
+        if (!prompt_energy_cut.isIn(b12)) continue;
         bool is_in_veto = false;
         for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
-            if (!cut.isIn(neu)) continue;
+            if (!cut.isIn(b12)) continue;
             is_in_veto = true;
             break;
         }
         if (!is_in_veto) continue;
 
-        posx = neu.pos.x;
-        posy = neu.pos.y;
-        posz = neu.pos.z;
-        e = neu.energy;
-        sec = neu.ts.GetSec();
-        nsec = neu.ts.GetNanoSec();
+        posx = b12.pos.x;
+        posy = b12.pos.y;
+        posz = b12.pos.z;
+        e = b12.energy;
+        sec = b12.ts.GetSec();
+        nsec = b12.ts.GetNanoSec();
 
-        totq = neu.calib.totq;
-        meanq = neu.calib.meanq;
-        stdq = neu.calib.stdq;
-        minq = neu.calib.minq;
-        maxq = neu.calib.maxq;
-        meant = neu.calib.meant;
-        stdt = neu.calib.stdt;
-        npmt = neu.calib.npmt;
-        nhit = neu.calib.nhit;
-        meanhit = neu.calib.meanhit;
-        stdhit = neu.calib.stdhit;
+        totq = b12.calib.totq;
+        meanq = b12.calib.meanq;
+        stdq = b12.calib.stdq;
+        minq = b12.calib.minq;
+        maxq = b12.calib.maxq;
+        meant = b12.calib.meant;
+        stdt = b12.calib.stdt;
+        npmt = b12.calib.npmt;
+        nhit = b12.calib.nhit;
+        meanhit = b12.calib.meanhit;
+        stdhit = b12.calib.stdhit;
 
         m_tree->Fill();
     }
