@@ -84,7 +84,7 @@ do_hadd() {
     local group_candidates=($(find "${base_dir}" -maxdepth 1 -type d -regex ".*/${run_group}(_[^/]+)?/?$" | sort))
 
     if (( ${#group_candidates[@]} == 0 )); then
-        log WARN "No matching run_group directory found under ${base_dir_analysis} for group ${run_group}"
+        log WARN "No matching run_group directory found under ${base_dir} for group ${run_group}"
         return
     fi
 
