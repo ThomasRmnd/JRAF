@@ -48,7 +48,7 @@ Usage: $(basename "$0") --site <str> --campaign <str> --run <int> --output <path
 
 Required:
   --site                <str>           Storage site selection {EOS|CNAF}
-  --campaign            <str>           Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
+  --campaign            <str>           Campaign selection {ReProd25C|ReProd25D|ValProd26B|ReProd26B}
   --run                 <int>           Run number to process
   --output              <path>          Output directory (default: ${OUTPUT_DIR})
   --list-base           <str>           Basepath for the file list
@@ -105,14 +105,14 @@ parse_args() {
     fi
 
     if [[ -z "${CAMPAIGN:-}" ]]; then
-        log ERROR "--campaign is required {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}"
+        log ERROR "--campaign is required {ReProd25C|ReProd25D|ValProd26B|ReProd26B}"
         usage
         exit 1
     fi
 
     case "${CAMPAIGN}" in
-        Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B) ;;
-        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
+        ReProd25C|ReProd25D|ValProd26B|ReProd26B) ;;
+        *) log ERROR "Invalid --site: ${CAMPAIGN} (expected {ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
            exit 1 ;;
     esac
 

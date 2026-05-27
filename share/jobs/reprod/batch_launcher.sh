@@ -57,7 +57,7 @@ Usage: $(basename "$0") --site <str> --campaign <str> [options]
 
 Required:
   --site        <str>   Storage site selection {EOS|CNAF}
-  --campaign    <str>   Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D|ValProd26B|ReProd26B}
+  --campaign    <str>   Campaign selection {ReProd25C|ReProd25D|ValProd26B|ReProd26B}
 
 Optional:
   --lower       <num>   Starting run number (inclusive)
@@ -107,18 +107,6 @@ parse_args() {
     fi
 
     case "${CAMPAIGN}" in
-        Normal)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            ;;
-        ReProd25A)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            ;;
-        ReProd25B)
-            LIST_BASE="${RUN_LIST_REPROD25C%/*}"
-            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
-            ;;
         ReProd25C)
             LIST_BASE="${RUN_LIST_REPROD25C%/*}"
             RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
