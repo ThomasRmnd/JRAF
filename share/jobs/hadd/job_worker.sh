@@ -81,7 +81,7 @@ do_hadd() {
 
     local base_dir="${subdirectory}/${run_bucket}"
 
-    local group_candidates=$(ls "${base_dir}" 2>/dev/null | grep -E "/${run_group}(_[^/]+)?/?$" | sort)
+    local group_candidates=($(ls "${base_dir}" 2>/dev/null | grep -E "/${run_group}(_[^/]+)?/?$" | sort))
 
     if (( ${#group_candidates[@]} == 0 )); then
         log WARN "No matching run_group directory found under ${base_dir} for group ${run_group}"
