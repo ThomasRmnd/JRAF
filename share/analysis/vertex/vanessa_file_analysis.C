@@ -5,8 +5,20 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH1D.h>
+#include <TTimeStamp.h>
 #include <TTree.h>
 #include <TVector3.h>
+
+struct prompt_event {
+    int run_id;
+    time_t sec;
+    int nsec;
+    double e;
+};
+
+bool operator<(const prompt_event& lhs, const prompt_event& rhs) {
+    return TTimeStamp(lhs.sec, lhs.nsec) < TTimeStamp(rhs.sec, rhs.nsec);
+}
 
 std::vector<double> generate_segment_boundaries(double start, double stop, int num_bins) {
     if (num_bins <= 0) return {};
@@ -256,6 +268,8 @@ int vanessa_file_analysis(const char* filepath) {
 
     int run_min = 999999, run_max = 0;
 
+    std::set<prompt_event> events;
+
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
         
@@ -280,8 +294,14 @@ int vanessa_file_analysis(const char* filepath) {
         // Flasher cut
         if (is_flasher_p || is_flasher_d) continue;
         
-        std::cout << run << ", " << t_p / 1000000000 << ", " << t_p % 1000000000 << ", " << energy_p << '\n';
+        events.insert(
+            run, t_p / 1000000000, t_p % 1000000000, energy_p
+        );
         h_e_p->Fill(energy_p);
+    }
+
+    for (const prompt_event& prompt : events) {
+        std::cout << prompt.run_id << ' ' << prompt.sec << ' ' << prompt.nsec << ' ' << prompt.e << '\n';
     }
 
     TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
