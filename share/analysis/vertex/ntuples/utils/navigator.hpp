@@ -11,7 +11,7 @@
 #include "utils/event.hpp"
 #include "utils/vector_reader.hpp"
 
-#undef __USE_MUON_IPOS_FPOS__
+#define __USE_MUON_IPOS_FPOS__
 
 class navigator_base {
 
