@@ -9,23 +9,6 @@ set -euo pipefail
 IFS=$'\n\t'
 
 #==============================
-# Utility functions & Cluster Detection
-#==============================
-
-HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
-    CLUSTER="CC-IN2P3"
-    export X509_USER_PROXY=/sps/juno/jdeandre/rtraw_ThomasRaymond/.cert_traymond_juno_user
-elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
-    CLUSTER="IHEP"
-else
-    echo "ERROR: Unknown cluster: ${HOSTNAME}" >&2
-    exit 1
-fi
-
-log INFO "Cluster detected: ${CLUSTER}"
-
-#==============================
 #  Utility logging function
 #==============================
 
@@ -64,6 +47,23 @@ log() {
         *) echo -e "${prefix} $msg" >&1 ;;
     esac
 }
+
+#==============================
+# Utility functions & Cluster Detection
+#==============================
+
+HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
+    CLUSTER="CC-IN2P3"
+    export X509_USER_PROXY=/sps/juno/jdeandre/rtraw_ThomasRaymond/.cert_traymond_juno_user
+elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
+    CLUSTER="IHEP"
+else
+    echo "ERROR: Unknown cluster: ${HOSTNAME}" >&2
+    exit 1
+fi
+
+log INFO "Cluster detected: ${CLUSTER}"
 
 #==============================
 # Configuration

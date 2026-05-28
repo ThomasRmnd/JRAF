@@ -4,25 +4,6 @@ set -euo pipefail
 IFS=$'\n\t'
 
 #==============================
-# Utility functions
-#==============================
-
-HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
-    # Detect CC-IN2P3 cluster
-    CLUSTER="CC-IN2P3"
-elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
-    # Detect IHEP cluster
-    CLUSTER="IHEP"
-else
-    echo "ERROR: Unknown cluster. Hostname: ${HOSTNAME}" >&2
-    echo "Expected CC-IN2P3 (cca###) or IHEP (lxlogin###.ihep.ac.cn)" >&2
-    exit 1
-fi
-
-log INFO "Cluster detected: ${CLUSTER}"
-
-#==============================
 #  Utility logging function
 #==============================
 
@@ -61,6 +42,25 @@ log() {
         *) echo -e "${prefix} $msg" >&1 ;;
     esac
 }
+
+#==============================
+# Utility functions
+#==============================
+
+HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
+    # Detect CC-IN2P3 cluster
+    CLUSTER="CC-IN2P3"
+elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
+    # Detect IHEP cluster
+    CLUSTER="IHEP"
+else
+    echo "ERROR: Unknown cluster. Hostname: ${HOSTNAME}" >&2
+    echo "Expected CC-IN2P3 (cca###) or IHEP (lxlogin###.ihep.ac.cn)" >&2
+    exit 1
+fi
+
+log INFO "Cluster detected: ${CLUSTER}"
 
 #==============================
 # Configuration defaults
