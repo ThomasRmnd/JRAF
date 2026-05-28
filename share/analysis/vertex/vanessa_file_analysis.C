@@ -261,7 +261,7 @@ int vanessa_file_analysis(const char* filepath) {
         
         // Energy cut
         if (energy_p < 0.7 || 12.0 < energy_p) continue;
-        if (energy_d < 2.0 || 2.5 < energy_d) continue;
+        if ((energy_d < 2.0 || 2.5 < energy_d) && (energy_d < 4.5 || 5.5 < energy_d)) continue;
         
         // Fiducial volume cut
         if (16.5 < R_p) continue;
@@ -280,6 +280,7 @@ int vanessa_file_analysis(const char* filepath) {
         // Flasher cut
         if (is_flasher_p || is_flasher_d) continue;
         
+        std::cout << run << ", " << t_p / 1000000000 << ", " << t_p % 1000000000 << ", " << energy_p << '\n';
         h_e_p->Fill(energy_p);
     }
 
