@@ -17,6 +17,7 @@
 #include "EvtNavigator/EvtNavHelper.h"
 
 #include "analysis/AccidentalAnalysis.hpp"
+#include "analysis/Boron12Analysis.hpp"
 #include "analysis/IBDAnalysis.hpp"
 #include "analysis/MultiplicityAnalysis.hpp"
 #include "analysis/NeutronAnalysis.hpp"
@@ -92,6 +93,7 @@ bool JRAF::initAnalyses() {
     m_analyses.push_back(std::make_shared<IBDAnalysis>("IBDAnalysis__MixedPhase", "MixedPhase"));
     m_analyses.push_back(std::make_shared<IBDAnalysis>("IBDAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
     m_analyses.push_back(std::make_shared<AccidentalAnalysis>("AccidentalAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
+    m_analyses.push_back(std::make_shared<Boron12Analysis>("Boron12Analysis__OMILREC_JVtx", "OMILREC_JVtx"));
     m_analyses.push_back(std::make_shared<MultiplicityAnalysis>("MultiplicityAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
     m_analyses.push_back(std::make_shared<NeutronAnalysis>("NeutronAnalysis__OMILREC_JVtx", "OMILREC_JVtx"));
 

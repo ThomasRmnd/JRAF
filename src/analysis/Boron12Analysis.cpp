@@ -38,9 +38,11 @@ bool Boron12Analysis::initialize() {
 
 void Boron12Analysis::process(const EventContext::View& events) {
     run_id = events.runid();
-    std::vector<TimeRangeMuonVetoSelection> mu_spa_neu_cut;
+    std::vector<TimeRangeMuonVetoSelection> mu_b12_sig_cut;
+    std::vector<TimeRangeMuonVetoSelection> mu_b12_bkg_cut;
     for (const track& trk : events.tracks()) {
-        mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
+        mu_b12_sig_cut.emplace_back(trk, TimeStamp{0, 5000000}, TimeStamp{0, 100000000});
+        mu_b12_bkg_cut.emplace_back(trk, TimeStamp{0, -100000000}, TimeStamp{0, -5000000});
     }
 
     FiducialVolumeSelection fiducial_vol_cut{18000.0};
@@ -50,13 +52,20 @@ void Boron12Analysis::process(const EventContext::View& events) {
         if (!fiducial_vol_cut.isIn(b12)) continue;
 
         if (!prompt_energy_cut.isIn(b12)) continue;
-        bool is_in_veto = false;
-        for (const TimeRangeMuonVetoSelection& cut : mu_spa_neu_cut) {
+
+        bool is_in_sig_veto = false;
+        for (const TimeRangeMuonVetoSelection& cut : mu_b12_sig_cut) {
             if (!cut.isIn(b12)) continue;
-            is_in_veto = true;
+            is_in_sig_veto = true;
             break;
         }
-        if (!is_in_veto) continue;
+        bool is_in_bkg_veto = false;
+        for (const TimeRangeMuonVetoSelection& cut : mu_b12_bkg_cut) {
+            if (!cut.isIn(b12)) continue;
+            is_in_bkg_veto = true;
+            break;
+        }
+        if (!is_in_sig_veto && !is_in_bkg_veto) continue;
 
         posx = b12.pos.x;
         posy = b12.pos.y;

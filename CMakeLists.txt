@@ -6,6 +6,7 @@ FILES
 
     src/analysis/AccidentalAnalysis.cpp
     src/analysis/Analysis.cpp
+    src/analysis/Boron12Analysis.cpp
     src/analysis/IBDAnalysis.cpp
     src/analysis/MultiplicityAnalysis.cpp
     src/analysis/NeutronAnalysis.cpp
