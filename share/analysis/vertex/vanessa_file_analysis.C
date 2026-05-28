@@ -295,7 +295,7 @@ int vanessa_file_analysis(const char* filepath) {
         if (is_flasher_p || is_flasher_d) continue;
         
         events.insert(
-            prompt_event{run, t_p / 1000000000, t_p % 1000000000, energy_p}
+            prompt_event{run, static_cast<time_t>(t_p / 1000000000), static_cast<int>(t_p % 1000000000), energy_p}
         );
         h_e_p->Fill(energy_p);
     }
