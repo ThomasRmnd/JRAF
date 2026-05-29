@@ -16,6 +16,36 @@ struct prompt_event {
     double e;
 };
 
+struct ibd_debug {
+
+    int run_id;
+
+    time_t sec_p;
+    int nsec_p;
+    double e_p;
+    double posx_p;
+    double posy_p;
+    double posz_p;
+
+    time_t sec_d;
+    int nsec_d;
+    double e_d;
+    double posx_d;
+    double posy_d;
+    double posz_d;
+
+    bool prompt_cut;
+    bool delayed_cut;
+    bool fiducial_cut;
+    bool chimney_cut;
+    bool correlation_time_cut;
+    bool correlation_space_cut;
+    bool multiplicity_cut;
+    bool neutron_cut;
+    bool flasher_cut;
+
+};
+
 bool operator<(const prompt_event& lhs, const prompt_event& rhs) {
     return TTimeStamp(lhs.sec, lhs.nsec) < TTimeStamp(rhs.sec, rhs.nsec);
 }
@@ -268,41 +298,79 @@ int vanessa_file_analysis(const char* filepath) {
 
     int run_min = 999999, run_max = 0;
 
-    std::set<prompt_event> events;
+    std::set<ibd_debug> events;
 
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
+
+        if (run < 9789 || 9822 < run) continue;
+
+        ibd_debug ibd{
+            run,
+            static_cast<time_t>(t_p / 1000000000),
+            static_cast<int>(t_p % 1000000000),
+            energy_p,
+            x_p,
+            y_p,
+            z_p,
+            static_cast<time_t>(t_d / 1000000000),
+            static_cast<int>(t_d % 1000000000),
+            energy_d,
+            x_d,
+            y_d,
+            z_d,
+            0.7 <= energy_p && energy_p <= 12.0,
+            2.0 <= energy_d && energy_d <= 2.5,
+            R_p <= 16.5,
+            std::abs(z_p) <= 15.5 || rho_p >= 2.0,
+            5000 <= dt && dt <= 1000000,
+            dR <= 1.5,
+            !mult_before && !mult_between && !mult_after,
+            !in_neu_veto_p && !in_neu_veto_d,
+            !is_flasher_p && !is_flasher_d
+        };
+
+        events.insert(ibd);
         
         // Energy cut
-        if (energy_p < 0.7 || 12.0 < energy_p) continue;
-        if ((energy_d < 2.0 || 2.5 < energy_d) && (energy_d < 4.5 || 5.5 < energy_d)) continue;
+        // if (energy_p < 0.7 || 12.0 < energy_p) continue;
+        // if ((energy_d < 2.0 || 2.5 < energy_d) && (energy_d < 4.5 || 5.5 < energy_d)) continue;
         
         // Fiducial volume cut
-        if (16.5 < R_p) continue;
-        if (std::abs(z_p) > 15.5 && rho_p < 2.0) continue;
+        // if (16.5 < R_p) continue;
+        // if (std::abs(z_p) > 15.5 && rho_p < 2.0) continue;
 
         // Correlation cut
-        if (dt < 5000 || 1000000 < dt) continue;
-        if (1.5 < dR) continue;
+        // if (dt < 5000 || 1000000 < dt) continue;
+        // if (1.5 < dR) continue;
 
         // Multiplicity cut
-        if (mult_before || mult_between || mult_after) continue;
+        // if (mult_before || mult_between || mult_after) continue;
 
         // Neutron veto cut
-        if (in_neu_veto_p || in_neu_veto_d) continue;
+        // if (in_neu_veto_p || in_neu_veto_d) continue;
 
         // Flasher cut
-        if (is_flasher_p || is_flasher_d) continue;
+        // if (is_flasher_p || is_flasher_d) continue;
         
-        events.insert(
-            prompt_event{run, static_cast<time_t>(t_p / 1000000000), static_cast<int>(t_p % 1000000000), energy_p}
-        );
-        h_e_p->Fill(energy_p);
+        // events.insert(
+        //     prompt_event{run, static_cast<time_t>(t_p / 1000000000), static_cast<int>(t_p % 1000000000), energy_p}
+        // );
+        // h_e_p->Fill(energy_p);
     }
 
-    for (const prompt_event& prompt : events) {
-        std::cout << prompt.run_id << ' ' << prompt.sec << ' ' << prompt.nsec << ' ' << prompt.e << '\n';
+    for (const ibd_debug& ibd : events) {
+        std::cout << ibd.run_id << ' ' 
+                  << ibd.sec_p << ' ' << ibd.nsec_p << ' ' << ibd.e_p << ' ' << ibd.posx_p << ' ' << ibd.posy_p << ' ' << ibd.posz_p << ' ' 
+                  << ibd.sec_d << ' ' << ibd.nsec_d << ' ' << ibd.e_d << ' ' << ibd.posx_d << ' ' << ibd.posy_d << ' ' << ibd.posz_d << ' '
+                  << ibd.prompt_cut << ' ' << ibd.delayed_cut << ' ' << ibd.fiducial_cut << ' ' << ibd.chimney_cut << ' ' 
+                  << ibd.correlation_time_cut << ' ' << ibd.correlation_space_cut << ' ' 
+                  << ibd.multiplicity_cut << ' ' << ibd.neutron_cut << ' ' << ibd.flasher_cut << '\n';
     }
+
+    // for (const prompt_event& prompt : events) {
+    //     std::cout << prompt.run_id << ' ' << prompt.sec << ' ' << prompt.nsec << ' ' << prompt.e << '\n';
+    // }
 
     TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
     c_e_p->cd();
