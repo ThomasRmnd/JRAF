@@ -339,7 +339,7 @@ int vanessa_file_analysis(const char* filepath) {
         // events.insert(ibd);
         
         if (energy_p < 0.7 || 12.0 < energy_p) continue;
-        if ((energy_d < 2.0 || 2.5 < energy_d) && (energy_d < 4.5 || 5.5 < energy_d)) continue;
+        if (energy_d < 2.0 || 2.5 < energy_d) continue;
         if (16.5 < R_p) continue;
         if (std::abs(z_p) > 15.5 && rho_p < 2.0) continue;
         if (dt < 5000 || 1000000 < dt) continue;
@@ -366,19 +366,17 @@ int vanessa_file_analysis(const char* filepath) {
         std::cout << prompt.run_id << ' ' << prompt.sec << ' ' << prompt.nsec << ' ' << prompt.e << '\n';
     }
 
-    TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
-    c_e_p->cd();
-
-    h_e_p->GetXaxis()->CenterTitle(true);
-    h_e_p->GetYaxis()->CenterTitle(true);
-    h_e_p->GetXaxis()->SetTitleOffset(1.25);
-    h_e_p->SetLineWidth(2);
-    h_e_p->SetLineColor(kBlue);
-    h_e_p->Draw("HIST");
-
-    c_e_p->SetTickx();
-    c_e_p->SetTicky();
-    c_e_p->Update();
+    // TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
+    // c_e_p->cd();
+    // h_e_p->GetXaxis()->CenterTitle(true);
+    // h_e_p->GetYaxis()->CenterTitle(true);
+    // h_e_p->GetXaxis()->SetTitleOffset(1.25);
+    // h_e_p->SetLineWidth(2);
+    // h_e_p->SetLineColor(kBlue);
+    // h_e_p->Draw("HIST");
+    // c_e_p->SetTickx();
+    // c_e_p->SetTicky();
+    // c_e_p->Update();
 
     return 0;
 }
