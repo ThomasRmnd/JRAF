@@ -334,7 +334,7 @@ int vanessa_file_analysis(const char* filepath) {
         //     !in_neu_veto_p && !in_neu_veto_d,
         //     !is_flasher_p && !is_flasher_d
         // };
-        events.insert(ibd);
+        // events.insert(ibd);
         
         if (energy_p < 0.7 || 12.0 < energy_p) continue;
         if ((energy_d < 2.0 || 2.5 < energy_d) && (energy_d < 4.5 || 5.5 < energy_d)) continue;
