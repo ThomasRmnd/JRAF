@@ -43,11 +43,11 @@ void MultiplicityAnalysis::process(const EventContext::View& events) {
         mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 5000000});
     }
 
-    FiducialVolumeSelection fiducial_vol_cut{18000.0};
+    // FiducialVolumeSelection fiducial_vol_cut{18000.0};
     EnergyRangeSelection multiplicity_energy_cut {2.0, 12.0};
 
     for (const vertex& multi : events.current()) {
-        if (!fiducial_vol_cut.isIn(multi)) continue;
+        // if (!fiducial_vol_cut.isIn(multi)) continue;
 
         if (!multiplicity_energy_cut.isIn(multi)) continue;
         bool is_in_veto = false;
