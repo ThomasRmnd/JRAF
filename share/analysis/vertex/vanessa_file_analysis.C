@@ -16,6 +16,10 @@ struct prompt_event {
     double e;
 };
 
+bool operator<(const prompt_event& lhs, const prompt_event& rhs) {
+    return TTimeStamp(lhs.sec, lhs.nsec) < TTimeStamp(rhs.sec, rhs.nsec);
+}
+
 struct ibd_debug {
 
     int run_id;
@@ -46,8 +50,8 @@ struct ibd_debug {
 
 };
 
-bool operator<(const prompt_event& lhs, const prompt_event& rhs) {
-    return TTimeStamp(lhs.sec, lhs.nsec) < TTimeStamp(rhs.sec, rhs.nsec);
+bool operator<(const ibd_debug& lhs, const ibd_debug& rhs) {
+    return TTimeStamp(lhs.sec_p, lhs.nsec_p) < TTimeStamp(rhs.sec_p, rhs.nsec_p);
 }
 
 std::vector<double> generate_segment_boundaries(double start, double stop, int num_bins) {
