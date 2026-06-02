@@ -53,7 +53,7 @@ log() {
 #==============================
 
 HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-if [[ "${HOSTNAME}" =~ ^cca[0-9]+\.in2p3\.fr$ ]]; then
+if [[ "${HOSTNAME}" =~ ^cc.*\.in2p3\.fr$ ]]; then
     # Detect CC-IN2P3 cluster
     CLUSTER="CC-IN2P3"
 elif [[ "${HOSTNAME}" =~ ^lxlogin[0-9]+\.ihep\.ac\.cn$ ]]; then
