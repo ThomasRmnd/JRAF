@@ -302,7 +302,8 @@ int vanessa_file_analysis(const char* filepath) {
 
     int run_min = 999999, run_max = 0;
 
-    std::set<ibd_debug> events;
+    std::set<prompt_event> events;
+    // std::set<ibd_debug> events;
 
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
