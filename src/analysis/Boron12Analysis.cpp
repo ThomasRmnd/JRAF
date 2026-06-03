@@ -45,11 +45,11 @@ void Boron12Analysis::process(const EventContext::View& events) {
         mu_b12_bkg_cut.emplace_back(trk, TimeStamp{0, -100000000}, TimeStamp{0, -5000000});
     }
 
-    FiducialVolumeSelection fiducial_vol_cut{18000.0};
+    // FiducialVolumeSelection fiducial_vol_cut{18000.0};
     EnergyRangeSelection prompt_energy_cut {0.6, 20.0};
 
     for (const vertex& b12 : events.current()) {
-        if (!fiducial_vol_cut.isIn(b12)) continue;
+        // if (!fiducial_vol_cut.isIn(b12)) continue;
 
         if (!prompt_energy_cut.isIn(b12)) continue;
 

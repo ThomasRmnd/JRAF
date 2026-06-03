@@ -58,59 +58,6 @@ private:
     double meanhit_d;
     double stdhit_d;
 
-    std::vector<double> posx_n;
-    std::vector<double> posy_n;
-    std::vector<double> posz_n;
-    std::vector<double> e_n;
-    std::vector<time_t> sec_n;
-    std::vector<int> nsec_n;
-
-    std::vector<double> totq_n;
-    std::vector<double> meanq_n;
-    std::vector<double> stdq_n;
-    std::vector<double> minq_n;
-    std::vector<double> maxq_n;
-    std::vector<double> meant_n;
-    std::vector<double> stdt_n;
-    std::vector<std::size_t> npmt_n;
-    std::vector<std::size_t> nhit_n;
-    std::vector<double> meanhit_n;
-    std::vector<double> stdhit_n;
-
-    std::vector<double> posx_mult;
-    std::vector<double> posy_mult;
-    std::vector<double> posz_mult;
-    std::vector<double> e_mult;
-    std::vector<time_t> sec_mult;
-    std::vector<int> nsec_mult;
-    std::vector<int> mult_type; // 0 = before prompt, 1 = between, 2 = after delayed
-
-    std::vector<double> totq_mult;
-    std::vector<double> meanq_mult;
-    std::vector<double> stdq_mult;
-    std::vector<double> minq_mult;
-    std::vector<double> maxq_mult;
-    std::vector<double> meant_mult;
-    std::vector<double> stdt_mult;
-    std::vector<std::size_t> npmt_mult;
-    std::vector<std::size_t> nhit_mult;
-    std::vector<double> meanhit_mult;
-    std::vector<double> stdhit_mult;
-
-    std::vector<std::string> method_mu;
-    std::vector<int> loc_mu;
-    std::vector<double> iposx_mu;
-    std::vector<double> iposy_mu;
-    std::vector<double> iposz_mu;
-    std::vector<double> fposx_mu;
-    std::vector<double> fposy_mu;
-    std::vector<double> fposz_mu;
-    std::vector<double> totq_cd_mu;
-    std::vector<double> totq_wp_mu;
-    std::vector<time_t> sec_mu;
-    std::vector<int> nsec_mu;
-    std::vector<double> quality_mu;
-
 };
 
 #endif // JRAF_ANALYSIS_ACCIDENTALANALYSIS_HPP_
