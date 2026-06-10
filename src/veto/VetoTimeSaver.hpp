@@ -19,9 +19,11 @@ struct VetoTimeSaver {
 
     std::unordered_map<VetoType, TimeStamp> veto_map {
         {VetoType::BeginningOfJob, TimeStamp{1, 200000000}},
-        {VetoType::MissingHeaders, TimeStamp{0, 5000000}},
+        {VetoType::MissingHeaders, TimeStamp{0, 7000000}},
         {VetoType::BigGaps, TimeStamp{1, 200000000}},
-        {VetoType::Muon, TimeStamp{0, 5000000}}
+        {VetoType::Muon, TimeStamp{0, 5000000}},
+        {VetoType::MuonCd, TimeStamp{0, 7000000}},
+        {VetoType::MuonWp, TimeStamp{0, 2000000}}
     };
 
     std::deque<VetoWindow> active_vetoes;

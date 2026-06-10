@@ -17,6 +17,8 @@ enum class VetoType : unsigned char {
     MissingHeaders,
     BigGaps,
     Muon,
+    MuonCd,
+    MuonWp,
 };
 
 struct BeginningOfJobVetoTracker {
@@ -101,6 +103,20 @@ struct MuonVetoTracker {
     bool check(JM::EvtNavigator* nav) {
         std::shared_ptr<Event> evt = EventCache::load(nav);
         return !evt->tracks.empty();
+    }
+
+    VetoType type(JM::EvtNavigator* nav) {
+        std::shared_ptr<Event> evt = EventCache::load(nav);
+        if (evt->tracks.empty()) {
+            return VetoType::None;
+        }
+        if (evt->totq_cd > 0.0) {
+            return VetoType::MuonCd;
+        }
+        if (evt->totq_wp > 0.0) {
+            return VetoType::MuonWp;
+        }
+        return VetoType::Muon;
     }
 
 };

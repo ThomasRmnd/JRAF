@@ -136,7 +136,12 @@ void IBDAnalysis::process(const EventContext::View& events) {
     mu_cut.reserve(events.tracks().size());
     mu_spa_neu_cut.reserve(events.tracks().size());
     for (const track& trk : events.tracks()) {
-        mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 5000000});
+        if (trk.det == track::loc::cd) {
+            mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 7000000});
+        }
+        else if (trk.det == track::loc::wp) {
+            mu_cut.emplace_back(trk, TimeStamp{0, 0}, TimeStamp{0, 2000000});
+        }
         mu_spa_neu_cut.emplace_back(trk, TimeStamp{0, 20000}, TimeStamp{0, 2000000});
     }
 

@@ -252,7 +252,7 @@ bool JRAF::execute() {
         }
     }
     if (m_muvetoTrkr.check(nav)) {
-        if (!m_vetoTimeSaver.create_no_veto(m_tsEvt, VetoType::Muon, runId)) {
+        if (!m_vetoTimeSaver.create_no_veto(m_tsEvt, m_muvetoTrkr.type(nav), runId)) {
             LogError << "Failed to create veto time saver for muon\n";
             return false;
         }
