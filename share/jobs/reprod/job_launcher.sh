@@ -308,7 +308,7 @@ submit_jobs() {
             --partition="htc" \
             --ntasks=1 \
             --cpus-per-task=1 \
-            --mem="8G" \
+            --mem="16G" \
             --time="0-8:00:00" \
             --mail-user="thomas.raymond@iphc.cnrs.fr" \
             --mail-type="FAIL" \
