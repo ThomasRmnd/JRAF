@@ -101,7 +101,7 @@ safe_rm_dir() {
 GOODRUNLIST_PATH="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList"
 
 ORIG_BASE="${GOODRUNLIST_PATH}/ReProd26B_Original/Physics"
-DEST_BASE="/sps/juno/jdeandre/rtraw_ThomasRaymond/test/GoodList/ReProd26B"
+DEST_BASE="${GOODRUNLIST_PATH}/ReProd26B"
 
 PHASES=(phase1 phase2 phase3 phase4 phase4b)
 
