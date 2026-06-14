@@ -428,16 +428,31 @@ rtraw_to_reprod_filename() {
 
     local base_dir="${XRD_BASEPATH}/juno/juno-reprod/${CAMPAIGN}/${stream}/${run_bucket}"
 
-    local candidate_groups
-    candidate_groups=$(xrdfs "${XRD_URL}" ls "${base_dir}" 2>/dev/null | grep -E "/${run_group}(_[^/]+)?/?$" | sort)
+    local candidate_groups=$(
+        xrdfs "${XRD_URL}" ls "${base_dir}" 2>/dev/null |
+        grep -E "/${run_group}(_phase[0-9]+[a-z]?)?/?$" |
+        sort
+    )
 
     if [[ -z "${candidate_groups}" ]]; then
         log ERROR "No run_group (${run_group}) directory found under ${base_dir}" >&2
         exit 1
     fi
 
-    local selected_group
-    selected_group=$(basename "$(echo "$candidate_groups" | tail -n 1)")
+    local selected_group=""
+
+    while read -r group_path; do
+        group_name=$(basename "${group_path}")
+
+        if xrdfs "${XRD_URL}" stat "${base_dir}/${group_name}/${run}" >/dev/null 2>&1; then
+            selected_group="${group_name}"
+        fi
+    done <<< "${candidate_groups}"
+
+    if [[ -z "${selected_group}" ]]; then
+       log ERROR "Run ${run} not found in any matching run_group directory under ${base_dir}"
+       exit 1
+    fi
 
     local reprod_path=""
     if (( USE_LOCAL == 1 )); then
