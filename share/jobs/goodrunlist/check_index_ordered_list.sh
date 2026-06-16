@@ -77,16 +77,14 @@ GOODRUNLIST_PATH="/sps/juno/jdeandre/rtraw_ThomasRaymond/analysis/other/GoodList
 # Usage & Argument Parsing
 #==============================
 
-VERSION=""
 CAMPAIGN=""
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") --campaign <str> --version <str>
+Usage: $(basename "$0") --campaign <str>
 
 Required:
-  --campaign            <str>           Campaign selection {ReProd25C|ReProd25D|ValProd26B|ReProd26B}
-  --version             <str>           Version of the Good Run List (example: v5.0.5)
+  --campaign            <str>           Campaign selection
 
 Optional:
   --help                                Show this help message and exit
@@ -102,36 +100,16 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --campaign)     CAMPAIGN="$2"; shift 2 ;;
-            --version)       VERSION="$2"; shift 2 ;;
             --help|-h)       usage; exit 0 ;;
             *) log ERROR "Unknown argument: $1"; usage; exit 1 ;;
         esac
     done
 
     if [[ -z "${CAMPAIGN:-}" ]]; then
-        log ERROR "--campaign is required {ReProd25C|ReProd25D|ValProd26B|ReProd26B}"
+        log ERROR "--campaign is required"
         usage
         exit 1
     fi
-
-    case "${CAMPAIGN}" in
-        ReProd25C|ReProd25D|ValProd26B|ReProd26B) ;;
-        *) log ERROR "Invalid --campaign: ${CAMPAIGN} (expected {ReProd25C|ReProd25D|ValProd26B|ReProd26B})"
-           exit 1 ;;
-    esac
-
-    if [[ -z "${VERSION:-}" ]]; then
-        log ERROR "--version is required"
-        usage
-        exit 1
-    fi
-
-    if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        log ERROR "Invalid version format: '${VERSION}' (expected e.g. v5.0.5)"
-        exit 1
-    fi
-
-    log INFO "Version: ${VERSION}"
 }
 
 #==============================
