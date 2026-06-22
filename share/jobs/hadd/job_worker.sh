@@ -145,7 +145,7 @@ do_hadd() {
        exit 1
     fi
 
-    local run_dir="${selected_group}/${run}"
+    local run_dir="${base_dir}/${selected_group}/${run}"
 
     if [[ ! -d "${run_dir}" ]]; then
         log WARN "Run directory not found: ${run_dir}"
