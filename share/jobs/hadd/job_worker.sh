@@ -114,14 +114,14 @@ do_hadd() {
     local bucket_val=$(( (10#$run / 1000) * 1000 ))
     local group_val=$(( (10#$run / 100) * 100 ))
     
-    local run_bucket=$(printf "%08d" "$bucket_val")
-    local run_group=$(printf "%08d" "$group_val")
+    local run_bucket=$(printf "%08d" "${bucket_val}")
+    local run_group=$(printf "%08d" "${group_val}")
 
     local base_dir="${subdirectory}/${run_bucket}"
 
     local candidate_groups=$(
         ls "${base_dir}" 2>/dev/null |
-        grep -E "/${run_group}(_phase[0-9]+[a-z]?)?/?$" |
+        grep -E "${run_group}(_phase[0-9]+[a-z]?)?/?$" |
         sort
     )
 
