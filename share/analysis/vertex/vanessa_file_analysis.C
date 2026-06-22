@@ -302,54 +302,54 @@ int vanessa_file_analysis(const char* filepath) {
 
     int run_min = 999999, run_max = 0;
 
-    // std::set<prompt_event> events;
-    std::set<ibd_debug> events;
+    // std::set<ibd_debug> events;
+    std::set<prompt_event> events;
 
     for (long k = 0l; k < tree->GetEntries(); ++k) {
         tree->GetEntry(k);
 
-        if (run < 9789 || 9822 < run) continue;
+        if (run < 9789 || 9972 < run) continue;
 
-        if (energy_p < 0.7 || 12.0 < energy_p) continue;
-        if (energy_d < 2.0 || 2.5 < energy_d) continue;
-        ibd_debug ibd{
-            run,
-            static_cast<time_t>(t_p / 1000000000),
-            static_cast<int>(t_p % 1000000000),
-            energy_p,
-            x_p,
-            y_p,
-            z_p,
-            static_cast<time_t>(t_d / 1000000000),
-            static_cast<int>(t_d % 1000000000),
-            energy_d,
-            x_d,
-            y_d,
-            z_d,
-            0.7 <= energy_p && energy_p <= 12.0,
-            2.0 <= energy_d && energy_d <= 2.5,
-            R_p <= 16.5,
-            std::abs(z_p) <= 15.5 || rho_p >= 2.0,
-            5000 <= dt && dt <= 1000000,
-            dR <= 1.5,
-            !mult_before && !mult_between && !mult_after,
-            !in_neu_veto_p && !in_neu_veto_d,
-            !is_flasher_p && !is_flasher_d
-        };
-        events.insert(ibd);
-        
         // if (energy_p < 0.7 || 12.0 < energy_p) continue;
         // if (energy_d < 2.0 || 2.5 < energy_d) continue;
-        // if (16.5 < R_p) continue;
-        // if (std::abs(z_p) > 15.5 && rho_p < 2.0) continue;
-        // if (dt < 5000 || 1000000 < dt) continue;
-        // if (1.5 < dR) continue;
-        // if (mult_before || mult_between || mult_after) continue;
-        // if (in_neu_veto_p || in_neu_veto_d) continue;
-        // if (is_flasher_p || is_flasher_d) continue;
-        // events.insert(
-        //     prompt_event{run, static_cast<time_t>(t_p / 1000000000), static_cast<int>(t_p % 1000000000), energy_p}
-        // );
+        // ibd_debug ibd{
+        //     run,
+        //     static_cast<time_t>(t_p / 1000000000),
+        //     static_cast<int>(t_p % 1000000000),
+        //     energy_p,
+        //     x_p,
+        //     y_p,
+        //     z_p,
+        //     static_cast<time_t>(t_d / 1000000000),
+        //     static_cast<int>(t_d % 1000000000),
+        //     energy_d,
+        //     x_d,
+        //     y_d,
+        //     z_d,
+        //     0.7 <= energy_p && energy_p <= 12.0,
+        //     2.0 <= energy_d && energy_d <= 2.5,
+        //     R_p <= 16.5,
+        //     std::abs(z_p) <= 15.5 || rho_p >= 2.0,
+        //     5000 <= dt && dt <= 1000000,
+        //     dR <= 1.5,
+        //     !mult_before && !mult_between && !mult_after,
+        //     !in_neu_veto_p && !in_neu_veto_d,
+        //     !is_flasher_p && !is_flasher_d
+        // };
+        // events.insert(ibd);
+        
+        if (energy_p < 0.7 || 12.0 < energy_p) continue;
+        if (energy_d < 2.0 || 2.5 < energy_d) continue;
+        if (16.5 < R_p) continue;
+        if (std::abs(z_p) > 15.5 && rho_p < 2.0) continue;
+        if (dt < 5000 || 1000000 < dt) continue;
+        if (1.5 < dR) continue;
+        if (mult_before || mult_between || mult_after) continue;
+        if (in_neu_veto_p || in_neu_veto_d) continue;
+        if (is_flasher_p || is_flasher_d) continue;
+        events.insert(
+            prompt_event{run, static_cast<time_t>(t_p / 1000000000), static_cast<int>(t_p % 1000000000), energy_p}
+        );
 
         // h_e_p->Fill(energy_p);
     }
