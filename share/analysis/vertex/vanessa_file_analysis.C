@@ -354,18 +354,18 @@ int vanessa_file_analysis(const char* filepath) {
         // h_e_p->Fill(energy_p);
     }
 
-    for (const ibd_debug& ibd : events) {
-        std::cout << ibd.run_id << ' ' 
-                  << ibd.sec_p << ' ' << ibd.nsec_p << ' ' << ibd.e_p << ' ' << ibd.posx_p << ' ' << ibd.posy_p << ' ' << ibd.posz_p << ' ' 
-                  << ibd.sec_d << ' ' << ibd.nsec_d << ' ' << ibd.e_d << ' ' << ibd.posx_d << ' ' << ibd.posy_d << ' ' << ibd.posz_d << ' '
-                  << ibd.prompt_cut << ' ' << ibd.delayed_cut << ' ' << ibd.fiducial_cut << ' ' << ibd.chimney_cut << ' ' 
-                  << ibd.correlation_time_cut << ' ' << ibd.correlation_space_cut << ' ' 
-                  << ibd.multiplicity_cut << ' ' << ibd.neutron_cut << ' ' << ibd.flasher_cut << '\n';
-    }
-
-    // for (const prompt_event& prompt : events) {
-    //     std::cout << prompt.run_id << ' ' << prompt.sec << ' ' << prompt.nsec << ' ' << prompt.e << '\n';
+    // for (const ibd_debug& ibd : events) {
+    //     std::cout << ibd.run_id << ' ' 
+    //               << ibd.sec_p << ' ' << ibd.nsec_p << ' ' << ibd.e_p << ' ' << ibd.posx_p << ' ' << ibd.posy_p << ' ' << ibd.posz_p << ' ' 
+    //               << ibd.sec_d << ' ' << ibd.nsec_d << ' ' << ibd.e_d << ' ' << ibd.posx_d << ' ' << ibd.posy_d << ' ' << ibd.posz_d << ' '
+    //               << ibd.prompt_cut << ' ' << ibd.delayed_cut << ' ' << ibd.fiducial_cut << ' ' << ibd.chimney_cut << ' ' 
+    //               << ibd.correlation_time_cut << ' ' << ibd.correlation_space_cut << ' ' 
+    //               << ibd.multiplicity_cut << ' ' << ibd.neutron_cut << ' ' << ibd.flasher_cut << '\n';
     // }
+
+    for (const prompt_event& prompt : events) {
+        std::cout << prompt.run_id << ' ' << prompt.sec << ' ' << prompt.nsec << ' ' << prompt.e << '\n';
+    }
 
     // TCanvas* c_e_p = new TCanvas("c_e_p", "c_e_p", 1000, 1000);
     // c_e_p->cd();
