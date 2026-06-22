@@ -119,16 +119,33 @@ do_hadd() {
 
     local base_dir="${subdirectory}/${run_bucket}"
 
-    mapfile -t group_candidates < <(find "${base_dir}" -maxdepth 1 -mindepth 1 -type d | grep -E "${run_group}(_[^/]+)?$" | sort)
+    local candidate_groups=$(
+        ls "${base_dir}" 2>/dev/null |
+        grep -E "/${run_group}(_phase[0-9]+[a-z]?)?/?$" |
+        sort
+    )
 
-    if (( ${#group_candidates[@]} == 0 )); then
-        log WARN "No matching run_group directory found under ${base_dir} for group ${run_group}"
-        return
+    if [[ -z "${candidate_groups}" ]]; then
+        log ERROR "No run_group (${run_group}) directory found under ${base_dir}" >&2
+        exit 1
     fi
 
-    local selected_group_dir="${group_candidates[-1]}"
+    local selected_group=""
 
-    local run_dir="${selected_group_dir}/${run}"
+    while read -r group_path; do
+        group_name=$(basename "${group_path}")
+
+        if stat "${base_dir}/${group_name}/${run}" >/dev/null 2>&1; then
+            selected_group="${group_name}"
+        fi
+    done <<< "${candidate_groups}"
+
+    if [[ -z "${selected_group}" ]]; then
+       log ERROR "Run ${run} not found in any matching run_group directory under ${base_dir}"
+       exit 1
+    fi
+
+    local run_dir="${selected_group}/${run}"
 
     if [[ ! -d "${run_dir}" ]]; then
         log WARN "Run directory not found: ${run_dir}"
