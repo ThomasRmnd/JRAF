@@ -54,8 +54,8 @@ PDG_LIFETIMES: dict[str, float] = {
 }
 
 DEFAULT_INITIAL_VALUES: dict[str, float] = {
-    "f_bkg":   0.08,
-    "f_Li9":   0.90,
+    "f_bkg":   0.35,
+    "f_Li9":   0.80,
     "tau_Li9": PDG_LIFETIMES["tau_Li9"],
     "tau_He8": PDG_LIFETIMES["tau_He8"],
 }
@@ -812,8 +812,8 @@ def plot_raw_spectra(
 def load_data(path: str) -> tuple[CosmogenicData, CosmogenicData]:
     """Load signal and background trees from a data ROOT file."""
     fin        = uproot.open(path)
-    background = CosmogenicData.from_tree(fin["background_events"])
-    signal     = CosmogenicData.from_tree(fin["signal_events"])
+    background = CosmogenicData.from_tree(fin["li9he8_shape_muon__with_neutron__analysis__cdwpttchi2_3m_1_2s__omilrec_jvertex/background_events"])
+    signal     = CosmogenicData.from_tree(fin["li9he8_shape_muon__with_neutron__analysis__cdwpttchi2_3m_1_2s__omilrec_jvertex/signal_events"])
     return signal, background
 
 
@@ -863,10 +863,10 @@ if __name__ == "__main__":
     mc                 = load_simulation(args.simulation)
 
     # ── Binning ───────────────────────────────────────────────────────────────
-    bins_e_raw  = nmo_analysis_bins() # np.linspace(0.0, 12.0, 51)
-    bins_dt_raw = np.linspace(0.0,  2.0, 101)
-    bins_e_fit  = nmo_analysis_bins() # np.linspace(0.0, 12.0, 51)
-    bins_dt_fit = np.linspace(0.0,  2.0, 101)
+    bins_e_raw  = np.linspace(0.0, 12.0, 101) # np.linspace(0.0, 12.0, 51) or nmo_analysis_bins()
+    bins_dt_raw = np.linspace(0.0,  1.2, 101)
+    bins_e_fit  = np.linspace(0.0, 12.0, 101) # np.linspace(0.0, 12.0, 51) or nmo_analysis_bins()
+    bins_dt_fit = np.linspace(0.0,  1.2, 101)
 
     # ── Pre-fit overview plots ─────────────────────────────────────────────────
     plot_raw_spectra(signal, background, mc, bins_e_raw, bins_dt_raw)

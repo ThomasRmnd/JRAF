@@ -24,6 +24,7 @@ ninputs = len(args.input)
 colors = {
     "P25C": "#6895b9",
     "P25D": "#9b7dbd",
+    "P26C": "#BB62B6"
 }
 
 fig, ax = plt.subplots(figsize=(10, 5))
