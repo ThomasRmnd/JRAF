@@ -61,7 +61,7 @@ EOF
 }
 
 parse_args() {
-    if (( $# < 2 )); then
+    if (( $# < 1 )); then
         echo "ERROR: Missing arguments for CC-IN2P3" >&2
         usage >&2
         exit 1
