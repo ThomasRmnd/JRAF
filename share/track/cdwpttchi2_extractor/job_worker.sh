@@ -42,17 +42,8 @@ XRD_URL_CNAF="root://xrootd-archive.cr.cnaf.infn.it:1095/"
 XRD_BASEPATH_EOS="/eos"
 XRD_BASEPATH_CNAF="/production/storm/dirac"
 
-INPUT_SUFFIX_NORMAL="output.normal.cca.root"
-INPUT_SUFFIX_REPROD25A="output.reprod25a.cca.root"
-INPUT_SUFFIX_REPROD25B="output.reprod25b.cca.root"
-INPUT_SUFFIX_REPROD25C="output.reprod25c.cca.root"
-INPUT_SUFFIX_REPROD25D="output.reprod25d.cca.root"
-
-OUTPUT_SUFFIX_NORMAL="reconstruction.cdwpttchi2.normal.root"
-OUTPUT_SUFFIX_REPROD25A="reconstruction.cdwpttchi2.reprod25a.root"
-OUTPUT_SUFFIX_REPROD25B="reconstruction.cdwpttchi2.reprod25b.root"
-OUTPUT_SUFFIX_REPROD25C="reconstruction.cdwpttchi2.reprod25c.root"
-OUTPUT_SUFFIX_REPROD25D="reconstruction.cdwpttchi2.reprod25d.root"
+INPUT_SUFFIX="reconstruction.root"
+OUTPUT_SUFFIX="reconstruction.cdwpttchi2.root"
 
 #==============================
 # Parse command-line arguments
@@ -60,12 +51,11 @@ OUTPUT_SUFFIX_REPROD25D="reconstruction.cdwpttchi2.reprod25d.root"
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") <campaign> <run_number>
+Usage: $(basename "$0") <run_number>
 
 Process a single file identified by run and process ID.
 
 Arguments:
-  <campaign>      Campaign selection {Normal|ReProd25A|ReProd25B|ReProd25C|ReProd25D}
   <run_number>    Run number to process
 EOF
 }
@@ -77,35 +67,7 @@ parse_args() {
         exit 1
     fi
 
-    CAMPAIGN="$1"; shift
     RUN_NUMBER="$1"; shift
-
-    case "${CAMPAIGN}" in
-        Normal)
-            INPUT_SUFFIX="${INPUT_SUFFIX_NORMAL}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_NORMAL}"
-            ;;
-        ReProd25A)
-            INPUT_SUFFIX="${INPUT_SUFFIX_REPROD25A}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25A}"
-            ;;
-        ReProd25B)
-            INPUT_SUFFIX="${INPUT_SUFFIX_REPROD25B}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25B}"
-            ;;
-        ReProd25C)
-            INPUT_SUFFIX="${INPUT_SUFFIX_REPROD25C}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25C}"
-            ;;
-        ReProd25D)
-            INPUT_SUFFIX="${INPUT_SUFFIX_REPROD25D}"
-            OUTPUT_SUFFIX="${OUTPUT_SUFFIX_REPROD25D}"
-            ;;
-        *)
-            log ERROR "Invalid campaign argument: ${CAMPAIGN} (expected {Normal|ReProd25A|ReProd25B|ReProd25C})"
-            exit 1
-            ;;
-    esac
 }
 
 #==============================
