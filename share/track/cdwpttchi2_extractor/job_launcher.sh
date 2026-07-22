@@ -74,15 +74,12 @@ parse_args() {
     case "${CAMPAIGN}" in
         ReProd25C)
             LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25C}"
-            RUN_LIST_PATH="${RUN_LIST_REPROD25C}"
             ;;
         ReProd25D)
             LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD25D}"
-            RUN_LIST_PATH="${RUN_LIST_REPROD25D}"
             ;;
         ReProd26B)
             LOCAL_RUN_LIST_PATH="${LOCAL_RUN_LIST_REPROD26B}"
-            RUN_LIST_PATH="${RUN_LIST_REPROD26B}"
             ;;
         *)
             log ERROR "Invalid --campaign: ${CAMPAIGN}"
