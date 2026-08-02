@@ -293,6 +293,7 @@ std::set<track> open_tt_user_chain(const char* path) {
             .is_stopping = false
         });
     }
+    std::cout << "Info: Loaded " << nentries << " TT tracks\n";
     return tracks;
 }
 
