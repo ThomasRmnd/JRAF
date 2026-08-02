@@ -595,20 +595,28 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations_
 }
 
 int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin, const char* path_janus) {
-    std::map<std::string, std::set<track>> tracks = open_joint_reco_user_chain(path_joint);
+    std::map<std::string, std::set<track>> joint_tracks = open_joint_reco_user_chain(path_joint);
+    std::set<track> cdclassify_tracks = joint_tracks["CdClassify"];
+    std::set<track> wpclassify_tracks = joint_tracks["WpBasic"];
+    std::set<track> tt_tracks = joint_tracks["Tt"];
     std::set<track> cdwpttchi2_tracks = open_cdwpttchi2_user_chain(path_cdwpttchi2);
+    std::set<track> amber_v5_5_tracks = open_amber_v5_5_user_chain(path_amber);
+    std::set<track> edwin_tracks = open_edwin_user_chain(path_edwin);
+    std::set<track> janus_tracks = open_janus_user_chain(path_janus);
+
+    std::map<std::string, std::set<track>> tracks;
+    tracks["Tt"] = tt_tracks;
+    tracks["CdClassify"] = cdclassify_tracks;
+    tracks["WpBasic"] = wpclassify_tracks;
     if (!cdwpttchi2_tracks.empty()) {
         tracks["CdWpTtChi2"] = cdwpttchi2_tracks;
     } 
-    std::set<track> amber_v5_5_tracks = open_amber_v5_5_user_chain(path_amber);
     if (!amber_v5_5_tracks.empty()) {
         tracks["Amber_v5.5"] = amber_v5_5_tracks;
     }
-    std::set<track> edwin_tracks = open_edwin_user_chain(path_edwin);
     if (!edwin_tracks.empty()) {
         tracks["Edwin"] = edwin_tracks;
     }
-    std::set<track> janus_tracks = open_janus_user_chain(path_janus);
     if (!janus_tracks.empty()) {
         tracks["Janus"] = janus_tracks;
     }
