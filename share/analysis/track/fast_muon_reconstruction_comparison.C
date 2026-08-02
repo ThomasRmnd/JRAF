@@ -265,7 +265,7 @@ std::set<track> open_janus_user_chain(const char* path) {
     return tracks;
 }
 
-set::set<track> open_tt_user_chain(const char* path) {
+std::set<track> open_tt_user_chain(const char* path) {
     TChain* chain = new TChain("single_muon");
     chain->Add(path);
     std::set<track> tracks;
