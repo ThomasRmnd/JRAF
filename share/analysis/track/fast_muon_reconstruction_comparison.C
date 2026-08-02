@@ -277,6 +277,17 @@ std::set<track> open_tt_user_chain(const char* path) {
     double fposx, fposy, fposz;
     double chi2;
 
+    chain->SetBranchAddress("runid", &runid);
+    chain->SetBranchAddress("sec", &sec);
+    chain->SetBranchAddress("nsec", &nsec);
+    chain->SetBranchAddress("iposx", &iposx);
+    chain->SetBranchAddress("iposy", &iposy);
+    chain->SetBranchAddress("iposz", &iposz);
+    chain->SetBranchAddress("fposx", &fposx);
+    chain->SetBranchAddress("fposy", &fposy);
+    chain->SetBranchAddress("fposz", &fposz);
+    chain->SetBranchAddress("chi2", &chi2);
+
     long long nentries = chain->GetEntries();
     std::cout << "Info: Found " << nentries << " entries in TT files\n";
     for (long long k = 0ll; k < nentries; ++k) {
@@ -293,7 +304,7 @@ std::set<track> open_tt_user_chain(const char* path) {
             .is_stopping = false
         });
     }
-    std::cout << "Info: Loaded " << nentries << " TT tracks\n";
+    std::cout << "Info: Loaded " << tracks.size() << " TT tracks\n";
     return tracks;
 }
 
