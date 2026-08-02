@@ -51,65 +51,6 @@ double get_quantile(std::vector<double>::const_iterator first, std::vector<doubl
     return *position;
 }
 
-void plot_metrics(const std::map<std::string, TH1D*>& hists, const std::map<std::string, double>& quantiles) {
-    if (hists.empty()) return;
-    std::map<std::string, Color_t> colors = {
-        {"CdWpTtChi2", kBlack}, 
-        {"CdClassify", kGreen + 2}, 
-        {"WpBasic", kViolet}, 
-        {"Amber_v5.5", kBlue},
-        {"Edwin", kRed},
-        {"Janus", kMagenta},
-    };
-    TCanvas* c = new TCanvas(Form("c_%s", hists.at("CdWpTtChi2")->GetName()), "Metric", 1000, 1000);
-    c->cd();
-
-    double max = 0.0;
-    for (const auto& [method, h] : hists) {
-        if (h->GetMaximum() > max) {
-            max = h->GetMaximum();
-        }
-        std::cout << "68.2% " << h->GetName() << " (" << h->GetEntries() << " entries): " << quantiles.at(method) << '\n';
-    }
-
-    TLegend* leg = new TLegend(0.45, 0.65, 0.85, 0.85);
-
-    bool first = true;
-    for (const auto& [method, h] : hists) {
-        h->SetStats(0);
-        h->SetLineColor(colors[method]);
-        h->SetLineWidth(3);
-        h->GetXaxis()->SetMaxDigits(3);
-        h->GetYaxis()->SetMaxDigits(3);
-        h->GetXaxis()->CenterTitle(true);
-        h->GetYaxis()->CenterTitle(true);
-        h->GetYaxis()->SetTitleOffset(1.25);
-        if (first) {
-            first = false;
-            h->SetMaximum(max * 1.1);
-            h->Draw();
-        }
-        else {
-            h->Draw("SAME");
-        }
-
-        TLine* line = new TLine(quantiles.at(method), 0.0, quantiles.at(method), max * 1.1);
-        line->SetLineStyle(2);
-        line->SetLineWidth(3);
-        line->SetLineColor(colors[method]);
-        line->Draw();
-
-        leg->AddEntry(h, Form("%s: 68%% quantile = %.2f", method.c_str(), quantiles.at(method)), "l");
-    }
-    leg->SetTextSize(0.02);
-    leg->Draw();
-
-    c->SetTickx();
-    c->SetTicky();
-    c->SetGrid();
-    c->Update();
-}
-
 std::set<track> open_amber_v5_5_user_chain(const char* path) {
     TChain* chain = new TChain("MuonReco");
     chain->Add(path);
@@ -324,6 +265,37 @@ std::set<track> open_janus_user_chain(const char* path) {
     return tracks;
 }
 
+set::set<track> open_tt_user_chain(const char* path) {
+    TChain* chain = new TChain("single_muon");
+    chain->Add(path);
+    std::set<track> tracks;
+
+    int runid;
+    time_t sec;
+    int nsec;
+    double iposx, iposy, iposz;
+    double fposx, fposy, fposz;
+    double chi2;
+
+    long long nentries = chain->GetEntries();
+    std::cout << "Info: Found " << nentries << " entries in TT files\n";
+    for (long long k = 0ll; k < nentries; ++k) {
+        chain->GetEntry(k);
+        tracks.insert(track{
+            .run_id = runid,
+            .ts = TTimeStamp(sec, nsec),
+            .totq_cd = 0.0,
+            .totq_wp = 0.0,
+            .quality = chi2,
+            .ipos = TVector3(iposx, iposy, iposz),
+            .fpos = TVector3(fposx, fposy, fposz),
+            .is_single = true,
+            .is_stopping = false
+        });
+    }
+    return tracks;
+}
+
 std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* path) {
     TChain* chain = new TChain("muons");
     chain->Add(path);
@@ -400,6 +372,7 @@ std::map<std::string, std::set<track>> open_joint_reco_user_chain(const char* pa
         // if (stopping_wpclassify) continue; // SELECTION!
         for (std::size_t i = 0ul; i < method->size(); ++i) {
             if ((*method)[i] == "CdWpTtChi2") continue;
+            if ((*method)[i] == "Tt") continue;
             tracks[(*method)[i]].insert(track{
                 .run_id = run_id,
                 .ts = TTimeStamp(sec, nsec),
@@ -594,11 +567,11 @@ std::map<std::string, std::vector<MuonPerformance>> compute_global_correlations_
     return performances;
 }
 
-int fast_muon_reconstruction_comparison(const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin, const char* path_janus) {
+int fast_muon_reconstruction_comparison(const char* path_tt, const char* path_joint, const char* path_cdwpttchi2, const char* path_amber, const char* path_edwin, const char* path_janus) {
+    std::set<track> tt_tracks = open_tt_user_chain(path_tt);
     std::map<std::string, std::set<track>> joint_tracks = open_joint_reco_user_chain(path_joint);
     std::set<track> cdclassify_tracks = joint_tracks["CdClassify"];
     std::set<track> wpclassify_tracks = joint_tracks["WpBasic"];
-    std::set<track> tt_tracks = joint_tracks["Tt"];
     std::set<track> cdwpttchi2_tracks = open_cdwpttchi2_user_chain(path_cdwpttchi2);
     std::set<track> amber_v5_5_tracks = open_amber_v5_5_user_chain(path_amber);
     std::set<track> edwin_tracks = open_edwin_user_chain(path_edwin);
